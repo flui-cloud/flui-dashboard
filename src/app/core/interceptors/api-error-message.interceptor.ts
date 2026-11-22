@@ -15,7 +15,10 @@ export const apiErrorMessageInterceptor: HttpInterceptorFn = (req, next) => {
   return next(req).pipe(
     catchError((error: unknown) => {
       if (error instanceof HttpErrorResponse) {
-        Object.defineProperty(error, 'message', { value: readableMessage(error), configurable: true });
+        Object.defineProperty(error, 'message', {
+          value: readableMessage(error),
+          configurable: true,
+        });
       }
       return throwError(() => error);
     }),

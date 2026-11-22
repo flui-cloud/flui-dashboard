@@ -55,15 +55,28 @@ export class EgressService {
   }
 
   cluster(clusterId: string): Promise<EgressView> {
-    return firstValueFrom(this.http.get<EgressView>(`${this.base}/infrastructure/clusters/${clusterId}/egress-policy`));
+    return firstValueFrom(
+      this.http.get<EgressView>(`${this.base}/infrastructure/clusters/${clusterId}/egress-policy`),
+    );
   }
 
   setCluster(clusterId: string, ports: EgressPort[]): Promise<EgressChange | null> {
-    return this.guard(this.http.put<EgressChange>(`${this.base}/infrastructure/clusters/${clusterId}/egress-policy`, { ports }), 'The rule was not saved');
+    return this.guard(
+      this.http.put<EgressChange>(
+        `${this.base}/infrastructure/clusters/${clusterId}/egress-policy`,
+        { ports },
+      ),
+      'The rule was not saved',
+    );
   }
 
   openCluster(clusterId: string): Promise<EgressChange | null> {
-    return this.guard(this.http.delete<EgressChange>(`${this.base}/infrastructure/clusters/${clusterId}/egress-policy`), 'The rule was not removed');
+    return this.guard(
+      this.http.delete<EgressChange>(
+        `${this.base}/infrastructure/clusters/${clusterId}/egress-policy`,
+      ),
+      'The rule was not removed',
+    );
   }
 
   app(appId: string): Promise<EgressView> {
@@ -75,7 +88,10 @@ export class EgressService {
       return await firstValueFrom(call);
     } catch (err: unknown) {
       const message = (err as { error?: { message?: string | string[] } })?.error?.message;
-      this.toast.showError({ title, message: Array.isArray(message) ? message.join(' ') : (message ?? 'Please try again.') });
+      this.toast.showError({
+        title,
+        message: Array.isArray(message) ? message.join(' ') : (message ?? 'Please try again.'),
+      });
       return null;
     }
   }

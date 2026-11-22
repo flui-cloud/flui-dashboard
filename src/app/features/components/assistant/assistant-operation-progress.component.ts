@@ -1,4 +1,14 @@
-import { Component, OnDestroy, OnInit, computed, inject, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnDestroy,
+  OnInit,
+  computed,
+  inject,
+  input,
+  output,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCircleCheck, lucideCircleX, lucideLoaderCircle } from '@ng-icons/lucide';
 import { firstValueFrom } from 'rxjs';
@@ -23,16 +33,22 @@ const TERMINAL = new Set<OperationState>(['COMPLETED', 'FAILED', 'CANCELLED']);
   providers: [provideIcons({ lucideCircleCheck, lucideCircleX, lucideLoaderCircle })],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <div class="mt-2 rounded-xl border px-3 py-2.5 text-xs"
-      [class]="succeeded()
-        ? 'border-green-500/30 bg-green-500/5'
-        : failed()
-          ? 'border-destructive/30 bg-destructive/5'
-          : 'border-border/50 bg-muted/30'">
-
+    <div
+      class="mt-2 rounded-xl border px-3 py-2.5 text-xs"
+      [class]="
+        succeeded()
+          ? 'border-green-500/30 bg-green-500/5'
+          : failed()
+            ? 'border-destructive/30 bg-destructive/5'
+            : 'border-border/50 bg-muted/30'
+      "
+    >
       <div class="flex items-center gap-2">
         @if (succeeded()) {
-          <ng-icon name="lucideCircleCheck" class="h-4 w-4 shrink-0 text-green-600 dark:text-green-400" />
+          <ng-icon
+            name="lucideCircleCheck"
+            class="h-4 w-4 shrink-0 text-green-600 dark:text-green-400"
+          />
         } @else if (failed()) {
           <ng-icon name="lucideCircleX" class="h-4 w-4 shrink-0 text-destructive" />
         } @else {
@@ -41,15 +57,19 @@ const TERMINAL = new Set<OperationState>(['COMPLETED', 'FAILED', 'CANCELLED']);
         <span class="font-medium text-foreground truncate">{{ label() }}</span>
         <div class="flex-1"></div>
         @if (isRunning() && hasProgress()) {
-          <span class="shrink-0 font-mono text-[11px] text-muted-foreground">{{ progress() }}%</span>
+          <span class="shrink-0 font-mono text-[11px] text-muted-foreground"
+            >{{ progress() }}%</span
+          >
         }
       </div>
 
       @if (isRunning()) {
         <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
           @if (hasProgress()) {
-            <div class="h-full rounded-full bg-blue-500 transition-[width] duration-500 ease-out"
-              [style.width.%]="progress()"></div>
+            <div
+              class="h-full rounded-full bg-blue-500 transition-[width] duration-500 ease-out"
+              [style.width.%]="progress()"
+            ></div>
           } @else {
             <div class="h-full w-1/3 rounded-full bg-blue-500/60 animate-pulse"></div>
           }
@@ -80,7 +100,9 @@ export class AssistantOperationProgressComponent implements OnInit, OnDestroy {
   protected readonly progress = computed(() => this.progressValue() ?? 0);
   protected readonly hasProgress = computed(() => this.progressValue() != null);
   protected readonly succeeded = computed(() => this.status() === 'COMPLETED');
-  protected readonly failed = computed(() => this.status() === 'FAILED' || this.status() === 'CANCELLED');
+  protected readonly failed = computed(
+    () => this.status() === 'FAILED' || this.status() === 'CANCELLED',
+  );
   protected readonly isRunning = computed(() => !this.succeeded() && !this.failed());
   protected readonly stepLabel = computed(() => this.humanizeStep(this.currentStep()));
 
@@ -108,7 +130,8 @@ export class AssistantOperationProgressComponent implements OnInit, OnDestroy {
       if (this.stopped) return;
 
       this.status.set(res.status);
-      if (typeof res.progress === 'number') this.progressValue.set(Math.max(0, Math.min(100, res.progress)));
+      if (typeof res.progress === 'number')
+        this.progressValue.set(Math.max(0, Math.min(100, res.progress)));
       if (res.currentStep) this.currentStep.set(res.currentStep);
       if (res.errorMessage) this.error.set(res.errorMessage);
 

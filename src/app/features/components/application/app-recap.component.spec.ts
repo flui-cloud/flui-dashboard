@@ -98,7 +98,10 @@ describe('AppRecapComponent', () => {
           useValue: {
             paramMap: of(convertToParamMap({ id: group.id })),
             queryParamMap: of(convertToParamMap({})),
-            snapshot: { paramMap: convertToParamMap({ id: group.id }), queryParamMap: convertToParamMap({}) },
+            snapshot: {
+              paramMap: convertToParamMap({ id: group.id }),
+              queryParamMap: convertToParamMap({}),
+            },
           },
         },
         {
@@ -112,33 +115,76 @@ describe('AppRecapComponent', () => {
         },
         {
           provide: AppEndpointsService,
-          useValue: { endpoints: signal([{ fqdn: 'whoami.example.com', tlsEnabled: true }]), loadEndpoints: () => Promise.resolve() },
+          useValue: {
+            endpoints: signal([{ fqdn: 'whoami.example.com', tlsEnabled: true }]),
+            loadEndpoints: () => Promise.resolve(),
+          },
         },
         {
           provide: ClusterService,
-          useValue: { clusters: signal([{ id: 'c1', name: 'ovh-scaling-test', status: 'active' }]), loadClusters: () => Promise.resolve() },
+          useValue: {
+            clusters: signal([{ id: 'c1', name: 'ovh-scaling-test', status: 'active' }]),
+            loadClusters: () => Promise.resolve(),
+          },
         },
         {
           provide: DbConsoleService,
-          useValue: { getConnectionInfo: () => of({ engine: 'postgres', database: 'umami', user: 'umami', namespace: 'ns', remotePort: 5432 }) },
+          useValue: {
+            getConnectionInfo: () =>
+              of({
+                engine: 'postgres',
+                database: 'umami',
+                user: 'umami',
+                namespace: 'ns',
+                remotePort: 5432,
+              }),
+          },
         },
         { provide: BackupService, useValue: { runOnDemand } },
-        { provide: FleetService, useValue: { appProtection: (id: string) => Promise.resolve(protections[id]) } },
+        {
+          provide: FleetService,
+          useValue: { appProtection: (id: string) => Promise.resolve(protections[id]) },
+        },
         {
           provide: ApplicationMetricsService,
           useValue: {
             applicationMetricsControllerGetAppMetrics: (id: string) =>
-              of(metrics(id, id === 'db' ? { volume: { used_bytes: 300 * 1024 ** 2, capacity_bytes: 5 * 1024 ** 3, utilization_percent: 6 } } : {})),
+              of(
+                metrics(
+                  id,
+                  id === 'db'
+                    ? {
+                        volume: {
+                          used_bytes: 300 * 1024 ** 2,
+                          capacity_bytes: 5 * 1024 ** 3,
+                          utilization_percent: 6,
+                        },
+                      }
+                    : {},
+                ),
+              ),
           },
         },
         {
           provide: ApplicationsService,
           useValue: {
             applicationReleasesControllerGetCurrentRelease: () =>
-              of({ status: 'SUCCEEDED', imageRef: 'traefik/whoami:v1.10', startedAt: '2026-09-26T16:47:00', completedAt: '2026-09-26T16:47:00' }),
+              of({
+                status: 'SUCCEEDED',
+                imageRef: 'traefik/whoami:v1.10',
+                startedAt: '2026-09-26T16:47:00',
+                completedAt: '2026-09-26T16:47:00',
+              }),
             applicationsControllerGetAuditEvents: (id: string) =>
               of({
-                events: [{ id: `e-${id}`, eventType: 'created', changeMetadata: {}, createdAt: '2026-09-16T00:44:00Z' }],
+                events: [
+                  {
+                    id: `e-${id}`,
+                    eventType: 'created',
+                    changeMetadata: {},
+                    createdAt: '2026-09-16T00:44:00Z',
+                  },
+                ],
                 total: 1,
               }),
           },
@@ -183,11 +229,15 @@ describe('AppRecapComponent', () => {
     it('heads the page with the image, the cluster and Open app', () => {
       expect(q('[data-testid="recap-meta"]').textContent).toContain('traefik/whoami:v1.10');
       expect(q('[data-testid="recap-meta"]').textContent).toContain('ovh-scaling-test');
-      expect(q('[data-testid="recap-open"]').getAttribute('href')).toBe('https://whoami.example.com');
+      expect(q('[data-testid="recap-open"]').getAttribute('href')).toBe(
+        'https://whoami.example.com',
+      );
     });
 
     it('shows the endpoint with its health and the three facts', () => {
-      expect(q('[data-testid="recap-endpoint-health"]').textContent).toContain('DNS and certificate ok');
+      expect(q('[data-testid="recap-endpoint-health"]').textContent).toContain(
+        'DNS and certificate ok',
+      );
       const facts = q('[data-testid="recap-facts"]').textContent ?? '';
       expect(facts).toContain('1 / 1 ready');
       expect(facts).toContain('0 restarts in the last hour');
@@ -217,7 +267,10 @@ describe('AppRecapComponent', () => {
   });
 
   describe('a bundle', () => {
-    const web = app('umami', { labels: { 'flui.cloud/composed-component': 'umami' }, catalogSlug: 'umami' });
+    const web = app('umami', {
+      labels: { 'flui.cloud/composed-component': 'umami' },
+      catalogSlug: 'umami',
+    });
     const db = app('db', {
       kind: 'DATABASE',
       exposure: 'cluster',
@@ -239,14 +292,20 @@ describe('AppRecapComponent', () => {
 
     beforeEach(() =>
       build(group, {
-        umami: protection('umami', { holdsData: false, coverage: 'unprotected', policy: null, lastSuccessAt: null }),
+        umami: protection('umami', {
+          holdsData: false,
+          coverage: 'unprotected',
+          policy: null,
+          lastSuccessAt: null,
+        }),
         db: protection('db', {
           coverage: 'unprotected',
           reason: 'no_policy',
           alarm: true,
           policy: null,
           lastSuccessAt: null,
-          protectPath: '/management/backup/policies/new?clusterId=c1&applicationId=db&engineClass=database',
+          protectPath:
+            '/management/backup/policies/new?clusterId=c1&applicationId=db&engineClass=database',
         }),
       }),
     );
@@ -266,11 +325,15 @@ describe('AppRecapComponent', () => {
       expect(dbCard).toContain('DISK');
       expect(dbCard).toContain('Not backed up');
       expect(dbCard).toContain('Protect');
-      expect(q('[data-testid="recap-component-umami"]').textContent).toContain('Nothing to back up');
+      expect(q('[data-testid="recap-component-umami"]').textContent).toContain(
+        'Nothing to back up',
+      );
       expect(topology).not.toContain('db is reachable inside the cluster only.');
       (q('[data-testid="recap-topology"] button[aria-expanded]') as HTMLButtonElement).click();
       fixture.detectChanges();
-      expect(q('[data-testid="recap-topology"]').textContent).toContain('db is reachable inside the cluster only.');
+      expect(q('[data-testid="recap-topology"]').textContent).toContain(
+        'db is reachable inside the cluster only.',
+      );
     });
 
     it('replaces the connect card with a Database block and lists recent activity', () => {

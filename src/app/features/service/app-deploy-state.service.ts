@@ -19,10 +19,7 @@ export interface DeployInFlight {
   startedAt: Date;
 }
 
-const TRACKED_OP_TYPES = new Set([
-  'deploy_application',
-  'rollback_application',
-]);
+const TRACKED_OP_TYPES = new Set(['deploy_application', 'rollback_application']);
 
 @Injectable({ providedIn: 'root' })
 export class AppDeployStateService {
@@ -36,8 +33,8 @@ export class AppDeployStateService {
   readonly error = this.errorSig.asReadonly();
   readonly progress = computed(() => this.deployInFlightSig()?.progress ?? null);
 
-  readonly currentlyDeployed = computed(() =>
-    this.versioning.versions().find((v) => v.isCurrentlyDeployed) ?? null,
+  readonly currentlyDeployed = computed(
+    () => this.versioning.versions().find((v) => v.isCurrentlyDeployed) ?? null,
   );
 
   constructor() {

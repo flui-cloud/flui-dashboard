@@ -53,8 +53,22 @@ function assessment(over: Partial<Assessment> = {}): Assessment {
     questionCount: 1,
     questionsWithOptionsCount: 1,
     units: [
-      { id: '.', name: 'root', buildStrategy: 'dockerfile', port: 3000, readiness: 'deployable', skipped: false },
-      { id: 'services/api', name: 'services/api', buildStrategy: 'nixpacks', port: null, readiness: 'deployable_pending_inputs', skipped: true },
+      {
+        id: '.',
+        name: 'root',
+        buildStrategy: 'dockerfile',
+        port: 3000,
+        readiness: 'deployable',
+        skipped: false,
+      },
+      {
+        id: 'services/api',
+        name: 'services/api',
+        buildStrategy: 'nixpacks',
+        port: null,
+        readiness: 'deployable_pending_inputs',
+        skipped: true,
+      },
     ],
     services: [
       { name: 'postgres', block: 'postgres' },
@@ -109,7 +123,12 @@ describe('repo map surface producer', () => {
 
   it('validates in every shape this page really takes — read refused, applied, refused with strays', () => {
     expectValidSurface(snapshotOf({ read: null, assessment: null, loading: true }));
-    expectValidSurface(snapshotOf({ read: { branch: 'main', ok: false, reason: 'no-credential' }, assessment: null }));
+    expectValidSurface(
+      snapshotOf({
+        read: { branch: 'main', ok: false, reason: 'no-credential' },
+        assessment: null,
+      }),
+    );
     expectValidSurface(snapshotOf({ hasLoadError: true, read: null, assessment: null }));
     expectValidSurface(
       snapshotOf({
@@ -132,7 +151,8 @@ describe('repo map surface producer', () => {
               status: 'created',
               armed: false,
               markedForReuse: false,
-              reason: 'The webhook secret could not be written, so this unit answers its own webhook with a 401.',
+              reason:
+                'The webhook secret could not be written, so this unit answers its own webhook with a 401.',
             },
           ],
         },
@@ -147,7 +167,14 @@ describe('repo map surface producer', () => {
             committed: false,
             markedForReuse: false,
             applications: [
-              { applicationId: 'app-9', name: 'demo-api', slug: 'demo-api', unitId: '.', branch: 'flui/deploy-4f1c8a2', attachedServices: ['postgres'] },
+              {
+                applicationId: 'app-9',
+                name: 'demo-api',
+                slug: 'demo-api',
+                unitId: '.',
+                branch: 'flui/deploy-4f1c8a2',
+                attachedServices: ['postgres'],
+              },
             ],
           },
         },
@@ -158,7 +185,11 @@ describe('repo map surface producer', () => {
   // The detail-page pattern of playbook §4: one real entity, named for the whole life of the
   // page, never a selection invented to make attention richer.
   it('names the repository from the route, reason route, in every state', () => {
-    for (const over of [{}, { read: null, assessment: null }, { hasLoadError: true }] as Partial<RepoMapSurfaceInput>[]) {
+    for (const over of [
+      {},
+      { read: null, assessment: null },
+      { hasLoadError: true },
+    ] as Partial<RepoMapSurfaceInput>[]) {
       const snapshot = snapshotOf(over);
       expect(snapshot.attention).toEqual([
         { scopeId: 'repo-map', entityRef: repositoryEntityRef(REPO_ID), reason: 'route' },
@@ -176,7 +207,14 @@ describe('repo map surface producer', () => {
           committed: true,
           markedForReuse: false,
           applications: [
-            { applicationId: 'app-9', name: 'demo-api', slug: 'demo-api', unitId: '.', branch: 'b', attachedServices: [] },
+            {
+              applicationId: 'app-9',
+              name: 'demo-api',
+              slug: 'demo-api',
+              unitId: '.',
+              branch: 'b',
+              attachedServices: [],
+            },
           ],
         },
       },
@@ -191,14 +229,18 @@ describe('repo map surface producer', () => {
   });
 
   it('emits no snapshot at all when the route names no repository', () => {
-    expect(buildRepoMapSurface(input({ repositoryId: '' }), { revision: 1, generatedAt: GENERATED_AT })).toBeNull();
+    expect(
+      buildRepoMapSurface(input({ repositoryId: '' }), { revision: 1, generatedAt: GENERATED_AT }),
+    ).toBeNull();
   });
 
   it('shows the page loading with only its controls before the first map comes back', () => {
     const snapshot = snapshotOf({ read: null, assessment: null, loading: true, hasRun: false });
     expect(snapshot.scopes.map((s) => s.id)).toEqual(['repo-map', 'repo-map:controls']);
     expect(scope(snapshot, 'repo-map')!.state).toEqual({ loading: true });
-    expect(obsOf(snapshot, 'repo-map:controls', 'flui.repo_map.has_run')!.presentedAs.value).toBe(false);
+    expect(obsOf(snapshot, 'repo-map:controls', 'flui.repo_map.has_run')!.presentedAs.value).toBe(
+      false,
+    );
   });
 
   it('marks a failed call as a view error with a code, never the backend sentence', () => {
@@ -213,10 +255,15 @@ describe('repo map surface producer', () => {
   // Playbook §6 point 2: a map that answers "this repository could not be read" is a complete
   // answer from the engine, not the view failing — it must not become state.error.
   it('keeps an unreadable repository out of scope.state and in an observation', () => {
-    const snapshot = snapshotOf({ read: { branch: 'main', ok: false, reason: 'no-credential' }, assessment: null });
+    const snapshot = snapshotOf({
+      read: { branch: 'main', ok: false, reason: 'no-credential' },
+      assessment: null,
+    });
     expect(scope(snapshot, 'repo-map')!.state).toEqual({ loading: false });
     expect(obsOf(snapshot, 'repo-map', 'flui.repo_map.read_ok')!.presentedAs.value).toBe(false);
-    expect(obsOf(snapshot, 'repo-map', 'flui.repo_map.read_refusal')!.presentedAs.text).toBe('no-credential');
+    expect(obsOf(snapshot, 'repo-map', 'flui.repo_map.read_refusal')!.presentedAs.text).toBe(
+      'no-credential',
+    );
     // Nothing below the verdict card is drawn on that screen, so nothing below it is claimed.
     expect(scope(snapshot, 'repo-map:verdict')).toBeUndefined();
     expect(scope(snapshot, 'repo-map:units')).toBeUndefined();
@@ -225,23 +272,45 @@ describe('repo map surface producer', () => {
 
   it('presents the verdict as its outcome and the counts behind it, not the engine reason', () => {
     const snapshot = snapshotOf();
-    expect(scope(snapshot, 'repo-map:verdict')!.label).toBe('Ready once you fill in the values below');
-    expect(obsOf(snapshot, 'repo-map:verdict', 'flui.repo_map.outcome')!.presentedAs.text).toBe('deployable_pending_inputs');
-    expect(obsOf(snapshot, 'repo-map:verdict', 'flui.repo_map.units_ready')!.presentedAs.value).toBe(1);
-    expect(obsOf(snapshot, 'repo-map:verdict', 'flui.repo_map.capacity_fits')!.presentedAs.value).toBe(true);
-    expect(obsOf(snapshot, 'repo-map:verdict', 'flui.repo_map.capacity_uncounted')!.presentedAs.value).toBe(1);
+    expect(scope(snapshot, 'repo-map:verdict')!.label).toBe(
+      'Ready once you fill in the values below',
+    );
+    expect(obsOf(snapshot, 'repo-map:verdict', 'flui.repo_map.outcome')!.presentedAs.text).toBe(
+      'deployable_pending_inputs',
+    );
+    expect(
+      obsOf(snapshot, 'repo-map:verdict', 'flui.repo_map.units_ready')!.presentedAs.value,
+    ).toBe(1);
+    expect(
+      obsOf(snapshot, 'repo-map:verdict', 'flui.repo_map.capacity_fits')!.presentedAs.value,
+    ).toBe(true);
+    expect(
+      obsOf(snapshot, 'repo-map:verdict', 'flui.repo_map.capacity_uncounted')!.presentedAs.value,
+    ).toBe(1);
   });
 
   it('says a capacity that was never computed was never computed, and invents no numbers', () => {
     const snapshot = snapshotOf({
       assessment: assessment({
-        capacity: { assessed: false, notAssessedReason: 'cluster-unreadable', known: false, uncountedCount: 0 },
+        capacity: {
+          assessed: false,
+          notAssessedReason: 'cluster-unreadable',
+          known: false,
+          uncountedCount: 0,
+        },
       }),
     });
-    expect(obsOf(snapshot, 'repo-map:verdict', 'flui.repo_map.capacity_assessed')!.presentedAs.value).toBe(false);
-    expect(obsOf(snapshot, 'repo-map:verdict', 'flui.repo_map.capacity_not_assessed_reason')!.presentedAs.text).toBe('cluster-unreadable');
+    expect(
+      obsOf(snapshot, 'repo-map:verdict', 'flui.repo_map.capacity_assessed')!.presentedAs.value,
+    ).toBe(false);
+    expect(
+      obsOf(snapshot, 'repo-map:verdict', 'flui.repo_map.capacity_not_assessed_reason')!.presentedAs
+        .text,
+    ).toBe('cluster-unreadable');
     expect(obsOf(snapshot, 'repo-map:verdict', 'flui.repo_map.capacity_fits')).toBeUndefined();
-    expect(obsOf(snapshot, 'repo-map:verdict', 'flui.repo_map.capacity_required_cpu')).toBeUndefined();
+    expect(
+      obsOf(snapshot, 'repo-map:verdict', 'flui.repo_map.capacity_required_cpu'),
+    ).toBeUndefined();
   });
 
   it('carries the units as rows WITHOUT a flui ref — a unit is not an application yet', () => {
@@ -249,14 +318,22 @@ describe('repo map surface producer', () => {
     const root = scope(snapshot, 'repo-map:units:.')!;
     expect(root.entities).toBeUndefined();
     expect(root.label).toBe('root');
-    expect(root.observations!.find((o) => o.key === 'flui.repo_map.unit_port')!.presentedAs.value).toBe(3000);
-    expect(root.observations!.find((o) => o.key === 'flui.repo_map.unit_readiness')!.presentedAs.text).toBe('deployable');
+    expect(
+      root.observations!.find((o) => o.key === 'flui.repo_map.unit_port')!.presentedAs.value,
+    ).toBe(3000);
+    expect(
+      root.observations!.find((o) => o.key === 'flui.repo_map.unit_readiness')!.presentedAs.text,
+    ).toBe('deployable');
   });
 
   it('keeps a slashed unit id out of the scope id, which the schema would reject, and still validates', () => {
     const snapshot = snapshotOf();
     expect(scope(snapshot, 'repo-map:units:services_api')).toBeTruthy();
-    expect(scope(snapshot, 'repo-map:units:services_api')!.observations!.find((o) => o.key === 'flui.repo_map.unit_not_rendered')!.presentedAs.value).toBe(true);
+    expect(
+      scope(snapshot, 'repo-map:units:services_api')!.observations!.find(
+        (o) => o.key === 'flui.repo_map.unit_not_rendered',
+      )!.presentedAs.value,
+    ).toBe(true);
     expectValidSurface(snapshot);
   });
 
@@ -266,33 +343,51 @@ describe('repo map surface producer', () => {
     ]);
     const none = snapshotOf({ clusterIdInput: '', clusterName: undefined });
     expect(scope(none, 'repo-map:controls')!.entities).toBeUndefined();
-    expect(obsOf(none, 'repo-map:controls', 'flui.repo_map.cluster_chosen')!.presentedAs.value).toBe(false);
+    expect(
+      obsOf(none, 'repo-map:controls', 'flui.repo_map.cluster_chosen')!.presentedAs.value,
+    ).toBe(false);
   });
 
   it('counts what the user must provide, split the way the page tags it', () => {
     const snapshot = snapshotOf();
     expect(obsOf(snapshot, 'repo-map:needed', 'flui.repo_map.needed')!.presentedAs.value).toBe(2);
-    expect(obsOf(snapshot, 'repo-map:needed', 'flui.repo_map.needed_secret')!.presentedAs.value).toBe(1);
-    expect(obsOf(snapshot, 'repo-map:needed', 'flui.repo_map.needed_blocks_start')!.presentedAs.value).toBe(1);
+    expect(
+      obsOf(snapshot, 'repo-map:needed', 'flui.repo_map.needed_secret')!.presentedAs.value,
+    ).toBe(1);
+    expect(
+      obsOf(snapshot, 'repo-map:needed', 'flui.repo_map.needed_blocks_start')!.presentedAs.value,
+    ).toBe(1);
     expect(scope(snapshot, 'repo-map:needed')!.state).toEqual({ empty: false });
   });
 
   it('marks the "nothing is needed" case empty instead of dropping the section the page still draws', () => {
     const snapshot = snapshotOf({
-      assessment: assessment({ neededCount: 0, neededSecretCount: 0, neededBlocksStartCount: 0, externalCount: 0 }),
+      assessment: assessment({
+        neededCount: 0,
+        neededSecretCount: 0,
+        neededBlocksStartCount: 0,
+        externalCount: 0,
+      }),
     });
     expect(scope(snapshot, 'repo-map:needed')!.state).toEqual({ empty: true });
   });
 
   it('omits the sections the page does not draw at all when they are empty', () => {
-    const snapshot = snapshotOf({ assessment: assessment({ obstacles: [], questionCount: 0, questionsWithOptionsCount: 0 }) });
+    const snapshot = snapshotOf({
+      assessment: assessment({ obstacles: [], questionCount: 0, questionsWithOptionsCount: 0 }),
+    });
     expect(scope(snapshot, 'repo-map:obstacles')).toBeUndefined();
     expect(scope(snapshot, 'repo-map:questions')).toBeUndefined();
   });
 
   it('carries an obstacle as the unit it names and whether a fix is offered — never its prose', () => {
     const snapshot = snapshotOf({
-      assessment: assessment({ obstacles: [{ hasRemedy: true, unit: 'services/api' }, { hasRemedy: false, unit: '' }] }),
+      assessment: assessment({
+        obstacles: [
+          { hasRemedy: true, unit: 'services/api' },
+          { hasRemedy: false, unit: '' },
+        ],
+      }),
     });
     expect(scope(snapshot, 'repo-map:obstacles')!.completeness).toEqual({ shown: 2, total: 2 });
     expect(scope(snapshot, 'repo-map:obstacles:0')!.observations).toEqual([
@@ -300,16 +395,24 @@ describe('repo map surface producer', () => {
       { key: 'flui.repo_map.obstacle_has_remedy', presentedAs: { value: true }, source: 'derived' },
     ]);
     expect(scope(snapshot, 'repo-map:obstacles:1')!.observations).toEqual([
-      { key: 'flui.repo_map.obstacle_has_remedy', presentedAs: { value: false }, source: 'derived' },
+      {
+        key: 'flui.repo_map.obstacle_has_remedy',
+        presentedAs: { value: false },
+        source: 'derived',
+      },
     ]);
   });
 
   it('carries the one UI sentence that says why the deploy button is dead, and drops it once applied', () => {
-    const blocked = snapshotOf({ applyBlockedReason: 'Pick a cluster above — an apply always deploys onto one.' });
-    expect(obsOf(blocked, 'repo-map:apply', 'flui.repo_map.apply_blocked_reason')!.presentedAs.text).toBe(
-      'Pick a cluster above — an apply always deploys onto one.',
-    );
-    expect(obsOf(snapshotOf(), 'repo-map:apply', 'flui.repo_map.apply_blocked_reason')).toBeUndefined();
+    const blocked = snapshotOf({
+      applyBlockedReason: 'Pick a cluster above — an apply always deploys onto one.',
+    });
+    expect(
+      obsOf(blocked, 'repo-map:apply', 'flui.repo_map.apply_blocked_reason')!.presentedAs.text,
+    ).toBe('Pick a cluster above — an apply always deploys onto one.');
+    expect(
+      obsOf(snapshotOf(), 'repo-map:apply', 'flui.repo_map.apply_blocked_reason'),
+    ).toBeUndefined();
   });
 
   it('gives every application an apply created its canonical ref, so a tool can act on it', () => {
@@ -339,21 +442,46 @@ describe('repo map surface producer', () => {
       },
     });
     const row = scope(snapshot, 'repo-map:apply:units:.')!;
-    expect(row.entities).toEqual([{ ref: applicationEntityRef('app-1'), label: 'demo-app', role: 'related' }]);
-    expect(row.observations!.find((o) => o.key === 'flui.repo_map.applied_unit_armed')!.presentedAs.value).toBe(false);
-    expect(row.observations!.find((o) => o.key === 'flui.repo_map.applied_unit_unmarked')!.presentedAs.value).toBe(true);
-    expect(obsOf(snapshot, 'repo-map:apply', 'flui.repo_map.apply_unmarked')!.presentedAs.value).toBe(1);
+    expect(row.entities).toEqual([
+      { ref: applicationEntityRef('app-1'), label: 'demo-app', role: 'related' },
+    ]);
+    expect(
+      row.observations!.find((o) => o.key === 'flui.repo_map.applied_unit_armed')!.presentedAs
+        .value,
+    ).toBe(false);
+    expect(
+      row.observations!.find((o) => o.key === 'flui.repo_map.applied_unit_unmarked')!.presentedAs
+        .value,
+    ).toBe(true);
+    expect(
+      obsOf(snapshot, 'repo-map:apply', 'flui.repo_map.apply_unmarked')!.presentedAs.value,
+    ).toBe(1);
   });
 
   it('keeps "the backend did not say" out of the marked-for-reuse warning', () => {
     const undecided = snapshotOf({
-      refusal: { status: 500, stranded: { branchDeleted: false, committed: true, applications: [] } },
+      refusal: {
+        status: 500,
+        stranded: { branchDeleted: false, committed: true, applications: [] },
+      },
     });
-    expect(obsOf(undecided, 'repo-map:refusal', 'flui.repo_map.refusal_marked_for_reuse')).toBeUndefined();
+    expect(
+      obsOf(undecided, 'repo-map:refusal', 'flui.repo_map.refusal_marked_for_reuse'),
+    ).toBeUndefined();
     const said = snapshotOf({
-      refusal: { status: 500, stranded: { branchDeleted: false, committed: true, markedForReuse: false, applications: [] } },
+      refusal: {
+        status: 500,
+        stranded: {
+          branchDeleted: false,
+          committed: true,
+          markedForReuse: false,
+          applications: [],
+        },
+      },
     });
-    expect(obsOf(said, 'repo-map:refusal', 'flui.repo_map.refusal_marked_for_reuse')!.presentedAs.value).toBe(false);
+    expect(
+      obsOf(said, 'repo-map:refusal', 'flui.repo_map.refusal_marked_for_reuse')!.presentedAs.value,
+    ).toBe(false);
   });
 
   // Playbook §7. This page is mostly engine prose; a producer that shovelled it in would be
@@ -413,7 +541,10 @@ describe('repo map surface producer', () => {
     expect(json).not.toContain('actions/runs');
     // That the yaml and raw-map panels are OPEN is a UI fact and is carried; their content is
     // not, and the input type has no field that could carry it.
-    expect(obsOf(JSON.parse(json) as SurfaceSnapshot, 'repo-map', 'flui.repo_map.yaml_shown')!.presentedAs.value).toBe(true);
+    expect(
+      obsOf(JSON.parse(json) as SurfaceSnapshot, 'repo-map', 'flui.repo_map.yaml_shown')!
+        .presentedAs.value,
+    ).toBe(true);
     expect(json).not.toContain('apiVersion');
   });
 
@@ -427,7 +558,11 @@ describe('repo map surface producer', () => {
       skipped: false,
     }));
     const snapshot = snapshotOf({ assessment: assessment({ units: many }) });
-    expect(scope(snapshot, 'repo-map:units')!.completeness).toEqual({ shown: 25, total: 30, truncated: true });
+    expect(scope(snapshot, 'repo-map:units')!.completeness).toEqual({
+      shown: 25,
+      total: 30,
+      truncated: true,
+    });
     expect(snapshot.surface.truncated).toBe(true);
     expectValidSurface(snapshot);
   });
@@ -435,9 +570,15 @@ describe('repo map surface producer', () => {
   it('bumps the revision on real change, and validateSurfaceSemantics accepts it against the previous snapshot', () => {
     const tracker = new RepoMapSurfaceRevision();
     const before = input();
-    const first = buildRepoMapSurface(before, { revision: tracker.next(presentedContent(before)), generatedAt: GENERATED_AT })!;
+    const first = buildRepoMapSurface(before, {
+      revision: tracker.next(presentedContent(before)),
+      generatedAt: GENERATED_AT,
+    })!;
     const after = input({ rawMapExpanded: true });
-    const second = buildRepoMapSurface(after, { revision: tracker.next(presentedContent(after)), generatedAt: '2026-09-07T10:00:05.000Z' })!;
+    const second = buildRepoMapSurface(after, {
+      revision: tracker.next(presentedContent(after)),
+      generatedAt: '2026-09-07T10:00:05.000Z',
+    })!;
     expect(second.surface.revision).toBe(first.surface.revision + 1);
     expect(validateSurfaceSemantics(second, { previousSnapshot: first })).toEqual([]);
   });
@@ -451,7 +592,10 @@ describe('repo map surface producer', () => {
 
   it('flags a snapshot whose revision does not advance on the previous one', () => {
     const first = snapshotOf();
-    const stale = { ...snapshotOf(), surface: { ...snapshotOf().surface, revision: first.surface.revision } };
+    const stale = {
+      ...snapshotOf(),
+      surface: { ...snapshotOf().surface, revision: first.surface.revision },
+    };
     expect(validateSurfaceSemantics(stale, { previousSnapshot: first })).toEqual([
       jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' }),
     ]);

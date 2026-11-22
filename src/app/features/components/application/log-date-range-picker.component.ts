@@ -1,11 +1,9 @@
-import {
-  Component, output, signal, computed, ChangeDetectionStrategy,
-} from '@angular/core';
+import { Component, output, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 export interface LogDateRange {
   start: string; // ISO 8601
-  end: string;   // ISO 8601
+  end: string; // ISO 8601
 }
 
 function todayLocal(): string {
@@ -21,10 +19,12 @@ function todayLocal(): string {
   imports: [FormsModule],
   template: `
     <div class="flex flex-col gap-4 p-4 w-full">
-
       <!-- Start -->
       <div class="flex flex-col gap-1.5">
-        <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Start</span>
+        <span
+          class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+          >Start</span
+        >
         <div class="flex gap-2">
           <input
             type="date"
@@ -44,7 +44,10 @@ function todayLocal(): string {
 
       <!-- End -->
       <div class="flex flex-col gap-1.5">
-        <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">End</span>
+        <span
+          class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+          >End</span
+        >
         <div class="flex gap-2">
           <input
             type="date"
@@ -106,7 +109,7 @@ export class LogDateRangePickerComponent {
     if (!sd || !ed) return;
 
     const start = new Date(`${sd}T${this.startTime()}`);
-    const end   = new Date(`${ed}T${this.endTime()}`);
+    const end = new Date(`${ed}T${this.endTime()}`);
 
     if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
       this.validationError.set('Invalid date or time');

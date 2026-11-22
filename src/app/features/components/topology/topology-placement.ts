@@ -67,7 +67,9 @@ export function placementStrip(
     ? []
     : [
         `M${from.x},${from.y} V${bus}`,
-        ...(chips.length > 1 ? [`M${Math.min(...centres, from.x)},${bus} H${Math.max(...centres, from.x)}`] : [`M${from.x},${bus} H${centres[0]}`]),
+        ...(chips.length > 1
+          ? [`M${Math.min(...centres, from.x)},${bus} H${Math.max(...centres, from.x)}`]
+          : [`M${from.x},${bus} H${centres[0]}`]),
         ...centres.map((x) => `M${x},${bus} V${y}`),
       ];
   return { appId, appName: app.displayName, chips, lines, extra: STRIP_GAP + CHIP_H + 28 };

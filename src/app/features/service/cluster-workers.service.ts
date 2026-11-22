@@ -81,9 +81,7 @@ export class ClusterWorkersService {
 
   async addWorkers(clusterId: string, count: number): Promise<WorkerOperationEnvelope> {
     try {
-      const res = await firstValueFrom(
-        this.clustersApi.clustersControllerAddWorkers(clusterId),
-      );
+      const res = await firstValueFrom(this.clustersApi.clustersControllerAddWorkers(clusterId));
       const env = fromAddResponse(res, clusterId);
       const clusterName = this.resolveClusterName(clusterId);
       this.contexts.set(env.operationId, { count, clusterName });
@@ -132,7 +130,7 @@ export class ClusterWorkersService {
   clearTracking(operationId: string): void {
     this.ws.unsubscribeFromOperation(operationId);
     this.contexts.delete(operationId);
-    this.states.update(curr => {
+    this.states.update((curr) => {
       const { [operationId]: _, ...rest } = curr;
       return rest;
     });
@@ -149,13 +147,16 @@ export class ClusterWorkersService {
       clusterId: env.clusterId,
       type: env.type,
       status: 'in_progress',
-      stepDescription: env.type === 'add_worker' ? 'Validating cluster + VNet…' : 'Preparing the node for removal…',
+      stepDescription:
+        env.type === 'add_worker'
+          ? 'Validating cluster + VNet…'
+          : 'Preparing the node for removal…',
     });
 
     this.ws.subscribeToOperation(env.operationId, {
-      onProgress: dto => this.onProgress(env, dto),
-      onCompleted: dto => void this.onCompleted(env, dto),
-      onFailed: dto => this.onFailed(env, dto),
+      onProgress: (dto) => this.onProgress(env, dto),
+      onCompleted: (dto) => void this.onCompleted(env, dto),
+      onFailed: (dto) => this.onFailed(env, dto),
     });
 
     // HTTP polling fallback in case the WebSocket is unavailable or drops
@@ -164,7 +165,7 @@ export class ClusterWorkersService {
   }
 
   private onProgress(env: WorkerOperationEnvelope, dto: InfrastructureOperationProgressDto): void {
-    this.upsert(env.operationId, prev => ({
+    this.upsert(env.operationId, (prev) => ({
       ...prev,
       progress: dto.percentage,
       currentStepIndex: dto.currentStepIndex,
@@ -180,9 +181,9 @@ export class ClusterWorkersService {
   ): Promise<void> {
     let warnings: OperationWarning[] = [];
     try {
-      const status = await firstValueFrom(
+      const status = (await firstValueFrom(
         this.operationsApi.infrastructureOperationsControllerGetOperationStatus(env.operationId),
-      ) as OperationStatus;
+      )) as OperationStatus;
       const raw = status.metadata?.['warnings'];
       if (Array.isArray(raw)) {
         warnings = raw as OperationWarning[];
@@ -191,7 +192,7 @@ export class ClusterWorkersService {
       console.warn('Failed to fetch terminal operation status for warnings:', err);
     }
 
-    this.upsert(env.operationId, prev => ({
+    this.upsert(env.operationId, (prev) => ({
       ...prev,
       progress: 100,
       currentStepIndex: prev.totalSteps > 0 ? prev.totalSteps - 1 : prev.currentStepIndex,
@@ -206,7 +207,7 @@ export class ClusterWorkersService {
   }
 
   private onFailed(env: WorkerOperationEnvelope, dto: InfrastructureOperationFailedDto): void {
-    this.upsert(env.operationId, prev => ({
+    this.upsert(env.operationId, (prev) => ({
       ...prev,
       status: 'failed',
       error: dto.error,
@@ -228,9 +229,9 @@ export class ClusterWorkersService {
       polls++;
 
       try {
-        const status = await firstValueFrom(
+        const status = (await firstValueFrom(
           this.operationsApi.infrastructureOperationsControllerGetOperationStatus(env.operationId),
-        ) as OperationStatus;
+        )) as OperationStatus;
 
         if (status.status === 'COMPLETED') {
           await this.onCompleted(env, {
@@ -256,7 +257,7 @@ export class ClusterWorkersService {
         }
 
         // Mid-flight: only update if WS hasn't already reported a higher progress.
-        this.upsert(env.operationId, prev => {
+        this.upsert(env.operationId, (prev) => {
           if (prev.progress >= status.progress) return prev;
           return {
             ...prev,
@@ -293,7 +294,7 @@ export class ClusterWorkersService {
     operationId: string,
     update: TrackingState | ((prev: TrackingState) => TrackingState),
   ): void {
-    this.states.update(curr => {
+    this.states.update((curr) => {
       const prev = curr[operationId] ?? { ...INITIAL_STATE, operationId };
       const next = typeof update === 'function' ? update(prev) : update;
       return { ...curr, [operationId]: next };
@@ -332,7 +333,7 @@ export class ClusterWorkersService {
   private resolveClusterName(clusterId: string): string {
     const current = this.clusterService.cluster();
     if (current?.id === clusterId && current.name) return current.name;
-    const fromList = this.clusterService.clusters().find(c => c.id === clusterId);
+    const fromList = this.clusterService.clusters().find((c) => c.id === clusterId);
     return fromList?.name ?? clusterId;
   }
 
@@ -368,11 +369,7 @@ export class ClusterWorkersService {
     }
   }
 
-  private notifyRejected(
-    clusterId: string,
-    type: WorkerOperationType,
-    message: string,
-  ): void {
+  private notifyRejected(clusterId: string, type: WorkerOperationType, message: string): void {
     const clusterName = this.resolveClusterName(clusterId);
     const verb = type === 'add_worker' ? 'add worker' : 'remove worker';
     this.notifications.add({
@@ -399,14 +396,16 @@ export class ClusterWorkersService {
         category: 'cluster-scaling',
       });
     } else {
-      const hasBlockingWarn = warnings.some(w => w.code === 'DRAIN_FAILED' || w.code === 'CORDON_FAILED');
+      const hasBlockingWarn = warnings.some(
+        (w) => w.code === 'DRAIN_FAILED' || w.code === 'CORDON_FAILED',
+      );
       const nodeNameSuffix = ctx?.nodeName ? ` ${ctx.nodeName}` : '';
       this.notifications.add({
         title: hasBlockingWarn
           ? `${clusterName}: worker removed with warnings`
           : `${clusterName}: worker${nodeNameSuffix} removed`,
         body: hasBlockingWarn
-          ? warnings.map(w => `${w.code}: ${w.reason}`).join(' • ')
+          ? warnings.map((w) => `${w.code}: ${w.reason}`).join(' • ')
           : 'Apps were moved off the node and the worker was removed from the provider.',
         link: this.nodesLink(env.clusterId),
         type: hasBlockingWarn ? 'warning' : 'success',

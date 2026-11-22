@@ -41,17 +41,14 @@ import {
             <span class="font-sans text-muted-foreground">Not installed</span>
           } @else {
             @if (component.changed) {
-              <span class="text-muted-foreground">{{
-                component.installedVersion
-              }}</span>
+              <span class="text-muted-foreground">{{ component.installedVersion }}</span>
               <span class="mx-1.5 text-muted-foreground/50">&rarr;</span>
             }
             <span class="font-semibold">{{
               component.targetVersion ?? component.installedVersion ?? '—'
             }}</span>
             @if (!component.installedIsRelease && !component.changed) {
-              <span
-                class="ml-1.5 font-sans text-[11px] text-amber-600 dark:text-amber-400"
+              <span class="ml-1.5 font-sans text-[11px] text-amber-600 dark:text-amber-400"
                 >build</span
               >
             }
@@ -65,11 +62,7 @@ import {
         <div>
           <span
             class="badge"
-            [class]="
-              component.changed
-                ? 'bg-primary/10 text-primary'
-                : 'badge-in-progress'
-            "
+            [class]="component.changed ? 'bg-primary/10 text-primary' : 'badge-in-progress'"
           >
             {{ changeLabel(component, status().availableVersion) }}
           </span>
@@ -82,9 +75,7 @@ import {
         @for (advisory of status().advisories; track advisory.title) {
           <div class="flex items-start gap-2.5">
             <ng-icon
-              [name]="
-                advisory.level === 'info' ? 'lucideInfo' : 'lucideTriangleAlert'
-              "
+              [name]="advisory.level === 'info' ? 'lucideInfo' : 'lucideTriangleAlert'"
               class="mt-0.5 h-4 w-4 shrink-0"
               [class]="
                 advisory.level === 'blocker'

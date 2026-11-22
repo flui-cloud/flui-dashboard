@@ -69,12 +69,12 @@ export class ClusterIssuerWebSocketService implements OnDestroy {
 
     this.socket.on('cluster:issuer:configured', (data: IssuerConfiguredEvent) => {
       this.configuredCallbacks.get(data.clusterId)?.(data);
-      this.globalConfiguredCbs.forEach(cb => cb(data));
+      this.globalConfiguredCbs.forEach((cb) => cb(data));
     });
 
     this.socket.on('cluster:issuer:failed', (data: IssuerFailedEvent) => {
       this.failedCallbacks.get(data.clusterId)?.(data);
-      this.globalFailedCbsGlobal.forEach(cb => cb(data));
+      this.globalFailedCbsGlobal.forEach((cb) => cb(data));
     });
   }
 
@@ -84,7 +84,7 @@ export class ClusterIssuerWebSocketService implements OnDestroy {
       onStatus: (e: IssuerStatusEvent) => void;
       onConfigured: (e: IssuerConfiguredEvent) => void;
       onFailed: (e: IssuerFailedEvent) => void;
-    }
+    },
   ): void {
     this.ensureConnected();
 
@@ -113,7 +113,7 @@ export class ClusterIssuerWebSocketService implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.subscribedClusters.forEach(id => this.unsubscribeFromCluster(id));
+    this.subscribedClusters.forEach((id) => this.unsubscribeFromCluster(id));
     this.socket?.disconnect();
     this.socket = null;
   }

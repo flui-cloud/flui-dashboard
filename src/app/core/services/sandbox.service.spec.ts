@@ -54,18 +54,14 @@ describe('telling a refusal from a failure', () => {
   });
 
   it('leaves an ordinary failure alone', () => {
-    expect(isSandboxRefusal({ status: 500, error: { code: 'INTERNAL' } })).toBe(
-      false,
-    );
+    expect(isSandboxRefusal({ status: 500, error: { code: 'INTERNAL' } })).toBe(false);
     expect(isSandboxRefusal({ status: 403, error: 'Forbidden' })).toBe(false);
     expect(isSandboxRefusal(new Error('offline'))).toBe(false);
     expect(isSandboxRefusal(null)).toBe(false);
   });
 
   it('hands back the code so a caller can say which limit it was', () => {
-    expect(sandboxRefusalCode(refusal('SANDBOX_STAND_IN'))).toBe(
-      'SANDBOX_STAND_IN',
-    );
+    expect(sandboxRefusalCode(refusal('SANDBOX_STAND_IN'))).toBe('SANDBOX_STAND_IN');
     expect(sandboxRefusalCode({ error: { code: 42 } })).toBeNull();
   });
 
@@ -87,9 +83,7 @@ describe('the area a screen belongs to', () => {
   });
 
   it('lets the longer prefix win', () => {
-    expect(sandboxAreaForUrl('/infrastructure/platform-components')).toBe(
-      'platform-config',
-    );
+    expect(sandboxAreaForUrl('/infrastructure/platform-components')).toBe('platform-config');
   });
 
   it('claims nothing it was not given', () => {
@@ -97,4 +91,3 @@ describe('the area a screen belongs to', () => {
     expect(sandboxAreaForUrl('/applications/abc')).toBeNull();
   });
 });
-

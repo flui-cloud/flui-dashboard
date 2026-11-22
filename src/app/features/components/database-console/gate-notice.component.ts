@@ -23,8 +23,8 @@ import { lucideTriangleAlert } from '@ng-icons/lucide';
       <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-3.5 w-3.5 shrink-0" />
       <span>
         Read-only here is a Flui safeguard (command check) —
-        <span class="font-semibold">not enforced by {{ engine() }}</span>. Keep it on for
-        safety; it's a guardrail, not a hard guarantee.
+        <span class="font-semibold">not enforced by {{ engine() }}</span
+        >. Keep it on for safety; it's a guardrail, not a hard guarantee.
       </span>
     </div>
   `,

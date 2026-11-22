@@ -19,9 +19,14 @@ import { accessOf } from '../../model/app-access';
     <header class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
       <div class="flex flex-col gap-1.5 min-w-0">
         <h1 class="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">Home</h1>
-        <div class="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm text-muted-foreground" data-testid="home-status-line">
+        <div
+          class="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm text-muted-foreground"
+          data-testid="home-status-line"
+        >
           @if (pulse().backendOnline) {
-            <span class="inline-flex items-center gap-1.5 font-semibold text-green-700 dark:text-green-400">
+            <span
+              class="inline-flex items-center gap-1.5 font-semibold text-green-700 dark:text-green-400"
+            >
               <span class="h-2 w-2 rounded-full bg-green-500"></span>Online
             </span>
           } @else {
@@ -44,26 +49,43 @@ import { accessOf } from '../../model/app-access';
             <span class="text-border">·</span>
             <span>{{ plural(pulse().totalClusters, 'cluster') }}</span>
             <span class="text-border">·</span>
-            <span>{{ fresh() ? pulse().runningApps + ' system apps running' : pulse().runningApps + ' running' }}</span>
+            <span>{{
+              fresh()
+                ? pulse().runningApps + ' system apps running'
+                : pulse().runningApps + ' running'
+            }}</span>
           }
           @if (pulse().activeOperations > 0) {
             <span class="text-border">·</span>
-            <span class="font-medium text-primary" data-testid="home-operations">{{ plural(pulse().activeOperations, 'operation') }}</span>
+            <span class="font-medium text-primary" data-testid="home-operations">{{
+              plural(pulse().activeOperations, 'operation')
+            }}</span>
           }
         </div>
       </div>
 
       <div class="flex items-center gap-2">
         @if (showWindow()) {
-          <div class="inline-flex p-0.5 gap-0.5 bg-muted rounded-lg" role="group" aria-label="Metrics window" data-testid="home-window">
+          <div
+            class="inline-flex p-0.5 gap-0.5 bg-muted rounded-lg"
+            role="group"
+            aria-label="Metrics window"
+            data-testid="home-window"
+          >
             @for (w of windows; track w) {
               <button
                 type="button"
                 (click)="setWindow(w)"
                 [attr.aria-pressed]="fleet.window() === w"
                 class="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors"
-                [class]="fleet.window() === w ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
-              >{{ w }}</button>
+                [class]="
+                  fleet.window() === w
+                    ? 'bg-card text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                "
+              >
+                {{ w }}
+              </button>
             }
           </div>
         }
@@ -98,7 +120,9 @@ export class DashboardHomeHeaderComponent {
   protected readonly guest = computed(() => this.sandbox.inSandbox());
   protected readonly guestApps = computed(() => {
     const groups = this.applications.applicationGroups();
-    const showcase = groups.filter((group) => group.components.some((c) => accessOf(c)?.showcase)).length;
+    const showcase = groups.filter((group) =>
+      group.components.some((c) => accessOf(c)?.showcase),
+    ).length;
     return { showcase, own: groups.length - showcase };
   });
 

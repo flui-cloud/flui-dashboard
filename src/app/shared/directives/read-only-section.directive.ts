@@ -1,18 +1,9 @@
-import {
-  Directive,
-  HostListener,
-  computed,
-  inject,
-  input,
-} from '@angular/core';
+import { Directive, HostListener, computed, inject, input } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map, startWith } from 'rxjs/operators';
 import { PermissionService } from '../../core/services/permission.service';
-import {
-  SandboxService,
-  sandboxAreaForUrl,
-} from '../../core/services/sandbox.service';
+import { SandboxService, sandboxAreaForUrl } from '../../core/services/sandbox.service';
 
 @Directive({
   selector: '[appReadOnlySection]',
@@ -52,9 +43,7 @@ export class ReadOnlySectionDirective {
 
   protected readonly readOnly = computed(() =>
     this.keys().some(
-      (key) =>
-        this.perms.isSectionReadOnly(key) ||
-        this.sandbox.levelOf(key) !== 'full',
+      (key) => this.perms.isSectionReadOnly(key) || this.sandbox.levelOf(key) !== 'full',
     ),
   );
 

@@ -53,7 +53,11 @@ describe('DashboardNeedsYouComponent', () => {
     state.set('ready');
     needs.set(NEEDS);
     needsSetup.set(false);
-    fleet = { needsYou: needs, needsYouState: state, loadNeedsYou: jasmine.createSpy('loadNeedsYou') };
+    fleet = {
+      needsYou: needs,
+      needsYouState: state,
+      loadNeedsYou: jasmine.createSpy('loadNeedsYou'),
+    };
     notifications = { triggerAction: jasmine.createSpy('triggerAction') };
     await TestBed.configureTestingModule({
       imports: [DashboardNeedsYouComponent],
@@ -73,7 +77,11 @@ describe('DashboardNeedsYouComponent', () => {
 
   it('lists what the API raised, most urgent first, with a count of what asks for action', () => {
     expect(q('needs-you-count')?.textContent?.trim()).toBe('2');
-    const rows = Array.from(el().querySelectorAll('[data-testid^="needs-you-cluster"], [data-testid^="needs-you-credential"]')).map((r) => r.textContent);
+    const rows = Array.from(
+      el().querySelectorAll(
+        '[data-testid^="needs-you-cluster"], [data-testid^="needs-you-credential"]',
+      ),
+    ).map((r) => r.textContent);
     expect(rows[0]).toContain('wc-9 is in error');
     expect(rows[1]).toContain('Connect your GitHub account');
     expect(rows[2]).toContain('wc-2 is being created');
@@ -116,7 +124,10 @@ describe('DashboardNeedsYouComponent', () => {
               clusterName: 'wc-1',
               reason: 'left_out',
               lastSuccessAt: null,
-              protect: { label: 'Protect', path: '/management/backup/policies/new?clusterId=c-1&applicationId=a-1' },
+              protect: {
+                label: 'Protect',
+                path: '/management/backup/policies/new?clusterId=c-1&applicationId=a-1',
+              },
             },
           ],
         },
@@ -125,9 +136,13 @@ describe('DashboardNeedsYouComponent', () => {
     fixture.detectChanges();
     const protect = q('needs-you-protect-a-1') as HTMLAnchorElement;
     expect(protect.textContent).toContain('Protect');
-    expect(protect.getAttribute('href')).toBe('/management/backup/policies/new?clusterId=c-1&applicationId=a-1');
+    expect(protect.getAttribute('href')).toBe(
+      '/management/backup/policies/new?clusterId=c-1&applicationId=a-1',
+    );
     expect(q('needs-you-backup:apps-without-backup')!.textContent).toContain('pg');
-    expect((q('needs-you-app-a-1') as HTMLAnchorElement).getAttribute('href')).toBe('/apps/applications/a-1');
+    expect((q('needs-you-app-a-1') as HTMLAnchorElement).getAttribute('href')).toBe(
+      '/apps/applications/a-1',
+    );
     needs.set(NEEDS);
   });
 
@@ -167,7 +182,9 @@ describe('DashboardNeedsYouComponent', () => {
     const open = q('needs-you-open-a-2') as HTMLAnchorElement;
     expect(open.textContent).toContain('Open backups');
     expect(open.getAttribute('href')).toBe('/apps/applications/a-2/snapshots');
-    expect((q('needs-you-app-a-2') as HTMLAnchorElement).getAttribute('href')).toBe('/apps/applications/a-2');
+    expect((q('needs-you-app-a-2') as HTMLAnchorElement).getAttribute('href')).toBe(
+      '/apps/applications/a-2',
+    );
     expect(q('needs-you-why-a-2')!.textContent).toContain('The database is not running yet.');
     expect(q('needs-you-backup:apps-without-backup')!.textContent).toContain('pg-orders · wc-1');
     needs.set(NEEDS);

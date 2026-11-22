@@ -17,15 +17,10 @@ describe('deleting a published address', () => {
     certificateRequired: false,
   } as unknown as AppEndpointResponseDto;
 
-  async function mount(options: {
-    can: boolean;
-    writable?: boolean;
-  }): Promise<void> {
+  async function mount(options: { can: boolean; writable?: boolean }): Promise<void> {
     await TestBed.configureTestingModule({
       imports: [DnsEndpointsListComponent],
-      providers: [
-        { provide: PermissionService, useValue: { can: () => options.can } },
-      ],
+      providers: [{ provide: PermissionService, useValue: { can: () => options.can } }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(DnsEndpointsListComponent);
@@ -63,9 +58,9 @@ describe('deleting a published address', () => {
 
   it('leaves Edit and Sync alone — their routes ask for nothing this can read', async () => {
     await mount({ can: false });
-    const labels = Array.from(
-      fixture.nativeElement.querySelectorAll('button'),
-    ).map((b) => (b as HTMLButtonElement).textContent?.trim());
+    const labels = Array.from(fixture.nativeElement.querySelectorAll('button')).map((b) =>
+      (b as HTMLButtonElement).textContent?.trim(),
+    );
     expect(labels).toContain('Edit');
     expect(labels).toContain('Sync');
   });

@@ -1,6 +1,10 @@
 import { Component, input, computed, ChangeDetectionStrategy } from '@angular/core';
 
-import { ReconciliationStatus, getStatusBadgeColor, getStatusBadgeLabel } from '../../model/firewall-v2.models';
+import {
+  ReconciliationStatus,
+  getStatusBadgeColor,
+  getStatusBadgeLabel,
+} from '../../model/firewall-v2.models';
 
 /**
  * Badge component to display firewall reconciliation status
@@ -26,31 +30,33 @@ import { ReconciliationStatus, getStatusBadgeColor, getStatusBadgeLabel } from '
     </span>
   `,
   changeDetection: ChangeDetectionStrategy.Eager,
-  styles: [`
-    :host {
-      display: inline-block;
-    }
+  styles: [
+    `
+      :host {
+        display: inline-block;
+      }
 
-    .badge-gray {
-      @apply bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300;
-    }
+      .badge-gray {
+        @apply bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300;
+      }
 
-    .badge-green {
-      @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300;
-    }
+      .badge-green {
+        @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300;
+      }
 
-    .badge-yellow {
-      @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300;
-    }
+      .badge-yellow {
+        @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300;
+      }
 
-    .badge-blue {
-      @apply bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300;
-    }
+      .badge-blue {
+        @apply bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300;
+      }
 
-    .badge-red {
-      @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300;
-    }
-  `]
+      .badge-red {
+        @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300;
+      }
+    `,
+  ],
 })
 export class ReconciliationStatusBadgeComponent {
   // Input signal
@@ -59,7 +65,7 @@ export class ReconciliationStatusBadgeComponent {
   // Computed signals
   normalizedStatus = computed(() => {
     const value = this.status();
-    return typeof value === 'string' ? value as ReconciliationStatus : value;
+    return typeof value === 'string' ? (value as ReconciliationStatus) : value;
   });
 
   badgeColor = computed(() => getStatusBadgeColor(this.normalizedStatus()));

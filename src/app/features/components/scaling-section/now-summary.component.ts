@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  input,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
@@ -20,16 +13,10 @@ import {
 } from '@ng-icons/lucide';
 import { PurchaseLogComponent } from './purchase-log.component';
 import { ScalingNowGiveBackComponent } from './now-give-back.component';
-import {
-  ClusterScalingRow,
-  SectionGroup,
-} from '../../model/scaling-section.models';
+import { ClusterScalingRow, SectionGroup } from '../../model/scaling-section.models';
 import { ScalingGroupStore } from './scaling-group.store';
 import { ago, eurMonth } from './now-format';
-import {
-  SectionFailureComponent,
-  SectionSkeletonComponent,
-} from './section-states.component';
+import { SectionFailureComponent, SectionSkeletonComponent } from './section-states.component';
 
 interface StatCard {
   id: string;
@@ -70,17 +57,10 @@ interface StatCard {
         testid="strip"
       />
     } @else if (failed()) {
-      <app-section-failure
-        [message]="failed() ?? ''"
-        testid="strip"
-        (retry)="store.reload()"
-      />
+      <app-section-failure [message]="failed() ?? ''" testid="strip" (retry)="store.reload()" />
     } @else {
       <div class="space-y-3">
-        <dl
-          class="m-0 grid grid-cols-2 gap-3 xl:grid-cols-4"
-          data-testid="strip"
-        >
+        <dl class="m-0 grid grid-cols-2 gap-3 xl:grid-cols-4" data-testid="strip">
           @for (card of cards(); track card.id) {
             <div
               class="rounded-lg border border-border bg-card px-4 py-3"
@@ -136,9 +116,7 @@ interface StatCard {
               <app-purchase-log [operationId]="purchase.operationId" />
             </div>
             @if (purchase.state === 'buying') {
-              <div
-                class="mt-2 h-1 w-full overflow-hidden rounded-full bg-primary/15"
-              >
+              <div class="mt-2 h-1 w-full overflow-hidden rounded-full bg-primary/15">
                 <div
                   class="h-1 rounded-full bg-primary transition-all"
                   [style.width.%]="purchase.progress"
@@ -165,21 +143,17 @@ interface StatCard {
             class="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-amber-500/40 bg-amber-500/[0.06] px-3 py-2 text-sm"
             data-testid="purchase-held"
           >
-            <ng-icon
-              name="lucideBell"
-              class="h-4 w-4 shrink-0 text-amber-500"
-            />
+            <ng-icon name="lucideBell" class="h-4 w-4 shrink-0 text-amber-500" />
             <div class="min-w-0 flex-1">
               @if (hold.until) {
                 <p class="m-0 text-foreground">
-                  The machine was sold out {{ heldAge() }} ago and nothing was
-                  created. Flui reads availability again at
-                  {{ clockOf(hold.until) }}.
+                  The machine was sold out {{ heldAge() }} ago and nothing was created. Flui reads
+                  availability again at {{ clockOf(hold.until) }}.
                 </p>
               } @else {
                 <p class="m-0 text-foreground">
-                  A node failed to be added {{ heldAge() }} ago — nothing more is added
-                  until you try again.
+                  A node failed to be added {{ heldAge() }} ago — nothing more is added until you
+                  try again.
                 </p>
               }
               @if (hold.error) {
@@ -206,20 +180,13 @@ interface StatCard {
             </button>
           </div>
         } @else if (giveBack(); as back) {
-          <app-scaling-now-give-back
-            [group]="group()"
-            [alarm]="back.alarm"
-            [age]="back.age"
-          />
+          <app-scaling-now-give-back [group]="group()" [alarm]="back.alarm" [age]="back.age" />
         } @else if (alarm(); as open) {
           <p
             class="m-0 flex flex-wrap items-baseline gap-x-2 gap-y-1 rounded-lg border border-amber-500/40 bg-amber-500/[0.06] px-3 py-2 text-sm"
             data-testid="open-alarm"
           >
-            <ng-icon
-              name="lucideBell"
-              class="h-4 w-4 shrink-0 translate-y-0.5 text-amber-500"
-            />
+            <ng-icon name="lucideBell" class="h-4 w-4 shrink-0 translate-y-0.5 text-amber-500" />
             <span class="text-foreground"
               >Alarm open {{ open.age }}
               @if (!preview()?.blocked) {
@@ -234,10 +201,7 @@ interface StatCard {
             class="m-0 flex flex-wrap items-baseline gap-x-2 text-[13px] text-muted-foreground"
             data-testid="opportunity-held"
           >
-            <ng-icon
-              name="lucidePause"
-              class="h-3.5 w-3.5 shrink-0 translate-y-0.5"
-            />
+            <ng-icon name="lucidePause" class="h-3.5 w-3.5 shrink-0 translate-y-0.5" />
             <span>Opportunity held — {{ reason }}</span>
           </p>
         }
@@ -263,13 +227,9 @@ export class ScalingNowSummaryComponent {
   private readonly row = computed(() => this.store.row().data);
 
   protected readonly pending = computed(() => this.preview()?.pending ?? null);
-  protected readonly held = computed(
-    () => this.preview()?.opportunityHeldBecause ?? null,
-  );
+  protected readonly held = computed(() => this.preview()?.opportunityHeldBecause ?? null);
 
-  private readonly manual = computed(
-    () => !this.group().capability.canProvision,
-  );
+  private readonly manual = computed(() => !this.group().capability.canProvision);
 
   private readonly withheld = computed(
     () => this.group().capability.canProvision && !this.group().acts.acts,
@@ -300,9 +260,7 @@ export class ScalingNowSummaryComponent {
     } catch (err: unknown) {
       const e = err as { error?: { message?: string }; message?: string };
       this.retryError.set(
-        e?.error?.message ??
-          e?.message ??
-          'Could not ask the group to try again.',
+        e?.error?.message ?? e?.message ?? 'Could not ask the group to try again.',
       );
     } finally {
       this.retrying.set(false);
@@ -316,31 +274,20 @@ export class ScalingNowSummaryComponent {
       : null;
   });
 
-  protected readonly alarm = computed<{ asks: string; age: string } | null>(
-    () => {
-      const open = this.row()?.openAlarm ?? null;
-      return open
-        ? { asks: open.asks, age: ago(open.since, Date.now()) }
-        : null;
-    },
-  );
+  protected readonly alarm = computed<{ asks: string; age: string } | null>(() => {
+    const open = this.row()?.openAlarm ?? null;
+    return open ? { asks: open.asks, age: ago(open.since, Date.now()) } : null;
+  });
 
   protected readonly cards = computed<StatCard[]>(() => {
     const row = this.row();
-    return [
-      this.nodesCard(row),
-      this.spendCard(row),
-      this.pendingCard(),
-      this.ordersCard(),
-    ];
+    return [this.nodesCard(row), this.spendCard(row), this.pendingCard(), this.ordersCard()];
   });
 
   private nodesCard(row: ClusterScalingRow | null): StatCard {
     const bounds = this.group().bounds;
 
-    const most = this.manual()
-      ? `max ${bounds.max}, reported not enforced`
-      : `max ${bounds.max}`;
+    const most = this.manual() ? `max ${bounds.max}, reported not enforced` : `max ${bounds.max}`;
 
     return {
       id: 'nodes',
@@ -386,9 +333,7 @@ export class ScalingNowSummaryComponent {
 
     const unpriced = row.unpricedNodes;
     const nodeWord = unpriced === 1 ? 'node carries' : 'nodes carry';
-    const floor = unpriced
-      ? `at least — ${unpriced} ${nodeWord} no price · `
-      : '';
+    const floor = unpriced ? `at least — ${unpriced} ${nodeWord} no price · ` : '';
 
     return {
       id: 'spend',
@@ -429,9 +374,7 @@ export class ScalingNowSummaryComponent {
 
   private ordersCard(): StatCard {
     const orders = this.group().standingOrders;
-    const blocked = orders.filter(
-      (o) => o.drainable !== null && !o.drainable.ok,
-    ).length;
+    const blocked = orders.filter((o) => o.drainable !== null && !o.drainable.ok).length;
     const blockedCaption = blocked ? `${blocked} blocked` : 'none blocked';
 
     return {

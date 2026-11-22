@@ -1,4 +1,15 @@
-import { Component, OnInit, OnDestroy, signal, computed, inject, ElementRef, AfterViewChecked, viewChild, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  signal,
+  computed,
+  inject,
+  ElementRef,
+  AfterViewChecked,
+  viewChild,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { Location } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -38,13 +49,20 @@ import {
 type BuildPhase = AppBuildResponseDto['status'];
 
 const BUILD_PHASES: Array<{ id: BuildPhase; label: string; icon: string }> = [
-  { id: 'CLONING',   label: 'Cloning repository',  icon: 'lucideGitBranch' },
-  { id: 'ANALYZING', label: 'Detecting framework',  icon: 'lucidePackage' },
-  { id: 'BUILDING',  label: 'Building image',       icon: 'lucideHammer' },
-  { id: 'PUSHING',   label: 'Pushing to registry',  icon: 'lucideContainer' },
+  { id: 'CLONING', label: 'Cloning repository', icon: 'lucideGitBranch' },
+  { id: 'ANALYZING', label: 'Detecting framework', icon: 'lucidePackage' },
+  { id: 'BUILDING', label: 'Building image', icon: 'lucideHammer' },
+  { id: 'PUSHING', label: 'Pushing to registry', icon: 'lucideContainer' },
 ];
 
-const PHASE_ORDER: BuildPhase[] = ['PENDING', 'CLONING', 'ANALYZING', 'BUILDING', 'PUSHING', 'COMPLETED'];
+const PHASE_ORDER: BuildPhase[] = [
+  'PENDING',
+  'CLONING',
+  'ANALYZING',
+  'BUILDING',
+  'PUSHING',
+  'COMPLETED',
+];
 
 function phaseIndex(status: BuildPhase): number {
   return PHASE_ORDER.indexOf(status);
@@ -68,9 +86,20 @@ interface WizardState {
   imports: [NgIcon],
   providers: [
     provideIcons({
-      lucideArrowLeft, lucideCheck, lucideLoader, lucideTriangleAlert,
-      lucideX, lucideGitBranch, lucidePackage, lucideTerminal, lucideClock,
-      lucideCopy, lucideRefreshCw, lucideHammer, lucideContainer, lucideRocket,
+      lucideArrowLeft,
+      lucideCheck,
+      lucideLoader,
+      lucideTriangleAlert,
+      lucideX,
+      lucideGitBranch,
+      lucidePackage,
+      lucideTerminal,
+      lucideClock,
+      lucideCopy,
+      lucideRefreshCw,
+      lucideHammer,
+      lucideContainer,
+      lucideRocket,
       lucideCpu,
     }),
   ],
@@ -79,8 +108,10 @@ interface WizardState {
     <div class="max-w-6xl mx-auto p-6">
       <!-- Back -->
       <div class="mb-6">
-        <button (click)="navigateBack()"
-          class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors">
+        <button
+          (click)="navigateBack()"
+          class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
           <ng-icon name="lucideArrowLeft" class="h-4 w-4 mr-2" />
           Back to Deploy Wizard
         </button>
@@ -91,7 +122,11 @@ interface WizardState {
         <div class="flex items-start justify-between mb-2">
           <div>
             <h1 class="text-2xl font-bold mb-1">
-              {{ phase() === 'confirm' ? 'Build Complete — Create Application' : 'Building Application' }}
+              {{
+                phase() === 'confirm'
+                  ? 'Build Complete — Create Application'
+                  : 'Building Application'
+              }}
             </h1>
             <p class="text-sm text-muted-foreground font-mono">{{ buildId() }}</p>
           </div>
@@ -108,8 +143,10 @@ interface WizardState {
         @if (phase() === 'building') {
           <div class="flex items-center gap-3 mt-4">
             <div class="flex-1 h-2 bg-border rounded-full overflow-hidden">
-              <div [style.width.%]="getBuildProgressPercent()"
-                class="h-full bg-blue-500 transition-all duration-500 ease-out"></div>
+              <div
+                [style.width.%]="getBuildProgressPercent()"
+                class="h-full bg-blue-500 transition-all duration-500 ease-out"
+              ></div>
             </div>
             <span class="text-xs text-muted-foreground tabular-nums w-8 text-right">
               {{ getBuildProgressPercent() }}%
@@ -120,7 +157,9 @@ interface WizardState {
 
       <!-- Connection lost banner -->
       @if (connectionLost() && phase() === 'building') {
-        <div class="mb-6 flex items-center gap-3 px-4 py-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700 rounded-lg text-sm text-yellow-800 dark:text-yellow-300">
+        <div
+          class="mb-6 flex items-center gap-3 px-4 py-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700 rounded-lg text-sm text-yellow-800 dark:text-yellow-300"
+        >
           <ng-icon name="lucideTriangleAlert" class="h-4 w-4 flex-shrink-0" />
           <span>Connection lost — the build is still running. Reconnecting...</span>
           <ng-icon name="lucideLoader" class="h-4 w-4 flex-shrink-0 animate-spin ml-auto" />
@@ -130,7 +169,6 @@ interface WizardState {
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Left: phases + logs -->
         <div class="lg:col-span-2 space-y-6">
-
           <!-- Build Phase Timeline -->
           <div class="bg-card border border-border rounded-lg p-6">
             <h2 class="text-lg font-semibold mb-4 flex items-center">
@@ -157,7 +195,9 @@ interface WizardState {
                         {{ ph.label }}
                       </span>
                       @if (ph.id === 'ANALYZING' && detectedFramework()) {
-                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
+                        <span
+                          class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
+                        >
                           <ng-icon name="lucidePackage" class="h-3 w-3 mr-1" />
                           {{ detectedFramework() }}
                         </span>
@@ -170,13 +210,17 @@ interface WizardState {
               <!-- Confirm phase indicator -->
               @if (phase() === 'confirm') {
                 <div class="flex items-start gap-4">
-                  <div class="h-6 w-6 rounded-full flex items-center justify-center border border-border text-[hsl(var(--ok))] flex-shrink-0 mt-0.5">
+                  <div
+                    class="h-6 w-6 rounded-full flex items-center justify-center border border-border text-[hsl(var(--ok))] flex-shrink-0 mt-0.5"
+                  >
                     <ng-icon name="lucideCheck" class="h-4 w-4" />
                   </div>
                   <div class="flex-1">
                     <span class="text-sm font-medium text-foreground">Image ready</span>
                     @if (imageRef()) {
-                      <p class="text-xs text-muted-foreground font-mono mt-0.5 truncate">{{ imageRef() }}</p>
+                      <p class="text-xs text-muted-foreground font-mono mt-0.5 truncate">
+                        {{ imageRef() }}
+                      </p>
                     }
                   </div>
                 </div>
@@ -192,18 +236,26 @@ interface WizardState {
                   <ng-icon name="lucideTerminal" class="h-5 w-5 mr-2" />
                   Build Logs
                 </h2>
-                <button (click)="copyLogs()"
-                  class="inline-flex items-center text-xs text-muted-foreground hover:text-foreground transition-colors">
+                <button
+                  (click)="copyLogs()"
+                  class="inline-flex items-center text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
                   <ng-icon name="lucideCopy" class="h-4 w-4 mr-1" />
                   Copy
                 </button>
               </div>
               <div class="p-4 bg-zinc-950 rounded-b-lg">
-                <div #logContainer
-                  class="font-mono text-xs text-zinc-300 space-y-0.5 h-80 overflow-y-auto">
+                <div
+                  #logContainer
+                  class="font-mono text-xs text-zinc-300 space-y-0.5 h-80 overflow-y-auto"
+                >
                   @for (log of buildLogs(); track $index) {
-                    <div [class]="log.startsWith('[stderr]') ? 'text-amber-300' : ''"
-                      class="whitespace-pre-wrap leading-relaxed">{{ log }}</div>
+                    <div
+                      [class]="log.startsWith('[stderr]') ? 'text-amber-300' : ''"
+                      class="whitespace-pre-wrap leading-relaxed"
+                    >
+                      {{ log }}
+                    </div>
                   }
                   @if (phase() === 'building' && buildLogs().length === 0) {
                     <div class="flex items-center gap-1.5 text-gray-500 text-xs">
@@ -245,9 +297,13 @@ interface WizardState {
                 <label class="block text-sm font-medium mb-1.5">
                   Port
                   @if (detectedPort()) {
-                    <span class="ml-1.5 text-xs font-normal text-muted-foreground">auto-detected</span>
+                    <span class="ml-1.5 text-xs font-normal text-muted-foreground"
+                      >auto-detected</span
+                    >
                   } @else {
-                    <span class="ml-1.5 text-xs font-normal text-amber-600 dark:text-amber-400">not detected — required</span>
+                    <span class="ml-1.5 text-xs font-normal text-amber-600 dark:text-amber-400"
+                      >not detected — required</span
+                    >
                   }
                 </label>
                 <input
@@ -277,28 +333,37 @@ interface WizardState {
                 } @else if (availableProfiles().length > 0) {
                   <div class="grid grid-cols-5 gap-2">
                     @for (profile of availableProfiles(); track profile.name) {
-                      <button type="button"
+                      <button
+                        type="button"
                         [class]="getProfileCardClass(profile.name)"
-                        (click)="selectedProfile.set(profile.name)">
-                        <div class="text-xs font-semibold mb-1.5">{{ getProfileLabel(profile.name) }}</div>
+                        (click)="selectedProfile.set(profile.name)"
+                      >
+                        <div class="text-xs font-semibold mb-1.5">
+                          {{ getProfileLabel(profile.name) }}
+                        </div>
                         <div class="flex items-center gap-1 text-xs text-muted-foreground">
                           <ng-icon name="lucideCpu" class="w-3 h-3 shrink-0" />
                           <span>{{ getProfileCpu(profile) }} CPU</span>
                         </div>
                         <div class="text-xs text-muted-foreground mt-0.5">
-                          {{ getProfileMemory(profile) }} <span class="text-muted-foreground/60">RAM</span>
+                          {{ getProfileMemory(profile) }}
+                          <span class="text-muted-foreground/60">RAM</span>
                         </div>
                       </button>
                     }
                   </div>
                   @if (selectedProfileInfo()) {
-                    <p class="text-xs text-muted-foreground mt-1.5 pl-0.5">{{ getProfileDescription(selectedProfile()) }}</p>
+                    <p class="text-xs text-muted-foreground mt-1.5 pl-0.5">
+                      {{ getProfileDescription(selectedProfile()) }}
+                    </p>
                   }
                 }
               </div>
 
               <div class="rounded-lg bg-muted/40 border border-border p-4 space-y-2 text-sm">
-                <h3 class="font-medium mb-2 text-xs text-muted-foreground uppercase tracking-wide">Deploy config</h3>
+                <h3 class="font-medium mb-2 text-xs text-muted-foreground uppercase tracking-wide">
+                  Deploy config
+                </h3>
                 @if (detectedFramework()) {
                   <div class="flex justify-between">
                     <span class="text-muted-foreground">Runtime</span>
@@ -338,19 +403,36 @@ interface WizardState {
                           {{ startCommandIsAutoCorrected() ? 'Auto-corrected' : 'Auto' }}
                         </span>
                       } @else {
-                        <span class="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">Custom</span>
+                        <span
+                          class="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                          >Custom</span
+                        >
                       }
                     </div>
                     @if (!startCommandOverrideExpanded()) {
-                      <button type="button" (click)="startCommandOverrideExpanded.set(true)"
-                        class="text-xs text-muted-foreground hover:text-foreground transition-colors">Edit</button>
+                      <button
+                        type="button"
+                        (click)="startCommandOverrideExpanded.set(true)"
+                        class="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        Edit
+                      </button>
                     } @else if (startCommandOverride()) {
-                      <button type="button" (click)="startCommandOverride.set(''); startCommandOverrideExpanded.set(false)"
-                        class="text-xs text-muted-foreground hover:text-foreground transition-colors">Reset to auto</button>
+                      <button
+                        type="button"
+                        (click)="
+                          startCommandOverride.set(''); startCommandOverrideExpanded.set(false)
+                        "
+                        class="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        Reset to auto
+                      </button>
                     }
                   </div>
                   @if (!startCommandOverrideExpanded()) {
-                    <code class="block text-xs bg-muted px-2 py-1.5 rounded font-mono break-all">{{ detectedStartCommand() }}</code>
+                    <code class="block text-xs bg-muted px-2 py-1.5 rounded font-mono break-all">{{
+                      detectedStartCommand()
+                    }}</code>
                   } @else {
                     <textarea
                       [value]="startCommandOverride()"
@@ -359,13 +441,18 @@ interface WizardState {
                       [placeholder]="detectedStartCommand() ?? 'e.g. java -jar app.jar'"
                       class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono resize-none"
                     ></textarea>
-                    <p class="text-xs text-muted-foreground">Leave empty to use the auto-detected command.</p>
+                    <p class="text-xs text-muted-foreground">
+                      Leave empty to use the auto-detected command.
+                    </p>
                   }
                 </div>
               }
 
-              <button (click)="createAndDeploy()" [disabled]="isCreating() || !isNameValid() || !effectivePort()"
-                class="inline-flex items-center justify-center w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 transition-colors">
+              <button
+                (click)="createAndDeploy()"
+                [disabled]="isCreating() || !isNameValid() || !effectivePort()"
+                class="inline-flex items-center justify-center w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 transition-colors"
+              >
                 @if (isCreating()) {
                   <ng-icon name="lucideLoader" class="h-4 w-4 mr-2 animate-spin" />
                   Creating application...
@@ -376,12 +463,10 @@ interface WizardState {
               </button>
             </div>
           }
-
         </div>
 
         <!-- Right Sidebar -->
         <div class="space-y-4">
-
           <!-- Failed -->
           @if (phase() === 'failed') {
             <div class="bg-card border border-destructive/40 rounded-lg p-5">
@@ -395,12 +480,17 @@ interface WizardState {
                 </div>
               </div>
               @if (errorMessage()) {
-                <div class="mb-4 p-3 bg-muted rounded-md text-xs text-destructive font-mono break-all">
+                <div
+                  class="mb-4 p-3 bg-muted rounded-md text-xs text-destructive font-mono break-all"
+                >
                   {{ errorMessage() }}
                 </div>
               }
-              <button (click)="retryFromWizard()" [disabled]="isDeleting()"
-                class="inline-flex items-center justify-center w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 transition-colors">
+              <button
+                (click)="retryFromWizard()"
+                [disabled]="isDeleting()"
+                class="inline-flex items-center justify-center w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 transition-colors"
+              >
                 @if (isDeleting()) {
                   <ng-icon name="lucideLoader" class="h-4 w-4 mr-2 animate-spin" />
                 } @else {
@@ -415,11 +505,16 @@ interface WizardState {
           @if (phase() === 'building') {
             <div class="bg-muted/40 border border-border rounded-lg p-4">
               <div class="flex items-start gap-3">
-                <ng-icon name="lucideLoader" class="h-4 w-4 text-muted-foreground mt-0.5 animate-spin flex-shrink-0" />
+                <ng-icon
+                  name="lucideLoader"
+                  class="h-4 w-4 text-muted-foreground mt-0.5 animate-spin flex-shrink-0"
+                />
                 <div>
                   <h4 class="text-sm font-medium mb-1">Building...</h4>
                   <p class="text-xs text-muted-foreground">This may take a few minutes.</p>
-                  <p class="text-xs text-muted-foreground mt-1">Your application will only be created once the build succeeds.</p>
+                  <p class="text-xs text-muted-foreground mt-1">
+                    Your application will only be created once the build succeeds.
+                  </p>
                 </div>
               </div>
             </div>
@@ -431,12 +526,16 @@ interface WizardState {
             <div class="space-y-2 text-sm">
               <div class="flex justify-between">
                 <span class="text-muted-foreground">Build ID:</span>
-                <code class="text-xs bg-muted px-2 py-0.5 rounded">{{ buildId().substring(0, 12) }}...</code>
+                <code class="text-xs bg-muted px-2 py-0.5 rounded"
+                  >{{ buildId().substring(0, 12) }}...</code
+                >
               </div>
               @if (detectedFramework()) {
                 <div class="flex justify-between items-center">
                   <span class="text-muted-foreground">Runtime:</span>
-                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
+                  <span
+                    class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
+                  >
                     {{ detectedFramework() }}
                   </span>
                 </div>
@@ -450,21 +549,30 @@ interface WizardState {
                   <div class="flex items-center gap-1.5 mb-1">
                     <span class="text-muted-foreground text-xs">Start command</span>
                     @if (startCommandIsAutoCorrected()) {
-                      <span class="text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Auto-corrected</span>
+                      <span
+                        class="text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                        >Auto-corrected</span
+                      >
                     } @else {
-                      <span class="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">Auto</span>
+                      <span class="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground"
+                        >Auto</span
+                      >
                     }
                   </div>
-                  <code class="block text-xs bg-muted px-2 py-1 rounded font-mono break-all leading-relaxed">{{ detectedStartCommand() }}</code>
+                  <code
+                    class="block text-xs bg-muted px-2 py-1 rounded font-mono break-all leading-relaxed"
+                    >{{ detectedStartCommand() }}</code
+                  >
                 </div>
               }
               <div class="flex justify-between">
                 <span class="text-muted-foreground">Elapsed:</span>
-                <span class="font-medium text-xs tabular-nums">{{ formatDuration(elapsedSeconds()) }}</span>
+                <span class="font-medium text-xs tabular-nums">{{
+                  formatDuration(elapsedSeconds())
+                }}</span>
               </div>
             </div>
           </div>
-
         </div>
       </div>
     </div>
@@ -513,15 +621,15 @@ export class StandaloneBuildProgressComponent implements OnInit, OnDestroy, Afte
   readonly buildPhases = BUILD_PHASES;
   readonly isNameValid = computed(() => this.appName().trim().length > 0);
   readonly effectivePort = computed(() => this.detectedPort() ?? this.wizardState()?.port ?? null);
-  readonly selectedProfileInfo = computed(() =>
-    this.availableProfiles().find(p => p.name === this.selectedProfile()) ?? null
+  readonly selectedProfileInfo = computed(
+    () => this.availableProfiles().find((p) => p.name === this.selectedProfile()) ?? null,
   );
 
   private readonly profileMeta: Record<string, { label: string; description: string }> = {
-    nano:   { label: 'Nano',   description: 'Static sites, lightweight proxies' },
-    small:  { label: 'Small',  description: 'REST microservices, simple apps' },
+    nano: { label: 'Nano', description: 'Static sites, lightweight proxies' },
+    small: { label: 'Small', description: 'REST microservices, simple apps' },
     medium: { label: 'Medium', description: 'Node.js, PHP, CMS apps' },
-    large:  { label: 'Large',  description: 'Java, databases, heavier workloads' },
+    large: { label: 'Large', description: 'Java, databases, heavier workloads' },
     xlarge: { label: 'XLarge', description: 'Elasticsearch, Kafka, MongoDB' },
   };
 
@@ -539,12 +647,13 @@ export class StandaloneBuildProgressComponent implements OnInit, OnDestroy, Afte
         this.router.navigate(['/apps/deploy/new']);
         return;
       }
-  
-      const state = (this.router.currentNavigation()?.extras?.state ?? history.state) as WizardState | undefined;
+
+      const state = (this.router.currentNavigation()?.extras?.state ?? history.state) as
+        WizardState | undefined;
       if (state?.clusterId) {
         this.wizardState.set(state);
       }
-  
+
       this.buildId.set(bId);
       await Promise.all([this.loadInitialState(bId), this.loadProfiles()]);
     })();
@@ -607,7 +716,7 @@ export class StandaloneBuildProgressComponent implements OnInit, OnDestroy, Afte
       onLog: (e: BuildLogEvent) => {
         this.resetHeartbeatWatchdog();
         const prefix = e.stream === 'stderr' ? '[stderr] ' : '';
-        this.buildLogs.update(logs => [...logs, prefix + e.line].slice(-500));
+        this.buildLogs.update((logs) => [...logs, prefix + e.line].slice(-500));
         this.shouldScrollLogs = true;
         this.inferPhaseFromLog(e.line);
       },
@@ -652,7 +761,12 @@ export class StandaloneBuildProgressComponent implements OnInit, OnDestroy, Afte
       }
     }
     if (current === 'PENDING' || current === 'CLONING' || current === 'ANALYZING') {
-      if (l.includes('railpack build') || l.includes('buildctl') || l.includes('#1 ') || l.includes('load build definition')) {
+      if (
+        l.includes('railpack build') ||
+        l.includes('buildctl') ||
+        l.includes('#1 ') ||
+        l.includes('load build definition')
+      ) {
         this.buildStatus.set('BUILDING');
       }
     }
@@ -674,7 +788,8 @@ export class StandaloneBuildProgressComponent implements OnInit, OnDestroy, Afte
           this.shouldScrollLogs = true;
         }
         this.applyDetectedFieldsIfMissing(build);
-        if (build.detectedStartCommand && !this.detectedStartCommand()) this.detectedStartCommand.set(build.detectedStartCommand);
+        if (build.detectedStartCommand && !this.detectedStartCommand())
+          this.detectedStartCommand.set(build.detectedStartCommand);
 
         const currentPhase = this.phase();
         if (currentPhase === 'confirm' || currentPhase === 'failed') {
@@ -682,7 +797,9 @@ export class StandaloneBuildProgressComponent implements OnInit, OnDestroy, Afte
           return;
         }
         this.applyTerminalPhaseTransition(build, false);
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }, 5000);
   }
 
@@ -693,7 +810,11 @@ export class StandaloneBuildProgressComponent implements OnInit, OnDestroy, Afte
     suggestedName?: string | null;
     imageRef?: string | null;
   }): void {
-    if (build.detectedFramework && build.detectedFramework !== 'unknown' && !this.detectedFramework()) {
+    if (
+      build.detectedFramework &&
+      build.detectedFramework !== 'unknown' &&
+      !this.detectedFramework()
+    ) {
       this.detectedFramework.set(build.detectedFramework);
     }
     if (build.detectedPort && !this.detectedPort()) this.detectedPort.set(build.detectedPort);
@@ -701,7 +822,10 @@ export class StandaloneBuildProgressComponent implements OnInit, OnDestroy, Afte
     if (build.imageRef && !this.imageRef()) this.imageRef.set(build.imageRef);
   }
 
-  private applyTerminalPhaseTransition(build: { status: string; errorMessage?: string | null }, stopHeartbeat: boolean): void {
+  private applyTerminalPhaseTransition(
+    build: { status: string; errorMessage?: string | null },
+    stopHeartbeat: boolean,
+  ): void {
     if (build.status === 'COMPLETED') {
       this.phase.set('confirm');
       this.stopPolling();
@@ -740,19 +864,23 @@ export class StandaloneBuildProgressComponent implements OnInit, OnDestroy, Afte
 
   private async syncBuildState(): Promise<void> {
     try {
-      const build = await firstValueFrom(this.buildsApi.standaloneBuildsControllerGetBuild(this.buildId()));
+      const build = await firstValueFrom(
+        this.buildsApi.standaloneBuildsControllerGetBuild(this.buildId()),
+      );
       this.buildStatus.set(build.status);
       this.connectionLost.set(false);
       this.applyDetectedFieldsIfMissing(build);
       const currentPhase = this.phase();
       if (currentPhase === 'confirm' || currentPhase === 'failed') return;
       this.applyTerminalPhaseTransition(build, true);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   private startElapsedTimer(): void {
     this.elapsedIntervalId = setInterval(() => {
-      this.elapsedSeconds.update(s => s + 1);
+      this.elapsedSeconds.update((s) => s + 1);
     }, 1000);
   }
 
@@ -785,14 +913,16 @@ export class StandaloneBuildProgressComponent implements OnInit, OnDestroy, Afte
           buildId: this.buildId(),
           category: CreateApplicationDto.CategoryEnum.User,
           sourceType: CreateApplicationDto.SourceTypeEnum.GitBuild,
-          sourceConfig: {},   // backend ignores this when buildId is provided
+          sourceConfig: {}, // backend ignores this when buildId is provided
           autoDeploy: true,
           port: this.effectivePort() ?? undefined,
           replicas: state.replicas,
           resourceProfile: this.selectedProfile() as CreateApplicationDto.ResourceProfileEnum,
           env: state.envVars,
-          ...(this.startCommandOverride().trim() ? { startCommand: this.startCommandOverride().trim() } : {}),
-        } as any)
+          ...(this.startCommandOverride().trim()
+            ? { startCommand: this.startCommandOverride().trim() }
+            : {}),
+        } as any),
       );
 
       if (response.operation?.id) {
@@ -825,8 +955,12 @@ export class StandaloneBuildProgressComponent implements OnInit, OnDestroy, Afte
     this.stopHeartbeatWatchdog();
     this.wsService.unsubscribeFromStandaloneBuild(oldBuildId);
     try {
-      await firstValueFrom(this.buildsApi.standaloneBuildsControllerDeleteStandaloneBuild(oldBuildId));
-    } catch { /* ignore — build may already be deleted */ }
+      await firstValueFrom(
+        this.buildsApi.standaloneBuildsControllerDeleteStandaloneBuild(oldBuildId),
+      );
+    } catch {
+      /* ignore — build may already be deleted */
+    }
 
     // Trigger new build
     let buildResp;
@@ -836,7 +970,7 @@ export class StandaloneBuildProgressComponent implements OnInit, OnDestroy, Afte
           gitUrl: state.gitUrl,
           branch: state.branch,
           targetClusterId: state.clusterId,
-        })
+        }),
       );
     } catch {
       this.isDeleting.set(false);
@@ -900,7 +1034,8 @@ export class StandaloneBuildProgressComponent implements OnInit, OnDestroy, Afte
   }
 
   getProfileCardClass(profileName: string): string {
-    const base = 'flex flex-col items-start p-3 rounded-lg border text-left transition-all cursor-pointer text-sm';
+    const base =
+      'flex flex-col items-start p-3 rounded-lg border text-left transition-all cursor-pointer text-sm';
     return this.selectedProfile() === profileName
       ? `${base} border-primary bg-primary/5 ring-1 ring-primary`
       : `${base} border-border hover:border-primary/50 hover:bg-muted/40`;
@@ -935,20 +1070,28 @@ export class StandaloneBuildProgressComponent implements OnInit, OnDestroy, Afte
     const s = this.getPhaseStatus(phaseId);
     const base = 'h-6 w-6 rounded-full flex items-center justify-center text-sm';
     switch (s) {
-      case 'completed': return `${base} border border-border text-[hsl(var(--ok))]`;
-      case 'running':   return `${base} bg-primary text-primary-foreground`;
-      case 'error':     return `${base} bg-destructive text-destructive-foreground`;
-      default:          return `${base} bg-muted text-muted-foreground`;
+      case 'completed':
+        return `${base} border border-border text-[hsl(var(--ok))]`;
+      case 'running':
+        return `${base} bg-primary text-primary-foreground`;
+      case 'error':
+        return `${base} bg-destructive text-destructive-foreground`;
+      default:
+        return `${base} bg-muted text-muted-foreground`;
     }
   }
 
   getPhaseLabelClass(phaseId: BuildPhase): string {
     const s = this.getPhaseStatus(phaseId);
     switch (s) {
-      case 'completed': return 'text-foreground';
-      case 'running':   return 'text-primary';
-      case 'error':     return 'text-destructive';
-      default:          return 'text-muted-foreground';
+      case 'completed':
+        return 'text-foreground';
+      case 'running':
+        return 'text-primary';
+      case 'error':
+        return 'text-destructive';
+      default:
+        return 'text-muted-foreground';
     }
   }
 
@@ -960,17 +1103,23 @@ export class StandaloneBuildProgressComponent implements OnInit, OnDestroy, Afte
 
   getStatusLabel(): string {
     switch (this.phase()) {
-      case 'building': return this.buildStatus();
-      case 'confirm':  return 'BUILD COMPLETE';
-      case 'failed':   return 'FAILED';
+      case 'building':
+        return this.buildStatus();
+      case 'confirm':
+        return 'BUILD COMPLETE';
+      case 'failed':
+        return 'FAILED';
     }
   }
 
   getStatusBadgeClass(): string {
     switch (this.phase()) {
-      case 'confirm':  return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[hsl(var(--ok)/0.12)] text-[hsl(var(--ok))]';
-      case 'failed':   return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-destructive/10 text-destructive';
-      default:         return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
+      case 'confirm':
+        return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[hsl(var(--ok)/0.12)] text-[hsl(var(--ok))]';
+      case 'failed':
+        return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-destructive/10 text-destructive';
+      default:
+        return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
     }
   }
 

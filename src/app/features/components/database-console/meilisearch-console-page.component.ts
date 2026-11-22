@@ -4,7 +4,7 @@ import {
   OnInit,
   inject,
   signal,
-  viewChild
+  viewChild,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -26,10 +26,7 @@ import {
   MeiliSearchResult,
   MeiliServerInfo,
 } from '../../model/meilisearch-console.models';
-import {
-  AssistFn,
-  DbAssistantChatComponent,
-} from './db-assistant-chat.component';
+import { AssistFn, DbAssistantChatComponent } from './db-assistant-chat.component';
 import {
   RawConsoleExample,
   RawConsoleSubmit,
@@ -84,16 +81,33 @@ type View = 'browse' | 'console';
         <div class="ml-auto flex items-center gap-2">
           @if (conn() === 'connected') {
             <div class="inline-flex overflow-hidden rounded-md border border-border">
-              <button type="button" (click)="view.set('browse')" class="px-2.5 py-1 text-xs"
-                [class.bg-muted]="view() === 'browse'" [class.text-foreground]="view() === 'browse'"
-                [class.text-muted-foreground]="view() !== 'browse'">Browse</button>
-              <button type="button" (click)="view.set('console')" class="border-l border-border px-2.5 py-1 text-xs"
-                [class.bg-muted]="view() === 'console'" [class.text-foreground]="view() === 'console'"
-                [class.text-muted-foreground]="view() !== 'console'">Console</button>
+              <button
+                type="button"
+                (click)="view.set('browse')"
+                class="px-2.5 py-1 text-xs"
+                [class.bg-muted]="view() === 'browse'"
+                [class.text-foreground]="view() === 'browse'"
+                [class.text-muted-foreground]="view() !== 'browse'"
+              >
+                Browse
+              </button>
+              <button
+                type="button"
+                (click)="view.set('console')"
+                class="border-l border-border px-2.5 py-1 text-xs"
+                [class.bg-muted]="view() === 'console'"
+                [class.text-foreground]="view() === 'console'"
+                [class.text-muted-foreground]="view() !== 'console'"
+              >
+                Console
+              </button>
             </div>
           }
-          <button type="button" (click)="connect()"
-            class="inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-2.5 text-xs text-muted-foreground hover:bg-muted">
+          <button
+            type="button"
+            (click)="connect()"
+            class="inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-2.5 text-xs text-muted-foreground hover:bg-muted"
+          >
             <ng-icon name="lucideRotateCcw" class="h-3.5 w-3.5" /> Refresh
           </button>
         </div>
@@ -104,7 +118,9 @@ type View = 'browse' | 'console';
           <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" /> Connecting…
         </div>
       } @else if (conn() === 'error') {
-        <div class="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+        <div
+          class="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
+        >
           <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-4 w-4 shrink-0" />
           <span>{{ errorMsg() || 'Failed to connect.' }}</span>
         </div>
@@ -121,65 +137,101 @@ type View = 'browse' | 'console';
               />
             </section>
           } @else {
-            <aside class="flex w-56 shrink-0 flex-col overflow-hidden rounded-md border border-border">
-              <div class="flex items-center gap-2 border-b border-border px-3 py-2 text-xs font-medium text-muted-foreground">
+            <aside
+              class="flex w-56 shrink-0 flex-col overflow-hidden rounded-md border border-border"
+            >
+              <div
+                class="flex items-center gap-2 border-b border-border px-3 py-2 text-xs font-medium text-muted-foreground"
+              >
                 <ng-icon name="lucideLayers" class="h-3.5 w-3.5" /> Indexes
               </div>
               <ul class="flex-1 overflow-auto py-1">
                 @for (idx of indexes(); track idx.uid) {
                   <li>
-                    <button type="button" (click)="selectIndex(idx.uid)"
+                    <button
+                      type="button"
+                      (click)="selectIndex(idx.uid)"
                       class="flex w-full items-center justify-between gap-2 px-3 py-1.5 text-left text-sm hover:bg-muted"
-                      [class.bg-muted]="selectedIndex() === idx.uid">
+                      [class.bg-muted]="selectedIndex() === idx.uid"
+                    >
                       <span class="truncate text-foreground">{{ idx.uid }}</span>
-                      <span class="shrink-0 font-mono text-xs text-muted-foreground">{{ idx.numberOfDocuments ?? 0 }}</span>
+                      <span class="shrink-0 font-mono text-xs text-muted-foreground">{{
+                        idx.numberOfDocuments ?? 0
+                      }}</span>
                     </button>
                   </li>
                 }
                 @if (indexes().length === 0) {
-                  <li class="px-3 py-4 text-center text-xs text-muted-foreground">No indexes yet.</li>
+                  <li class="px-3 py-4 text-center text-xs text-muted-foreground">
+                    No indexes yet.
+                  </li>
                 }
               </ul>
             </aside>
 
             <section class="flex min-w-0 flex-1 flex-col overflow-auto">
               @if (!selectedIndex()) {
-                <div class="rounded-md border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
+                <div
+                  class="rounded-md border border-dashed border-border p-10 text-center text-sm text-muted-foreground"
+                >
                   Select an index to search.
                 </div>
               } @else {
                 <div class="flex flex-col gap-2">
                   <div class="flex items-center gap-2">
-                    <input type="text" [(ngModel)]="query" (keydown.enter)="runSearch()"
+                    <input
+                      type="text"
+                      [(ngModel)]="query"
+                      (keydown.enter)="runSearch()"
                       placeholder="Search text (empty = everything)"
-                      class="h-9 flex-1 rounded-md border border-border bg-background px-3 text-sm text-foreground" />
-                    <button type="button" (click)="runSearch()" [disabled]="loading()"
-                      class="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50">
+                      class="h-9 flex-1 rounded-md border border-border bg-background px-3 text-sm text-foreground"
+                    />
+                    <button
+                      type="button"
+                      (click)="runSearch()"
+                      [disabled]="loading()"
+                      class="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                    >
                       <ng-icon name="lucidePlay" class="h-3.5 w-3.5" /> Search
                     </button>
                   </div>
-                  <input type="text" [(ngModel)]="filter" (keydown.enter)="runSearch()"
+                  <input
+                    type="text"
+                    [(ngModel)]="filter"
+                    (keydown.enter)="runSearch()"
                     placeholder="Filter (optional) — e.g. genre = horror AND rating > 4"
-                    class="h-9 w-full rounded-md border border-border bg-background px-3 font-mono text-xs text-foreground" />
+                    class="h-9 w-full rounded-md border border-border bg-background px-3 font-mono text-xs text-foreground"
+                  />
                 </div>
 
                 @if (queryError(); as e) {
-                  <div class="mt-2 flex items-center gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                  <div
+                    class="mt-2 flex items-center gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive"
+                  >
                     <ng-icon name="lucideTriangleAlert" class="h-3.5 w-3.5" /> {{ e }}
                   </div>
                 }
 
                 @if (result(); as r) {
                   <div class="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
-                    <span><strong class="text-foreground">{{ r.estimatedTotalHits }}</strong> hits</span>
+                    <span
+                      ><strong class="text-foreground">{{ r.estimatedTotalHits }}</strong>
+                      hits</span
+                    >
                     <span>· {{ r.processingTimeMs }} ms</span>
                   </div>
                   <div class="mt-2 space-y-2">
                     @for (h of r.hits; track $index) {
-                      <pre class="overflow-auto rounded-md border border-border px-3 py-2 font-mono text-xs text-foreground">{{ pretty(h) }}</pre>
+                      <pre
+                        class="overflow-auto rounded-md border border-border px-3 py-2 font-mono text-xs text-foreground"
+                        >{{ pretty(h) }}</pre>
                     }
                     @if (r.hits.length === 0) {
-                      <div class="rounded-md border border-dashed border-border p-8 text-center text-sm text-muted-foreground">No documents matched.</div>
+                      <div
+                        class="rounded-md border border-dashed border-border p-8 text-center text-sm text-muted-foreground"
+                      >
+                        No documents matched.
+                      </div>
                     }
                   </div>
                 } @else if (loading()) {
@@ -218,10 +270,9 @@ export class MeilisearchConsolePageComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly api = inject(MeilisearchConsoleService);
 
-  readonly applicationId = toSignal(
-    this.route.paramMap.pipe(map((p) => p.get('applicationId'))),
-    { initialValue: this.route.snapshot.paramMap.get('applicationId') },
-  );
+  readonly applicationId = toSignal(this.route.paramMap.pipe(map((p) => p.get('applicationId'))), {
+    initialValue: this.route.snapshot.paramMap.get('applicationId'),
+  });
 
   readonly conn = signal<ConnState>('connecting');
   readonly errorMsg = signal('');
@@ -238,8 +289,7 @@ export class MeilisearchConsolePageComponent implements OnInit {
 
   private readonly shell = viewChild(RestConsoleComponent);
 
-  readonly rawSubmit: RawConsoleSubmit = (req) =>
-    this.api.runRaw(this.applicationId() ?? '', req);
+  readonly rawSubmit: RawConsoleSubmit = (req) => this.api.runRaw(this.applicationId() ?? '', req);
 
   readonly consoleExamples: RawConsoleExample[] = [
     { label: 'List indexes', text: 'GET /indexes' },
@@ -306,11 +356,7 @@ export class MeilisearchConsolePageComponent implements OnInit {
       ? this.rawAssist(prompt, conversation, model)
       : this.searchAssist(prompt, conversation, model);
 
-  private formatRaw(r: {
-    method: string;
-    path: string;
-    body?: Record<string, unknown>;
-  }): string {
+  private formatRaw(r: { method: string; path: string; body?: Record<string, unknown> }): string {
     const head = `${r.method} ${r.path}`;
     return r.body && Object.keys(r.body).length
       ? `${head}\n${JSON.stringify(r.body, null, 2)}`

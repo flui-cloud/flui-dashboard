@@ -3,10 +3,7 @@ import { firstValueFrom } from 'rxjs';
 import { ImageRegistryService } from '../../core/api/api/imageRegistry.service';
 import { ImageResponseDto } from '../../core/api/model/imageResponseDto';
 import { GhcrTagDto } from '../../core/api/model/ghcrTagDto';
-import {
-  isSandboxRefusal,
-  sandboxFailureMessage,
-} from '../../core/services/sandbox.service';
+import { isSandboxRefusal, sandboxFailureMessage } from '../../core/services/sandbox.service';
 
 @Injectable({
   providedIn: 'root',
@@ -49,7 +46,7 @@ export class ImageRegistryFeatureService {
     this.clearError();
     try {
       const images = await firstValueFrom(
-        this.api.imageRegistryControllerListImages(appId, tag, 1, 100)
+        this.api.imageRegistryControllerListImages(appId, tag, 1, 100),
       );
       this.imagesList.set(images);
     } catch (error: any) {
@@ -64,9 +61,7 @@ export class ImageRegistryFeatureService {
     this.isLoading.set(true);
     this.clearError();
     try {
-      const images = await firstValueFrom(
-        this.api.imageRegistryControllerListImagesByApp(appId)
-      );
+      const images = await firstValueFrom(this.api.imageRegistryControllerListImagesByApp(appId));
       this.imagesList.set(images);
     } catch (error: any) {
       this.noteFailure(error, 'Failed to load images');
@@ -78,31 +73,27 @@ export class ImageRegistryFeatureService {
 
   async addTag(imageId: string, tag: string): Promise<ImageResponseDto> {
     const updated = await firstValueFrom(
-      this.api.imageRegistryControllerAddFluiTag(imageId, { tag })
+      this.api.imageRegistryControllerAddFluiTag(imageId, { tag }),
     );
-    this.imagesList.update(imgs => imgs.map(i => i.id === imageId ? updated : i));
+    this.imagesList.update((imgs) => imgs.map((i) => (i.id === imageId ? updated : i)));
     return updated;
   }
 
   async removeTag(imageId: string, tag: string): Promise<ImageResponseDto> {
     const updated = await firstValueFrom(
-      this.api.imageRegistryControllerRemoveFluiTag(imageId, tag)
+      this.api.imageRegistryControllerRemoveFluiTag(imageId, tag),
     );
-    this.imagesList.update(imgs => imgs.map(i => i.id === imageId ? updated : i));
+    this.imagesList.update((imgs) => imgs.map((i) => (i.id === imageId ? updated : i)));
     return updated;
   }
 
   async deployImage(imageId: string): Promise<void> {
-    await firstValueFrom(
-      this.api.imageRegistryControllerDeployImage(imageId)
-    );
+    await firstValueFrom(this.api.imageRegistryControllerDeployImage(imageId));
   }
 
   async deleteImage(imageId: string): Promise<void> {
-    await firstValueFrom(
-      this.api.imageRegistryControllerDeleteImage(imageId)
-    );
-    this.imagesList.update(imgs => imgs.filter(i => i.id !== imageId));
+    await firstValueFrom(this.api.imageRegistryControllerDeleteImage(imageId));
+    this.imagesList.update((imgs) => imgs.filter((i) => i.id !== imageId));
   }
 
   clearError(): void {
@@ -120,15 +111,12 @@ export class ImageRegistryFeatureService {
     const refused = isSandboxRefusal(error);
     this.refusedSignal.set(refused);
     this.refusalMessageSignal.set(
-      refused
-        ? ((error as { error?: { message?: string } })?.error?.message ?? null)
-        : null,
+      refused ? ((error as { error?: { message?: string } })?.error?.message ?? null) : null,
     );
     this.error.set(
       sandboxFailureMessage(
         error,
-        (error as { error?: { message?: string }; message?: string })?.error
-          ?.message ||
+        (error as { error?: { message?: string }; message?: string })?.error?.message ||
           (error as { message?: string })?.message ||
           fallback,
       ),
@@ -141,9 +129,7 @@ export class ImageRegistryFeatureService {
     this.ghcrIsLoading.set(true);
     this.ghcrError.set(null);
     try {
-      const tags = await firstValueFrom(
-        this.api.imageRegistryControllerListGhcrVersions(appId)
-      );
+      const tags = await firstValueFrom(this.api.imageRegistryControllerListGhcrVersions(appId));
       this.ghcrTagsList.set(tags);
     } catch (error: any) {
       const status = error?.status;
@@ -153,7 +139,9 @@ export class ImageRegistryFeatureService {
         return;
       }
       if (status === 403) {
-        this.ghcrError.set('GitHub refused to list the images. The GitHub token needs the read:packages scope; replace it on the Repositories page.');
+        this.ghcrError.set(
+          'GitHub refused to list the images. The GitHub token needs the read:packages scope; replace it on the Repositories page.',
+        );
       } else {
         this.ghcrError.set(error?.error?.message || error?.message || 'Failed to load GHCR images');
       }
@@ -165,14 +153,15 @@ export class ImageRegistryFeatureService {
 
   async deleteGhcrVersion(appId: string, versionId: number, force = false): Promise<void> {
     await firstValueFrom(
-      this.api.imageRegistryControllerDeleteGhcrVersion(appId, versionId, force ? 'true' : 'false')
+      this.api.imageRegistryControllerDeleteGhcrVersion(appId, versionId, force ? 'true' : 'false'),
     );
-    this.ghcrTagsList.update(tags => tags.filter(t => t.versionId !== versionId));
+    this.ghcrTagsList.update((tags) => tags.filter((t) => t.versionId !== versionId));
   }
 
-  async redeployGhcrTag(appId: string, tag: string): Promise<{ operationId: string; status: string }> {
-    return await firstValueFrom(
-      this.api.imageRegistryControllerRedeployGhcrTag(appId, tag)
-    );
+  async redeployGhcrTag(
+    appId: string,
+    tag: string,
+  ): Promise<{ operationId: string; status: string }> {
+    return await firstValueFrom(this.api.imageRegistryControllerRedeployGhcrTag(appId, tag));
   }
 }

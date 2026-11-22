@@ -22,14 +22,28 @@ import {
       {{ label() }}
     </span>
   `,
-  styles: [`
-    :host { display: inline-block; }
-    .badge-gray   { @apply bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300; }
-    .badge-green  { @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300; }
-    .badge-yellow { @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300; }
-    .badge-blue   { @apply bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300; }
-    .badge-red    { @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300; }
-  `]
+  styles: [
+    `
+      :host {
+        display: inline-block;
+      }
+      .badge-gray {
+        @apply bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300;
+      }
+      .badge-green {
+        @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300;
+      }
+      .badge-yellow {
+        @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300;
+      }
+      .badge-blue {
+        @apply bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300;
+      }
+      .badge-red {
+        @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300;
+      }
+    `,
+  ],
 })
 export class DnsStatusBadgeComponent {
   status = input.required<DnsReconciliationStatus | CertificateStatus | string | null>();

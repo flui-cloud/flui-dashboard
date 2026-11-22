@@ -36,7 +36,6 @@ export interface DashboardDnsStatus {
   zitadel: AppDnsInfo | null;
 }
 
-
 @Injectable({ providedIn: 'root' })
 export class DashboardDnsService {
   private readonly clusterDNSZoneApi = inject(ClusterDNSZoneService);
@@ -60,8 +59,8 @@ export class DashboardDnsService {
   async load(): Promise<void> {
     const clusters = this.clusterService.clusters();
     const target =
-      clusters.find(c => isControlClusterType(c.clusterType) && !!c.id) ??
-      clusters.find(c => !!c.id);
+      clusters.find((c) => isControlClusterType(c.clusterType) && !!c.id) ??
+      clusters.find((c) => !!c.id);
 
     if (!target?.id) return;
 
@@ -72,11 +71,15 @@ export class DashboardDnsService {
     try {
       // Load system status (applicationId, endpointId, domain per app) + endpoints in parallel
       const [systemStatus, endpoints] = await Promise.all([
-        firstValueFrom(this.clusterDNSZoneApi.clusterDnsZoneControllerGetSystemDnsStatus(target.id)),
-        firstValueFrom(this.appEndpointsApi.appEndpointControllerListEndpoints(target.id)).catch(() => [] as AppEndpointResponseDto[]),
+        firstValueFrom(
+          this.clusterDNSZoneApi.clusterDnsZoneControllerGetSystemDnsStatus(target.id),
+        ),
+        firstValueFrom(this.appEndpointsApi.appEndpointControllerListEndpoints(target.id)).catch(
+          () => [] as AppEndpointResponseDto[],
+        ),
       ]);
 
-      const endpointMap = new Map(endpoints.map(e => [e.id, e]));
+      const endpointMap = new Map(endpoints.map((e) => [e.id, e]));
 
       const buildAppInfo = (raw: SystemDnsStatusResponseDto['fluiApi']): AppDnsInfo => {
         const appId = raw?.applicationId ?? null;
@@ -86,7 +89,8 @@ export class DashboardDnsService {
         const syncedDomain = raw?.syncedDomain ?? null;
         const lastSyncedAt = raw?.lastSyncedAt ?? null;
         const synced = raw?.synced ?? false;
-        const endpointWorking = ep?.reconciliationStatus === 'IN_SYNC' && ep?.certificateStatus === 'valid';
+        const endpointWorking =
+          ep?.reconciliationStatus === 'IN_SYNC' && ep?.certificateStatus === 'valid';
         const isComplete =
           (synced && syncedDomain !== null && syncedDomain === domain && lastSyncedAt !== null) ||
           endpointWorking;
@@ -111,12 +115,26 @@ export class DashboardDnsService {
       // zitadel may be null when SSO is not configured for this installation
       const zitadel = systemStatus.zitadel ? buildAppInfo(systemStatus.zitadel) : null;
 
-      const dnsZoneConfigured = !!(fluiApi.endpointId || fluiWeb.endpointId || zitadel?.endpointId || fluiApi.domain || fluiWeb.domain);
+      const dnsZoneConfigured = !!(
+        fluiApi.endpointId ||
+        fluiWeb.endpointId ||
+        zitadel?.endpointId ||
+        fluiApi.domain ||
+        fluiWeb.domain
+      );
       const hasEndpoints = !!(fluiApi.endpointId || fluiWeb.endpointId || zitadel?.endpointId);
       // Only include zitadel in fullyConfigured check when it is present in this installation
-      const fullyConfigured = fluiApi.isComplete && fluiWeb.isComplete && (zitadel === null || zitadel.isComplete);
+      const fullyConfigured =
+        fluiApi.isComplete && fluiWeb.isComplete && (zitadel === null || zitadel.isComplete);
 
-      this.statusData.set({ dnsZoneConfigured, hasEndpoints, fullyConfigured, fluiApi, fluiWeb, zitadel });
+      this.statusData.set({
+        dnsZoneConfigured,
+        hasEndpoints,
+        fullyConfigured,
+        fluiApi,
+        fluiWeb,
+        zitadel,
+      });
     } catch {
       this.errorData.set('Could not load DNS status');
     } finally {

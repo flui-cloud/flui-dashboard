@@ -1,10 +1,13 @@
 import {
-  Component, OnChanges, SimpleChanges, signal,
+  Component,
+  OnChanges,
+  SimpleChanges,
+  signal,
   input,
   output,
   inject,
   effect,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
 } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
@@ -49,19 +52,24 @@ export interface VariablesSavePayload {
 function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
   const trimmed = value.trim();
   if (!trimmed) return 'plain';
-  if ((trimmed.startsWith('{') && trimmed.endsWith('}')) ||
-      (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
-    try { JSON.parse(trimmed); return 'json'; } catch { /* not valid JSON */ }
+  if (
+    (trimmed.startsWith('{') && trimmed.endsWith('}')) ||
+    (trimmed.startsWith('[') && trimmed.endsWith(']'))
+  ) {
+    try {
+      JSON.parse(trimmed);
+      return 'json';
+    } catch {
+      /* not valid JSON */
+    }
   }
   // YAML heuristics: contains newlines + colon-separated lines, or starts with ---
-  if (trimmed.includes('\n') || trimmed.startsWith('---') ||
-      /^[a-zA-Z_]\w*:\s/.test(trimmed)) {
+  if (trimmed.includes('\n') || trimmed.startsWith('---') || /^[a-zA-Z_]\w*:\s/.test(trimmed)) {
     return 'yaml';
   }
   if (value.length > 80) return 'long';
   return 'plain';
 }
-
 
 @Component({
   selector: 'app-variables-editor',
@@ -69,15 +77,24 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
   imports: [FormsModule, NgIconComponent],
   providers: [
     provideIcons({
-      lucidePlus, lucideTrash2, lucideSave, lucideLock,
-      lucideEye, lucideEyeOff, lucideKey, lucideLoader,
-      lucidePencil, lucideX, lucideCode, lucideList, lucideMaximize2,
+      lucidePlus,
+      lucideTrash2,
+      lucideSave,
+      lucideLock,
+      lucideEye,
+      lucideEyeOff,
+      lucideKey,
+      lucideLoader,
+      lucidePencil,
+      lucideX,
+      lucideCode,
+      lucideList,
+      lucideMaximize2,
     }),
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 space-y-3">
-
       <!-- Header -->
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
@@ -87,7 +104,9 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
           />
           <h4 class="text-sm font-semibold text-gray-900 dark:text-white">{{ title() }}</h4>
           @if (isSensitiveSection) {
-            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+            <span
+              class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400"
+            >
               Write-only
             </span>
           }
@@ -101,9 +120,11 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
               type="button"
               (click)="toggleJsonMode()"
               class="inline-flex items-center gap-1 px-2 py-1 text-xs rounded border transition-colors"
-              [class]="jsonMode()
-                ? 'border-blue-400 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                : 'border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500'"
+              [class]="
+                jsonMode()
+                  ? 'border-blue-400 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                  : 'border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500'
+              "
             >
               <ng-icon [name]="jsonMode() ? 'lucideList' : 'lucideCode'" class="h-3.5 w-3.5" />
               {{ jsonMode() ? 'Row view' : 'JSON' }}
@@ -132,36 +153,57 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
             rows="12"
             spellcheck="false"
             class="w-full font-mono text-xs px-3 py-2 bg-white dark:bg-gray-800 border rounded text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none resize-y"
-            [class]="jsonError() ? 'border-red-400 focus:border-red-500' : 'border-gray-300 dark:border-gray-600 focus:border-blue-500'"
+            [class]="
+              jsonError()
+                ? 'border-red-400 focus:border-red-500'
+                : 'border-gray-300 dark:border-gray-600 focus:border-blue-500'
+            "
             placeholder='{ "KEY": "value" }'
           ></textarea>
           @if (jsonError()) {
             <p class="text-xs text-red-600 dark:text-red-400">{{ jsonError() }}</p>
           }
           <p class="text-xs text-gray-400 dark:text-gray-500">
-            Edit as a flat JSON object. Keys already in the dataset will be overwritten; others will be added via upsert.
+            Edit as a flat JSON object. Keys already in the dataset will be overwritten; others will
+            be added via upsert.
           </p>
         </div>
       } @else {
-
         <!-- ── ROW MODE ── -->
         @if (rows().length > 0) {
           <div class="overflow-hidden rounded border border-gray-200 dark:border-gray-600">
             <table class="w-full text-sm">
               <thead>
-                <tr class="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600">
-                  <th class="text-left px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 w-2/5">KEY</th>
-                  <th class="text-left px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400">VALUE</th>
+                <tr
+                  class="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600"
+                >
+                  <th
+                    class="text-left px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 w-2/5"
+                  >
+                    KEY
+                  </th>
+                  <th
+                    class="text-left px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400"
+                  >
+                    VALUE
+                  </th>
                   <th class="px-3 py-2 w-20"></th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                 @for (row of rows(); track row.key; let i = $index) {
-                  <tr [class]="isDirtyRow(row) ? 'bg-blue-50 dark:bg-blue-900/10' : 'bg-white dark:bg-gray-800/50'">
-
+                  <tr
+                    [class]="
+                      isDirtyRow(row)
+                        ? 'bg-blue-50 dark:bg-blue-900/10'
+                        : 'bg-white dark:bg-gray-800/50'
+                    "
+                  >
                     <!-- KEY -->
                     <td class="px-3 py-1.5 align-top">
-                      <span class="font-mono text-xs text-gray-700 dark:text-gray-300">{{ row.key }}</span>
+                      <span class="font-mono text-xs text-gray-700 dark:text-gray-300">{{
+                        row.key
+                      }}</span>
                     </td>
 
                     <!-- VALUE -->
@@ -182,24 +224,51 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
                               [title]="maskMode.enabled() ? 'Turn off mask mode to reveal' : ''"
                               class="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-gray-400"
                             >
-                              <ng-icon [name]="showValues() ? 'lucideEyeOff' : 'lucideEye'" class="h-3.5 w-3.5" />
+                              <ng-icon
+                                [name]="showValues() ? 'lucideEyeOff' : 'lucideEye'"
+                                class="h-3.5 w-3.5"
+                              />
                             </button>
-                            <button type="button" (click)="openExpandModal(i, true)" class="flex-shrink-0 text-gray-400 hover:text-blue-500 dark:hover:text-blue-400" title="Expand editor">
+                            <button
+                              type="button"
+                              (click)="openExpandModal(i, true)"
+                              class="flex-shrink-0 text-gray-400 hover:text-blue-500 dark:hover:text-blue-400"
+                              title="Expand editor"
+                            >
                               <ng-icon name="lucideMaximize2" class="h-3.5 w-3.5" />
                             </button>
-                            <button type="button" (click)="confirmSecretEdit(i)" [disabled]="!row.newSecretValue.trim()" class="text-xs px-1.5 py-0.5 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50">OK</button>
-                            <button type="button" (click)="cancelSecretEdit(i)" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                            <button
+                              type="button"
+                              (click)="confirmSecretEdit(i)"
+                              [disabled]="!row.newSecretValue.trim()"
+                              class="text-xs px-1.5 py-0.5 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                            >
+                              OK
+                            </button>
+                            <button
+                              type="button"
+                              (click)="cancelSecretEdit(i)"
+                              class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                            >
                               <ng-icon name="lucideX" class="h-3.5 w-3.5" />
                             </button>
                           </div>
                         } @else {
                           <span
                             class="font-mono text-xs select-none"
-                            [class]="row.isPending && !isDirtyRow(row)
-                              ? 'italic text-amber-600 dark:text-amber-400'
-                              : 'text-gray-400 dark:text-gray-500'"
+                            [class]="
+                              row.isPending && !isDirtyRow(row)
+                                ? 'italic text-amber-600 dark:text-amber-400'
+                                : 'text-gray-400 dark:text-gray-500'
+                            "
                           >
-                            {{ isDirtyRow(row) ? '(updated)' : (row.isPending ? 'awaiting a value' : '****') }}
+                            {{
+                              isDirtyRow(row)
+                                ? '(updated)'
+                                : row.isPending
+                                  ? 'awaiting a value'
+                                  : '****'
+                            }}
                           </span>
                         }
                       } @else if (row.editingPlain) {
@@ -210,11 +279,26 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
                             placeholder="value"
                             class="flex-1 font-mono text-xs px-2 py-1 bg-white dark:bg-gray-800 border border-blue-400 rounded text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none"
                           />
-                          <button type="button" (click)="openExpandModal(i, false)" class="flex-shrink-0 text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 mt-0.5" title="Expand editor">
+                          <button
+                            type="button"
+                            (click)="openExpandModal(i, false)"
+                            class="flex-shrink-0 text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 mt-0.5"
+                            title="Expand editor"
+                          >
                             <ng-icon name="lucideMaximize2" class="h-3.5 w-3.5" />
                           </button>
-                          <button type="button" (click)="confirmPlainEdit(i)" class="text-xs px-1.5 py-0.5 bg-blue-600 text-white rounded hover:bg-blue-700 mt-0.5">OK</button>
-                          <button type="button" (click)="cancelPlainEdit(i)" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 mt-0.5">
+                          <button
+                            type="button"
+                            (click)="confirmPlainEdit(i)"
+                            class="text-xs px-1.5 py-0.5 bg-blue-600 text-white rounded hover:bg-blue-700 mt-0.5"
+                          >
+                            OK
+                          </button>
+                          <button
+                            type="button"
+                            (click)="cancelPlainEdit(i)"
+                            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 mt-0.5"
+                          >
                             <ng-icon name="lucideX" class="h-3.5 w-3.5" />
                           </button>
                         </div>
@@ -223,13 +307,21 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
                         <div class="flex items-start gap-1.5 min-w-0">
                           <span
                             class="font-mono text-xs truncate max-w-xs"
-                            [class]="isDirtyRow(row) ? 'text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400'"
+                            [class]="
+                              isDirtyRow(row)
+                                ? 'text-blue-700 dark:text-blue-300'
+                                : 'text-gray-600 dark:text-gray-400'
+                            "
                             [title]="row.value"
                           >
                             {{ row.value || '—' }}
                           </span>
                           @if (getValueTypeBadge(row.value); as badge) {
-                            <span class="flex-shrink-0 inline-flex items-center px-1 py-0 rounded text-[10px] font-medium {{ badge.class }}">
+                            <span
+                              class="flex-shrink-0 inline-flex items-center px-1 py-0 rounded text-[10px] font-medium {{
+                                badge.class
+                              }}"
+                            >
                               {{ badge.label }}
                             </span>
                           }
@@ -282,7 +374,9 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
 
         <!-- Add new variable form -->
         @if (showAddForm()) {
-          <div class="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
+          <div
+            class="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800"
+          >
             <input
               type="text"
               [(ngModel)]="newKey"
@@ -295,8 +389,21 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
               placeholder="value"
               class="flex-1 font-mono text-xs px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
             />
-            <button type="button" (click)="confirmAddRow()" [disabled]="!newKey.trim()" class="px-2 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">Add</button>
-            <button type="button" (click)="cancelAddRow()" class="px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Cancel</button>
+            <button
+              type="button"
+              (click)="confirmAddRow()"
+              [disabled]="!newKey.trim()"
+              class="px-2 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Add
+            </button>
+            <button
+              type="button"
+              (click)="cancelAddRow()"
+              class="px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+            >
+              Cancel
+            </button>
           </div>
         }
 
@@ -317,24 +424,41 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
 
     <!-- ── EXPAND MODAL ── -->
     @if (expandModal()) {
-      <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" (click)="closeExpandModal()">
-        <div class="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[80vh]" (click)="$event.stopPropagation()">
-
+      <div
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+        (click)="closeExpandModal()"
+      >
+        <div
+          class="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[80vh]"
+          (click)="$event.stopPropagation()"
+        >
           <!-- Modal header -->
-          <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
+          <div
+            class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700"
+          >
             <div class="flex items-center gap-2">
               <ng-icon
                 [name]="expandModal()!.isSensitive ? 'lucideLock' : 'lucideCode'"
                 class="h-4 w-4 text-gray-500 dark:text-gray-400"
               />
-              <span class="text-sm font-semibold text-gray-900 dark:text-white font-mono">{{ expandModal()!.key }}</span>
+              <span class="text-sm font-semibold text-gray-900 dark:text-white font-mono">{{
+                expandModal()!.key
+              }}</span>
               @if (expandModal()!.typeLabel) {
-                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium {{ expandModal()!.typeBadgeClass }}">
+                <span
+                  class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium {{
+                    expandModal()!.typeBadgeClass
+                  }}"
+                >
                   {{ expandModal()!.typeLabel }}
                 </span>
               }
             </div>
-            <button type="button" (click)="closeExpandModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+            <button
+              type="button"
+              (click)="closeExpandModal()"
+              class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            >
               <ng-icon name="lucideX" class="h-5 w-5" />
             </button>
           </div>
@@ -350,7 +474,10 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
                   [title]="maskMode.enabled() ? 'Turn off mask mode to reveal' : ''"
                   class="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-gray-500"
                 >
-                  <ng-icon [name]="showValues() ? 'lucideEyeOff' : 'lucideEye'" class="h-3.5 w-3.5" />
+                  <ng-icon
+                    [name]="showValues() ? 'lucideEyeOff' : 'lucideEye'"
+                    class="h-3.5 w-3.5"
+                  />
                   {{ showValues() ? 'Hide' : 'Show' }} value
                 </button>
               </div>
@@ -372,13 +499,23 @@ function detectValueType(value: string): 'json' | 'yaml' | 'long' | 'plain' {
               ></textarea>
             }
             <p class="text-xs text-gray-400 dark:text-gray-500">
-              {{ expandModal()!.isSensitive ? 'Value will be stored as a Secret. It will never be readable back.' : 'Tip: you can paste multi-line JSON, YAML, or long strings directly.' }}
+              {{
+                expandModal()!.isSensitive
+                  ? 'Value will be stored as a Secret. It will never be readable back.'
+                  : 'Tip: you can paste multi-line JSON, YAML, or long strings directly.'
+              }}
             </p>
           </div>
 
           <!-- Modal footer -->
-          <div class="flex items-center justify-end gap-3 px-5 py-4 border-t border-gray-200 dark:border-gray-700">
-            <button type="button" (click)="closeExpandModal()" class="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+          <div
+            class="flex items-center justify-end gap-3 px-5 py-4 border-t border-gray-200 dark:border-gray-700"
+          >
+            <button
+              type="button"
+              (click)="closeExpandModal()"
+              class="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+            >
               Cancel
             </button>
             <button
@@ -498,14 +635,33 @@ export class AppVariablesEditorComponent implements OnChanges {
 
   protected getValueTypeBadge(value: string): { label: string; class: string } | null {
     const t = detectValueType(value);
-    if (t === 'json') return { label: 'JSON', class: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' };
-    if (t === 'yaml') return { label: 'YAML', class: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' };
-    if (t === 'long') return { label: 'long', class: 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-400' };
+    if (t === 'json')
+      return {
+        label: 'JSON',
+        class: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+      };
+    if (t === 'yaml')
+      return {
+        label: 'YAML',
+        class: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+      };
+    if (t === 'long')
+      return {
+        label: 'long',
+        class: 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-400',
+      };
     return null;
   }
 
-  private getModalBadge(value: string, isSensitive: boolean): { typeLabel: string; typeBadgeClass: string } {
-    if (isSensitive) return { typeLabel: 'secret', typeBadgeClass: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400' };
+  private getModalBadge(
+    value: string,
+    isSensitive: boolean,
+  ): { typeLabel: string; typeBadgeClass: string } {
+    if (isSensitive)
+      return {
+        typeLabel: 'secret',
+        typeBadgeClass: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+      };
     const badge = this.getValueTypeBadge(value);
     return { typeLabel: badge?.label ?? '', typeBadgeClass: badge?.class ?? '' };
   }
@@ -548,16 +704,20 @@ export class AppVariablesEditorComponent implements OnChanges {
     if (!modal) return;
     const { rowIndex, editValue, isSensitive } = modal;
     if (isSensitive) {
-      this.rows.update(rows =>
+      this.rows.update((rows) =>
         rows.map((r, i) =>
-          i === rowIndex ? { ...r, value: editValue, newSecretValue: editValue, editingSecret: false } : r
-        )
+          i === rowIndex
+            ? { ...r, value: editValue, newSecretValue: editValue, editingSecret: false }
+            : r,
+        ),
       );
     } else {
-      this.rows.update(rows =>
+      this.rows.update((rows) =>
         rows.map((r, i) =>
-          i === rowIndex ? { ...r, value: editValue, newPlainValue: editValue, editingPlain: false } : r
-        )
+          i === rowIndex
+            ? { ...r, value: editValue, newPlainValue: editValue, editingPlain: false }
+            : r,
+        ),
       );
     }
     this.expandModal.set(null);
@@ -583,7 +743,11 @@ export class AppVariablesEditorComponent implements OnChanges {
   }
 
   protected onJsonChange(text: string): void {
-    if (!text.trim()) { this.jsonError.set(null); this.jsonParsed.set(null); return; }
+    if (!text.trim()) {
+      this.jsonError.set(null);
+      this.jsonParsed.set(null);
+      return;
+    }
     try {
       const parsed = JSON.parse(text);
       if (typeof parsed !== 'object' || Array.isArray(parsed) || parsed === null) {
@@ -616,55 +780,59 @@ export class AppVariablesEditorComponent implements OnChanges {
 
   protected isDirty(): boolean {
     if (this.jsonMode()) return this.jsonParsed() !== null;
-    return this.deletedKeys().size > 0 || this.rows().some(r => this.isDirtyRow(r));
+    return this.deletedKeys().size > 0 || this.rows().some((r) => this.isDirtyRow(r));
   }
 
   protected canSave(): boolean {
     if (this.jsonMode()) return this.jsonParsed() !== null && !this.jsonError();
-    return this.rows().filter(r => r.isNew).every(r => r.key.trim() && r.value.trim());
+    return this.rows()
+      .filter((r) => r.isNew)
+      .every((r) => r.key.trim() && r.value.trim());
   }
 
   // ── Plain row edit ────────────────────────────────────────────────────────
 
   protected startPlainEdit(index: number): void {
-    this.rows.update(rows =>
-      rows.map((r, i) => i === index ? { ...r, editingPlain: true, newPlainValue: r.value } : r)
+    this.rows.update((rows) =>
+      rows.map((r, i) => (i === index ? { ...r, editingPlain: true, newPlainValue: r.value } : r)),
     );
   }
 
   protected cancelPlainEdit(index: number): void {
-    this.rows.update(rows =>
-      rows.map((r, i) => i === index ? { ...r, editingPlain: false, newPlainValue: '' } : r)
+    this.rows.update((rows) =>
+      rows.map((r, i) => (i === index ? { ...r, editingPlain: false, newPlainValue: '' } : r)),
     );
   }
 
   protected confirmPlainEdit(index: number): void {
-    this.rows.update(rows =>
+    this.rows.update((rows) =>
       rows.map((r, i) =>
-        i === index ? { ...r, value: r.newPlainValue, editingPlain: false, newPlainValue: '' } : r
-      )
+        i === index ? { ...r, value: r.newPlainValue, editingPlain: false, newPlainValue: '' } : r,
+      ),
     );
   }
 
   // ── Sensitive row edit ────────────────────────────────────────────────────
 
   protected startSecretEdit(index: number): void {
-    this.rows.update(rows =>
-      rows.map((r, i) => i === index ? { ...r, editingSecret: true, newSecretValue: '' } : r)
+    this.rows.update((rows) =>
+      rows.map((r, i) => (i === index ? { ...r, editingSecret: true, newSecretValue: '' } : r)),
     );
   }
 
   protected cancelSecretEdit(index: number): void {
-    this.rows.update(rows =>
-      rows.map((r, i) => i === index ? { ...r, editingSecret: false, newSecretValue: '' } : r)
+    this.rows.update((rows) =>
+      rows.map((r, i) => (i === index ? { ...r, editingSecret: false, newSecretValue: '' } : r)),
     );
   }
 
   protected confirmSecretEdit(index: number): void {
-    this.rows.update(rows =>
+    this.rows.update((rows) =>
       rows.map((r, i) =>
-        i === index ? { ...r, value: r.newSecretValue, editingSecret: false, newSecretValue: '' } : r
-      )
+        i === index
+          ? { ...r, value: r.newSecretValue, editingSecret: false, newSecretValue: '' }
+          : r,
+      ),
     );
   }
 
@@ -682,7 +850,7 @@ export class AppVariablesEditorComponent implements OnChanges {
 
   protected confirmAddRow(): void {
     if (!this.newKey.trim()) return;
-    this.rows.update(rows => [
+    this.rows.update((rows) => [
       ...rows,
       {
         key: this.newKey.trim(),
@@ -703,13 +871,13 @@ export class AppVariablesEditorComponent implements OnChanges {
   protected removeRow(index: number): void {
     const row = this.rows()[index];
     if (!row.isNew) {
-      this.deletedKeys.update(s => new Set([...s, row.key]));
+      this.deletedKeys.update((s) => new Set([...s, row.key]));
     }
-    this.rows.update(rows => rows.filter((_, i) => i !== index));
+    this.rows.update((rows) => rows.filter((_, i) => i !== index));
   }
 
   protected toggleValues(): void {
-    this.showValues.update(v => !v);
+    this.showValues.update((v) => !v);
   }
 
   // ── Save ──────────────────────────────────────────────────────────────────
@@ -719,7 +887,7 @@ export class AppVariablesEditorComponent implements OnChanges {
       const parsed = this.jsonParsed();
       if (!parsed) return;
       const deleteKeys = Object.keys(this.data()).filter(
-        k => !this.sensitiveKeys().includes(k) && !(k in parsed),
+        (k) => !this.sensitiveKeys().includes(k) && !(k in parsed),
       );
       this.save.emit({ data: parsed, deleteKeys });
       return;

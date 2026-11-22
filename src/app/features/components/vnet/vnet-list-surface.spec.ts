@@ -23,7 +23,18 @@ function vnet(over: Partial<VNetInfo> = {}): VNetInfo {
     ipRange: '10.0.0.0/16',
     labels: [{ key: 'env', value: 'prod' }],
     status: VNetStatus.ACTIVE,
-    subnets: [{ id: 's1', vnetId: 'vnet-1', ipRange: '10.0.1.0/24', networkZone: 'eu-central', gateway: '10.0.1.1', attachedServerIds: ['srv-1'], createdAt: new Date(), updatedAt: new Date() }],
+    subnets: [
+      {
+        id: 's1',
+        vnetId: 'vnet-1',
+        ipRange: '10.0.1.0/24',
+        networkZone: 'eu-central',
+        gateway: '10.0.1.1',
+        attachedServerIds: ['srv-1'],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ],
     routes: [],
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
     updatedAt: new Date('2026-01-01T00:00:00.000Z'),
@@ -44,7 +55,10 @@ function input(over: Partial<VNetListSurfaceInput> = {}): VNetListSurfaceInput {
 }
 
 function snapshotOf(over: Partial<VNetListSurfaceInput> = {}): SurfaceSnapshot {
-  return buildVNetListSurface(input(over), { revision: 1, generatedAt: '2026-08-20T09:13:00.000Z' });
+  return buildVNetListSurface(input(over), {
+    revision: 1,
+    generatedAt: '2026-08-20T09:13:00.000Z',
+  });
 }
 
 const listScope = (s: SurfaceSnapshot) => s.scopes.find((x) => x.kind === 'list')!;
@@ -78,14 +92,24 @@ describe('vnet list surface producer', () => {
   });
 
   it('says who built the network, which the provider field cannot: a Flui-built one reads byos there', () => {
-    const obs = rowScopes(snapshotOf({ visibleVNets: [vnet({ provider: 'byos' as VNetInfo['provider'], implementation: 'wireguard' })] }))[0].observations!;
+    const obs = rowScopes(
+      snapshotOf({
+        visibleVNets: [
+          vnet({ provider: 'byos' as VNetInfo['provider'], implementation: 'wireguard' }),
+        ],
+      }),
+    )[0].observations!;
     expect(obs.find((o) => o.key === 'flui.vnet.provider')?.presentedAs.text).toBe('byos');
-    expect(obs.find((o) => o.key === 'flui.vnet.implementation')?.presentedAs.text).toBe('wireguard');
+    expect(obs.find((o) => o.key === 'flui.vnet.implementation')?.presentedAs.text).toBe(
+      'wireguard',
+    );
   });
 
   it('reads a network with no implementation as provider-native', () => {
     const obs = rowScopes(snapshotOf())[0].observations!;
-    expect(obs.find((o) => o.key === 'flui.vnet.implementation')?.presentedAs.text).toBe('provider-native');
+    expect(obs.find((o) => o.key === 'flui.vnet.implementation')?.presentedAs.text).toBe(
+      'provider-native',
+    );
   });
 
   it('redacts: the VNet CIDR, subnet CIDR and gateway never reach the snapshot (unclassified backend field — see producer comment)', () => {
@@ -102,7 +126,10 @@ describe('vnet list surface producer', () => {
   });
 
   it('declares filtered when a filter narrows the visible set', () => {
-    const snapshot = snapshotOf({ totalCount: 5, filters: { search: '', provider: 'hetzner', status: '', clusterId: '' } });
+    const snapshot = snapshotOf({
+      totalCount: 5,
+      filters: { search: '', provider: 'hetzner', status: '', clusterId: '' },
+    });
     expect(listScope(snapshot).completeness).toEqual({ shown: 1, total: 5, filtered: true });
   });
 
@@ -113,9 +140,15 @@ describe('vnet list surface producer', () => {
 
   it('bumps the revision on real change, and validateSurfaceSemantics accepts it against the previous snapshot', () => {
     const tracker = new VNetListSurfaceRevision();
-    const first = buildVNetListSurface(input(), { revision: tracker.next(presentedContent(input())), generatedAt: '2026-08-20T09:13:00.000Z' });
+    const first = buildVNetListSurface(input(), {
+      revision: tracker.next(presentedContent(input())),
+      generatedAt: '2026-08-20T09:13:00.000Z',
+    });
     const changed = input({ visibleVNets: [vnet({ status: VNetStatus.FAILED })] });
-    const second = buildVNetListSurface(changed, { revision: tracker.next(presentedContent(changed)), generatedAt: '2026-08-20T09:14:00.000Z' });
+    const second = buildVNetListSurface(changed, {
+      revision: tracker.next(presentedContent(changed)),
+      generatedAt: '2026-08-20T09:14:00.000Z',
+    });
     expect(second.surface.revision).toBe(first.surface.revision + 1);
     expect(validateSurfaceSemantics(second, { previousSnapshot: first })).toEqual([]);
   });
@@ -123,8 +156,13 @@ describe('vnet list surface producer', () => {
   // The invalid-revision check needs a real failing case exercised, not just trusted.
   it('flags a snapshot whose revision does not advance on the previous one', () => {
     const first = snapshotOf();
-    const stale = { ...snapshotOf(), surface: { ...snapshotOf().surface, revision: first.surface.revision } };
+    const stale = {
+      ...snapshotOf(),
+      surface: { ...snapshotOf().surface, revision: first.surface.revision },
+    };
     const issues = validateSurfaceSemantics(stale, { previousSnapshot: first });
-    expect(issues).toEqual([jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' })]);
+    expect(issues).toEqual([
+      jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' }),
+    ]);
   });
 });

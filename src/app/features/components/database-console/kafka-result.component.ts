@@ -13,9 +13,7 @@ import { formatValue, pretty } from './kafka-format';
   template: `
     @if (state.result(); as r) {
       <div class="mt-3 rounded-md border border-border">
-        <div
-          class="flex items-center gap-2 border-b border-border bg-muted/40 px-3 py-1.5 text-xs"
-        >
+        <div class="flex items-center gap-2 border-b border-border bg-muted/40 px-3 py-1.5 text-xs">
           <span class="font-mono text-foreground">{{ r.command }}</span>
           @if (r.text) {
             <span class="ml-auto text-muted-foreground">{{ r.text }}</span>
@@ -45,7 +43,14 @@ import { formatValue, pretty } from './kafka-format';
                     </tr>
                   }
                   @if ((r.rows ?? []).length === 0) {
-                    <tr><td class="px-3 py-4 text-center text-xs text-muted-foreground" [attr.colspan]="(r.columns ?? []).length || 1">No rows.</td></tr>
+                    <tr>
+                      <td
+                        class="px-3 py-4 text-center text-xs text-muted-foreground"
+                        [attr.colspan]="(r.columns ?? []).length || 1"
+                      >
+                        No rows.
+                      </td>
+                    </tr>
                   }
                 </tbody>
               </table>
@@ -55,21 +60,35 @@ import { formatValue, pretty } from './kafka-format';
             <div class="max-h-96 space-y-2 overflow-auto p-3">
               @for (m of r.messages ?? []; track $index) {
                 <div class="rounded-md border border-border">
-                  <div class="flex items-center gap-2 border-b border-border bg-muted/40 px-3 py-1 text-[11px] text-muted-foreground">
+                  <div
+                    class="flex items-center gap-2 border-b border-border bg-muted/40 px-3 py-1 text-[11px] text-muted-foreground"
+                  >
                     <span class="font-mono">p{{ m.partition }} · offset {{ m.offset }}</span>
-                    @if (m.key) { <span class="font-mono">key: {{ m.key }}</span> }
-                    @if (m.timestamp) { <span class="ml-auto">{{ m.timestamp }}</span> }
+                    @if (m.key) {
+                      <span class="font-mono">key: {{ m.key }}</span>
+                    }
+                    @if (m.timestamp) {
+                      <span class="ml-auto">{{ m.timestamp }}</span>
+                    }
                   </div>
-                  <pre class="overflow-auto px-3 py-2 font-mono text-xs text-foreground">{{ value(m.value) }}</pre>
+                  <pre class="overflow-auto px-3 py-2 font-mono text-xs text-foreground">{{
+                    value(m.value)
+                  }}</pre>
                 </div>
               }
               @if ((r.messages ?? []).length === 0) {
-                <div class="rounded-md border border-dashed border-border p-6 text-center text-xs text-muted-foreground">No records in that window.</div>
+                <div
+                  class="rounded-md border border-dashed border-border p-6 text-center text-xs text-muted-foreground"
+                >
+                  No records in that window.
+                </div>
               }
             </div>
           }
           @case ('detail') {
-            <pre class="max-h-96 overflow-auto px-3 py-2 font-mono text-xs text-foreground">{{ detail(r.detail) }}</pre>
+            <pre class="max-h-96 overflow-auto px-3 py-2 font-mono text-xs text-foreground">{{
+              detail(r.detail)
+            }}</pre>
           }
         }
       </div>

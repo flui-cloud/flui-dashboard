@@ -31,7 +31,9 @@ describe('topology surface producer', () => {
   });
 
   it('invents nothing before the snapshot has loaded', () => {
-    expect(buildTopologySurface(input({ snapshot: null }), { revision: 1, generatedAt: 'x' })).toBeNull();
+    expect(
+      buildTopologySurface(input({ snapshot: null }), { revision: 1, generatedAt: 'x' }),
+    ).toBeNull();
   });
 
   it('points attention at the page when nothing is selected', () => {
@@ -41,7 +43,11 @@ describe('topology surface producer', () => {
   it('points attention at the selected element, by the ref of the page it opens', () => {
     const s = snapshotOf({ focus: { type: 'server', id: 's-1' } });
     expect(s.attention).toEqual([
-      { scopeId: 'topology:focus', entityRef: 'flui://instance/hetzner%3A481', reason: 'selection' },
+      {
+        scopeId: 'topology:focus',
+        entityRef: 'flui://instance/hetzner%3A481',
+        reason: 'selection',
+      },
     ]);
     expect(snapshotOf({ focus: { type: 'app', id: 'a-web' } }).attention[0].entityRef).toBe(
       'flui://application/a-web',
@@ -64,13 +70,17 @@ describe('topology surface producer', () => {
     const tracker = new TopologySurfaceRevision();
     const r1 = tracker.next(presentedContent(input()));
     expect(tracker.next(presentedContent(input()))).toBe(r1);
-    expect(tracker.next(presentedContent(input({ focus: { type: 'app', id: 'a-db' } })))).toBe(r1 + 1);
+    expect(tracker.next(presentedContent(input({ focus: { type: 'app', id: 'a-db' } })))).toBe(
+      r1 + 1,
+    );
   });
 
   it('flags a snapshot whose revision does not advance on the previous one', () => {
     const first = snapshotOf();
     const stale = snapshotOf({ focus: { type: 'app', id: 'a-db' } }, first.surface.revision);
     const issues = validateSurfaceSemantics(stale, { previousSnapshot: first });
-    expect(issues).toEqual([jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' })]);
+    expect(issues).toEqual([
+      jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' }),
+    ]);
   });
 });

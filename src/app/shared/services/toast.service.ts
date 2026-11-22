@@ -48,7 +48,7 @@ export class ToastService {
   }
 
   dismiss(id: number): void {
-    this.toastsSignal.update(curr => curr.filter(t => t.id !== id));
+    this.toastsSignal.update((curr) => curr.filter((t) => t.id !== id));
   }
 
   clear(): void {
@@ -65,7 +65,7 @@ export class ToastService {
       action: input.action,
       persistent: !!input.persistent,
     };
-    this.toastsSignal.update(curr => [...curr, toast]);
+    this.toastsSignal.update((curr) => [...curr, toast]);
     if (!toast.persistent) {
       setTimeout(() => this.dismiss(id), 5000);
     }

@@ -46,7 +46,10 @@ function iconOf(item: NeedsYouItem): { icon: string; spin: boolean } {
     const github = item.credential?.kind === 'github_app' || item.credential?.kind === 'github_pat';
     return { icon: github ? 'lucideGithub' : 'lucideKeyRound', spin: false };
   }
-  return { icon: item.level === 'critical' ? 'lucideCircleAlert' : 'lucideTriangleAlert', spin: false };
+  return {
+    icon: item.level === 'critical' ? 'lucideCircleAlert' : 'lucideTriangleAlert',
+    spin: false,
+  };
 }
 
 @Component({
@@ -73,7 +76,11 @@ function iconOf(item: NeedsYouItem): { icon: string; spin: boolean } {
         <div class="flex items-center justify-between">
           <h2 class="font-semibold text-foreground">Needs you</h2>
           @if (count() > 0) {
-            <span class="rounded-full bg-destructive px-2 py-0.5 text-xs font-semibold text-destructive-foreground" data-testid="needs-you-count">{{ count() }}</span>
+            <span
+              class="rounded-full bg-destructive px-2 py-0.5 text-xs font-semibold text-destructive-foreground"
+              data-testid="needs-you-count"
+              >{{ count() }}</span
+            >
           }
         </div>
 
@@ -82,22 +89,37 @@ function iconOf(item: NeedsYouItem): { icon: string; spin: boolean } {
             <div class="h-14 rounded-lg skeleton"></div>
           }
         } @else if (fleet.needsYouState() === 'error' && rows().length === 0) {
-          <div class="flex items-center justify-between gap-3 rounded-lg bg-muted/50 p-3" data-testid="needs-you-error">
+          <div
+            class="flex items-center justify-between gap-3 rounded-lg bg-muted/50 p-3"
+            data-testid="needs-you-error"
+          >
             <span class="text-sm text-muted-foreground">Could not check what needs you</span>
-            <button type="button" class="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline" (click)="retry()">
+            <button
+              type="button"
+              class="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+              (click)="retry()"
+            >
               <ng-icon name="lucideRefreshCw" class="h-3 w-3" />
               Retry
             </button>
           </div>
         } @else if (rows().length === 0) {
           <div class="flex items-center gap-2.5 py-1" data-testid="needs-you-empty">
-            <ng-icon name="lucideCircleCheckBig" class="h-4 w-4 text-green-600 dark:text-green-400" />
+            <ng-icon
+              name="lucideCircleCheckBig"
+              class="h-4 w-4 text-green-600 dark:text-green-400"
+            />
             <span class="text-sm text-muted-foreground">Nothing needs you right now</span>
           </div>
         } @else {
           @for (row of rows(); track row.id) {
             <ng-template #body>
-              <ng-icon [name]="row.icon" class="h-[18px] w-[18px] flex-shrink-0 mt-0.5" [class]="iconTone(row)" [class.animate-spin]="row.spin" />
+              <ng-icon
+                [name]="row.icon"
+                class="h-[18px] w-[18px] flex-shrink-0 mt-0.5"
+                [class]="iconTone(row)"
+                [class.animate-spin]="row.spin"
+              />
               <div class="flex flex-col gap-0.5 min-w-0">
                 <span class="text-sm font-semibold text-foreground">{{ row.title }}</span>
                 @if (row.detail) {
@@ -106,11 +128,21 @@ function iconOf(item: NeedsYouItem): { icon: string; spin: boolean } {
               </div>
             </ng-template>
             @if (row.opensDnsWizard) {
-              <button type="button" class="flex gap-3 rounded-lg p-3 text-left hover:opacity-90 transition-opacity" [class]="boxTone(row)" (click)="openDnsWizard()" [attr.data-testid]="'needs-you-' + row.id">
+              <button
+                type="button"
+                class="flex gap-3 rounded-lg p-3 text-left hover:opacity-90 transition-opacity"
+                [class]="boxTone(row)"
+                (click)="openDnsWizard()"
+                [attr.data-testid]="'needs-you-' + row.id"
+              >
                 <ng-container [ngTemplateOutlet]="body" />
               </button>
             } @else if (row.apps.length) {
-              <div class="flex flex-col gap-2 rounded-lg p-3" [class]="boxTone(row)" [attr.data-testid]="'needs-you-' + row.id">
+              <div
+                class="flex flex-col gap-2 rounded-lg p-3"
+                [class]="boxTone(row)"
+                [attr.data-testid]="'needs-you-' + row.id"
+              >
                 <div class="flex gap-3">
                   <ng-container [ngTemplateOutlet]="body" />
                 </div>
@@ -118,32 +150,67 @@ function iconOf(item: NeedsYouItem): { icon: string; spin: boolean } {
                   @for (app of row.apps; track app.id) {
                     <li class="flex items-start justify-between gap-2 text-xs">
                       <div class="flex min-w-0 flex-col">
-                        <a [routerLink]="app.appPath" class="truncate font-medium text-foreground hover:underline" [attr.data-testid]="'needs-you-app-' + app.id">{{ app.name }}</a>
+                        <a
+                          [routerLink]="app.appPath"
+                          class="truncate font-medium text-foreground hover:underline"
+                          [attr.data-testid]="'needs-you-app-' + app.id"
+                          >{{ app.name }}</a
+                        >
                         @if (app.secondary) {
                           <span class="truncate text-muted-foreground">{{ app.secondary }}</span>
                         }
                         @if (app.why) {
-                          <span class="text-muted-foreground" [attr.data-testid]="'needs-you-why-' + app.id">{{ app.why }}</span>
+                          <span
+                            class="text-muted-foreground"
+                            [attr.data-testid]="'needs-you-why-' + app.id"
+                            >{{ app.why }}</span
+                          >
                         }
                       </div>
                       @if (app.protectPath) {
-                        <a [routerLink]="pathOf(app.protectPath)" [queryParams]="queryOf(app.protectPath)" class="shrink-0 font-medium text-primary hover:underline" [attr.data-testid]="'needs-you-protect-' + app.id">Protect</a>
+                        <a
+                          [routerLink]="pathOf(app.protectPath)"
+                          [queryParams]="queryOf(app.protectPath)"
+                          class="shrink-0 font-medium text-primary hover:underline"
+                          [attr.data-testid]="'needs-you-protect-' + app.id"
+                          >Protect</a
+                        >
                       } @else {
-                        <a [routerLink]="app.backupsPath" class="shrink-0 font-medium text-primary hover:underline" [attr.data-testid]="'needs-you-open-' + app.id">Open backups</a>
+                        <a
+                          [routerLink]="app.backupsPath"
+                          class="shrink-0 font-medium text-primary hover:underline"
+                          [attr.data-testid]="'needs-you-open-' + app.id"
+                          >Open backups</a
+                        >
                       }
                     </li>
                   }
                 </ul>
                 @if (row.path) {
-                  <a [routerLink]="pathOf(row.path)" [queryParams]="queryOf(row.path)" class="pl-[30px] text-xs font-medium text-primary hover:underline">Open backups</a>
+                  <a
+                    [routerLink]="pathOf(row.path)"
+                    [queryParams]="queryOf(row.path)"
+                    class="pl-[30px] text-xs font-medium text-primary hover:underline"
+                    >Open backups</a
+                  >
                 }
               </div>
             } @else if (row.path) {
-              <a [routerLink]="pathOf(row.path)" [queryParams]="queryOf(row.path)" class="flex gap-3 rounded-lg p-3 hover:opacity-90 transition-opacity" [class]="boxTone(row)" [attr.data-testid]="'needs-you-' + row.id">
+              <a
+                [routerLink]="pathOf(row.path)"
+                [queryParams]="queryOf(row.path)"
+                class="flex gap-3 rounded-lg p-3 hover:opacity-90 transition-opacity"
+                [class]="boxTone(row)"
+                [attr.data-testid]="'needs-you-' + row.id"
+              >
                 <ng-container [ngTemplateOutlet]="body" />
               </a>
             } @else {
-              <div class="flex gap-3 rounded-lg p-3" [class]="boxTone(row)" [attr.data-testid]="'needs-you-' + row.id">
+              <div
+                class="flex gap-3 rounded-lg p-3"
+                [class]="boxTone(row)"
+                [attr.data-testid]="'needs-you-' + row.id"
+              >
                 <ng-container [ngTemplateOutlet]="body" />
               </div>
             }

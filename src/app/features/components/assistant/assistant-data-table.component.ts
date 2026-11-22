@@ -15,16 +15,22 @@ export interface DataTableConfig {
         <span class="font-semibold text-foreground">{{ title() }}</span>
         <span class="text-muted-foreground">{{ data().rows.length }} items</span>
         <div class="flex-1"></div>
-        <input type="text" placeholder="Filter…" [value]="search()"
+        <input
+          type="text"
+          placeholder="Filter…"
+          [value]="search()"
           (input)="onSearchInput($event)"
-          class="w-32 rounded-md bg-muted/50 border border-input/50 px-2 py-0.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-ring" />
+          class="w-32 rounded-md bg-muted/50 border border-input/50 px-2 py-0.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-ring"
+        />
       </div>
       <div class="overflow-auto max-h-[220px]">
         <table class="w-full">
           <thead class="sticky top-0 bg-muted/50">
             <tr>
               @for (col of data().columns; track col) {
-                <th class="text-left px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground whitespace-nowrap">
+                <th
+                  class="text-left px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground whitespace-nowrap"
+                >
                   {{ col }}
                 </th>
               }
@@ -33,7 +39,10 @@ export interface DataTableConfig {
           <tbody class="divide-y divide-border/30">
             @if (filteredRows().length === 0) {
               <tr>
-                <td [attr.colspan]="data().columns.length" class="text-center text-muted-foreground py-4 px-3">
+                <td
+                  [attr.colspan]="data().columns.length"
+                  class="text-center text-muted-foreground py-4 px-3"
+                >
                   No results.
                 </td>
               </tr>

@@ -30,9 +30,7 @@ import { InstanceWithLabels } from '../../model/instance.models';
           Details
         </button>
       } @else {
-        <span class="text-xs text-muted-foreground italic">
-          No actions
-        </span>
+        <span class="text-xs text-muted-foreground italic"> No actions </span>
       }
     </div>
   `,

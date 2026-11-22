@@ -164,9 +164,9 @@ describe('the volumes no application owns', () => {
     await mount({ rows: [claim()] });
     (el(`orphaned-delete-${REF}`) as HTMLButtonElement).click();
     fixture.detectChanges();
-    const keep = Array.from(
-      fixture.nativeElement.querySelectorAll('button'),
-    ).find((b) => (b as HTMLButtonElement).textContent?.trim() === 'Keep it');
+    const keep = Array.from(fixture.nativeElement.querySelectorAll('button')).find(
+      (b) => (b as HTMLButtonElement).textContent?.trim() === 'Keep it',
+    );
     expect(keep).toBeDefined();
     (keep as HTMLButtonElement).click();
     fixture.detectChanges();

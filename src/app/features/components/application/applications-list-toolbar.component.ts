@@ -5,7 +5,9 @@ import { lucideSearch } from '@ng-icons/lucide';
 import { ListFilters, ListView } from './applications-list-rows';
 import { WorkloadType } from '../../model/workload-list';
 
-export type FilterChange = { [K in keyof ListFilters]: { field: K; value: ListFilters[K] } }[keyof ListFilters];
+export type FilterChange = {
+  [K in keyof ListFilters]: { field: K; value: ListFilters[K] };
+}[keyof ListFilters];
 
 const VIEWS: { key: ListView; label: string }[] = [
   { key: 'all', label: 'All' },
@@ -24,7 +26,12 @@ const VIEWS: { key: ListView; label: string }[] = [
   template: `
     <div class="flex flex-col gap-2.5 lg:flex-row lg:items-center">
       @if (typeOptions().length > 0) {
-        <div class="inline-flex flex-wrap gap-0.5 rounded-lg bg-muted p-0.5" role="tablist" aria-label="Type" data-testid="apps-types">
+        <div
+          class="inline-flex flex-wrap gap-0.5 rounded-lg bg-muted p-0.5"
+          role="tablist"
+          aria-label="Type"
+          data-testid="apps-types"
+        >
           <button
             type="button"
             role="tab"
@@ -33,7 +40,9 @@ const VIEWS: { key: ListView; label: string }[] = [
             class="rounded-md px-3 py-1.5 text-sm font-medium transition-colors"
             [class]="typeClass('')"
             data-testid="apps-type-all"
-          >All</button>
+          >
+            All
+          </button>
           @for (t of typeOptions(); track t.key) {
             <button
               type="button"
@@ -43,11 +52,17 @@ const VIEWS: { key: ListView; label: string }[] = [
               class="rounded-md px-3 py-1.5 text-sm font-medium transition-colors"
               [class]="typeClass(t.key)"
               [attr.data-testid]="'apps-type-' + t.key"
-            >{{ t.label }}</button>
+            >
+              {{ t.label }}
+            </button>
           }
         </div>
       }
-      <div class="inline-flex flex-wrap gap-0.5 rounded-lg bg-muted p-0.5" role="tablist" data-testid="apps-views">
+      <div
+        class="inline-flex flex-wrap gap-0.5 rounded-lg bg-muted p-0.5"
+        role="tablist"
+        data-testid="apps-views"
+      >
         @for (v of views; track v.key) {
           <button
             type="button"
@@ -66,7 +81,10 @@ const VIEWS: { key: ListView; label: string }[] = [
         }
       </div>
       <div class="relative flex-1">
-        <ng-icon name="lucideSearch" class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <ng-icon
+          name="lucideSearch"
+          class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+        />
         <input
           type="text"
           [ngModel]="filters().search"
@@ -131,8 +149,10 @@ export class ApplicationsListToolbarComponent {
 
   protected viewClass(view: ListView): string {
     if (this.filters().view === view) return 'bg-background text-foreground shadow-sm';
-    if (view === 'attention' && this.counts().attention > 0) return 'text-destructive hover:text-foreground';
-    if (view === 'no_backup' && this.counts().no_backup > 0) return 'text-amber-700 dark:text-amber-400 hover:text-foreground';
+    if (view === 'attention' && this.counts().attention > 0)
+      return 'text-destructive hover:text-foreground';
+    if (view === 'no_backup' && this.counts().no_backup > 0)
+      return 'text-amber-700 dark:text-amber-400 hover:text-foreground';
     return 'text-muted-foreground hover:text-foreground';
   }
 }

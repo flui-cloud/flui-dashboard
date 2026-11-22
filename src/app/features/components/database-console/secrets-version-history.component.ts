@@ -14,16 +14,12 @@ import { SecretsConsoleStateService } from './secrets-console-state.service';
     @if (!s.isNew() && s.selected(); as sec) {
       @if (sec.versions.length) {
         <div class="border-t border-border px-4 py-3">
-          <div
-            class="mb-2 flex items-center gap-1.5 text-xs font-medium text-muted-foreground"
-          >
+          <div class="mb-2 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
             <ng-icon name="lucideClock" class="h-3.5 w-3.5" /> Version history
           </div>
           <div class="space-y-1">
             @for (v of reversed(sec.versions); track v.version) {
-              <div
-                class="flex items-center gap-2 rounded-md px-2 py-1 text-xs hover:bg-muted/50"
-              >
+              <div class="flex items-center gap-2 rounded-md px-2 py-1 text-xs hover:bg-muted/50">
                 <button
                   type="button"
                   (click)="s.changeVersion(v.version)"
@@ -34,9 +30,7 @@ import { SecretsConsoleStateService } from './secrets-console-state.service';
                 >
                   v{{ v.version }}
                 </button>
-                <span class="truncate text-muted-foreground">{{
-                  v.createdTime
-                }}</span>
+                <span class="truncate text-muted-foreground">{{ v.createdTime }}</span>
                 @if (v.destroyed) {
                   <span class="text-destructive">destroyed</span>
                 } @else if (v.deleted) {

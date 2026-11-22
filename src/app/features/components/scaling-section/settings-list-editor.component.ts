@@ -1,19 +1,7 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  input,
-  output,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideArrowDown,
-  lucideArrowUp,
-  lucidePlus,
-  lucideX,
-} from '@ng-icons/lucide';
+import { lucideArrowDown, lucideArrowUp, lucidePlus, lucideX } from '@ng-icons/lucide';
 import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
 import { ListMove } from './group-draft';
 import {
@@ -43,31 +31,22 @@ export interface ListChoice {
   selector: 'app-settings-list-editor',
   standalone: true,
   imports: [FormsModule, NgIcon, HlmButtonDirective, ArchitectureBadgeComponent],
-  providers: [
-    provideIcons({ lucideArrowDown, lucideArrowUp, lucidePlus, lucideX }),
-  ],
+  providers: [provideIcons({ lucideArrowDown, lucideArrowUp, lucidePlus, lucideX })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <span class="flex flex-col gap-2">
       @if (ordered()) {
         @for (item of items(); track item; let i = $index) {
-          <span
-            class="flex items-center gap-2"
-            [attr.data-testid]="kind() + '-' + item"
-          >
+          <span class="flex items-center gap-2" [attr.data-testid]="kind() + '-' + item">
             <span
               class="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[11px] tabular-nums text-muted-foreground"
             >
               {{ i + 1 }}
             </span>
-            <span class="font-mono text-[13px] text-foreground">{{
-              item
-            }}</span>
+            <span class="font-mono text-[13px] text-foreground">{{ item }}</span>
             <app-architecture-badge [architecture]="architectures()[item]" />
             @if (label(item) !== item) {
-              <span class="truncate text-[12px] text-muted-foreground">{{
-                label(item)
-              }}</span>
+              <span class="truncate text-[12px] text-muted-foreground">{{ label(item) }}</span>
             }
             <button
               type="button"
@@ -100,10 +79,7 @@ export interface ListChoice {
             </button>
           </span>
         } @empty {
-          <span
-            class="text-muted-foreground"
-            [attr.data-testid]="'no-' + kind() + 's'"
-          >
+          <span class="text-muted-foreground" [attr.data-testid]="'no-' + kind() + 's'">
             {{ emptyNote() }}
           </span>
         }
@@ -130,10 +106,7 @@ export interface ListChoice {
               </button>
             </span>
           } @empty {
-            <span
-              class="text-muted-foreground"
-              [attr.data-testid]="'no-' + kind() + 's'"
-            >
+            <span class="text-muted-foreground" [attr.data-testid]="'no-' + kind() + 's'">
               {{ emptyNote() }}
             </span>
           }
@@ -141,11 +114,9 @@ export interface ListChoice {
       }
 
       @if (listedWarning(); as warning) {
-        <span
-          class="text-[12px] text-muted-foreground"
-          [attr.data-testid]="kind() + '-warning'"
-          >{{ warning }}</span
-        >
+        <span class="text-[12px] text-muted-foreground" [attr.data-testid]="kind() + '-warning'">{{
+          warning
+        }}</span>
       }
 
       <span class="flex items-center gap-2">
@@ -251,9 +222,7 @@ export class SettingsListEditorComponent {
       (this.choices() ?? []).map((choice) => [choice.value, choice.architecture]),
     );
     for (const item of this.items()) {
-      const warning = architectureWarning(
-        this.architectures()[item] ?? known.get(item),
-      );
+      const warning = architectureWarning(this.architectures()[item] ?? known.get(item));
       if (warning) return warning;
     }
     return null;

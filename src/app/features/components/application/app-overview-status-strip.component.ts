@@ -4,7 +4,13 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideArrowRight } from '@ng-icons/lucide';
 import type { AppMetricsDto } from '../../../core/api/model/appMetricsDto';
 import { TONE_DOT, TONE_TEXT } from './app-recap-view';
-import { formatCores, formatUsageBytes, limitPercent, loadTone, runStateOf } from './app-overview-view';
+import {
+  formatCores,
+  formatUsageBytes,
+  limitPercent,
+  loadTone,
+  runStateOf,
+} from './app-overview-view';
 
 @Component({
   selector: 'app-overview-status-strip',
@@ -28,9 +34,15 @@ import { formatCores, formatUsageBytes, limitPercent, loadTone, runStateOf } fro
         <span class="hidden items-center gap-2 sm:flex">
           <span class="text-label">{{ bar.key }}</span>
           <span class="h-1.5 w-16 overflow-hidden rounded-full bg-muted">
-            <span class="block h-full rounded-full transition-all" [class]="dot[bar.tone]" [style.width.%]="bar.percent"></span>
+            <span
+              class="block h-full rounded-full transition-all"
+              [class]="dot[bar.tone]"
+              [style.width.%]="bar.percent"
+            ></span>
           </span>
-          <span class="font-medium tabular-nums" [class]="text[bar.tone]">{{ bar.percent.toFixed(0) }}%</span>
+          <span class="font-medium tabular-nums" [class]="text[bar.tone]"
+            >{{ bar.percent.toFixed(0) }}%</span
+          >
         </span>
       }
       <span class="hidden truncate text-xs text-muted-foreground lg:inline">{{ usage() }}</span>

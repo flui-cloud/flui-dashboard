@@ -1,9 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  input,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { ClusterScalingRow } from '../../model/scaling-section.models';
 import { eurMonth, oldestAlarm } from './overview-format';
 
@@ -22,10 +17,7 @@ interface Card {
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <dl
-      class="m-0 grid grid-cols-1 gap-3 sm:grid-cols-3"
-      data-testid="situation"
-    >
+    <dl class="m-0 grid grid-cols-1 gap-3 sm:grid-cols-3" data-testid="situation">
       @for (card of cards(); track card.id) {
         <div
           class="rounded-lg border border-border bg-card px-4 py-3"
@@ -40,16 +32,11 @@ interface Card {
               [attr.data-testid]="'tile-value-' + card.id"
               >{{ card.value }}
               @if (card.suffix; as suffix) {
-                <span
-                  class="ml-1.5 text-sm font-normal text-muted-foreground"
-                  >{{ suffix }}</span
-                >
+                <span class="ml-1.5 text-sm font-normal text-muted-foreground">{{ suffix }}</span>
               }
             </span>
             @if (card.caption; as caption) {
-              <span class="mt-0.5 block text-xs text-muted-foreground">{{
-                caption
-              }}</span>
+              <span class="mt-0.5 block text-xs text-muted-foreground">{{ caption }}</span>
             }
           </dd>
         </div>
@@ -81,10 +68,7 @@ export class OverviewSituationComponent {
       ? priced.reduce((sum, r) => sum + (r.monthlyEur as number), 0)
       : null;
     const overCap = all.filter(
-      (r) =>
-        r.monthlyCap !== null &&
-        r.monthlyEur !== null &&
-        r.monthlyEur > r.monthlyCap,
+      (r) => r.monthlyCap !== null && r.monthlyEur !== null && r.monthlyEur > r.monthlyCap,
     ).length;
     const untracked = tracked === null ? 'no cluster carries one' : null;
 

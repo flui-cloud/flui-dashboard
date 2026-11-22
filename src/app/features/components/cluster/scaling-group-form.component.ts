@@ -11,10 +11,7 @@ import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { ScalingApiService } from '../../service/scaling-api.service';
 import { SectionGroup } from '../../model/scaling-section.models';
-import {
-  ProvisionMode,
-  WriteScalingGroup,
-} from '../../model/scaling-group.models';
+import { ProvisionMode, WriteScalingGroup } from '../../model/scaling-group.models';
 import { consequenceOf } from '../scaling-section/scaling-consequence';
 import { GroupCostComponent } from '../scaling-section/group-cost.component';
 
@@ -48,9 +45,7 @@ import { GroupCostComponent } from '../scaling-section/group-cost.component';
           </h3>
 
           <fieldset class="m-0 flex flex-col gap-2 border-0 p-0">
-            <legend class="mb-1 p-0 text-xs font-semibold text-foreground">
-              Nodes
-            </legend>
+            <legend class="mb-1 p-0 text-xs font-semibold text-foreground">Nodes</legend>
             <div class="flex flex-wrap items-end gap-3">
               @for (bound of bounds; track bound.role) {
                 <div class="flex flex-col gap-1.5">
@@ -69,15 +64,12 @@ import { GroupCostComponent } from '../scaling-section/group-cost.component';
               }
             </div>
             <p class="m-0 text-[11px] text-sub">
-              Counted across every node, master included — the number shown on
-              the page.
+              Counted across every node, master included — the number shown on the page.
             </p>
           </fieldset>
 
           <fieldset class="m-0 flex flex-col gap-2 border-0 p-0">
-            <legend class="mb-1 p-0 text-xs font-semibold text-foreground">
-              When it acts
-            </legend>
+            <legend class="mb-1 p-0 text-xs font-semibold text-foreground">When it acts</legend>
             @for (mode of modes; track mode.value) {
               <label
                 [attr.for]="mode.value"
@@ -97,12 +89,8 @@ import { GroupCostComponent } from '../scaling-section/group-cost.component';
                   (change)="setProvision(mode.value)"
                 />
                 <span class="flex flex-col gap-0.5">
-                  <span class="text-[13px] font-semibold text-foreground">{{
-                    mode.label
-                  }}</span>
-                  <span class="text-xs leading-relaxed text-sub">{{
-                    mode.help
-                  }}</span>
+                  <span class="text-[13px] font-semibold text-foreground">{{ mode.label }}</span>
+                  <span class="text-xs leading-relaxed text-sub">{{ mode.help }}</span>
                 </span>
               </label>
             }
@@ -127,8 +115,8 @@ import { GroupCostComponent } from '../scaling-section/group-cost.component';
                 >
               </div>
               <p class="m-0 text-[11px] text-sub">
-                The safety net under the node limits: Flui never passes it,
-                and raises an alarm instead.
+                The safety net under the node limits: Flui never passes it, and raises an alarm
+                instead.
               </p>
             </div>
           }
@@ -141,10 +129,7 @@ import { GroupCostComponent } from '../scaling-section/group-cost.component';
           />
 
           @if (problem(); as message) {
-            <p
-              class="m-0 text-sm text-red-600 dark:text-red-400"
-              data-testid="form-error"
-            >
+            <p class="m-0 text-sm text-red-600 dark:text-red-400" data-testid="form-error">
               {{ message }}
             </p>
           }
@@ -174,11 +159,7 @@ import { GroupCostComponent } from '../scaling-section/group-cost.component';
           data-testid="consequence"
         >
           <h4 class="m-0 mb-3 text-[13px] font-semibold text-foreground">
-            {{
-              provision() === 'automatic'
-                ? 'What you are turning on'
-                : 'What this does'
-            }}
+            {{ provision() === 'automatic' ? 'What you are turning on' : 'What this does' }}
           </h4>
           <p class="m-0 text-[15px] leading-relaxed text-foreground">
             {{ consequence().sentence }}
@@ -233,10 +214,7 @@ export class ScalingGroupFormComponent {
 
   // Each field reads its seed until someone edits it, so the form is correct on
   // its first paint without writing to signals while rendering.
-  private readonly boundsEdit = signal<Record<
-    'min' | 'desired' | 'max',
-    number
-  > | null>(null);
+  private readonly boundsEdit = signal<Record<'min' | 'desired' | 'max', number> | null>(null);
   private readonly provisionEdit = signal<ProvisionMode | null>(null);
   readonly capEdit = signal<number | null>(null);
   readonly saving = signal(false);
@@ -259,12 +237,8 @@ export class ScalingGroupFormComponent {
     };
   });
 
-  readonly draftBounds = computed(
-    () => this.boundsEdit() ?? this.seed().bounds,
-  );
-  readonly provision = computed(
-    () => this.provisionEdit() ?? this.seed().provision,
-  );
+  readonly draftBounds = computed(() => this.boundsEdit() ?? this.seed().bounds);
+  readonly provision = computed(() => this.provisionEdit() ?? this.seed().provision);
   readonly cap = computed(() => this.capEdit() ?? this.seed().cap);
 
   setBound(role: 'min' | 'desired' | 'max', value: number): void {
@@ -280,8 +254,7 @@ export class ScalingGroupFormComponent {
     bounds: this.draftBounds(),
     provision: this.provision(),
     limits: {
-      maxMonthlyCost:
-        this.provision() === 'automatic' ? Number(this.cap()) : null,
+      maxMonthlyCost: this.provision() === 'automatic' ? Number(this.cap()) : null,
     },
   }));
 
@@ -299,9 +272,7 @@ export class ScalingGroupFormComponent {
     () => this.provision() === 'automatic' && !isPositiveAmount(this.cap()),
   );
 
-  readonly consequence = computed(() =>
-    consequenceOf(this.body(), this.currentNodes()),
-  );
+  readonly consequence = computed(() => consequenceOf(this.body(), this.currentNodes()));
 
   readonly problem = computed(() => {
     const saved = this.failure();
@@ -312,8 +283,7 @@ export class ScalingGroupFormComponent {
     if (min > 20 || desired > 20 || max > 20)
       return 'A cluster may hold at most 20 nodes, master included.';
     if (min > max) return 'Max nodes cannot be below min nodes.';
-    if (desired < min || desired > max)
-      return 'The target sits between min and max nodes.';
+    if (desired < min || desired > max) return 'The target sits between min and max nodes.';
     if (this.provision() === 'automatic' && !isPositiveAmount(this.cap())) {
       return 'Adding nodes automatically needs a spending ceiling, the safety net under the node limits.';
     }
@@ -344,8 +314,7 @@ export class ScalingGroupFormComponent {
   }
 
   private readError(error: unknown): string {
-    const body = (error as { error?: { message?: string | string[] } })?.error
-      ?.message;
+    const body = (error as { error?: { message?: string | string[] } })?.error?.message;
     if (Array.isArray(body)) return body.join('. ');
     if (typeof body === 'string') return body;
     return 'Scaling could not be saved.';

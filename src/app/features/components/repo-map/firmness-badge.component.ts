@@ -21,9 +21,12 @@ export class FirmnessBadgeComponent {
 
   readonly label = computed(() => {
     switch (this.level()) {
-      case 'declared': return 'declared';
-      case 'derived': return 'derived';
-      default: return 'circumstantial';
+      case 'declared':
+        return 'declared';
+      case 'derived':
+        return 'derived';
+      default:
+        return 'circumstantial';
     }
   });
 

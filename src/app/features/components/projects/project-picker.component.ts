@@ -40,9 +40,7 @@ export class ProjectPickerComponent {
   readonly value = input<string | null>(null);
   readonly valueChange = output<string | null>();
 
-  protected readonly choices = computed(() =>
-    selectableProjects(this.projects.projects()),
-  );
+  protected readonly choices = computed(() => selectableProjects(this.projects.projects()));
 
   constructor() {
     this.projects.loadProjects();

@@ -25,7 +25,9 @@ describe('migration measures on the migrations list', () => {
 
   it('puts the write pause, what ended it, and the interruption on one line', () => {
     expect(
-      measuresLine(row('full', { writePauseMs: 6512, writePauseEndedBy: 'bridge', interruptionMs: 42000 })),
+      measuresLine(
+        row('full', { writePauseMs: 6512, writePauseEndedBy: 'bridge', interruptionMs: 42000 }),
+      ),
     ).toBe('Writes paused 6.5 s (until the bridge) · app stopped 42.0 s');
     expect(measuresLine(row('full', { writePauseMs: 12000, writePauseEndedBy: 'dns' }))).toBe(
       'Writes paused 12.0 s (until DNS moved)',
@@ -49,7 +51,9 @@ describe('migration measures on the migrations list', () => {
   });
 
   it("lists the API's next steps for database and full rows only", () => {
-    const steps = [{ key: 'protect-database', text: 'Protect the new database with a backup policy.' }];
+    const steps = [
+      { key: 'protect-database', text: 'Protect the new database with a backup policy.' },
+    ];
     expect(nextStepsOf(row('full', { nextSteps: steps }))).toEqual(steps);
     expect(nextStepsOf(row('db'))).toEqual([]);
     expect(nextStepsOf(row('app', { nextSteps: steps }))).toEqual([]);

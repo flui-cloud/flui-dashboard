@@ -15,7 +15,14 @@ import {
   groupEntityRef,
   roleEntityRef,
 } from './access-surface';
-import type { AccessBinding, AccessRole, GrantRecord, GroupRecord, RoleDef, UserRecord } from '../../model/iam.model';
+import type {
+  AccessBinding,
+  AccessRole,
+  GrantRecord,
+  GroupRecord,
+  RoleDef,
+  UserRecord,
+} from '../../model/iam.model';
 
 const USER: UserRecord = {
   id: 'user-1',
@@ -44,7 +51,11 @@ const GRANT: GrantRecord = {
   },
 };
 
-const GROUP: GroupRecord = { name: 'platform-team', description: 'Runs the platform', members: ['ada@example.com', 'grace@example.com'] };
+const GROUP: GroupRecord = {
+  name: 'platform-team',
+  description: 'Runs the platform',
+  members: ['ada@example.com', 'grace@example.com'],
+};
 
 const ROLE: RoleDef = {
   key: 'operator' as AccessRole,
@@ -74,12 +85,16 @@ function input(over: Partial<AccessSurfaceInput> = {}): AccessSurfaceInput {
 }
 
 function snapshotOf(over: Partial<AccessSurfaceInput> = {}): SurfaceSnapshot {
-  const snapshot = buildAccessSurface(input(over), { revision: 1, generatedAt: '2026-09-02T09:00:00.000Z' });
+  const snapshot = buildAccessSurface(input(over), {
+    revision: 1,
+    generatedAt: '2026-09-02T09:00:00.000Z',
+  });
   if (!snapshot) throw new Error('the producer described nothing');
   return snapshot;
 }
 
-const rowsOf = (s: SurfaceSnapshot) => s.scopes.filter((sc) => sc.kind === 'region' && sc.entities?.length);
+const rowsOf = (s: SurfaceSnapshot) =>
+  s.scopes.filter((sc) => sc.kind === 'region' && sc.entities?.length);
 
 describe('access surface producer', () => {
   it('emits a snapshot that validates against the real schema and passes semantic checks, for every tab', () => {
@@ -97,17 +112,28 @@ describe('access surface producer', () => {
     const tracker = new AccessSurfaceRevision();
     const a = input({ activeTab: 'groups' });
     const b = input({ activeTab: 'groups', groups: [GROUP, { name: 'other', members: [] }] });
-    const first = buildAccessSurface(a, { revision: tracker.next(presentedContent(a)), generatedAt: '2026-09-02T09:00:00.000Z' })!;
-    const second = buildAccessSurface(b, { revision: tracker.next(presentedContent(b)), generatedAt: '2026-09-02T09:01:00.000Z' })!;
+    const first = buildAccessSurface(a, {
+      revision: tracker.next(presentedContent(a)),
+      generatedAt: '2026-09-02T09:00:00.000Z',
+    })!;
+    const second = buildAccessSurface(b, {
+      revision: tracker.next(presentedContent(b)),
+      generatedAt: '2026-09-02T09:01:00.000Z',
+    })!;
     expect(second.surface.revision).toBe(first.surface.revision + 1);
     expect(validateSurfaceSemantics(second, { previousSnapshot: first })).toEqual([]);
   });
 
   it('flags a snapshot whose revision does not advance on the previous one', () => {
     const first = snapshotOf();
-    const stale = { ...snapshotOf(), surface: { ...snapshotOf().surface, revision: first.surface.revision } };
+    const stale = {
+      ...snapshotOf(),
+      surface: { ...snapshotOf().surface, revision: first.surface.revision },
+    };
     const issues = validateSurfaceSemantics(stale, { previousSnapshot: first });
-    expect(issues).toEqual([jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' })]);
+    expect(issues).toEqual([
+      jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' }),
+    ]);
   });
 
   it('is a list page with no selection: attention names only the page, and no row is ever primary/selected', () => {
@@ -125,20 +151,24 @@ describe('access surface producer', () => {
     expect(snapshot.scopes.some((s) => s.id.includes(':tab:people:'))).toBeFalse();
   });
 
-  it('presents each grant\'s principal, role and scope exactly as the Grants table renders them', () => {
+  it("presents each grant's principal, role and scope exactly as the Grants table renders them", () => {
     const snapshot = snapshotOf({ activeTab: 'grants' });
     const row = snapshot.scopes.find((s) => s.id === 'access:tab:grants:list:grant-1')!;
-    expect(row.entities).toEqual([{ ref: grantEntityRef('grant-1'), label: 'ada@example.com', role: 'related' }]);
+    expect(row.entities).toEqual([
+      { ref: grantEntityRef('grant-1'), label: 'ada@example.com', role: 'related' },
+    ]);
     const obs = Object.fromEntries(row.observations!.map((o) => [o.key, o.presentedAs.text]));
     expect(obs['flui.access.grant_principal']).toBe('ada@example.com');
     expect(obs['flui.access.grant_role']).toBe('Operator');
     expect(obs['flui.access.grant_scope']).toBe('Everything');
   });
 
-  it('presents a person\'s email — the field mask mode classifies TENANT_IDENTITY and substitutes when active — and nothing wider', () => {
+  it("presents a person's email — the field mask mode classifies TENANT_IDENTITY and substitutes when active — and nothing wider", () => {
     const snapshot = snapshotOf({ activeTab: 'people' });
     const row = snapshot.scopes.find((s) => s.id === `access:tab:people:list:${USER.id}`)!;
-    expect(row.entities).toEqual([{ ref: personEntityRef(USER.id), label: USER.email, role: 'related' }]);
+    expect(row.entities).toEqual([
+      { ref: personEntityRef(USER.id), label: USER.email, role: 'related' },
+    ]);
     const keys = row.observations!.map((o) => o.key);
     expect(keys).toContain('flui.access.person_email');
     expect(keys).not.toContain('flui.access.person_display_name');
@@ -155,28 +185,37 @@ describe('access surface producer', () => {
     expect(plainRow.observations!.some((o) => o.key === 'flui.access.person_is_admin')).toBeFalse();
   });
 
-  it('presents a group\'s member count, never the members\' emails themselves', () => {
+  it("presents a group's member count, never the members' emails themselves", () => {
     const snapshot = snapshotOf({ activeTab: 'groups' });
     const row = snapshot.scopes.find((s) => s.id === 'access:tab:groups:list:platform-team')!;
-    expect(row.entities).toEqual([{ ref: groupEntityRef('platform-team'), label: 'platform-team', role: 'related' }]);
-    const obs = Object.fromEntries(row.observations!.map((o) => [o.key, o.presentedAs.value ?? o.presentedAs.text]));
+    expect(row.entities).toEqual([
+      { ref: groupEntityRef('platform-team'), label: 'platform-team', role: 'related' },
+    ]);
+    const obs = Object.fromEntries(
+      row.observations!.map((o) => [o.key, o.presentedAs.value ?? o.presentedAs.text]),
+    );
     expect(obs['flui.access.group_member_count']).toBe(2);
     const json = JSON.stringify(snapshot);
     expect(json).not.toContain('ada@example.com');
     expect(json).not.toContain('grace@example.com');
   });
 
-  it('presents a role\'s name and description, never its raw permission strings', () => {
+  it("presents a role's name and description, never its raw permission strings", () => {
     const snapshot = snapshotOf({ activeTab: 'roles' });
     const row = snapshot.scopes.find((s) => s.id === 'access:tab:roles:list:operator')!;
-    expect(row.entities).toEqual([{ ref: roleEntityRef('operator'), label: 'Operator', role: 'related' }]);
+    expect(row.entities).toEqual([
+      { ref: roleEntityRef('operator'), label: 'Operator', role: 'related' },
+    ]);
     const json = JSON.stringify(snapshot);
     expect(json).not.toContain('app:deploy');
     expect(json).not.toContain('app:restart');
   });
 
   it('marks the people list as a view error, without carrying the raw backend message, when the fetch failed', () => {
-    const snapshot = snapshotOf({ activeTab: 'people', usersError: 'connection reset by upstream identity service' });
+    const snapshot = snapshotOf({
+      activeTab: 'people',
+      usersError: 'connection reset by upstream identity service',
+    });
     const list = snapshot.scopes.find((s) => s.id === 'access:tab:people:list')!;
     expect(list.state).toEqual(jasmine.objectContaining({ error: true }));
     const json = JSON.stringify(snapshot);

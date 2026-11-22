@@ -1,10 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  input,
-  output,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -27,9 +21,11 @@ import { AppNotification } from '../../../core/services/notification.service';
   template: `
     <div
       class="group relative flex gap-2.5 p-3 cursor-pointer transition-colors"
-      [class]="notification().read
-        ? 'hover:bg-muted/50'
-        : 'bg-blue-50/40 dark:bg-blue-950/20 hover:bg-blue-50/60 dark:hover:bg-blue-950/30'"
+      [class]="
+        notification().read
+          ? 'hover:bg-muted/50'
+          : 'bg-blue-50/40 dark:bg-blue-950/20 hover:bg-blue-50/60 dark:hover:bg-blue-950/30'
+      "
       (click)="clicked.emit()"
     >
       <!-- Left type bar -->
@@ -64,7 +60,10 @@ import { AppNotification } from '../../../core/services/notification.service';
               (click)="onToggleExpand($event)"
               class="inline-flex items-center gap-0.5 text-xs text-primary hover:underline"
             >
-              <ng-icon [name]="expanded() ? 'lucideChevronUp' : 'lucideChevronDown'" class="!h-3 !w-3" />
+              <ng-icon
+                [name]="expanded() ? 'lucideChevronUp' : 'lucideChevronDown'"
+                class="!h-3 !w-3"
+              />
               {{ expanded() ? 'Show less' : 'Show more' }}
             </button>
           }
@@ -110,10 +109,14 @@ export class NotificationItemComponent {
 
   readonly typeBarClass = computed(() => {
     switch (this.notification().type) {
-      case 'success': return 'bg-green-500';
-      case 'warning': return 'bg-yellow-500';
-      case 'error':   return 'bg-red-500';
-      default:        return 'bg-blue-500';
+      case 'success':
+        return 'bg-green-500';
+      case 'warning':
+        return 'bg-yellow-500';
+      case 'error':
+        return 'bg-red-500';
+      default:
+        return 'bg-blue-500';
     }
   });
 

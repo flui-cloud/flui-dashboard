@@ -12,10 +12,7 @@ import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideLoader, lucideSearch, lucideTriangleAlert } from '@ng-icons/lucide';
 import { HlmInputDirective } from '@spartan-ng/ui-input-helm';
-import {
-  AgentKeyProjectsService,
-  SelectableProject,
-} from './agent-key-projects.service';
+import { AgentKeyProjectsService, SelectableProject } from './agent-key-projects.service';
 
 @Component({
   selector: 'app-agent-key-project-picker',
@@ -30,9 +27,14 @@ import {
         Reading which projects there are…
       </div>
     } @else if (loadError()) {
-      <div class="flex items-start gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+      <div
+        class="flex items-start gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+      >
         <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-4 w-4 shrink-0" />
-        <span>The project list could not be read. Every project stays reachable — nothing to narrow it with.</span>
+        <span
+          >The project list could not be read. Every project stays reachable — nothing to narrow it
+          with.</span
+        >
       </div>
     } @else if (projects().length === 0) {
       <p class="text-sm text-muted-foreground">

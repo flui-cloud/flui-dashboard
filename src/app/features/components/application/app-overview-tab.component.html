@@ -7,11 +7,7 @@
       <app-overview-status-strip [metrics]="m" [appStatus]="app.status" />
     }
 
-    <app-latest-release-card
-      class="block"
-      [appId]="app.id"
-      [canRollback]="rollbackAvailable()"
-    />
+    <app-latest-release-card class="block" [appId]="app.id" [canRollback]="rollbackAvailable()" />
 
     <app-database-ha-card #haCard class="block" [app]="app" />
 
@@ -19,7 +15,7 @@
 
     <app-db-import-card class="block" [app]="app" />
 
-    @if (app.persistenceScope === "dedicated" && !haCard.active()) {
+    @if (app.persistenceScope === 'dedicated' && !haCard.active()) {
       <div
         class="flex items-start gap-3 rounded-lg border border-indigo-200 bg-indigo-50/70 px-4 py-2.5 dark:border-indigo-900 dark:bg-indigo-950/30"
       >
@@ -29,13 +25,11 @@
         />
         <div class="text-sm">
           <div class="font-medium text-indigo-900 dark:text-indigo-200">
-            Pinned to {{ app.dedicatedNodeName ?? "the master node" }}
+            Pinned to {{ app.dedicatedNodeName ?? 'the master node' }}
           </div>
-          <div
-            class="mt-0.5 text-xs text-indigo-700/80 dark:text-indigo-300/80"
-          >
-            This app keeps its data on one node's local disk, so it always runs
-            there. Resizing that node will briefly stop the app.
+          <div class="mt-0.5 text-xs text-indigo-700/80 dark:text-indigo-300/80">
+            This app keeps its data on one node's local disk, so it always runs there. Resizing that
+            node will briefly stop the app.
           </div>
         </div>
       </div>
@@ -64,30 +58,28 @@
 
     @if (
       !app.systemProtected &&
-        app.status !== "deleted" &&
-        app.status !== "deleting" &&
+        app.status !== 'deleted' &&
+        app.status !== 'deleting' &&
         deleteGroup();
       as group
     ) {
       <div>
         <app-delete-dialog [group]="group" [primary]="app" [compact]="true">
           {{
-            group.type === "composed"
-              ? "Removes the bundle, all its components and their resources."
-              : "Removes this application and everything created for it."
+            group.type === 'composed'
+              ? 'Removes the bundle, all its components and their resources.'
+              : 'Removes this application and everything created for it.'
           }}
         </app-delete-dialog>
       </div>
-    } @else if (!app.systemProtected && app.status !== "deleted") {
+    } @else if (!app.systemProtected && app.status !== 'deleted') {
       <div
         class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed border-red-300 px-4 py-3 dark:border-red-900/50"
         data-testid="danger-line"
       >
-        @if (app.status === "deleting") {
+        @if (app.status === 'deleting') {
           <span class="min-w-0 animate-pulse text-xs text-muted-foreground">
-            {{
-              deleteStepMessage() || "Removing application and its resources..."
-            }}
+            {{ deleteStepMessage() || 'Removing application and its resources...' }}
           </span>
           <button
             type="button"

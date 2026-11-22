@@ -18,9 +18,7 @@ export class CacheConsoleService {
   }
 
   getConnectionInfo(appId: string): Observable<CacheConnectionInfo> {
-    return this.http.get<CacheConnectionInfo>(
-      `${this.base(appId)}/connection-info`,
-    );
+    return this.http.get<CacheConnectionInfo>(`${this.base(appId)}/connection-info`);
   }
 
   getServerInfo(appId: string): Observable<CacheServerInfo> {
@@ -42,10 +40,7 @@ export class CacheConsoleService {
     appId: string,
     req: { key: string; readOnly?: boolean },
   ): Observable<{ deleted: boolean }> {
-    return this.http.post<{ deleted: boolean }>(
-      `${this.base(appId)}/delete`,
-      req,
-    );
+    return this.http.post<{ deleted: boolean }>(`${this.base(appId)}/delete`, req);
   }
 
   flush(appId: string, readOnly: boolean): Observable<{ ok: true }> {

@@ -9,16 +9,33 @@ import {
   input,
   signal,
   viewChild,
-  output
+  output,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DocumentField } from '../../model/document-console.models';
 
 /** Mongo query operators offered at value position (inside `{ field: { … } }`). */
 const OPERATORS = [
-  '$eq', '$ne', '$gt', '$gte', '$lt', '$lte', '$in', '$nin', '$exists',
-  '$regex', '$options', '$type', '$all', '$size', '$elemMatch', '$mod',
-  '$and', '$or', '$nor', '$not',
+  '$eq',
+  '$ne',
+  '$gt',
+  '$gte',
+  '$lt',
+  '$lte',
+  '$in',
+  '$nin',
+  '$exists',
+  '$regex',
+  '$options',
+  '$type',
+  '$all',
+  '$size',
+  '$elemMatch',
+  '$mod',
+  '$and',
+  '$or',
+  '$nor',
+  '$not',
 ].map((label) => ({ label, type: 'keyword' as const }));
 
 /**
@@ -101,8 +118,13 @@ export class DocumentFilterEditorComponent implements AfterViewInit, OnDestroy {
           import('./cm-highlight').then((m) => m.fluiHighlighting()),
         ]);
       const { EditorView, keymap } = view;
-      const { autocompletion, completionKeymap, completionStatus, closeBrackets, snippetCompletion } =
-        ac;
+      const {
+        autocompletion,
+        completionKeymap,
+        completionStatus,
+        closeBrackets,
+        snippetCompletion,
+      } = ac;
       const compStatus = completionStatus as (s: unknown) => string | null;
 
       const ctors = [
@@ -121,9 +143,7 @@ export class DocumentFilterEditorComponent implements AfterViewInit, OnDestroy {
       }) => {
         const word = context.matchBefore(/[$\w.]*/);
         const typed = word?.text ?? '';
-        const head = context.state
-          .sliceDoc(0, word ? word.from : context.pos)
-          .trimEnd();
+        const head = context.state.sliceDoc(0, word ? word.from : context.pos).trimEnd();
         const last = head.at(-1) ?? '';
         let options: { label: string; type?: string; detail?: string }[];
         if (typed.startsWith('$')) {
@@ -167,9 +187,11 @@ export class DocumentFilterEditorComponent implements AfterViewInit, OnDestroy {
         ]),
       );
 
-      const sync = EditorView.updateListener.of((u: { docChanged: boolean; state: { doc: { toString(): string } } }) => {
-        if (u.docChanged) this.fallbackText = u.state.doc.toString();
-      });
+      const sync = EditorView.updateListener.of(
+        (u: { docChanged: boolean; state: { doc: { toString(): string } } }) => {
+          if (u.docChanged) this.fallbackText = u.state.doc.toString();
+        },
+      );
 
       const ev = new EditorView({
         state: EditorState.create({
@@ -187,7 +209,11 @@ export class DocumentFilterEditorComponent implements AfterViewInit, OnDestroy {
             EditorView.theme({
               '&': { backgroundColor: 'transparent', color: 'inherit' },
               '&.cm-focused': { outline: 'none' },
-              '.cm-content': { padding: '6px 8px', caretColor: 'hsl(var(--foreground))', fontFamily: 'ui-monospace, monospace' },
+              '.cm-content': {
+                padding: '6px 8px',
+                caretColor: 'hsl(var(--foreground))',
+                fontFamily: 'ui-monospace, monospace',
+              },
               '.cm-line': { padding: '0' },
               '.cm-cursor, .cm-dropCursor': { borderLeftColor: 'hsl(var(--foreground))' },
               '&.cm-focused .cm-cursor': { borderLeftColor: 'hsl(var(--foreground))' },

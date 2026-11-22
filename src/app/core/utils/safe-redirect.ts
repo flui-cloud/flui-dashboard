@@ -16,7 +16,11 @@ export function bumpLoopGuard(redirect: string): LoopGuardState {
   const raw = sessionStorage.getItem(key);
   let state: LoopGuardState | null = null;
   if (raw) {
-    try { state = JSON.parse(raw) as LoopGuardState; } catch { state = null; }
+    try {
+      state = JSON.parse(raw) as LoopGuardState;
+    } catch {
+      state = null;
+    }
   }
   if (!state || now - state.firstAt > LOOP_GUARD_WINDOW_MS) {
     state = { count: 1, firstAt: now };
@@ -40,7 +44,8 @@ export function isSafeRedirect(url: string): boolean {
   try {
     const { hostname } = new URL(url);
     if (hostname.endsWith('.flui.cloud') || hostname === 'flui.cloud') return true;
-    if (!environment.production && (hostname === 'localhost' || hostname === '127.0.0.1')) return true;
+    if (!environment.production && (hostname === 'localhost' || hostname === '127.0.0.1'))
+      return true;
     return false;
   } catch {
     return false;

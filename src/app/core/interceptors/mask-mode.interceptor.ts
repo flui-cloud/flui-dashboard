@@ -20,7 +20,11 @@ export const maskModeInterceptor: HttpInterceptorFn = (req, next) => {
 };
 
 /** The same decision for a request that does not go through HttpClient, such as a stream read with fetch. */
-export function maskModeHeaders(enabled: boolean, url: string, apiBaseUrl: string): Record<string, string> {
+export function maskModeHeaders(
+  enabled: boolean,
+  url: string,
+  apiBaseUrl: string,
+): Record<string, string> {
   return enabled && isFluiApi(url, apiBaseUrl) ? { 'x-mask-mode': 'on' } : {};
 }
 

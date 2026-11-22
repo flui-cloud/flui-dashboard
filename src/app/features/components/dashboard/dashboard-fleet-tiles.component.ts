@@ -26,13 +26,28 @@ import { fleetTiles } from './home-state';
         }
       </div>
     } @else if (failed()) {
-      <div class="card-surface px-4 py-3 flex items-center justify-between gap-3" data-testid="fleet-tiles-error">
+      <div
+        class="card-surface px-4 py-3 flex items-center justify-between gap-3"
+        data-testid="fleet-tiles-error"
+      >
         <span class="text-sm text-muted-foreground">Cluster metrics could not be read</span>
-        <button type="button" class="text-xs font-medium text-primary hover:underline" (click)="retry()">Retry</button>
+        <button
+          type="button"
+          class="text-xs font-medium text-primary hover:underline"
+          (click)="retry()"
+        >
+          Retry
+        </button>
       </div>
     }
   `,
-  styles: [`:host { display: block; }`],
+  styles: [
+    `
+      :host {
+        display: block;
+      }
+    `,
+  ],
 })
 export class DashboardFleetTilesComponent {
   readonly fresh = input(false);

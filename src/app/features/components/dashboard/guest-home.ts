@@ -12,8 +12,7 @@ export interface GuestAppReading {
 
 type Bag = Record<string, unknown>;
 
-const bag = (value: unknown): Bag =>
-  value && typeof value === 'object' ? (value as Bag) : {};
+const bag = (value: unknown): Bag => (value && typeof value === 'object' ? (value as Bag) : {});
 const num = (value: unknown): number | null =>
   typeof value === 'number' && Number.isFinite(value) ? value : null;
 const points = (answer: Bag | null): Bag[] => {
@@ -26,7 +25,10 @@ const series = (rows: Bag[], pick: (row: Bag) => number | null): number[] =>
 const WINDOW_SECONDS: Record<FleetWindow, number> = { '1h': 3600, '3h': 10800, '24h': 86400 };
 
 /** The range asked of the history routes: the home's window, sixty points across it. */
-export function historyRange(window: FleetWindow, now = Date.now()): { start: string; end: string; step: string } {
+export function historyRange(
+  window: FleetWindow,
+  now = Date.now(),
+): { start: string; end: string; step: string } {
   const seconds = WINDOW_SECONDS[window];
   return {
     start: new Date(now - seconds * 1000).toISOString(),
@@ -89,7 +91,15 @@ export function appTiles(reading: GuestAppReading | undefined): StatTileData[] {
     unit: string,
     footnote: string,
   ): StatTileData => {
-    if (now === null) return { label, value: '—', unit: '', spark, color, footnote: reading ? footnote : 'reading…' };
+    if (now === null)
+      return {
+        label,
+        value: '—',
+        unit: '',
+        spark,
+        color,
+        footnote: reading ? footnote : 'reading…',
+      };
     const delta = formatDelta(now, spark, show);
     return {
       label,

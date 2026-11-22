@@ -64,9 +64,6 @@ export class ClusterHaService {
     role: ClusterHaMissingRole['role'],
     zone: string,
   ): Observable<{ operationId: string }> {
-    return this.http.post<{ operationId: string }>(
-      `${this.url(clusterId)}/nodes`,
-      { role, zone },
-    );
+    return this.http.post<{ operationId: string }>(`${this.url(clusterId)}/nodes`, { role, zone });
   }
 }

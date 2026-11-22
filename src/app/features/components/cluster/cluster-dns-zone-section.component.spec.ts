@@ -79,8 +79,6 @@ describe('taking a DNS zone off a cluster', () => {
 
   it('leaves the confirmation unreachable when the control is gone', async () => {
     await mount(false);
-    expect(
-      fixture.nativeElement.querySelector('[data-testid="zone-remove-confirm"]'),
-    ).toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="zone-remove-confirm"]')).toBeNull();
   });
 });

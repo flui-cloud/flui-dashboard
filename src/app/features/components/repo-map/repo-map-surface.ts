@@ -237,7 +237,11 @@ function strandedRow(app: StrandedApplication): SurfaceListRow {
     label: app.name,
     observations: keep([
       textObservation('flui.repo_map.stranded_slug', app.slug, 'api'),
-      valueObservation('flui.repo_map.stranded_attached_count', app.attachedServices.length, 'derived'),
+      valueObservation(
+        'flui.repo_map.stranded_attached_count',
+        app.attachedServices.length,
+        'derived',
+      ),
     ]),
   };
 }
@@ -245,24 +249,50 @@ function strandedRow(app: StrandedApplication): SurfaceListRow {
 function capacityObservations(capacity: RepoMapCapacity): Observation[] {
   const base = [
     boolObservation('flui.repo_map.capacity_assessed', capacity.assessed, 'api'),
-    textObservation('flui.repo_map.capacity_not_assessed_reason', capacity.notAssessedReason, 'api'),
+    textObservation(
+      'flui.repo_map.capacity_not_assessed_reason',
+      capacity.notAssessedReason,
+      'api',
+    ),
   ];
   if (!capacity.assessed || !capacity.known) return keep(base);
   return keep([
     ...base,
-    capacity.fits === undefined ? null : boolObservation('flui.repo_map.capacity_fits', capacity.fits, 'api'),
+    capacity.fits === undefined
+      ? null
+      : boolObservation('flui.repo_map.capacity_fits', capacity.fits, 'api'),
     capacity.requiredCpuMillicores === undefined
       ? null
-      : valueObservation('flui.repo_map.capacity_required_cpu', capacity.requiredCpuMillicores, 'api', 'm'),
+      : valueObservation(
+          'flui.repo_map.capacity_required_cpu',
+          capacity.requiredCpuMillicores,
+          'api',
+          'm',
+        ),
     capacity.requiredMemoryMebibytes === undefined
       ? null
-      : valueObservation('flui.repo_map.capacity_required_memory', capacity.requiredMemoryMebibytes, 'api', 'MiB'),
+      : valueObservation(
+          'flui.repo_map.capacity_required_memory',
+          capacity.requiredMemoryMebibytes,
+          'api',
+          'MiB',
+        ),
     capacity.availableCpuMillicores === undefined
       ? null
-      : valueObservation('flui.repo_map.capacity_available_cpu', capacity.availableCpuMillicores, 'api', 'm'),
+      : valueObservation(
+          'flui.repo_map.capacity_available_cpu',
+          capacity.availableCpuMillicores,
+          'api',
+          'm',
+        ),
     capacity.availableMemoryMebibytes === undefined
       ? null
-      : valueObservation('flui.repo_map.capacity_available_memory', capacity.availableMemoryMebibytes, 'api', 'MiB'),
+      : valueObservation(
+          'flui.repo_map.capacity_available_memory',
+          capacity.availableMemoryMebibytes,
+          'api',
+          'MiB',
+        ),
     // A fit computed with parts left out is not a fit, and the page says so in words. The
     // count is what makes that qualification survive into the snapshot.
     valueObservation('flui.repo_map.capacity_uncounted', capacity.uncountedCount, 'api'),
@@ -308,11 +338,15 @@ export function presentedContent(input: RepoMapSurfaceInput): PresentedContent {
     id: PAGE_ID,
     kind: 'page',
     label: input.repoFullName ?? 'Deploy readiness',
-    entities: [{ ref, ...(input.repoFullName ? { label: input.repoFullName } : {}), role: 'primary' }],
+    entities: [
+      { ref, ...(input.repoFullName ? { label: input.repoFullName } : {}), role: 'primary' },
+    ],
     observations: keep([
       textObservation('flui.repo_map.commit', read?.commitShortSha, 'api'),
       read ? boolObservation('flui.repo_map.read_ok', read.ok, 'api') : null,
-      read && !read.ok ? textObservation('flui.repo_map.read_refusal', read.reason ?? 'unknown', 'api') : null,
+      read && !read.ok
+        ? textObservation('flui.repo_map.read_refusal', read.reason ?? 'unknown', 'api')
+        : null,
       assessment ? textObservation('flui.repo_map.coverage', assessment.coverage, 'api') : null,
       assessment ? valueObservation('flui.repo_map.caveats', assessment.caveatCount, 'api') : null,
       boolObservation('flui.repo_map.yaml_shown', input.yamlExpanded, 'ui'),
@@ -363,9 +397,17 @@ export function presentedContent(input: RepoMapSurfaceInput): PresentedContent {
       observations: keep([
         textObservation('flui.repo_map.outcome', assessment.outcome, 'api'),
         valueObservation('flui.repo_map.units_ready', assessment.unitsReady, 'derived'),
-        valueObservation('flui.repo_map.units_pending_inputs', assessment.unitsPendingInputs, 'derived'),
+        valueObservation(
+          'flui.repo_map.units_pending_inputs',
+          assessment.unitsPendingInputs,
+          'derived',
+        ),
         valueObservation('flui.repo_map.units_blocked', assessment.unitsBlocked, 'derived'),
-        valueObservation('flui.repo_map.units_not_assessed', assessment.unitsNotAssessed, 'derived'),
+        valueObservation(
+          'flui.repo_map.units_not_assessed',
+          assessment.unitsNotAssessed,
+          'derived',
+        ),
         ...capacityObservations(assessment.capacity),
       ]),
     });
@@ -380,7 +422,11 @@ export function presentedContent(input: RepoMapSurfaceInput): PresentedContent {
       observations: [
         valueObservation('flui.repo_map.needed', assessment.neededCount, 'derived'),
         valueObservation('flui.repo_map.needed_secret', assessment.neededSecretCount, 'derived'),
-        valueObservation('flui.repo_map.needed_blocks_start', assessment.neededBlocksStartCount, 'derived'),
+        valueObservation(
+          'flui.repo_map.needed_blocks_start',
+          assessment.neededBlocksStartCount,
+          'derived',
+        ),
         valueObservation('flui.repo_map.externals', assessment.externalCount, 'derived'),
       ],
       state: { empty: assessment.neededCount === 0 },
@@ -413,7 +459,11 @@ export function presentedContent(input: RepoMapSurfaceInput): PresentedContent {
         label: 'We could not tell',
         observations: [
           valueObservation('flui.repo_map.questions', assessment.questionCount, 'derived'),
-          valueObservation('flui.repo_map.questions_with_options', assessment.questionsWithOptionsCount, 'derived'),
+          valueObservation(
+            'flui.repo_map.questions_with_options',
+            assessment.questionsWithOptionsCount,
+            'derived',
+          ),
         ],
       });
     }
@@ -424,9 +474,14 @@ export function presentedContent(input: RepoMapSurfaceInput): PresentedContent {
       label: 'What would run',
       totalCount: assessment.units.length,
       rows: assessment.units.map(unitRow),
-      listObservations: [valueObservation('flui.repo_map.rendered_units', assessment.renderedUnitCount, 'api')],
+      listObservations: [
+        valueObservation('flui.repo_map.rendered_units', assessment.renderedUnitCount, 'api'),
+      ],
     });
-    unitScopes[0] = { ...unitScopes[0], state: { loading: false, empty: assessment.units.length === 0 } };
+    unitScopes[0] = {
+      ...unitScopes[0],
+      state: { loading: false, empty: assessment.units.length === 0 },
+    };
     scopes.push(...unitScopes);
 
     if (assessment.services.length > 0) {
@@ -450,7 +505,11 @@ export function presentedContent(input: RepoMapSurfaceInput): PresentedContent {
       id: APPLY_ID,
       parentId: PAGE_ID,
       kind: 'region',
-      label: applied ? (applied.partial ? 'Applied, but not everything was armed' : 'Applied') : 'Deploy from this map',
+      label: applied
+        ? applied.partial
+          ? 'Applied, but not everything was armed'
+          : 'Applied'
+        : 'Deploy from this map',
       observations: keep([
         boolObservation('flui.repo_map.applying', input.applying, 'ui'),
         boolObservation('flui.repo_map.applied', Boolean(applied), 'ui'),
@@ -459,11 +518,19 @@ export function presentedContent(input: RepoMapSurfaceInput): PresentedContent {
           : null,
         applied ? boolObservation('flui.repo_map.apply_partial', applied.partial, 'api') : null,
         applied ? textObservation('flui.repo_map.apply_branch', applied.branch, 'api') : null,
-        applied ? textObservation('flui.repo_map.apply_commit', applied.commitShortSha, 'api') : null,
-        applied ? textObservation('flui.repo_map.apply_base_branch', applied.baseBranch, 'api') : null,
+        applied
+          ? textObservation('flui.repo_map.apply_commit', applied.commitShortSha, 'api')
+          : null,
+        applied
+          ? textObservation('flui.repo_map.apply_base_branch', applied.baseBranch, 'api')
+          : null,
         applied ? valueObservation('flui.repo_map.apply_files', applied.fileCount, 'api') : null,
-        applied ? valueObservation('flui.repo_map.apply_skipped', applied.skippedCount, 'api') : null,
-        applied ? valueObservation('flui.repo_map.apply_unmarked', applied.unmarkedCount, 'derived') : null,
+        applied
+          ? valueObservation('flui.repo_map.apply_skipped', applied.skippedCount, 'api')
+          : null,
+        applied
+          ? valueObservation('flui.repo_map.apply_unmarked', applied.unmarkedCount, 'derived')
+          : null,
       ]),
     });
 
@@ -488,18 +555,31 @@ export function presentedContent(input: RepoMapSurfaceInput): PresentedContent {
         observations: keep([
           valueObservation('flui.repo_map.refusal_status', input.refusal.status, 'api'),
           boolObservation('flui.repo_map.refusal_left_applications', Boolean(stranded), 'api'),
-          stranded ? boolObservation('flui.repo_map.refusal_branch_deleted', stranded.branchDeleted, 'api') : null,
-          stranded ? boolObservation('flui.repo_map.refusal_committed', stranded.committed, 'api') : null,
+          stranded
+            ? boolObservation('flui.repo_map.refusal_branch_deleted', stranded.branchDeleted, 'api')
+            : null,
+          stranded
+            ? boolObservation('flui.repo_map.refusal_committed', stranded.committed, 'api')
+            : null,
           // Three states, not two, exactly as the service reads it: absent means the backend did
           // not say, and saying `false` for it here would put a warning on the screen's own
           // wording that the screen never showed.
           stranded && stranded.markedForReuse !== undefined
-            ? boolObservation('flui.repo_map.refusal_marked_for_reuse', stranded.markedForReuse, 'api')
+            ? boolObservation(
+                'flui.repo_map.refusal_marked_for_reuse',
+                stranded.markedForReuse,
+                'api',
+              )
             : null,
         ]),
         // The refusal IS the view failing to do what it was asked, and it carries a code rather
         // than the backend's sentence.
-        state: { error: true, errorCode: stranded ? 'flui.repo_map.apply_left_applications' : 'flui.repo_map.apply_refused' },
+        state: {
+          error: true,
+          errorCode: stranded
+            ? 'flui.repo_map.apply_left_applications'
+            : 'flui.repo_map.apply_refused',
+        },
       });
 
       if (stranded && stranded.applications.length > 0) {

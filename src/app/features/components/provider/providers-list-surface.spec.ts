@@ -41,7 +41,10 @@ function input(over: Partial<ProvidersSurfaceInput> = {}): ProvidersSurfaceInput
 }
 
 function snapshotOf(over: Partial<ProvidersSurfaceInput> = {}): SurfaceSnapshot {
-  const snapshot = buildProvidersSurface(input(over), { revision: 1, generatedAt: '2026-09-02T09:00:00.000Z' });
+  const snapshot = buildProvidersSurface(input(over), {
+    revision: 1,
+    generatedAt: '2026-09-02T09:00:00.000Z',
+  });
   if (!snapshot) throw new Error('the producer described nothing');
   return snapshot;
 }
@@ -61,34 +64,53 @@ describe('providers list surface producer', () => {
     const tracker = new ProvidersSurfaceRevision();
     const a = input();
     const b = input({ searchTerm: 'hetz' });
-    const first = buildProvidersSurface(a, { revision: tracker.next(presentedContent(a)), generatedAt: '2026-09-02T09:00:00.000Z' })!;
-    const second = buildProvidersSurface(b, { revision: tracker.next(presentedContent(b)), generatedAt: '2026-09-02T09:01:00.000Z' })!;
+    const first = buildProvidersSurface(a, {
+      revision: tracker.next(presentedContent(a)),
+      generatedAt: '2026-09-02T09:00:00.000Z',
+    })!;
+    const second = buildProvidersSurface(b, {
+      revision: tracker.next(presentedContent(b)),
+      generatedAt: '2026-09-02T09:01:00.000Z',
+    })!;
     expect(second.surface.revision).toBe(first.surface.revision + 1);
     expect(validateSurfaceSemantics(second, { previousSnapshot: first })).toEqual([]);
   });
 
   it('flags a snapshot whose revision does not advance on the previous one', () => {
     const first = snapshotOf();
-    const stale = { ...snapshotOf(), surface: { ...snapshotOf().surface, revision: first.surface.revision } };
+    const stale = {
+      ...snapshotOf(),
+      surface: { ...snapshotOf().surface, revision: first.surface.revision },
+    };
     const issues = validateSurfaceSemantics(stale, { previousSnapshot: first });
-    expect(issues).toEqual([jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' })]);
+    expect(issues).toEqual([
+      jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' }),
+    ]);
   });
 
   it('never names an entity in attention when no provider is being configured — every row is related, not primary', () => {
     const snapshot = snapshotOf();
     expect(snapshot.attention).toEqual([{ scopeId: 'providers', reason: 'route' }]);
     const row = snapshot.scopes.find((s) => s.id === 'providers:list:hetzner')!;
-    expect(row.entities).toEqual([{ ref: providerEntityRef('hetzner'), label: 'Hetzner', role: 'related' }]);
+    expect(row.entities).toEqual([
+      { ref: providerEntityRef('hetzner'), label: 'Hetzner', role: 'related' },
+    ]);
   });
 
   it('names the provider being configured as the one selected entity, in addition to its related row', () => {
     const snapshot = snapshotOf({ configuringProvider: HETZNER });
     expect(snapshot.attention).toEqual([
-      { scopeId: 'providers:configure:hetzner', entityRef: providerEntityRef('hetzner'), reason: 'selection' },
+      {
+        scopeId: 'providers:configure:hetzner',
+        entityRef: providerEntityRef('hetzner'),
+        reason: 'selection',
+      },
       { scopeId: 'providers', reason: 'route' },
     ]);
     const selection = snapshot.scopes.find((s) => s.id === 'providers:configure:hetzner')!;
-    expect(selection.entities).toEqual([{ ref: providerEntityRef('hetzner'), label: 'Hetzner', role: 'selected' }]);
+    expect(selection.entities).toEqual([
+      { ref: providerEntityRef('hetzner'), label: 'Hetzner', role: 'selected' },
+    ]);
   });
 
   it('reports completeness against the true total, and marks filtered when a filter is active', () => {

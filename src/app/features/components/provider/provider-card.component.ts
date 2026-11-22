@@ -22,18 +22,27 @@ import {
   providers: [provideIcons({ lucideCheck, lucideExternalLink, lucideInfo, lucideMinus })],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <article class="card-surface h-full flex flex-col p-5 gap-4" [attr.data-testid]="'provider-card-' + definition().id">
+    <article
+      class="card-surface h-full flex flex-col p-5 gap-4"
+      [attr.data-testid]="'provider-card-' + definition().id"
+    >
       <header class="flex items-start gap-3">
         <app-provider-mark [name]="definition().displayName" [size]="36" />
         <div class="min-w-0 flex-1">
           <div class="flex items-center justify-between gap-3">
             <h3 class="font-semibold text-foreground truncate">{{ definition().displayName }}</h3>
-            <span class="inline-flex items-center gap-1.5 text-xs font-medium shrink-0" [class]="stateText()" data-testid="provider-state">
+            <span
+              class="inline-flex items-center gap-1.5 text-xs font-medium shrink-0"
+              [class]="stateText()"
+              data-testid="provider-state"
+            >
               <span class="h-1.5 w-1.5 rounded-full" [class]="stateDot()"></span>
               {{ state().label }}
             </span>
           </div>
-          <p class="text-sm text-muted-foreground truncate" [attr.title]="definition().description">{{ definition().description }}</p>
+          <p class="text-sm text-muted-foreground truncate" [attr.title]="definition().description">
+            {{ definition().description }}
+          </p>
         </div>
       </header>
 
@@ -42,7 +51,8 @@ import {
           <dt class="text-label">Regions</dt>
           <dd class="text-sm font-medium text-foreground mt-1" [attr.title]="regionNames()">
             @if (isConfigured()) {
-              {{ enabledRegions().length }} <span class="text-muted-foreground font-normal">of {{ regionCount() }}</span>
+              {{ enabledRegions().length }}
+              <span class="text-muted-foreground font-normal">of {{ regionCount() }}</span>
             } @else {
               {{ regionCount() || '—' }}
             }
@@ -50,7 +60,12 @@ import {
         </div>
         <div class="min-w-0">
           <dt class="text-label">Sign-in</dt>
-          <dd class="text-sm font-medium text-foreground mt-1 truncate" [attr.title]="credentialLabel()">{{ credentialLabel() || '—' }}</dd>
+          <dd
+            class="text-sm font-medium text-foreground mt-1 truncate"
+            [attr.title]="credentialLabel()"
+          >
+            {{ credentialLabel() || '—' }}
+          </dd>
         </div>
         <div class="min-w-0">
           <dt class="text-label flex items-center gap-1">
@@ -70,7 +85,8 @@ import {
           </dt>
           <dd class="text-sm font-medium text-foreground mt-1">
             @if (price(); as p) {
-              {{ p.amount | currency: p.currency : 'symbol' : '1.2-2' }}<span class="text-xs text-muted-foreground font-normal">/mo</span>
+              {{ p.amount | currency: p.currency : 'symbol' : '1.2-2'
+              }}<span class="text-xs text-muted-foreground font-normal">/mo</span>
             } @else {
               —
             }
@@ -89,7 +105,10 @@ import {
                 [attr.title]="item.hint"
                 [attr.data-testid]="'capability-' + item.key"
               >
-                <ng-icon [name]="item.on ? 'lucideCheck' : 'lucideMinus'" class="h-3 w-3 shrink-0 text-muted-foreground" />
+                <ng-icon
+                  [name]="item.on ? 'lucideCheck' : 'lucideMinus'"
+                  class="h-3 w-3 shrink-0 text-muted-foreground"
+                />
                 {{ item.label }}
               </li>
             }
@@ -152,8 +171,12 @@ export class ProviderCardComponent {
   readonly enabledRegions = computed(() => this.configuration()?.enabledRegions ?? []);
 
   private readonly regions = computed(() => {
-    const fromConfig = (this.configuration()?.availableRegions as Array<{ id: string; displayName?: string; name?: string }> | undefined) ?? [];
-    return fromConfig.length ? fromConfig : this.definition().capabilities?.supportedRegions ?? [];
+    const fromConfig =
+      (this.configuration()?.availableRegions as
+        Array<{ id: string; displayName?: string; name?: string }> | undefined) ?? [];
+    return fromConfig.length
+      ? fromConfig
+      : (this.definition().capabilities?.supportedRegions ?? []);
   });
 
   readonly regionCount = computed(() => this.regions().length);
@@ -174,7 +197,9 @@ export class ProviderCardComponent {
     const hourly = pricing.billingCycle === 'hourly';
     return {
       currency: pricing.currency || 'EUR',
-      amount: hourly ? this.pricingService.calculateMonthlyPrice(pricing.minimumCost) : pricing.minimumCost,
+      amount: hourly
+        ? this.pricingService.calculateMonthlyPrice(pricing.minimumCost)
+        : pricing.minimumCost,
       estimated: hourly,
     };
   });

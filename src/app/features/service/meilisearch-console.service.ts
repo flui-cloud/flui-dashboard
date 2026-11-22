@@ -36,9 +36,7 @@ export class MeilisearchConsoleService {
   }
 
   getConnectionInfo(appId: string): Observable<MeiliConnectionInfo> {
-    return this.http.get<MeiliConnectionInfo>(
-      `${this.base(appId)}/connection-info`,
-    );
+    return this.http.get<MeiliConnectionInfo>(`${this.base(appId)}/connection-info`);
   }
 
   getServerInfo(appId: string): Observable<MeiliServerInfo> {
@@ -63,23 +61,11 @@ export class MeilisearchConsoleService {
     return this.http.post<RawRestResponse>(`${this.base(appId)}/raw`, req);
   }
 
-  assist(
-    appId: string,
-    req: MeiliAssistRequest,
-  ): Observable<MeiliSearchSuggestion> {
-    return this.http.post<MeiliSearchSuggestion>(
-      `${this.base(appId)}/assist`,
-      req,
-    );
+  assist(appId: string, req: MeiliAssistRequest): Observable<MeiliSearchSuggestion> {
+    return this.http.post<MeiliSearchSuggestion>(`${this.base(appId)}/assist`, req);
   }
 
-  assistRaw(
-    appId: string,
-    req: MeiliAssistRequest,
-  ): Observable<MeiliRawSuggestion> {
-    return this.http.post<MeiliRawSuggestion>(
-      `${this.base(appId)}/assist-raw`,
-      req,
-    );
+  assistRaw(appId: string, req: MeiliAssistRequest): Observable<MeiliRawSuggestion> {
+    return this.http.post<MeiliRawSuggestion>(`${this.base(appId)}/assist-raw`, req);
   }
 }

@@ -2,11 +2,7 @@ import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { ApplicationService } from '../../service/application.service';
-import {
-  DbSession,
-  DbSessionsInfo,
-  DbSessionsService,
-} from '../../service/db-sessions.service';
+import { DbSession, DbSessionsInfo, DbSessionsService } from '../../service/db-sessions.service';
 import { AppSessionsTabComponent } from './app-sessions-tab.component';
 
 const session = (over: Partial<DbSession> = {}): DbSession => ({
@@ -81,7 +77,9 @@ describe('AppSessionsTabComponent', () => {
       .and.callFake(() => of({ pid: 12, action: 'terminate', message: 'Session 12 closed.' }));
     closeClient = jasmine
       .createSpy('closeClient')
-      .and.callFake(() => of({ clientId: 5, pod: 'pg-pooler-1', message: 'Pooled connection 5 closed.' }));
+      .and.callFake(() =>
+        of({ clientId: 5, pod: 'pg-pooler-1', message: 'Pooled connection 5 closed.' }),
+      );
     await TestBed.configureTestingModule({
       imports: [AppSessionsTabComponent],
       providers: [
@@ -109,7 +107,9 @@ describe('AppSessionsTabComponent', () => {
   it('marks the blocker and draws the waiting session under it', () => {
     const el = render();
     expect(q(el, 'session-blocking-11')?.textContent).toContain('blocking 1');
-    const rows = Array.from(el.querySelectorAll('tbody tr')).map((r) => r.getAttribute('data-testid'));
+    const rows = Array.from(el.querySelectorAll('tbody tr')).map((r) =>
+      r.getAttribute('data-testid'),
+    );
     expect(rows.indexOf('session-12')).toBe(rows.indexOf('session-11') + 1);
   });
 
@@ -151,7 +151,10 @@ describe('AppSessionsTabComponent', () => {
   });
 
   it('reads nothing for a database that is not PostgreSQL', () => {
-    selected.set({ ...POSTGRES_APP, labels: { 'flui.cloud/db-engine': 'mariadb', 'flui.cloud/app-type': 'building-block' } });
+    selected.set({
+      ...POSTGRES_APP,
+      labels: { 'flui.cloud/db-engine': 'mariadb', 'flui.cloud/app-type': 'building-block' },
+    });
     const el = render();
     expect(q(el, 'sessions-unsupported')).not.toBeNull();
     expect(list).not.toHaveBeenCalled();
@@ -198,7 +201,9 @@ describe('AppSessionsTabComponent', () => {
       }),
     );
     const el = render();
-    expect(q(el, 'sessions-pooler-summary')?.textContent).toContain('transaction mode · 1 clients · 0 waiting');
+    expect(q(el, 'sessions-pooler-summary')?.textContent).toContain(
+      'transaction mode · 1 clients · 0 waiting',
+    );
     expect(q(el, 'pooled-client-5')).toBeNull();
     q(el, 'sessions-pooler-toggle')!.click();
     fixture.detectChanges();
@@ -213,7 +218,11 @@ describe('AppSessionsTabComponent', () => {
     fixture.detectChanges();
     expect(closeClient).toHaveBeenCalledWith(
       'db-1',
-      jasmine.objectContaining({ id: 5, pod: 'pg-pooler-1', connectTime: '2026-10-12 07:00:00 UTC' }),
+      jasmine.objectContaining({
+        id: 5,
+        pod: 'pg-pooler-1',
+        connectTime: '2026-10-12 07:00:00 UTC',
+      }),
     );
     expect(q(el, 'sessions-notice')?.textContent).toContain('Pooled connection 5 closed.');
   });

@@ -16,12 +16,7 @@ export interface NeedsDecisionItem {
 }
 
 export type ProtectedAppOutcomeKind =
-  | 'protected'
-  | 'already_protected'
-  | 'waiting'
-  | 'needs_decision'
-  | 'failed'
-  | 'skipped';
+  'protected' | 'already_protected' | 'waiting' | 'needs_decision' | 'failed' | 'skipped';
 
 export interface ProtectedApp {
   applicationId: string;
@@ -94,10 +89,7 @@ export function protectedAppLine(app: ProtectedApp): string {
   }
 }
 
-export function policyEngineLabel(
-  engineClass?: string | null,
-  engine?: string | null,
-): string {
+export function policyEngineLabel(engineClass?: string | null, engine?: string | null): string {
   switch (engineClass) {
     case 'database':
       return engine?.endsWith('-dump') ? 'Database (dumps)' : 'Database (continuous)';

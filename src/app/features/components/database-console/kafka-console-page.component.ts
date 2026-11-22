@@ -1,9 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  inject,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -79,7 +74,9 @@ import { KafkaResultComponent } from './kafka-result.component';
             @if (state.cluster(); as c) {
               <span class="font-normal text-muted-foreground">
                 · {{ c.brokers.length }} broker{{ c.brokers.length === 1 ? '' : 's' }}
-                @if (c.clusterId) { · {{ c.clusterId }} }
+                @if (c.clusterId) {
+                  · {{ c.clusterId }}
+                }
               </span>
             }
           </h1>
@@ -121,9 +118,7 @@ import { KafkaResultComponent } from './kafka-result.component';
                 </div>
                 <div class="max-h-56 overflow-auto">
                   <table class="w-full text-sm">
-                    <thead
-                      class="sticky top-0 bg-muted/60 text-xs text-muted-foreground"
-                    >
+                    <thead class="sticky top-0 bg-muted/60 text-xs text-muted-foreground">
                       <tr>
                         <th class="px-3 py-1.5 text-left font-medium">Topic</th>
                         <th class="px-3 py-1.5 text-right font-medium">Partitions</th>
@@ -146,13 +141,20 @@ import { KafkaResultComponent } from './kafka-result.component';
                               >
                             }
                           </td>
-                          <td class="px-3 py-1.5 text-right font-mono text-muted-foreground">{{ t.partitions }}</td>
-                          <td class="px-3 py-1.5 text-right font-mono text-muted-foreground">{{ t.replicationFactor }}</td>
+                          <td class="px-3 py-1.5 text-right font-mono text-muted-foreground">
+                            {{ t.partitions }}
+                          </td>
+                          <td class="px-3 py-1.5 text-right font-mono text-muted-foreground">
+                            {{ t.replicationFactor }}
+                          </td>
                         </tr>
                       }
                       @if (state.topics().length === 0) {
                         <tr>
-                          <td colspan="3" class="px-3 py-6 text-center text-xs text-muted-foreground">
+                          <td
+                            colspan="3"
+                            class="px-3 py-6 text-center text-xs text-muted-foreground"
+                          >
                             No topics yet — create one or produce to auto-create.
                           </td>
                         </tr>
@@ -179,12 +181,16 @@ import { KafkaResultComponent } from './kafka-result.component';
                         title="Show lag for this group"
                       >
                         <span class="truncate text-foreground">{{ g.groupId }}</span>
-                        <span class="shrink-0 font-mono text-[10px] text-muted-foreground">lag →</span>
+                        <span class="shrink-0 font-mono text-[10px] text-muted-foreground"
+                          >lag →</span
+                        >
                       </button>
                     </li>
                   }
                   @if (state.groups().length === 0) {
-                    <li class="px-3 py-6 text-center text-xs text-muted-foreground">No consumer groups.</li>
+                    <li class="px-3 py-6 text-center text-xs text-muted-foreground">
+                      No consumer groups.
+                    </li>
                   }
                 </ul>
               </div>
@@ -192,9 +198,7 @@ import { KafkaResultComponent } from './kafka-result.component';
 
             <!-- Command runner -->
             <section class="flex flex-col rounded-md border border-border">
-              <div
-                class="flex items-center gap-2 border-b border-border bg-muted/40 px-3 py-2"
-              >
+              <div class="flex items-center gap-2 border-b border-border bg-muted/40 px-3 py-2">
                 <ng-icon name="lucideDatabase" class="h-4 w-4 text-primary" />
                 <span class="text-sm font-medium text-foreground">kafka-shell</span>
                 <button
@@ -207,7 +211,10 @@ import { KafkaResultComponent } from './kafka-result.component';
                   [class.text-muted-foreground]="state.readOnly()"
                   [title]="state.readOnly() ? 'Read-only: writes are blocked' : 'Writes enabled'"
                 >
-                  <ng-icon [name]="state.readOnly() ? 'lucideLock' : 'lucideLockOpen'" class="h-3.5 w-3.5" />
+                  <ng-icon
+                    [name]="state.readOnly() ? 'lucideLock' : 'lucideLockOpen'"
+                    class="h-3.5 w-3.5"
+                  />
                   {{ state.readOnly() ? 'Read-only' : 'Writes on' }}
                 </button>
               </div>
@@ -244,7 +251,9 @@ import { KafkaResultComponent } from './kafka-result.component';
                     >
                       {{ ex.label }}
                       @if (ex.write) {
-                        <span class="rounded bg-amber-500/15 px-1 text-[10px] text-amber-600">write</span>
+                        <span class="rounded bg-amber-500/15 px-1 text-[10px] text-amber-600"
+                          >write</span
+                        >
                       }
                     </button>
                   }
@@ -286,10 +295,9 @@ export class KafkaConsolePageComponent implements OnInit {
   protected readonly state = inject(KafkaConsoleStateService);
   private readonly route = inject(ActivatedRoute);
 
-  readonly applicationId = toSignal(
-    this.route.paramMap.pipe(map((p) => p.get('applicationId'))),
-    { initialValue: this.route.snapshot.paramMap.get('applicationId') },
-  );
+  readonly applicationId = toSignal(this.route.paramMap.pipe(map((p) => p.get('applicationId'))), {
+    initialValue: this.route.snapshot.paramMap.get('applicationId'),
+  });
 
   ngOnInit(): void {
     this.state.appId.set(this.applicationId() ?? null);

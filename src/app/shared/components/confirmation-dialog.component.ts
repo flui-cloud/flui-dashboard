@@ -28,11 +28,10 @@ export type ConfirmationDialogVariant = 'danger' | 'warning' | 'info';
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (isOpen()) {
-      <div
-        class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm"
-        (click)="onCancel()"
-      >
-        <div class="fixed left-[50%] top-[50%] z-50 w-full max-w-md translate-x-[-50%] translate-y-[-50%] p-4">
+      <div class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm" (click)="onCancel()">
+        <div
+          class="fixed left-[50%] top-[50%] z-50 w-full max-w-md translate-x-[-50%] translate-y-[-50%] p-4"
+        >
           <div
             class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl"
             (click)="$event.stopPropagation()"
@@ -45,7 +44,7 @@ export type ConfirmationDialogVariant = 'danger' | 'warning' | 'info';
                   [ngClass]="{
                     'bg-red-100 dark:bg-red-900/20': variant() === 'danger',
                     'bg-yellow-100 dark:bg-yellow-900/20': variant() === 'warning',
-                    'bg-blue-100 dark:bg-blue-900/20': variant() === 'info'
+                    'bg-blue-100 dark:bg-blue-900/20': variant() === 'info',
                   }"
                 >
                   <ng-icon
@@ -54,7 +53,7 @@ export type ConfirmationDialogVariant = 'danger' | 'warning' | 'info';
                     [ngClass]="{
                       'text-red-600 dark:text-red-400': variant() === 'danger',
                       'text-yellow-600 dark:text-yellow-400': variant() === 'warning',
-                      'text-blue-600 dark:text-blue-400': variant() === 'info'
+                      'text-blue-600 dark:text-blue-400': variant() === 'info',
                     }"
                   />
                 </div>
@@ -75,7 +74,9 @@ export type ConfirmationDialogVariant = 'danger' | 'warning' | 'info';
                       {{ detailsOpen() ? 'Hide details' : 'What exactly happens' }}
                     </button>
                     @if (detailsOpen()) {
-                      <ul class="mt-2 space-y-1.5 border-l-2 border-gray-200 pl-3 dark:border-gray-700">
+                      <ul
+                        class="mt-2 space-y-1.5 border-l-2 border-gray-200 pl-3 dark:border-gray-700"
+                      >
                         @for (line of details; track line) {
                           <li class="text-xs text-gray-600 dark:text-gray-400">{{ line }}</li>
                         }
@@ -114,7 +115,7 @@ export type ConfirmationDialogVariant = 'danger' | 'warning' | 'info';
                 [ngClass]="{
                   'bg-red-600 hover:bg-red-700 text-white': variant() === 'danger',
                   'bg-yellow-600 hover:bg-yellow-700 text-white': variant() === 'warning',
-                  'bg-blue-600 hover:bg-blue-700 text-white': variant() === 'info'
+                  'bg-blue-600 hover:bg-blue-700 text-white': variant() === 'info',
                 }"
                 class="min-w-[100px]"
               >

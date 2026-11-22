@@ -9,10 +9,7 @@ import {
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideBell, lucideCheck } from '@ng-icons/lucide';
-import {
-  AppNotification,
-  NotificationService,
-} from '../../../core/services/notification.service';
+import { AppNotification, NotificationService } from '../../../core/services/notification.service';
 import { NotificationItemComponent } from './notification-item.component';
 
 @Component({
@@ -37,18 +34,31 @@ import { NotificationItemComponent } from './notification-item.component';
       </button>
 
       @if (isOpen()) {
-        <div class="fl-popover" role="dialog" aria-label="Notifications" (click)="$event.stopPropagation()">
+        <div
+          class="fl-popover"
+          role="dialog"
+          aria-label="Notifications"
+          (click)="$event.stopPropagation()"
+        >
           <div class="fl-popover__header">
             <span class="fl-popover__title">Notifications</span>
             <div class="flex items-center gap-1">
               @if (notifService.unreadCount() > 0) {
-                <button type="button" class="fl-btn fl-btn--ghost fl-btn--sm" (click)="notifService.markAllRead()">
+                <button
+                  type="button"
+                  class="fl-btn fl-btn--ghost fl-btn--sm"
+                  (click)="notifService.markAllRead()"
+                >
                   <ng-icon name="lucideCheck" />
                   Mark all read
                 </button>
               }
               @if (notifService.notifications().length > 0) {
-                <button type="button" class="fl-btn fl-btn--ghost fl-btn--sm" (click)="notifService.clear()">
+                <button
+                  type="button"
+                  class="fl-btn fl-btn--ghost fl-btn--sm"
+                  (click)="notifService.clear()"
+                >
                   Clear all
                 </button>
               }
@@ -78,7 +88,9 @@ import { NotificationItemComponent } from './notification-item.component';
 
           @if (notifService.notifications().length > 0) {
             <div class="fl-popover__footer">
-              {{ notifService.notifications().length }} notification{{ notifService.notifications().length !== 1 ? 's' : '' }}
+              {{ notifService.notifications().length }} notification{{
+                notifService.notifications().length !== 1 ? 's' : ''
+              }}
               @if (notifService.unreadCount() > 0) {
                 · {{ notifService.unreadCount() }} unread
               }
@@ -110,16 +122,16 @@ export class NotificationPanelComponent {
 
   togglePanel(event: Event): void {
     event.stopPropagation();
-    this.isOpen.update(v => !v);
+    this.isOpen.update((v) => !v);
   }
 
   onItemClicked(notif: AppNotification): void {
     this.notifService.markRead(notif.id);
-    this.expandedId.update(current => current === notif.id ? null : notif.id);
+    this.expandedId.update((current) => (current === notif.id ? null : notif.id));
   }
 
   toggleExpanded(id: string): void {
-    this.expandedId.update(current => current === id ? null : id);
+    this.expandedId.update((current) => (current === id ? null : id));
   }
 
   onLinkClicked(notif: AppNotification): void {

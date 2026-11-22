@@ -119,9 +119,13 @@ export interface ChartPanelContext {
       </div>
     }
   `,
-  styles: [`
-    :host { display: block; }
-  `],
+  styles: [
+    `
+      :host {
+        display: block;
+      }
+    `,
+  ],
 })
 export class ChartPanelComponent implements OnDestroy {
   readonly title = input.required<string>();

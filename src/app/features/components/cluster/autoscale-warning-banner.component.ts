@@ -8,21 +8,12 @@ import { AutoscaleStatus } from '../../model/autoscale.models';
   selector: 'app-autoscale-warning-banner',
   standalone: true,
   imports: [NgIcon],
-  providers: [
-    provideIcons({ lucideTriangleAlert, lucideCircleAlert, lucideZap, lucidePlus }),
-  ],
+  providers: [provideIcons({ lucideTriangleAlert, lucideCircleAlert, lucideZap, lucidePlus })],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (visible()) {
-      <div
-        class="flex items-start gap-3 rounded-lg border p-3"
-        [class]="containerClass()"
-      >
-        <ng-icon
-          [name]="iconName()"
-          class="h-5 w-5 flex-shrink-0 mt-0.5"
-          [class]="iconClass()"
-        />
+      <div class="flex items-start gap-3 rounded-lg border p-3" [class]="containerClass()">
+        <ng-icon [name]="iconName()" class="h-5 w-5 flex-shrink-0 mt-0.5" [class]="iconClass()" />
         <div class="flex-1 min-w-0">
           <p class="text-sm font-medium" [class]="titleClass()">
             {{ title() }}
@@ -40,7 +31,9 @@ import { AutoscaleStatus } from '../../model/autoscale.models';
                   [class]="actionBorderClass()"
                 >
                   <ng-icon name="lucideZap" class="h-3.5 w-3.5" />
-                  {{ status()?.autoscalingEnabled ? 'Manage autoscaling' : 'Configure autoscaling' }}
+                  {{
+                    status()?.autoscalingEnabled ? 'Manage autoscaling' : 'Configure autoscaling'
+                  }}
                 </button>
               }
               @if (showAddWorker()) {
@@ -87,37 +80,37 @@ export class AutoscaleWarningBannerComponent {
   });
 
   readonly iconName = computed(() =>
-    this.status()?.warning === 'DANGER_NEEDS_SCALE' ? 'lucideCircleAlert' : 'lucideTriangleAlert'
+    this.status()?.warning === 'DANGER_NEEDS_SCALE' ? 'lucideCircleAlert' : 'lucideTriangleAlert',
   );
 
   readonly containerClass = computed(() =>
     this.status()?.warning === 'DANGER_NEEDS_SCALE'
       ? 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20'
-      : 'border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-900/20'
+      : 'border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-900/20',
   );
 
   readonly iconClass = computed(() =>
     this.status()?.warning === 'DANGER_NEEDS_SCALE'
       ? 'text-red-600 dark:text-red-400'
-      : 'text-yellow-600 dark:text-yellow-400'
+      : 'text-yellow-600 dark:text-yellow-400',
   );
 
   readonly titleClass = computed(() =>
     this.status()?.warning === 'DANGER_NEEDS_SCALE'
       ? 'text-red-900 dark:text-red-200'
-      : 'text-yellow-900 dark:text-yellow-200'
+      : 'text-yellow-900 dark:text-yellow-200',
   );
 
   readonly messageClass = computed(() =>
     this.status()?.warning === 'DANGER_NEEDS_SCALE'
       ? 'text-red-800 dark:text-red-300'
-      : 'text-yellow-800 dark:text-yellow-300'
+      : 'text-yellow-800 dark:text-yellow-300',
   );
 
   readonly actionBorderClass = computed(() =>
     this.status()?.warning === 'DANGER_NEEDS_SCALE'
       ? 'border-red-300 dark:border-red-700 text-red-700 dark:text-red-300'
-      : 'border-yellow-300 dark:border-yellow-700 text-yellow-800 dark:text-yellow-300'
+      : 'border-yellow-300 dark:border-yellow-700 text-yellow-800 dark:text-yellow-300',
   );
 
   readonly showConfigure = computed(() => true);

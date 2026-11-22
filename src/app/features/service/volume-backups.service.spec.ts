@@ -1,8 +1,5 @@
 import { provideHttpClient, withXhr } from '@angular/common/http';
-import {
-  HttpTestingController,
-  provideHttpClientTesting,
-} from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { AppConfigService } from '../../core/services/app-config.service';
 import { VolumeBackupsService } from './volume-backups.service';
@@ -50,9 +47,7 @@ describe('VolumeBackupsService', () => {
       paths: ['uploads'],
       targetApplicationId: 'other',
     });
-    const req = http.expectOne(
-      '/api/v1/applications/a/volume-backups/b1/restore-files',
-    );
+    const req = http.expectOne('/api/v1/applications/a/volume-backups/b1/restore-files');
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({
       paths: ['uploads'],
@@ -63,9 +58,7 @@ describe('VolumeBackupsService', () => {
   });
 
   it('reads the API message of a refusal', () => {
-    expect(
-      service.errorMessage({ error: { message: 'nope' } }, 'fallback'),
-    ).toBe('nope');
+    expect(service.errorMessage({ error: { message: 'nope' } }, 'fallback')).toBe('nope');
     expect(service.errorMessage({}, 'fallback')).toBe('fallback');
   });
 });

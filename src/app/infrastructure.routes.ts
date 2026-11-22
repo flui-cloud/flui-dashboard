@@ -9,9 +9,7 @@ export const infrastructureRoutes: Routes = [
   {
     path: 'costs',
     loadComponent: () =>
-      import('./features/components/costs/costs.component').then(
-        (m) => m.CostsComponent,
-      ),
+      import('./features/components/costs/costs.component').then((m) => m.CostsComponent),
     title: 'Costs - flui.cloud',
   },
   {
@@ -20,17 +18,17 @@ export const infrastructureRoutes: Routes = [
       {
         path: '',
         loadComponent: () =>
-          import(
-            './features/components/compute/compute-instances.component'
-          ).then((m) => m.ComputeInstancesComponent),
+          import('./features/components/compute/compute-instances.component').then(
+            (m) => m.ComputeInstancesComponent,
+          ),
         title: 'Compute - flui.cloud',
       },
       {
         path: ':provider/:providerId',
         loadComponent: () =>
-          import(
-            './features/components/compute/instance-detail.component'
-          ).then((m) => m.InstanceDetailComponent),
+          import('./features/components/compute/instance-detail.component').then(
+            (m) => m.InstanceDetailComponent,
+          ),
         title: 'Instance Details - flui.cloud',
       },
     ],
@@ -46,25 +44,25 @@ export const infrastructureRoutes: Routes = [
       {
         path: 'clusters',
         loadComponent: () =>
-          import(
-            './features/components/firewall/firewall-cluster-management.component'
-          ).then((m) => m.FirewallClusterManagementComponent),
+          import('./features/components/firewall/firewall-cluster-management.component').then(
+            (m) => m.FirewallClusterManagementComponent,
+          ),
         title: 'Cluster Firewalls - flui.cloud',
       },
       {
         path: 'provider-firewalls',
         loadComponent: () =>
-          import(
-            './features/components/firewall/firewall-provider-instances.component'
-          ).then((m) => m.FirewallProviderInstancesComponent),
+          import('./features/components/firewall/firewall-provider-instances.component').then(
+            (m) => m.FirewallProviderInstancesComponent,
+          ),
         title: 'Provider Firewalls - flui.cloud',
       },
       {
         path: ':id',
         loadComponent: () =>
-          import(
-            './features/components/firewall/firewall-detail.component'
-          ).then((m) => m.FirewallDetailComponent),
+          import('./features/components/firewall/firewall-detail.component').then(
+            (m) => m.FirewallDetailComponent,
+          ),
         title: 'Firewall Details - flui.cloud',
       },
     ],
@@ -72,9 +70,7 @@ export const infrastructureRoutes: Routes = [
   {
     path: 'keys',
     loadComponent: () =>
-      import('./features/components/ssh-keys.component').then(
-        (m) => m.SshKeysComponent
-      ),
+      import('./features/components/ssh-keys.component').then((m) => m.SshKeysComponent),
     title: 'SSH Keys - flui.cloud',
   },
   {
@@ -83,9 +79,7 @@ export const infrastructureRoutes: Routes = [
       {
         path: '',
         loadComponent: () =>
-          import('./features/components/dns/dns-shell.component').then(
-            (m) => m.DnsShellComponent
-          ),
+          import('./features/components/dns/dns-shell.component').then((m) => m.DnsShellComponent),
         title: 'DNS Zones - flui.cloud',
         children: [
           { path: '', redirectTo: 'zones', pathMatch: 'full' },
@@ -93,7 +87,7 @@ export const infrastructureRoutes: Routes = [
             path: 'zones',
             loadComponent: () =>
               import('./features/components/dns/dns-zones-list.component').then(
-                (m) => m.DnsZonesListComponent
+                (m) => m.DnsZonesListComponent,
               ),
             title: 'Registered Zones - flui.cloud',
           },
@@ -101,7 +95,7 @@ export const infrastructureRoutes: Routes = [
             path: 'issuers',
             loadComponent: () =>
               import('./features/components/dns/dns-issuers-tab.component').then(
-                (m) => m.DnsIssuersTabComponent
+                (m) => m.DnsIssuersTabComponent,
               ),
             title: 'Certificate Issuers - flui.cloud',
           },
@@ -109,7 +103,7 @@ export const infrastructureRoutes: Routes = [
             path: 'internal-hosting',
             loadComponent: () =>
               import('./features/components/dns/dns-internal-hosting-tab.component').then(
-                (m) => m.DnsInternalHostingTabComponent
+                (m) => m.DnsInternalHostingTabComponent,
               ),
             title: 'Internal Hosting - flui.cloud',
           },
@@ -119,7 +113,7 @@ export const infrastructureRoutes: Routes = [
         path: 'register',
         loadComponent: () =>
           import('./features/components/dns/dns-zone-register.component').then(
-            (m) => m.DnsZoneRegisterComponent
+            (m) => m.DnsZoneRegisterComponent,
           ),
         title: 'Register DNS Zone - flui.cloud',
       },
@@ -128,9 +122,9 @@ export const infrastructureRoutes: Routes = [
   {
     path: 'platform-components',
     loadComponent: () =>
-      import(
-        './features/components/platform-components/platform-components-list.component'
-      ).then((m) => m.PlatformComponentsListComponent),
+      import('./features/components/platform-components/platform-components-list.component').then(
+        (m) => m.PlatformComponentsListComponent,
+      ),
     title: 'Platform Components - flui.cloud',
   },
   {
@@ -144,16 +138,14 @@ export const infrastructureRoutes: Routes = [
       {
         path: '',
         loadComponent: () =>
-          import('./features/components/vnet/vnet-list.component').then(
-            (m) => m.VNetListComponent
-          ),
+          import('./features/components/vnet/vnet-list.component').then((m) => m.VNetListComponent),
         title: 'Virtual Networks - flui.cloud',
       },
       {
         path: 'new',
         loadComponent: () =>
           import('./features/components/vnet/vnet-create.component').then(
-            (m) => m.VNetCreateComponent
+            (m) => m.VNetCreateComponent,
           ),
         title: 'Create VNet - flui.cloud',
       },
@@ -161,7 +153,7 @@ export const infrastructureRoutes: Routes = [
         path: ':id',
         loadComponent: () =>
           import('./features/components/vnet/vnet-details.component').then(
-            (m) => m.VNetDetailsComponent
+            (m) => m.VNetDetailsComponent,
           ),
         title: 'VNet Details - flui.cloud',
       },

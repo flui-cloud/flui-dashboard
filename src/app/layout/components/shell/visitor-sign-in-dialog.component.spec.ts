@@ -1,7 +1,10 @@
 import { TestBed, fakeAsync, flush, flushMicrotasks } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { VisitorSignInDialogComponent } from './visitor-sign-in-dialog.component';
-import { UpgradeProviders, VisitorSignInService } from '../../../core/services/visitor-sign-in.service';
+import {
+  UpgradeProviders,
+  VisitorSignInService,
+} from '../../../core/services/visitor-sign-in.service';
 
 describe('VisitorSignInDialogComponent', () => {
   const build = (answer: UpgradeProviders) => {
@@ -23,12 +26,16 @@ describe('VisitorSignInDialogComponent', () => {
     fixture.detectChanges();
     flush();
     const el = fixture.nativeElement as HTMLElement;
-    const find = (id: string) => el.querySelector<HTMLButtonElement>(`[data-testid="visitor-sign-in-${id}"]`);
+    const find = (id: string) =>
+      el.querySelector<HTMLButtonElement>(`[data-testid="visitor-sign-in-${id}"]`);
     return { fixture, gate, el, find };
   };
 
   it('offers only the connected providers', fakeAsync(() => {
-    const { el, find, gate } = build({ providers: [{ provider: 'github', name: 'GitHub' }], email: false });
+    const { el, find, gate } = build({
+      providers: [{ provider: 'github', name: 'GitHub' }],
+      email: false,
+    });
     expect(el.querySelector('[role="dialog"]')?.getAttribute('aria-modal')).toBe('true');
     expect(el.textContent).toContain('Sign in to deploy');
     expect(find('github')?.textContent).toContain('Continue with GitHub');

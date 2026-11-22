@@ -29,7 +29,9 @@ function completedDetail(metadata: BackupJob['metadata']): string | undefined {
 }
 
 /** How a finished run ended, in the words the progress dialog shows; null while it runs. */
-export function backupJobOutcome(job: Pick<BackupJob, 'status' | 'errorMessage' | 'metadata'>): BackupJobOutcome | null {
+export function backupJobOutcome(
+  job: Pick<BackupJob, 'status' | 'errorMessage' | 'metadata'>,
+): BackupJobOutcome | null {
   switch (job.status) {
     case 'completed':
       return {
@@ -42,13 +44,18 @@ export function backupJobOutcome(job: Pick<BackupJob, 'status' | 'errorMessage' 
       return {
         status: 'completed',
         partial: true,
-        detail: job.errorMessage ?? (volumes.length ? `Left out: ${volumes.join(', ')}.` : undefined),
+        detail:
+          job.errorMessage ?? (volumes.length ? `Left out: ${volumes.join(', ')}.` : undefined),
       };
     }
     case 'failed':
       return { status: 'failed', partial: false, detail: job.errorMessage ?? 'The backup failed.' };
     case 'cancelled':
-      return { status: 'failed', partial: false, detail: job.errorMessage ?? 'The backup was cancelled.' };
+      return {
+        status: 'failed',
+        partial: false,
+        detail: job.errorMessage ?? 'The backup was cancelled.',
+      };
     default:
       return null;
   }

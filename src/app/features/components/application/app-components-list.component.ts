@@ -12,7 +12,9 @@ import { ApplicationResponseDto } from '../../../core/api/model/models';
       <section class="rounded-2xl border border-border bg-card p-6">
         <h2 class="mb-3 text-sm font-semibold text-foreground">
           Components
-          <span class="ml-1 text-xs font-normal text-muted-foreground">({{ components().length }})</span>
+          <span class="ml-1 text-xs font-normal text-muted-foreground"
+            >({{ components().length }})</span
+          >
         </h2>
         <div class="flex flex-col gap-1.5">
           @for (c of components(); track c.id) {
@@ -26,13 +28,22 @@ import { ApplicationResponseDto } from '../../../core/api/model/models';
                 <span class="flex items-center gap-2 truncate text-sm font-medium text-foreground">
                   {{ role(c) }}
                   @if (c.id === primaryComponentId()) {
-                    <span class="rounded bg-sky-100 px-1.5 py-0.5 text-[10px] font-medium text-sky-800 dark:bg-sky-900/20 dark:text-sky-400">primary</span>
+                    <span
+                      class="rounded bg-sky-100 px-1.5 py-0.5 text-[10px] font-medium text-sky-800 dark:bg-sky-900/20 dark:text-sky-400"
+                      >primary</span
+                    >
                   }
                 </span>
-                <span class="block truncate font-mono text-xs text-muted-foreground">{{ c.slug }}</span>
+                <span class="block truncate font-mono text-xs text-muted-foreground">{{
+                  c.slug
+                }}</span>
               </div>
-              <span class="hidden flex-shrink-0 font-mono text-xs text-muted-foreground sm:block">{{ c.exposure }}</span>
-              <span class="flex-shrink-0 text-xs capitalize text-muted-foreground">{{ c.status }}</span>
+              <span class="hidden flex-shrink-0 font-mono text-xs text-muted-foreground sm:block">{{
+                c.exposure
+              }}</span>
+              <span class="flex-shrink-0 text-xs capitalize text-muted-foreground">{{
+                c.status
+              }}</span>
             </a>
           }
         </div>

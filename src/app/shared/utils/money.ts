@@ -19,10 +19,7 @@ function formatterFor(currency: string): Intl.NumberFormat | null {
 }
 
 /** Every amount of money the same way: the currency and two decimals, whatever precision the API sent. */
-export function formatMoney(
-  value: number | string | null | undefined,
-  currency = 'EUR',
-): string {
+export function formatMoney(value: number | string | null | undefined, currency = 'EUR'): string {
   if (value === null || value === undefined || value === '') return '—';
   const amount = typeof value === 'number' ? value : Number.parseFloat(value);
   if (!Number.isFinite(amount)) return '—';
@@ -30,10 +27,7 @@ export function formatMoney(
 }
 
 /** A monthly amount, as prices are quoted in the catalogue. */
-export function formatMonthly(
-  value: number | string | null | undefined,
-  currency = 'EUR',
-): string {
+export function formatMonthly(value: number | string | null | undefined, currency = 'EUR'): string {
   const money = formatMoney(value, currency);
   return money === '—' ? money : `${money}/mo`;
 }

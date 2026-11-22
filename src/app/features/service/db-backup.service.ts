@@ -33,10 +33,8 @@ export class DbBackupService {
 
   /** Restore a dump file (raw body). Destructive — backend requires confirm=true. */
   restore(appId: string, file: File): Observable<{ ok: true }> {
-    return this.http.post<{ ok: true }>(
-      `${this.base(appId)}/restore?confirm=true`,
-      file,
-      { headers: { 'Content-Type': 'application/octet-stream' } },
-    );
+    return this.http.post<{ ok: true }>(`${this.base(appId)}/restore?confirm=true`, file, {
+      headers: { 'Content-Type': 'application/octet-stream' },
+    });
   }
 }

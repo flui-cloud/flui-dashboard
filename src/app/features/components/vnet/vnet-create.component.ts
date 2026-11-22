@@ -4,22 +4,23 @@
  * Form for creating a new Virtual Network with initial subnet configuration.
  */
 
-import { Component, signal, inject, OnInit, computed, effect, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  signal,
+  inject,
+  OnInit,
+  computed,
+  effect,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideArrowLeft,
-  lucideNetwork,
-  lucideInfo,
-  lucideCircleAlert
-} from '@ng-icons/lucide';
+import { lucideArrowLeft, lucideNetwork, lucideInfo, lucideCircleAlert } from '@ng-icons/lucide';
 
 import { VNetService } from '../../service/vnet.service';
-import {
-  CreateVNetConfiguration
-} from '../../model/vnet.models';
+import { CreateVNetConfiguration } from '../../model/vnet.models';
 import { ProviderWizardService } from '../../../shared/services/provider-wizard.service';
 import { VNetTopologyDto } from '../../../core/api/model/vNetTopologyDto';
 
@@ -32,8 +33,8 @@ import { VNetTopologyDto } from '../../../core/api/model/vNetTopologyDto';
       lucideArrowLeft,
       lucideNetwork,
       lucideInfo,
-      lucideCircleAlert
-    })
+      lucideCircleAlert,
+    }),
   ],
   template: `
     <div class="space-y-6 p-6 max-w-4xl mx-auto">
@@ -47,9 +48,7 @@ import { VNetTopologyDto } from '../../../core/api/model/vNetTopologyDto';
           Back
         </button>
         <div>
-          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
-            Create Virtual Network
-          </h1>
+          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Create Virtual Network</h1>
           <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
             Create a new VNet with automatic subnet provisioning
           </p>
@@ -58,23 +57,31 @@ import { VNetTopologyDto } from '../../../core/api/model/vNetTopologyDto';
 
       <!-- Error Message -->
       @if (errorMessage()) {
-        <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+        <div
+          class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4"
+        >
           <div class="flex items-start gap-2">
-            <ng-icon name="lucideCircleAlert" class="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5" />
+            <ng-icon
+              name="lucideCircleAlert"
+              class="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5"
+            />
             <div class="text-sm text-red-800 dark:text-red-200">{{ errorMessage() }}</div>
           </div>
         </div>
       }
 
       <!-- Form -->
-      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+      <div
+        class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6"
+      >
         <div class="space-y-6">
-
           <!-- Basic Information -->
           <div>
             <div class="flex items-center gap-2 mb-4">
               <ng-icon name="lucideNetwork" class="h-5 w-5 text-gray-500" />
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Network Configuration</h2>
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+                Network Configuration
+              </h2>
             </div>
 
             <div class="space-y-4">
@@ -84,7 +91,9 @@ import { VNetTopologyDto } from '../../../core/api/model/vNetTopologyDto';
                   Cloud Provider <span class="text-red-500">*</span>
                 </label>
                 @if (isLoadingProviders()) {
-                  <div class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-400 text-sm">
+                  <div
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-400 text-sm"
+                  >
                     Loading providers...
                   </div>
                 } @else {
@@ -119,9 +128,13 @@ import { VNetTopologyDto } from '../../../core/api/model/vNetTopologyDto';
                     type="button"
                     (click)="ipRange.set('10.0.0.0/' + suggestedVnetPrefix())"
                     class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline"
-                  >Use /{{ suggestedVnetPrefix() }}</button>
+                  >
+                    Use /{{ suggestedVnetPrefix() }}
+                  </button>
                   @if (ipRangeAddressLabel()) {
-                    <span class="ml-2 text-gray-400 dark:text-gray-500">· {{ ipRangeAddressLabel() }}</span>
+                    <span class="ml-2 text-gray-400 dark:text-gray-500"
+                      >· {{ ipRangeAddressLabel() }}</span
+                    >
                   }
                 </p>
                 @if (ipRange() && !isValidCIDR()) {
@@ -163,7 +176,9 @@ import { VNetTopologyDto } from '../../../core/api/model/vNetTopologyDto';
                   <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
                     <div class="flex items-center gap-2 mb-3">
                       <ng-icon name="lucideInfo" class="h-4 w-4 text-gray-500" />
-                      <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Initial Subnet (Optional)</h2>
+                      <h2 class="text-sm font-semibold text-gray-900 dark:text-white">
+                        Initial Subnet (Optional)
+                      </h2>
                     </div>
                     <div class="space-y-3">
                       <div class="flex items-center gap-2">
@@ -173,13 +188,18 @@ import { VNetTopologyDto } from '../../../core/api/model/vNetTopologyDto';
                           [(ngModel)]="createInitialSubnet"
                           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                         />
-                        <label for="createSubnet" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <label
+                          for="createSubnet"
+                          class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                        >
                           Create initial subnet in this zone
                         </label>
                       </div>
                       @if (createInitialSubnet) {
                         <div class="ml-6">
-                          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          <label
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                          >
                             Subnet IP Range (Optional)
                           </label>
                           <input
@@ -297,7 +317,7 @@ import { VNetTopologyDto } from '../../../core/api/model/vNetTopologyDto';
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.Eager,
-  styles: []
+  styles: [],
 })
 export class VNetCreateComponent implements OnInit {
   private readonly vnetService = inject(VNetService);
@@ -309,7 +329,7 @@ export class VNetCreateComponent implements OnInit {
   readonly isLoadingProviders = this.providerWizardService.isProviderLoading;
 
   readonly enabledProviders = () =>
-    this.providerWizardService.providersData().filter(p => !p.comingSoon);
+    this.providerWizardService.providersData().filter((p) => !p.comingSoon);
 
   /** VNet topology of the selected provider (null = no VNet support) */
   readonly vnetTopology = computed((): VNetTopologyDto | null => {
@@ -376,9 +396,8 @@ export class VNetCreateComponent implements OnInit {
     const toIp = (n: number) =>
       `${(n >>> 24) & 0xff}.${(n >>> 16) & 0xff}.${(n >>> 8) & 0xff}.${n & 0xff}`;
 
-    const countLabel = count >= 1_000_000
-      ? `${(count / 1_000_000).toFixed(1)}M`
-      : count.toLocaleString();
+    const countLabel =
+      count >= 1_000_000 ? `${(count / 1_000_000).toFixed(1)}M` : count.toLocaleString();
 
     return `${countLabel} addresses · ${toIp(first)}–${toIp(last)}`;
   });
@@ -392,7 +411,7 @@ export class VNetCreateComponent implements OnInit {
 
   /** Covered regions of the currently selected zone */
   get selectedZoneCoveredRegions(): string[] {
-    return this.vnetZones().find(z => z.id === this.subnetZone)?.coveredRegions ?? [];
+    return this.vnetZones().find((z) => z.id === this.subnetZone)?.coveredRegions ?? [];
   }
 
   // Form fields
@@ -457,11 +476,11 @@ export class VNetCreateComponent implements OnInit {
   }
 
   addLabel() {
-    this.labels.update(current => [...current, { key: '', value: '' }]);
+    this.labels.update((current) => [...current, { key: '', value: '' }]);
   }
 
   removeLabel(index: number) {
-    this.labels.update(current => current.filter((_, i) => i !== index));
+    this.labels.update((current) => current.filter((_, i) => i !== index));
   }
 
   isValidCIDR(): boolean {
@@ -501,7 +520,8 @@ export class VNetCreateComponent implements OnInit {
   subnetCidrErrorMessage(): string {
     if (!this.subnetIpRange) return '';
     const cidrRegex = /^(\d{1,3}\.){3}\d{1,3}\/(\d{1,2})$/;
-    if (!cidrRegex.test(this.subnetIpRange)) return 'Please enter a valid CIDR notation (e.g., 10.0.0.0/24)';
+    if (!cidrRegex.test(this.subnetIpRange))
+      return 'Please enter a valid CIDR notation (e.g., 10.0.0.0/24)';
     const prefix = Number.parseInt(this.subnetIpRange.split('/')[1], 10);
     const c = this.subnetIpConstraints();
     if (c && (prefix < c.minPrefix || prefix > c.maxPrefix)) {
@@ -528,14 +548,14 @@ export class VNetCreateComponent implements OnInit {
       provider: this.providerSignal(),
       ipRange: this.ipRange(),
       labels: this.labels()
-        .filter(l => l.key && l.value)
-        .map(l => ({ key: l.key, value: l.value })),
+        .filter((l) => l.key && l.value)
+        .map((l) => ({ key: l.key, value: l.value })),
       subnet: hasSubnet
         ? {
             networkZone: this.subnetZone,
-            ipRange: this.subnetIpRange || undefined
+            ipRange: this.subnetIpRange || undefined,
           }
-        : undefined
+        : undefined,
     };
 
     try {

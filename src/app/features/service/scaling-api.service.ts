@@ -189,7 +189,12 @@ interface WireOrderedShape {
   architecture?: ServerArchitecture | null;
   outlook: WireOutlook | null;
   why: string;
-  facts?: { cores: number; memoryMi: number; hourlyEur: number | null; monthlyEur: number | null } | null;
+  facts?: {
+    cores: number;
+    memoryMi: number;
+    hourlyEur: number | null;
+    monthlyEur: number | null;
+  } | null;
 }
 
 interface WireCatalogue {
@@ -264,21 +269,15 @@ export class ScalingApiService {
   }
 
   rows(): Observable<ClusterScalingRow[]> {
-    return this.http
-      .get<WireRow[]>(`${this.base}/scaling`)
-      .pipe(map((rows) => rows.map(toRow)));
+    return this.http.get<WireRow[]>(`${this.base}/scaling`).pipe(map((rows) => rows.map(toRow)));
   }
 
   row(clusterId: string): Observable<ClusterScalingRow> {
-    return this.http
-      .get<WireRow>(`${this.base}/clusters/${clusterId}/scaling`)
-      .pipe(map(toRow));
+    return this.http.get<WireRow>(`${this.base}/clusters/${clusterId}/scaling`).pipe(map(toRow));
   }
 
   group(groupId: string): Observable<SectionGroup> {
-    return this.http
-      .get<WireGroup>(`${this.base}/scaling-groups/${groupId}`)
-      .pipe(map(toGroup));
+    return this.http.get<WireGroup>(`${this.base}/scaling-groups/${groupId}`).pipe(map(toGroup));
   }
 
   preview(groupId: string): Observable<ScalingPreview> {
@@ -306,10 +305,9 @@ export class ScalingApiService {
 
   clusterDecisions(clusterId: string, limit = 50): Observable<ScalingDecision[]> {
     return this.http
-      .get<WireDecision[]>(
-        `${this.base}/clusters/${clusterId}/scaling-decisions`,
-        { params: { limit } },
-      )
+      .get<WireDecision[]>(`${this.base}/clusters/${clusterId}/scaling-decisions`, {
+        params: { limit },
+      })
       .pipe(map((rows) => rows.map(toDecision)));
   }
 
@@ -353,7 +351,10 @@ export class ScalingApiService {
   }
 
   /** Buys, once, the machine a manual group proposes; the group stays manual. */
-  approvePurchase(groupId: string, machine: { shape: string; region: string }): Observable<{ did: string }> {
+  approvePurchase(
+    groupId: string,
+    machine: { shape: string; region: string },
+  ): Observable<{ did: string }> {
     return this.http.post<{ did: string }>(
       `${this.base}/scaling-groups/${groupId}/approve-purchase`,
       machine,

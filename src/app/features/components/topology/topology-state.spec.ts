@@ -33,7 +33,9 @@ describe('topology state in the address', () => {
 
   it('reads the server boxes from the address', () => {
     expect(parseTopologyState({ box: 'server' }).boxBy).toBe('server');
-    expect(topologyQueryParams({ ...DEFAULT_TOPOLOGY_STATE, boxBy: 'server' })).toEqual({ box: 'server' });
+    expect(topologyQueryParams({ ...DEFAULT_TOPOLOGY_STATE, boxBy: 'server' })).toEqual({
+      box: 'server',
+    });
     expect(parseTopologyState({ box: 'rack' }).boxBy).toBe('cluster');
   });
 
@@ -50,7 +52,13 @@ describe('topology state in the address', () => {
     expect(parseTopologyState({ view: 'infrastructure', fleet: 'clusters' })).toEqual(
       jasmine.objectContaining({ view: 'infrastructure', fleetBy: 'clusters' }),
     );
-    expect(topologyQueryParams({ ...DEFAULT_TOPOLOGY_STATE, view: 'infrastructure', fleetBy: 'clusters' })).toEqual({
+    expect(
+      topologyQueryParams({
+        ...DEFAULT_TOPOLOGY_STATE,
+        view: 'infrastructure',
+        fleetBy: 'clusters',
+      }),
+    ).toEqual({
       view: 'infrastructure',
       fleet: 'clusters',
     });
@@ -59,7 +67,9 @@ describe('topology state in the address', () => {
   it('opens the fleet by app in full, and keeps the narrowing to problems in the address', () => {
     expect(DEFAULT_TOPOLOGY_STATE.problems).toBeFalse();
     expect(parseTopologyState({ problems: '1' }).problems).toBeTrue();
-    expect(topologyQueryParams({ ...DEFAULT_TOPOLOGY_STATE, problems: true })).toEqual({ problems: '1' });
+    expect(topologyQueryParams({ ...DEFAULT_TOPOLOGY_STATE, problems: true })).toEqual({
+      problems: '1',
+    });
   });
 
   it('keeps ids that hold colons', () => {

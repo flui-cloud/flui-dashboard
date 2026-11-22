@@ -42,11 +42,15 @@ function input(over: Partial<DnsZonesListSurfaceInput> = {}): DnsZonesListSurfac
 }
 
 function snapshotOf(over: Partial<DnsZonesListSurfaceInput> = {}): SurfaceSnapshot {
-  return buildDnsZonesListSurface(input(over), { revision: 1, generatedAt: '2026-08-20T09:13:00.000Z' });
+  return buildDnsZonesListSurface(input(over), {
+    revision: 1,
+    generatedAt: '2026-08-20T09:13:00.000Z',
+  });
 }
 
 const listScope = (s: SurfaceSnapshot) => s.scopes.find((x) => x.kind === 'list')!;
-const rowScope = (s: SurfaceSnapshot, id: string) => s.scopes.find((x) => x.id === `dns-zones:zones:${id}`)!;
+const rowScope = (s: SurfaceSnapshot, id: string) =>
+  s.scopes.find((x) => x.id === `dns-zones:zones:${id}`)!;
 
 describe('dns zones list surface producer', () => {
   it('emits a snapshot that validates against the real schema and passes semantic checks', () => {
@@ -66,7 +70,11 @@ describe('dns zones list surface producer', () => {
   it('names the expanded zone in attention, reason selection — a real, single-valued product state', () => {
     const snapshot = snapshotOf({ expandedZoneId: 'zone-1' });
     expect(snapshot.attention).toEqual([
-      { scopeId: 'dns-zones:zones:zone-1', entityRef: dnsZoneEntityRef('zone-1'), reason: 'selection' },
+      {
+        scopeId: 'dns-zones:zones:zone-1',
+        entityRef: dnsZoneEntityRef('zone-1'),
+        reason: 'selection',
+      },
     ]);
     expect(rowScope(snapshot, 'zone-1').entities![0].role).toBe('selected');
   });
@@ -75,15 +83,24 @@ describe('dns zones list surface producer', () => {
     const snapshot = snapshotOf({ assignedClusterCountOf: () => 2 });
     const obs = rowScope(snapshot, 'zone-1').observations!;
     expect(obs.find((o) => o.key === 'flui.dns_zone.provider')?.presentedAs.text).toBe('hetzner');
-    expect(obs.find((o) => o.key === 'flui.dns_zone.description')?.presentedAs.text).toBe('primary zone');
+    expect(obs.find((o) => o.key === 'flui.dns_zone.description')?.presentedAs.text).toBe(
+      'primary zone',
+    );
     expect(obs.find((o) => o.key === 'flui.dns_zone.provider_count')?.presentedAs.value).toBe(1);
-    expect(obs.find((o) => o.key === 'flui.dns_zone.ttl_seconds')?.presentedAs).toEqual({ value: 60, unit: 'seconds' });
-    expect(obs.find((o) => o.key === 'flui.dns_zone.assigned_cluster_count')?.presentedAs.value).toBe(2);
+    expect(obs.find((o) => o.key === 'flui.dns_zone.ttl_seconds')?.presentedAs).toEqual({
+      value: 60,
+      unit: 'seconds',
+    });
+    expect(
+      obs.find((o) => o.key === 'flui.dns_zone.assigned_cluster_count')?.presentedAs.value,
+    ).toBe(2);
   });
 
   it('omits the TTL observation when the enriched read has not resolved yet', () => {
     const snapshot = snapshotOf({ ttlOf: () => undefined });
-    expect(rowScope(snapshot, 'zone-1').observations!.find((o) => o.key === 'flui.dns_zone.ttl_seconds')).toBeUndefined();
+    expect(
+      rowScope(snapshot, 'zone-1').observations!.find((o) => o.key === 'flui.dns_zone.ttl_seconds'),
+    ).toBeUndefined();
   });
 
   it('marks loading/empty from the real signals, never inventing rows', () => {
@@ -93,9 +110,15 @@ describe('dns zones list surface producer', () => {
 
   it('bumps the revision on real change (expanding a zone), and validateSurfaceSemantics accepts it against the previous snapshot', () => {
     const tracker = new DnsZonesListSurfaceRevision();
-    const first = buildDnsZonesListSurface(input(), { revision: tracker.next(presentedContent(input())), generatedAt: '2026-08-20T09:13:00.000Z' });
+    const first = buildDnsZonesListSurface(input(), {
+      revision: tracker.next(presentedContent(input())),
+      generatedAt: '2026-08-20T09:13:00.000Z',
+    });
     const expanded = input({ expandedZoneId: 'zone-1' });
-    const second = buildDnsZonesListSurface(expanded, { revision: tracker.next(presentedContent(expanded)), generatedAt: '2026-08-20T09:14:00.000Z' });
+    const second = buildDnsZonesListSurface(expanded, {
+      revision: tracker.next(presentedContent(expanded)),
+      generatedAt: '2026-08-20T09:14:00.000Z',
+    });
     expect(second.surface.revision).toBe(first.surface.revision + 1);
     expect(validateSurfaceSemantics(second, { previousSnapshot: first })).toEqual([]);
   });
@@ -103,8 +126,13 @@ describe('dns zones list surface producer', () => {
   // The invalid-revision check needs a real failing case exercised, not just trusted.
   it('flags a snapshot whose revision does not advance on the previous one', () => {
     const first = snapshotOf();
-    const stale = { ...snapshotOf(), surface: { ...snapshotOf().surface, revision: first.surface.revision } };
+    const stale = {
+      ...snapshotOf(),
+      surface: { ...snapshotOf().surface, revision: first.surface.revision },
+    };
     const issues = validateSurfaceSemantics(stale, { previousSnapshot: first });
-    expect(issues).toEqual([jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' })]);
+    expect(issues).toEqual([
+      jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' }),
+    ]);
   });
 });

@@ -33,7 +33,11 @@ export function fleetGraph(t: TopologyResponseDto): TopologyGraph {
     }),
   );
   const ingress = t.links.filter((l) => l.from.kind === 'internet' && l.traffic.measured);
-  const edges = bundle(ingress, (appId, internet) => (internet ? INTERNET : apps.get(appId ?? '')?.clusterId ?? null), apps);
+  const edges = bundle(
+    ingress,
+    (appId, internet) => (internet ? INTERNET : (apps.get(appId ?? '')?.clusterId ?? null)),
+    apps,
+  );
   const crossLinks = t.links.filter((l) => l.crossCluster);
   edges.push(...bundle(crossLinks, (appId) => apps.get(appId ?? '')?.clusterId ?? null, apps));
   if (ingress.length) nodes.unshift(internetNode());
@@ -45,7 +49,10 @@ export function fleetGraph(t: TopologyResponseDto): TopologyGraph {
  * it reaches. What a fleet of a few servers looks like; past the node limit the
  * fleet is drawn by cluster instead.
  */
-export function appsGraph(t: TopologyResponseDto, boxBy: TopologyViewState['boxBy'] = 'cluster'): TopologyGraph {
+export function appsGraph(
+  t: TopologyResponseDto,
+  boxBy: TopologyViewState['boxBy'] = 'cluster',
+): TopologyGraph {
   if (boxBy === 'server') return serversGraph(t);
   const apps = new Map(t.apps.map((a) => [a.id, a]));
   const nodes = boxBy === 'project' ? projectBoxes(t) : clusterBoxes(t);
@@ -74,11 +81,22 @@ function serversGraph(t: TopologyResponseDto): TopologyGraph {
   return { level: 'fleet', nodes, edges, collapsedFrom: null, stacked: true };
 }
 
-function serverBox(t: TopologyResponseDto, s: TopologyServerDto, copies: Map<string, string[]>): GraphNode[] {
+function serverBox(
+  t: TopologyResponseDto,
+  s: TopologyServerDto,
+  copies: Map<string, string[]>,
+): GraphNode[] {
   const on = t.apps.filter((a) => copiesOn(a, s.id) > 0);
-  const where = [clusterNameOf(t, s.clusterId), s.region ?? s.provider, s.serverType].filter(Boolean).join(' · ');
-  const common = { label: s.nodeName, tone: toneOf(s.status), focus: { type: 'server' as const, id: s.id } };
-  if (!on.length) return [node('cluster', `server:${s.id}`, { ...common, sub: `${where} · no apps` })];
+  const where = [clusterNameOf(t, s.clusterId), s.region ?? s.provider, s.serverType]
+    .filter(Boolean)
+    .join(' · ');
+  const common = {
+    label: s.nodeName,
+    tone: toneOf(s.status),
+    focus: { type: 'server' as const, id: s.id },
+  };
+  if (!on.length)
+    return [node('cluster', `server:${s.id}`, { ...common, sub: `${where} · no apps` })];
   const box = node('region', `server:${s.id}`, { ...common, sub: where, problems: troubled(on) });
   const copy = (n: GraphNode, of: TopologyAppDto[]): GraphNode => {
     const id = `${n.id}@${s.id}`;
@@ -89,7 +107,9 @@ function serverBox(t: TopologyResponseDto, s: TopologyServerDto, copies: Map<str
     .filter((a) => a.kind !== 'system')
     .map((a) => copy({ ...appNode(a, stackOrCategory(t, a)), replicas: copiesOn(a, s.id) }, [a]));
   const system = on.filter((a) => a.kind === 'system');
-  const platforms = system.length ? [copy(platformNode(t, s.clusterId, false, system), system)] : [];
+  const platforms = system.length
+    ? [copy(platformNode(t, s.clusterId, false, system), system)]
+    : [];
   return [box, ...users, ...platforms];
 }
 
@@ -99,11 +119,15 @@ const copiesOn = (a: TopologyAppDto, serverId: string) =>
 /** Under each app, its stack when it shares one, else what kind of app it is. */
 function stackOrCategory(t: TopologyResponseDto, a: TopologyAppDto): string {
   const stack = t.stacks.find((s) => s.id === a.stackId);
-  return stack && stack.appIds.length > 1 && stack.name !== a.displayName ? stack.name : categoryLabel(a.category);
+  return stack && stack.appIds.length > 1 && stack.name !== a.displayName
+    ? stack.name
+    : categoryLabel(a.category);
 }
 
-const clusterNameOf = (t: TopologyResponseDto, id: string) => t.clusters.find((c) => c.id === id)?.name ?? '';
-const troubled = (apps: TopologyAppDto[]) => apps.filter((a) => a.status === 'error' || a.status === 'warning').length;
+const clusterNameOf = (t: TopologyResponseDto, id: string) =>
+  t.clusters.find((c) => c.id === id)?.name ?? '';
+const troubled = (apps: TopologyAppDto[]) =>
+  apps.filter((a) => a.status === 'error' || a.status === 'warning').length;
 
 function projectBoxes(t: TopologyResponseDto): GraphNode[] {
   const boxes = [
@@ -111,7 +135,8 @@ function projectBoxes(t: TopologyResponseDto): GraphNode[] {
     { id: NO_PROJECT, name: 'No project' },
     { id: PLATFORM, name: 'Platform' },
   ];
-  const boxOf = (a: TopologyAppDto) => (a.kind === 'system' ? PLATFORM : (a.projectId ?? NO_PROJECT));
+  const boxOf = (a: TopologyAppDto) =>
+    a.kind === 'system' ? PLATFORM : (a.projectId ?? NO_PROJECT);
   return boxes.flatMap((box) => {
     const own = t.apps.filter((a) => boxOf(a) === box.id);
     if (!own.length) return [];
@@ -121,10 +146,12 @@ function projectBoxes(t: TopologyResponseDto): GraphNode[] {
       tone: worstTone(own.map((a) => toneOf(a.status))),
       problems: troubled(own),
     });
-    const users = own.filter((a) => a.kind !== 'system').map((a) => appNode(a, clusterNameOf(t, a.clusterId)));
-    const platforms = [...new Set(own.filter((a) => a.kind === 'system').map((a) => a.clusterId))].map((clusterId) =>
-      platformNode(t, clusterId, true),
-    );
+    const users = own
+      .filter((a) => a.kind !== 'system')
+      .map((a) => appNode(a, clusterNameOf(t, a.clusterId)));
+    const platforms = [
+      ...new Set(own.filter((a) => a.kind === 'system').map((a) => a.clusterId)),
+    ].map((clusterId) => platformNode(t, clusterId, true));
     return [region, ...[...users, ...platforms].map((n) => ({ ...n, parent: region.id }))];
   });
 }
@@ -140,9 +167,15 @@ function clusterBoxes(t: TopologyResponseDto): GraphNode[] {
       dashed: c.overlay === 'public-address',
       problems: c.counts.errors + c.counts.warnings,
     };
-    if (!own.length) return [node('cluster', c.id, { ...common, sub: `${c.provider} · ${c.region} · no apps` })];
-    const region = node('region', `region:${c.id}`, { ...common, sub: `${c.provider} · ${c.region}` });
-    const users = own.filter((a) => a.kind !== 'system').map((a) => appNode(a, stackOrCategory(t, a)));
+    if (!own.length)
+      return [node('cluster', c.id, { ...common, sub: `${c.provider} · ${c.region} · no apps` })];
+    const region = node('region', `region:${c.id}`, {
+      ...common,
+      sub: `${c.provider} · ${c.region}`,
+    });
+    const users = own
+      .filter((a) => a.kind !== 'system')
+      .map((a) => appNode(a, stackOrCategory(t, a)));
     const platform = own.some((a) => a.kind === 'system') ? [platformNode(t, c.id, false)] : [];
     return [region, ...[...users, ...platform].map((n) => ({ ...n, parent: region.id }))];
   });
@@ -187,9 +220,22 @@ function worstTone(tones: StatusTone[]): StatusTone {
 }
 
 /** The ids a project filter keeps lit: its apps, the boxes holding them, and the stacks and clusters they run in. */
-export function projectLit(t: TopologyResponseDto, graph: TopologyGraph, projectId: string): Set<string> {
+export function projectLit(
+  t: TopologyResponseDto,
+  graph: TopologyGraph,
+  projectId: string,
+): Set<string> {
   const own = t.apps.filter((a) => a.projectId === projectId);
-  const ids = new Set<string>(own.flatMap((a) => [a.id, a.stackId, a.clusterId, `region:${a.clusterId}`, `region:${projectId}`, `pill:${a.clusterId}`]));
+  const ids = new Set<string>(
+    own.flatMap((a) => [
+      a.id,
+      a.stackId,
+      a.clusterId,
+      `region:${a.clusterId}`,
+      `region:${projectId}`,
+      `pill:${a.clusterId}`,
+    ]),
+  );
   const ownIds = new Set(own.map((a) => a.id));
   for (const n of graph.nodes) {
     if (n.kind === 'internet') ids.add(n.id);
@@ -244,10 +290,16 @@ export function clusterGraph(t: TopologyResponseDto, clusterId: string): Topolog
   for (const id of [...others].sort((a, b) => a.localeCompare(b))) {
     const c = t.clusters.find((x) => x.id === id);
     if (!c) continue;
-    nodes.push(node('pill', `pill:${id}`, {
-      label: c.name, sub: c.provider, tone: toneOf(c.status), focus: { type: 'cluster', id },
-      drill: { level: 'cluster', cluster: id, focus: null }, dashed: c.overlay === 'public-address',
-    }));
+    nodes.push(
+      node('pill', `pill:${id}`, {
+        label: c.name,
+        sub: c.provider,
+        tone: toneOf(c.status),
+        focus: { type: 'cluster', id },
+        drill: { level: 'cluster', cluster: id, focus: null },
+        dashed: c.overlay === 'public-address',
+      }),
+    );
   }
   return { level: 'cluster', nodes, edges, collapsedFrom: null };
 }
@@ -256,15 +308,21 @@ export function stackGraph(t: TopologyResponseDto, stackId: string): TopologyGra
   const apps = new Map(t.apps.map((a) => [a.id, a]));
   const stack = t.stacks.find((s) => s.id === stackId);
   const inside = new Set(stack?.appIds ?? []);
-  const touching = t.links.filter((l) => inside.has(l.to.appId ?? '') || inside.has(l.from.appId ?? ''));
+  const touching = t.links.filter(
+    (l) => inside.has(l.to.appId ?? '') || inside.has(l.from.appId ?? ''),
+  );
   const neighbours = new Set(
-    touching.flatMap((l) => [l.from.appId, l.to.appId]).filter((id): id is string => !!id && !inside.has(id)),
+    touching
+      .flatMap((l) => [l.from.appId, l.to.appId])
+      .filter((id): id is string => !!id && !inside.has(id)),
   );
   const clusterName = (id: string) => t.clusters.find((c) => c.id === id)?.name ?? '';
   const nodes = [...inside, ...neighbours]
     .map((id) => apps.get(id))
     .filter((a): a is TopologyAppDto => !!a)
-    .map((a) => appNode(a, inside.has(a.id) ? categoryLabel(a.category) : clusterName(a.clusterId)));
+    .map((a) =>
+      appNode(a, inside.has(a.id) ? categoryLabel(a.category) : clusterName(a.clusterId)),
+    );
   const edges = bundle(touching, endsWithin(apps), apps);
   if (edges.some((e) => e.from === INTERNET)) nodes.unshift(internetNode());
   return { level: 'stack', nodes, edges, collapsedFrom: null };
@@ -312,7 +370,8 @@ export function appGraph(t: TopologyResponseDto, appId: string, hops: number): T
     .map((id) => apps.get(id))
     .filter((a): a is TopologyAppDto => !!a)
     .map((a) => appNode(a, subOf(a), a.id === appId));
-  const endOf = (l: TopologyLinkDto) => (l.from.kind === 'internet' ? INTERNET : (l.from.appId ?? ''));
+  const endOf = (l: TopologyLinkDto) =>
+    l.from.kind === 'internet' ? INTERNET : (l.from.appId ?? '');
   const touching = t.links.filter((l) => inside.has(l.to.appId ?? '') && inside.has(endOf(l)));
   const edges = bundle(touching, endsWithin(inside), apps);
   if (edges.some((e) => e.from === INTERNET)) nodes.unshift(internetNode());

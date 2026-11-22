@@ -65,9 +65,14 @@ export class BackupOperationsTracker {
     if (options.onSettled) this.settledHooks.set(operationId, options.onSettled);
     this.ws.subscribeToOperation(operationId, {
       onProgress: (e) => this.progress(e),
-      onCompleted: () => void this.settleFromJobOr(operationId, { status: 'completed', partial: false }),
+      onCompleted: () =>
+        void this.settleFromJobOr(operationId, { status: 'completed', partial: false }),
       onFailed: (e) =>
-        void this.settleFromJobOr(operationId, { status: 'failed', partial: false, detail: e.error }),
+        void this.settleFromJobOr(operationId, {
+          status: 'failed',
+          partial: false,
+          detail: e.error,
+        }),
     });
     void this.poll(operationId);
   }
@@ -107,7 +112,11 @@ export class BackupOperationsTracker {
         return;
       }
       if (settlesHere && (status === 'FAILED' || status === 'CANCELLED')) {
-        this.settle(operationId, { status: 'failed', partial: false, detail: op.errorMessage ?? 'The operation failed' });
+        this.settle(operationId, {
+          status: 'failed',
+          partial: false,
+          detail: op.errorMessage ?? 'The operation failed',
+        });
         return;
       }
       this.patch(operationId, (current) => ({
@@ -154,7 +163,10 @@ export class BackupOperationsTracker {
     }));
   }
 
-  private patch(operationId: string, change: (op: ActiveOperation) => Partial<ActiveOperation>): void {
+  private patch(
+    operationId: string,
+    change: (op: ActiveOperation) => Partial<ActiveOperation>,
+  ): void {
     this._ops.update((map) => {
       const current = map[operationId];
       if (current?.status !== 'running') return map;

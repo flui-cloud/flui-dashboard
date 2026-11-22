@@ -1,9 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient, withXhr } from '@angular/common/http';
-import {
-  HttpTestingController,
-  provideHttpClientTesting,
-} from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { AppConfigService } from '../../core/services/app-config.service';
 import { REGISTRY_REFUSED_MESSAGE, RegistryStorageService } from './registry-storage.service';
 
@@ -55,7 +52,12 @@ describe('RegistryStorageService', () => {
     const req = http.expectOne(`${base}/scaleway`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({ region: 'nl-ams' });
-    req.flush({ backend: 'filesystem', connected: true, provider: 'scaleway_object_storage', bucket: 'b' });
+    req.flush({
+      backend: 'filesystem',
+      connected: true,
+      provider: 'scaleway_object_storage',
+      bucket: 'b',
+    });
     expect(await pending).toBe(true);
     expect(service.connecting()).toBeNull();
     expect(service.status()?.connected).toBe(true);
@@ -63,7 +65,15 @@ describe('RegistryStorageService', () => {
 
   it('keeps the last measurement when the connect answer carries none', async () => {
     const load = service.load();
-    const usage = { measuredAt: 'x', totalBytes: 5, alertBytes: null, capacityBytes: 10, alerting: false, applications: [], unreadable: 0 };
+    const usage = {
+      measuredAt: 'x',
+      totalBytes: 5,
+      alertBytes: null,
+      capacityBytes: 10,
+      alerting: false,
+      applications: [],
+      unreadable: 0,
+    };
     http.expectOne(base).flush({ backend: 'filesystem', connected: false, usage });
     await load;
 
@@ -90,10 +100,12 @@ describe('RegistryStorageService', () => {
       accessKey: 'AK',
       secretKey: 'SK',
     });
-    http.expectOne(base).flush(
-      { message: ['bucket must match', 'endpoint must be a URL'] },
-      { status: 400, statusText: 'Bad Request' },
-    );
+    http
+      .expectOne(base)
+      .flush(
+        { message: ['bucket must match', 'endpoint must be a URL'] },
+        { status: 400, statusText: 'Bad Request' },
+      );
     expect(await pending).toBe(false);
     expect(service.connectError()).toBe('bucket must match. endpoint must be a URL');
     expect(service.refused()).toBe(false);
@@ -102,8 +114,24 @@ describe('RegistryStorageService', () => {
   it('lists the buckets and removes one, with the answer the API gives', async () => {
     const list = service.loadBuckets();
     http.expectOne(`${base}/buckets`).flush([
-      { id: 'b1', provider: 'scaleway_object_storage', region: 'fr-par', bucket: 'new', active: true, createdByFlui: true, connectedAt: 'x' },
-      { id: 'b2', provider: 'minio', region: 'us-east-1', bucket: 'old', active: false, createdByFlui: false, connectedAt: 'y' },
+      {
+        id: 'b1',
+        provider: 'scaleway_object_storage',
+        region: 'fr-par',
+        bucket: 'new',
+        active: true,
+        createdByFlui: true,
+        connectedAt: 'x',
+      },
+      {
+        id: 'b2',
+        provider: 'minio',
+        region: 'us-east-1',
+        bucket: 'old',
+        active: false,
+        createdByFlui: false,
+        connectedAt: 'y',
+      },
     ]);
     await list;
     expect(service.buckets()).toHaveSize(2);
@@ -120,32 +148,49 @@ describe('RegistryStorageService', () => {
 
   it('shows the conflict message when the bucket is the one in use', async () => {
     const removal = service.removeBucket('b1');
-    http.expectOne(`${base}/buckets/b1`).flush(
-      { message: 'The registry keeps its images in this bucket: connect another one first' },
-      { status: 409, statusText: 'Conflict' },
-    );
+    http
+      .expectOne(`${base}/buckets/b1`)
+      .flush(
+        { message: 'The registry keeps its images in this bucket: connect another one first' },
+        { status: 409, statusText: 'Conflict' },
+      );
     expect(await removal).toBeNull();
-    expect(service.removeError()).toBe('The registry keeps its images in this bucket: connect another one first');
+    expect(service.removeError()).toBe(
+      'The registry keeps its images in this bucket: connect another one first',
+    );
     expect(service.refused()).toBe(false);
   });
 
   it('reads the traffic for the chosen window, 24h by default', async () => {
     const first = service.loadTraffic();
     const req = http.expectOne('http://api/api/v1/registry/traffic?window=24h');
-    req.flush({ window: '24h', requests: { pulls: 1, pushes: 0, deletes: 0 }, outcomes: { ok: 1, refused: 0, notFound: 0, failed: 0 }, bytesIn: 0, bytesOut: 10, peakBytesPerSecondIn: 0, peakBytesPerSecondOut: 1, readFromBucketBytes: null });
+    req.flush({
+      window: '24h',
+      requests: { pulls: 1, pushes: 0, deletes: 0 },
+      outcomes: { ok: 1, refused: 0, notFound: 0, failed: 0 },
+      bytesIn: 0,
+      bytesOut: 10,
+      peakBytesPerSecondIn: 0,
+      peakBytesPerSecondOut: 1,
+      readFromBucketBytes: null,
+    });
     await first;
     expect(service.traffic()?.requests.pulls).toBe(1);
 
     const second = service.loadTraffic('7d');
     expect(service.trafficWindow()).toBe('7d');
-    http.expectOne('http://api/api/v1/registry/traffic?window=7d').flush({ ...service.traffic(), window: '7d' });
+    http
+      .expectOne('http://api/api/v1/registry/traffic?window=7d')
+      .flush({ ...service.traffic(), window: '7d' });
     await second;
     expect(service.trafficLoading()).toBe(false);
   });
 
   it('hides the traffic on a 403 without refusing the page', async () => {
     const pending = service.loadTraffic();
-    http.expectOne('http://api/api/v1/registry/traffic?window=24h').flush({ message: 'Forbidden' }, { status: 403, statusText: 'Forbidden' });
+    http
+      .expectOne('http://api/api/v1/registry/traffic?window=24h')
+      .flush({ message: 'Forbidden' }, { status: 403, statusText: 'Forbidden' });
     await pending;
     expect(service.trafficHidden()).toBe(true);
     expect(service.refused()).toBe(false);
@@ -154,7 +199,9 @@ describe('RegistryStorageService', () => {
 
   it('marks a failed traffic read without hiding the card', async () => {
     const pending = service.loadTraffic();
-    http.expectOne('http://api/api/v1/registry/traffic?window=24h').flush({}, { status: 500, statusText: 'Error' });
+    http
+      .expectOne('http://api/api/v1/registry/traffic?window=24h')
+      .flush({}, { status: 500, statusText: 'Error' });
     await pending;
     expect(service.trafficFailed()).toBe(true);
     expect(service.trafficHidden()).toBe(false);
@@ -211,10 +258,14 @@ describe('RegistryStorageService', () => {
       jasmine.clock().install();
       try {
         const pending = service.loadMode();
-        http.expectOne(`${modeUrl}/mode`).flush({ ...ghcr, mode: 'flui', storage: 'volume', ready: false });
+        http
+          .expectOne(`${modeUrl}/mode`)
+          .flush({ ...ghcr, mode: 'flui', storage: 'volume', ready: false });
         await pending;
         jasmine.clock().tick(5_000);
-        http.expectOne(`${modeUrl}/mode`).flush({ ...ghcr, mode: 'flui', storage: 'volume', ready: false });
+        http
+          .expectOne(`${modeUrl}/mode`)
+          .flush({ ...ghcr, mode: 'flui', storage: 'volume', ready: false });
         service.stopFollowing();
         jasmine.clock().tick(10_000);
         http.expectNone(`${modeUrl}/mode`);

@@ -29,9 +29,11 @@
             (click)="setTimeRange(range.value)"
             [attr.aria-pressed]="timeRange() === range.value"
             class="px-3 py-1 rounded-md text-xs font-semibold transition-colors"
-            [class]="timeRange() === range.value
-              ? 'bg-card text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'"
+            [class]="
+              timeRange() === range.value
+                ? 'bg-card text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            "
           >
             {{ range.label }}
           </button>
@@ -44,9 +46,11 @@
         [title]="pollingPaused() ? 'Retry' : 'Refresh'"
         [attr.aria-label]="pollingPaused() ? 'Retry' : 'Refresh'"
         class="inline-flex items-center justify-center h-8 w-8 rounded-lg border transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-        [class]="pollingPaused() && canRetry()
-          ? 'border-border text-foreground hover:bg-muted'
-          : 'border-border text-muted-foreground hover:text-foreground hover:bg-muted'"
+        [class]="
+          pollingPaused() && canRetry()
+            ? 'border-border text-foreground hover:bg-muted'
+            : 'border-border text-muted-foreground hover:text-foreground hover:bg-muted'
+        "
       >
         <ng-icon name="lucideRefreshCw" [class.animate-spin]="isLoading()" class="h-3.5 w-3.5" />
       </button>
@@ -59,9 +63,21 @@
       data-testid="capacity-advice"
     >
       <ng-icon
-        [name]="advice.tone === 'ok' ? 'lucideCircleCheck' : advice.tone === 'act' ? 'lucideTriangleAlert' : 'lucideHourglass'"
+        [name]="
+          advice.tone === 'ok'
+            ? 'lucideCircleCheck'
+            : advice.tone === 'act'
+              ? 'lucideTriangleAlert'
+              : 'lucideHourglass'
+        "
         class="mt-0.5 h-4 w-4 shrink-0"
-        [class]="advice.tone === 'ok' ? 'text-green-600 dark:text-green-400' : advice.tone === 'act' ? 'text-amber-600 dark:text-amber-400' : 'text-sub'"
+        [class]="
+          advice.tone === 'ok'
+            ? 'text-green-600 dark:text-green-400'
+            : advice.tone === 'act'
+              ? 'text-amber-600 dark:text-amber-400'
+              : 'text-sub'
+        "
       />
       <div class="min-w-0 flex-1">
         <div class="flex flex-wrap items-center justify-between gap-2">
@@ -98,7 +114,9 @@
                 <li>{{ next.sentence }}</li>
               }
             </ul>
-            <p class="m-0 mt-1 text-[11px] text-sub">Judged on the last {{ advice.thresholds.window_minutes }} minutes.</p>
+            <p class="m-0 mt-1 text-[11px] text-sub">
+              Judged on the last {{ advice.thresholds.window_minutes }} minutes.
+            </p>
           }
         }
       </div>
@@ -107,7 +125,9 @@
 
   <!-- Error message -->
   @if (error()) {
-    <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+    <div
+      class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4"
+    >
       <p class="text-red-700 dark:text-red-400">{{ error() }}</p>
     </div>
   }
@@ -116,7 +136,9 @@
   @if (metrics(); as m) {
     <!-- Pod / Replica selector: shown only with 2+ replicas -->
     @if (availableReplicas().length > 1) {
-      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3">
+      <div
+        class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3"
+      >
         <div class="flex items-center gap-3 min-w-0">
           <span class="text-xs font-medium text-gray-500 dark:text-gray-400 shrink-0">View:</span>
           <div class="flex gap-2 overflow-x-auto scrollbar-none pb-0.5">
@@ -175,13 +197,18 @@
             {{ m.health!.unavailable_pods }} of {{ m.health!.total_pods }} pods unavailable
           </p>
           @if (m.health!.condition_message) {
-            <p class="m-0 mt-0.5 text-xs text-muted-foreground">{{ m.health!.condition_message }}</p>
+            <p class="m-0 mt-0.5 text-xs text-muted-foreground">
+              {{ m.health!.condition_message }}
+            </p>
           }
         </div>
       </div>
     }
 
-    <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4" data-testid="app-metrics-summary">
+    <div
+      class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4"
+      data-testid="app-metrics-summary"
+    >
       @for (tile of tiles(); track tile.label) {
         <app-stat-tile [data]="tile" [sparkWidth]="112" />
       }
@@ -189,32 +216,56 @@
 
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-4" data-testid="app-metrics-grid">
       @if (cpuHistory(); as cpu) {
-        <app-chart-panel title="CPU" subtitle="of its limit" [value]="cpuNow()" [body]="cpuBody"
-          [inlineHeight]="inlineHeight" [expandedHeight]="expandedHeight">
+        <app-chart-panel
+          title="CPU"
+          subtitle="of its limit"
+          [value]="cpuNow()"
+          [body]="cpuBody"
+          [inlineHeight]="inlineHeight"
+          [expandedHeight]="expandedHeight"
+        >
           <ng-template #cpuBody let-mode>
             <app-time-series-line [data]="cpu" [config]="pick(cpuConfig, mode)" />
           </ng-template>
         </app-chart-panel>
       }
       @if (memoryHistory(); as memory) {
-        <app-chart-panel title="Memory" subtitle="of its limit" [value]="memoryNow()" [body]="memoryBody"
-          [inlineHeight]="inlineHeight" [expandedHeight]="expandedHeight">
+        <app-chart-panel
+          title="Memory"
+          subtitle="of its limit"
+          [value]="memoryNow()"
+          [body]="memoryBody"
+          [inlineHeight]="inlineHeight"
+          [expandedHeight]="expandedHeight"
+        >
           <ng-template #memoryBody let-mode>
             <app-time-series-line [data]="memory" [config]="pick(memoryConfig, mode)" />
           </ng-template>
         </app-chart-panel>
       }
       @if (networkHistory(); as network) {
-        <app-chart-panel title="Network" subtitle="in and out" [value]="networkNow()" [body]="networkBody"
-          [inlineHeight]="inlineHeight" [expandedHeight]="expandedHeight">
+        <app-chart-panel
+          title="Network"
+          subtitle="in and out"
+          [value]="networkNow()"
+          [body]="networkBody"
+          [inlineHeight]="inlineHeight"
+          [expandedHeight]="expandedHeight"
+        >
           <ng-template #networkBody let-mode>
             <app-time-series-line [data]="network" [config]="pick(networkConfig, mode)" />
           </ng-template>
         </app-chart-panel>
       }
       @if (replicasHistory(); as replicas) {
-        <app-chart-panel title="Replicas" subtitle="ready of desired" [value]="replicasNow()" [body]="replicasBody"
-          [inlineHeight]="inlineHeight" [expandedHeight]="expandedHeight">
+        <app-chart-panel
+          title="Replicas"
+          subtitle="ready of desired"
+          [value]="replicasNow()"
+          [body]="replicasBody"
+          [inlineHeight]="inlineHeight"
+          [expandedHeight]="expandedHeight"
+        >
           <ng-template #replicasBody let-mode>
             <app-time-series-line [data]="replicas" [config]="pick(replicasConfig, mode)" />
           </ng-template>
@@ -227,8 +278,12 @@
 
     <!-- Per-replica breakdown: shown only with 2+ replicas -->
     @if (availableReplicas().length > 1) {
-      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-        <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Replicas breakdown</h3>
+      <div
+        class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4"
+      >
+        <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
+          Replicas breakdown
+        </h3>
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           @for (replica of availableReplicas(); track replica.pod) {
             <button
@@ -247,7 +302,10 @@
                   [class.bg-green-400]="replica.status.ready === 1"
                   [class.bg-red-400]="replica.status.ready !== 1"
                 ></span>
-                <span class="font-mono text-xs text-gray-700 dark:text-gray-300 truncate" [title]="replica.pod">
+                <span
+                  class="font-mono text-xs text-gray-700 dark:text-gray-300 truncate"
+                  [title]="replica.pod"
+                >
                   {{ replica.pod }}
                 </span>
                 <span class="ml-auto text-xs text-gray-500 dark:text-gray-400 shrink-0">
@@ -269,7 +327,9 @@
                     [style.width.%]="replica.cpu.utilization_percent ?? 0"
                   ></div>
                 </div>
-                <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <div
+                  class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mt-1"
+                >
                   <span>{{ formatCpu(replica.cpu.usage_cores ?? 0) }}</span>
                   <span>limit {{ formatCpu(replica.cpu.limits_cores ?? 0) }}</span>
                 </div>
@@ -289,14 +349,18 @@
                     [style.width.%]="replica.memory.utilization_percent ?? 0"
                   ></div>
                 </div>
-                <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <div
+                  class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mt-1"
+                >
                   <span>{{ formatBytes(replica.memory.usage_bytes ?? 0) }}</span>
                   <span>limit {{ formatBytes(replica.memory.limits_bytes ?? 0) }}</span>
                 </div>
               </div>
 
               <!-- Network + restarts -->
-              <div class="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-gray-200 dark:border-gray-700">
+              <div
+                class="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-gray-200 dark:border-gray-700"
+              >
                 <div>
                   <p class="text-gray-500 dark:text-gray-400">Net In</p>
                   <p class="font-medium text-gray-900 dark:text-gray-100">
@@ -330,19 +394,28 @@
 
     <!-- Pod Phases -->
     @if (monitoring.podPhases().length > 0) {
-      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+      <div
+        class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4"
+      >
         <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Pod Phases</h3>
         <div class="flex gap-3 flex-wrap">
           @for (pod of monitoring.podPhases(); track pod.phase) {
-            <div class="flex items-center gap-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg px-3 py-2">
-              <span class="inline-flex h-2 w-2 rounded-full"
+            <div
+              class="flex items-center gap-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg px-3 py-2"
+            >
+              <span
+                class="inline-flex h-2 w-2 rounded-full"
                 [class.bg-green-500]="pod.phase === 'Running'"
                 [class.bg-yellow-500]="pod.phase === 'Pending'"
                 [class.bg-red-500]="pod.phase === 'Failed'"
-                [class.bg-gray-400]="pod.phase !== 'Running' && pod.phase !== 'Pending' && pod.phase !== 'Failed'"
+                [class.bg-gray-400]="
+                  pod.phase !== 'Running' && pod.phase !== 'Pending' && pod.phase !== 'Failed'
+                "
               ></span>
               <span class="text-sm text-gray-700 dark:text-gray-300">{{ pod.phase }}</span>
-              <span class="text-sm font-bold text-gray-900 dark:text-gray-100">{{ pod.count }}</span>
+              <span class="text-sm font-bold text-gray-900 dark:text-gray-100">{{
+                pod.count
+              }}</span>
             </div>
           }
         </div>
@@ -362,7 +435,9 @@
 
   <!-- Empty state -->
   @if (!metrics() && !isLoading() && !error()) {
-    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-12">
+    <div
+      class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-12"
+    >
       <div class="text-center">
         <ng-icon name="lucideActivity" class="h-12 w-12 text-gray-400 mx-auto mb-3" />
         <p class="text-gray-600 dark:text-gray-400">No metrics available. Waiting for data...</p>
@@ -372,7 +447,9 @@
 
   <!-- Loading skeleton -->
   @if (isLoading() && !metrics()) {
-    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-12">
+    <div
+      class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-12"
+    >
       <div class="text-center">
         <ng-icon name="lucideRefreshCw" class="h-12 w-12 text-gray-400 mx-auto mb-3 animate-spin" />
         <p class="text-gray-600 dark:text-gray-400">Loading metrics...</p>

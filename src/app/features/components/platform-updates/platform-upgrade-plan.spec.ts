@@ -2,15 +2,9 @@ import {
   PlatformUpdateOperation,
   PlatformUpgradePlan,
 } from '../../service/platform-update.service';
-import {
-  canApplyPlan,
-  k3sNodeRows,
-  planBlockers,
-} from './platform-upgrade-plan';
+import { canApplyPlan, k3sNodeRows, planBlockers } from './platform-upgrade-plan';
 
-const plan = (
-  blockers: PlatformUpgradePlan['blockers'],
-): PlatformUpgradePlan => ({
+const plan = (blockers: PlatformUpgradePlan['blockers']): PlatformUpgradePlan => ({
   planId: 'p1',
   fromVersion: '0.19.0',
   targetVersion: '0.20.0',
@@ -30,9 +24,7 @@ describe('the upgrade plan as the dashboard presents it', () => {
   });
 
   it('needs the box ticked when the only blocker is a missing backup', () => {
-    const p = plan([
-      { phase: 'backup', message: 'No backup.', overridable: true },
-    ]);
+    const p = plan([{ phase: 'backup', message: 'No backup.', overridable: true }]);
     expect(canApplyPlan(p, { withoutBackup: false })).toBeFalse();
     expect(canApplyPlan(p, { withoutBackup: true })).toBeTrue();
     expect(planBlockers(p).soft).toHaveSize(1);
@@ -41,9 +33,7 @@ describe('the upgrade plan as the dashboard presents it', () => {
   it('refuses a plan with a hard blocker whatever is ticked', () => {
     const p = plan([{ phase: 'k3s', message: 'Node not Ready.' }]);
     expect(canApplyPlan(p, { withoutBackup: true })).toBeFalse();
-    expect(planBlockers(p).hard.map((b) => b.message)).toEqual([
-      'Node not Ready.',
-    ]);
+    expect(planBlockers(p).hard.map((b) => b.message)).toEqual(['Node not Ready.']);
   });
 
   it('lists every node K3s touches, per cluster, in the order the phase runs them', () => {
@@ -95,8 +85,6 @@ describe('the upgrade plan as the dashboard presents it', () => {
   });
 
   it('has no K3s rows for an image-only update', () => {
-    expect(
-      k3sNodeRows({ components: [] } as unknown as PlatformUpdateOperation),
-    ).toEqual([]);
+    expect(k3sNodeRows({ components: [] } as unknown as PlatformUpdateOperation)).toEqual([]);
   });
 });

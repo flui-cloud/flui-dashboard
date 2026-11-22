@@ -111,7 +111,8 @@ async function main() {
   });
 
   const keyField = page.locator('[data-testid="minted-key"]');
-  const shot = (file) => page.screenshot({ path: path.join(OUT, file), fullPage: true, mask: [keyField] });
+  const shot = (file) =>
+    page.screenshot({ path: path.join(OUT, file), fullPage: true, mask: [keyField] });
 
   await page.goto(`${DASH}/settings#agent-keys`, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('[data-testid^="group-"]', { timeout: 20_000 });

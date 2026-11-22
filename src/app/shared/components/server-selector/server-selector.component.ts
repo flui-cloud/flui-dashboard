@@ -1,4 +1,14 @@
-import { Component, OnInit, input, output, signal, computed, inject, effect, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  input,
+  output,
+  signal,
+  computed,
+  inject,
+  effect,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
@@ -57,26 +67,26 @@ import { ProviderMarkComponent } from '../provider-mark.component';
           (ngModelChange)="onSearchChange()"
           placeholder="Search servers by name..."
           class="w-full pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
+        />
       </div>
-    
+
       <!-- Loading State -->
       @if (isLoading()) {
         <div class="flex items-center justify-center py-12">
           <ng-icon name="lucideLoader" size="32" class="animate-spin text-blue-500"></ng-icon>
         </div>
       }
-    
+
       <!-- Error State -->
       @if (error() && !isLoading()) {
         <div
           class="flex items-center gap-2 p-4 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg"
-          >
+        >
           <ng-icon name="lucideCircleAlert" size="20"></ng-icon>
           <span>{{ error() }}</span>
         </div>
       }
-    
+
       <!-- Servers List -->
       @if (!isLoading() && !error()) {
         <div class="space-y-2 max-h-96 overflow-y-auto">
@@ -86,7 +96,7 @@ import { ProviderMarkComponent } from '../provider-mark.component';
               (click)="selectServer(server)"
               [class]="getServerCardClass(server)"
               class="p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md"
-              >
+            >
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3 flex-1 min-w-0">
                   <!-- Provider Icon -->
@@ -99,7 +109,9 @@ import { ProviderMarkComponent } from '../provider-mark.component';
                       </h3>
                       <app-instance-status-badge [status]="server.status || 'unknown'" />
                     </div>
-                    <div class="flex items-center gap-4 mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    <div
+                      class="flex items-center gap-4 mt-1 text-sm text-slate-500 dark:text-slate-400"
+                    >
                       @if (server.ipConfig?.v4?.ip) {
                         <span class="font-mono">{{ server.ipConfig?.v4?.ip }}</span>
                       }
@@ -128,9 +140,7 @@ import { ProviderMarkComponent } from '../provider-mark.component';
           }
           <!-- Empty State -->
           @if (filteredServers().length === 0) {
-            <div
-              class="text-center py-12 text-slate-500 dark:text-slate-400"
-              >
+            <div class="text-center py-12 text-slate-500 dark:text-slate-400">
               <ng-icon name="lucideServer" size="48" class="mx-auto mb-3 opacity-30"></ng-icon>
               @if (searchQuery()) {
                 <p>No servers found matching "{{ searchQuery() }}"</p>
@@ -142,26 +152,26 @@ import { ProviderMarkComponent } from '../provider-mark.component';
           }
         </div>
       }
-    
+
       <!-- Selected Count (Multi-select mode) -->
       @if (multiSelect() && selectedServers().length > 0) {
         <div
           class="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg"
-          >
+        >
           <span class="text-sm font-medium text-blue-700 dark:text-blue-300">
             {{ selectedServers().length }} server(s) selected
           </span>
           <button
             (click)="clearSelection()"
             class="flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
-            >
+          >
             <ng-icon name="lucideX" size="16"></ng-icon>
             Clear
           </button>
         </div>
       }
     </div>
-    `,
+  `,
 })
 export class ServerSelectorComponent implements OnInit {
   private readonly instancesApi = inject(VirtualInstancesService);
@@ -210,21 +220,20 @@ export class ServerSelectorComponent implements OnInit {
     const query = this.searchQuery().toLowerCase();
     const excluded = this.excludeServerIds();
 
-    return servers
-      .filter(server => {
-        // Exclude servers in the exclude list
-        if (excluded.includes(server.id || '')) {
-          return false;
-        }
+    return servers.filter((server) => {
+      // Exclude servers in the exclude list
+      if (excluded.includes(server.id || '')) {
+        return false;
+      }
 
-        // Filter by search query
-        if (query) {
-          const name = (server.displayName || server.name || '').toLowerCase();
-          return name.includes(query);
-        }
+      // Filter by search query
+      if (query) {
+        const name = (server.displayName || server.name || '').toLowerCase();
+        return name.includes(query);
+      }
 
-        return true;
-      });
+      return true;
+    });
   });
 
   // ===== LIFECYCLE =====
@@ -254,8 +263,8 @@ export class ServerSelectorComponent implements OnInit {
           undefined, // status
           undefined, // page
           undefined, // limit
-          provider   // provider filter
-        )
+          provider, // provider filter
+        ),
       );
 
       this.availableServers.set((response.data || []) as InstanceWithLabels[]);
@@ -271,14 +280,14 @@ export class ServerSelectorComponent implements OnInit {
   selectServer(server: InstanceWithLabels): void {
     if (this.multiSelect()) {
       // Multi-select mode: toggle selection
-      this.selectedServers.update(selected => {
-        const index = selected.findIndex(s => s.id === server.id);
+      this.selectedServers.update((selected) => {
+        const index = selected.findIndex((s) => s.id === server.id);
         if (index === -1) {
           // Not selected, add it
           return [...selected, server];
         } else {
           // Already selected, remove it
-          return selected.filter(s => s.id !== server.id);
+          return selected.filter((s) => s.id !== server.id);
         }
       });
       this.serversSelected.emit(this.selectedServers());
@@ -290,7 +299,7 @@ export class ServerSelectorComponent implements OnInit {
   }
 
   isSelected(server: InstanceWithLabels): boolean {
-    return this.selectedServers().some(s => s.id === server.id);
+    return this.selectedServers().some((s) => s.id === server.id);
   }
 
   clearSelection(): void {

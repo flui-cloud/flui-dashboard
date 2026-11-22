@@ -51,7 +51,7 @@ async function main() {
   const clusters = await json(`${API}/api/v1/infrastructure/clusters`);
   const clusterId = (Array.isArray(clusters) ? clusters : clusters?.data)?.[0]?.id;
   const apps = await json(`${API}/api/v1/clusters/${clusterId}/applications`);
-  const list = Array.isArray(apps) ? apps : apps?.data ?? [];
+  const list = Array.isArray(apps) ? apps : (apps?.data ?? []);
   const target = list.find((a) => a.name.includes(WANTED)) ?? list[0];
   if (!target) throw new Error('this guest owns no application');
 
@@ -66,7 +66,11 @@ async function main() {
 
   const danger = page.locator('button', { hasText: /^\s*Delete\s*$/ }).last();
   await danger.scrollIntoViewIfNeeded();
-  report.steps.push({ step: 'delete control', visible: await danger.isVisible(), enabled: await danger.isEnabled() });
+  report.steps.push({
+    step: 'delete control',
+    visible: await danger.isVisible(),
+    enabled: await danger.isEnabled(),
+  });
   await shot(page, '02-danger-zone');
 
   await danger.click();

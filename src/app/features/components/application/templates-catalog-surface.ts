@@ -67,7 +67,10 @@ function pageObservations(input: TemplatesCatalogSurfaceInput): Observation[] {
   ].filter((observation): observation is Observation => observation !== null);
 }
 
-function rowObservations(input: TemplatesCatalogSurfaceInput, template: TemplateResponseDto): Observation[] {
+function rowObservations(
+  input: TemplatesCatalogSurfaceInput,
+  template: TemplateResponseDto,
+): Observation[] {
   return [
     textObservation('flui.template.category', input.categoryOf(template), 'derived'),
     valueObservation('flui.template.port', template.port, 'api'),
@@ -159,7 +162,13 @@ export function presentedContent(input: TemplatesCatalogSurfaceInput): Presented
   ];
 
   const attention: AttentionTarget[] = highlighted
-    ? [{ scopeId: LIST_ID, entityRef: templateEntityRef(highlighted.framework), reason: 'selection' }]
+    ? [
+        {
+          scopeId: LIST_ID,
+          entityRef: templateEntityRef(highlighted.framework),
+          reason: 'selection',
+        },
+      ]
     : [{ scopeId: PAGE_ID, reason: 'route' }];
 
   return { scopes, attention };

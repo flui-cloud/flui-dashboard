@@ -26,7 +26,7 @@ export enum DnsProvider {
 
 export enum CertificateProvider {
   LETS_ENCRYPT = 'lets_encrypt',
-  LETS_ENCRYPT_STAGING = 'lets_encrypt_staging'
+  LETS_ENCRYPT_STAGING = 'lets_encrypt_staging',
 }
 
 export enum DnsRecordType {
@@ -35,7 +35,7 @@ export enum DnsRecordType {
   CNAME = 'CNAME',
   TXT = 'TXT',
   MX = 'MX',
-  SRV = 'SRV'
+  SRV = 'SRV',
 }
 
 export enum DnsReconciliationStatus {
@@ -43,7 +43,7 @@ export enum DnsReconciliationStatus {
   IN_SYNC = 'IN_SYNC',
   DRIFT = 'DRIFT',
   RECONCILING = 'RECONCILING',
-  ERROR = 'ERROR'
+  ERROR = 'ERROR',
 }
 
 export enum CertificateStatus {
@@ -51,7 +51,7 @@ export enum CertificateStatus {
   ISSUING = 'issuing',
   VALID = 'valid',
   EXPIRED = 'expired',
-  FAILED = 'failed'
+  FAILED = 'failed',
 }
 
 // --- Provider zone (raw response from provider discovery) ---
@@ -92,67 +92,103 @@ export interface EndpointFormState {
 
 export function getReconciliationBadgeColor(status: DnsReconciliationStatus | string): string {
   switch (status) {
-    case DnsReconciliationStatus.PENDING: return 'gray';
-    case DnsReconciliationStatus.IN_SYNC: return 'green';
-    case DnsReconciliationStatus.DRIFT: return 'yellow';
-    case DnsReconciliationStatus.RECONCILING: return 'blue';
-    case DnsReconciliationStatus.ERROR: return 'red';
-    default: return 'gray';
+    case DnsReconciliationStatus.PENDING:
+      return 'gray';
+    case DnsReconciliationStatus.IN_SYNC:
+      return 'green';
+    case DnsReconciliationStatus.DRIFT:
+      return 'yellow';
+    case DnsReconciliationStatus.RECONCILING:
+      return 'blue';
+    case DnsReconciliationStatus.ERROR:
+      return 'red';
+    default:
+      return 'gray';
   }
 }
 
 export function getReconciliationBadgeLabel(status: DnsReconciliationStatus | string): string {
   switch (status) {
-    case DnsReconciliationStatus.PENDING: return 'Pending';
-    case DnsReconciliationStatus.IN_SYNC: return 'In Sync';
-    case DnsReconciliationStatus.DRIFT: return 'Drift Detected';
-    case DnsReconciliationStatus.RECONCILING: return 'Reconciling';
-    case DnsReconciliationStatus.ERROR: return 'Error';
-    default: return 'Unknown';
+    case DnsReconciliationStatus.PENDING:
+      return 'Pending';
+    case DnsReconciliationStatus.IN_SYNC:
+      return 'In Sync';
+    case DnsReconciliationStatus.DRIFT:
+      return 'Drift Detected';
+    case DnsReconciliationStatus.RECONCILING:
+      return 'Reconciling';
+    case DnsReconciliationStatus.ERROR:
+      return 'Error';
+    default:
+      return 'Unknown';
   }
 }
 
 export function getReconciliationIcon(status: DnsReconciliationStatus | string): string {
   switch (status) {
-    case DnsReconciliationStatus.PENDING: return '\u25CB';
-    case DnsReconciliationStatus.IN_SYNC: return '\u2713';
-    case DnsReconciliationStatus.DRIFT: return '\u26A0';
-    case DnsReconciliationStatus.RECONCILING: return '\u27F3';
-    case DnsReconciliationStatus.ERROR: return '\u2717';
-    default: return '?';
+    case DnsReconciliationStatus.PENDING:
+      return '\u25CB';
+    case DnsReconciliationStatus.IN_SYNC:
+      return '\u2713';
+    case DnsReconciliationStatus.DRIFT:
+      return '\u26A0';
+    case DnsReconciliationStatus.RECONCILING:
+      return '\u27F3';
+    case DnsReconciliationStatus.ERROR:
+      return '\u2717';
+    default:
+      return '?';
   }
 }
 
 export function getCertificateBadgeColor(status: CertificateStatus | string | null): string {
   switch (status) {
-    case CertificateStatus.PENDING: return 'yellow';
-    case CertificateStatus.ISSUING: return 'blue';
-    case CertificateStatus.VALID: return 'green';
-    case CertificateStatus.EXPIRED: return 'red';
-    case CertificateStatus.FAILED: return 'red';
-    default: return 'gray';
+    case CertificateStatus.PENDING:
+      return 'yellow';
+    case CertificateStatus.ISSUING:
+      return 'blue';
+    case CertificateStatus.VALID:
+      return 'green';
+    case CertificateStatus.EXPIRED:
+      return 'red';
+    case CertificateStatus.FAILED:
+      return 'red';
+    default:
+      return 'gray';
   }
 }
 
 export function getCertificateBadgeLabel(status: CertificateStatus | string | null): string {
   switch (status) {
-    case CertificateStatus.PENDING: return 'Pending';
-    case CertificateStatus.ISSUING: return 'Issuing';
-    case CertificateStatus.VALID: return 'Valid';
-    case CertificateStatus.EXPIRED: return 'Expired';
-    case CertificateStatus.FAILED: return 'Failed';
-    default: return 'None';
+    case CertificateStatus.PENDING:
+      return 'Pending';
+    case CertificateStatus.ISSUING:
+      return 'Issuing';
+    case CertificateStatus.VALID:
+      return 'Valid';
+    case CertificateStatus.EXPIRED:
+      return 'Expired';
+    case CertificateStatus.FAILED:
+      return 'Failed';
+    default:
+      return 'None';
   }
 }
 
 export function getCertificateIcon(status: CertificateStatus | string | null): string {
   switch (status) {
-    case CertificateStatus.PENDING: return '\u25CB';
-    case CertificateStatus.ISSUING: return '\u27F3';
-    case CertificateStatus.VALID: return '\u2713';
-    case CertificateStatus.EXPIRED: return '\u2717';
-    case CertificateStatus.FAILED: return '\u2717';
-    default: return '-';
+    case CertificateStatus.PENDING:
+      return '\u25CB';
+    case CertificateStatus.ISSUING:
+      return '\u27F3';
+    case CertificateStatus.VALID:
+      return '\u2713';
+    case CertificateStatus.EXPIRED:
+      return '\u2717';
+    case CertificateStatus.FAILED:
+      return '\u2717';
+    default:
+      return '-';
   }
 }
 
@@ -177,9 +213,11 @@ export function formatTimeSince(timestamp: string | null): string {
 }
 
 export function needsReconciliation(status: DnsReconciliationStatus | string): boolean {
-  return status === DnsReconciliationStatus.PENDING
-    || status === DnsReconciliationStatus.DRIFT
-    || status === DnsReconciliationStatus.ERROR;
+  return (
+    status === DnsReconciliationStatus.PENDING ||
+    status === DnsReconciliationStatus.DRIFT ||
+    status === DnsReconciliationStatus.ERROR
+  );
 }
 
 export function buildEndpointUrl(fqdn: string, tlsEnabled: boolean): string {

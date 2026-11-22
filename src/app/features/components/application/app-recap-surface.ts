@@ -124,9 +124,23 @@ export function presentedContent(input: AppRecapSurfaceInput): PresentedContent 
     label: group.name,
     entities: [
       { ref, label: group.name, role: 'primary' },
-      ...(primary ? [{ ref: applicationEntityRef(primary.id), label: primary.slug ?? group.name, role: 'related' as const }] : []),
+      ...(primary
+        ? [
+            {
+              ref: applicationEntityRef(primary.id),
+              label: primary.slug ?? group.name,
+              role: 'related' as const,
+            },
+          ]
+        : []),
       ...(group.clusterId
-        ? [{ ref: clusterEntityRef(group.clusterId), ...(group.clusterName ? { label: group.clusterName } : {}), role: 'related' as const }]
+        ? [
+            {
+              ref: clusterEntityRef(group.clusterId),
+              ...(group.clusterName ? { label: group.clusterName } : {}),
+              role: 'related' as const,
+            },
+          ]
         : []),
     ],
     observations: keep([
@@ -140,8 +154,14 @@ export function presentedContent(input: AppRecapSurfaceInput): PresentedContent 
       primary ? textObservation('flui.application.source', primary.sourceLabel, 'api') : null,
       primary ? textObservation('flui.application.exposure', primary.exposure, 'api') : null,
       primary ? valueObservation('flui.application.replicas', primary.replicas, 'api') : null,
-      primary ? textObservation('flui.application.catalog_version', primary.catalogVersion, 'api') : null,
-      boolObservation('flui.app_recap.bundled_databases', input.extraDatabases.length > 0, 'derived'),
+      primary
+        ? textObservation('flui.application.catalog_version', primary.catalogVersion, 'api')
+        : null,
+      boolObservation(
+        'flui.app_recap.bundled_databases',
+        input.extraDatabases.length > 0,
+        'derived',
+      ),
       textObservation('flui.app_recap.backup_coverage', input.backupCoverage, 'api'),
     ]),
     state: { loading: input.isLoading },

@@ -1,7 +1,15 @@
 import { databaseEngineOf } from '../../model/db-engine';
 import { accessOf } from '../../model/app-access';
 import { ApplicationService } from '../../service/application.service';
-import { Component, OnInit, OnDestroy, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  inject,
+  signal,
+  computed,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { ActivatedRoute } from '@angular/router';
 import { UserEventsService } from '../../../core/services/user-events.service';
@@ -22,12 +30,12 @@ import { formatPercent, formatRate } from '../../../shared/utils/metric-format';
 import { ApplicationMonitoringService } from '../../service/application-monitoring.service';
 import { ApplicationMetricsService } from '../../../core/api/api/applicationMetrics.service';
 import { DbDiskUsageComponent } from './db-disk-usage.component';
-import {
-  AppTrafficSectionComponent,
-  TrafficRange,
-} from './app-traffic-section.component';
+import { AppTrafficSectionComponent, TrafficRange } from './app-traffic-section.component';
 import { AppAlertsSectionComponent } from './app-alerts-section.component';
-import type { AppHistoryPoint, SingleAppMetricsHistoryResponseDto } from '../../model/application.models';
+import type {
+  AppHistoryPoint,
+  SingleAppMetricsHistoryResponseDto,
+} from '../../model/application.models';
 import { lastReadinessDip, throttleNotice } from './app-monitoring-history';
 import { AppHealthChecksService } from '../../service/app-health-checks.service';
 import { AppCapacityAdviceService, adviceView } from '../../service/app-capacity-advice.service';
@@ -76,10 +84,17 @@ function sizedPair(extra: TimeSeriesChartConfig): SizedConfig {
     TimeSeriesLineComponent,
     DbDiskUsageComponent,
     AppTrafficSectionComponent,
-    AppAlertsSectionComponent
-],
+    AppAlertsSectionComponent,
+  ],
   providers: [
-    provideIcons({ lucideRefreshCw, lucideActivity, lucideCircleCheck, lucideTriangleAlert, lucideHeartPulse, lucideHourglass }),
+    provideIcons({
+      lucideRefreshCw,
+      lucideActivity,
+      lucideCircleCheck,
+      lucideTriangleAlert,
+      lucideHeartPulse,
+      lucideHourglass,
+    }),
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './app-monitoring-tab.component.html',
@@ -128,9 +143,7 @@ export class AppMonitoringTabComponent implements OnInit, OnDestroy {
   private unsubscribeAlerts: (() => void) | null = null;
 
   private readonly alertsRefreshTick = signal(0);
-  readonly alertsRefreshKey = computed(
-    () => this.refreshTick() + this.alertsRefreshTick(),
-  );
+  readonly alertsRefreshKey = computed(() => this.refreshTick() + this.alertsRefreshTick());
 
   readonly trafficRange = computed<TrafficRange>(() => {
     this.refreshTick();
@@ -154,7 +167,9 @@ export class AppMonitoringTabComponent implements OnInit, OnDestroy {
   readonly lastDip = computed(() => lastReadinessDip(this.historyPoints()));
 
   readonly ranges = RANGES;
-  readonly rangeLabel = computed(() => RANGES.find((r) => r.value === this.timeRange())?.long ?? '');
+  readonly rangeLabel = computed(
+    () => RANGES.find((r) => r.value === this.timeRange())?.long ?? '',
+  );
   readonly inlineHeight = INLINE_HEIGHT;
   readonly expandedHeight = EXPANDED_HEIGHT;
   readonly cpuConfig = sizedPair({ unit: '%', thresholds: { warning: 70, danger: 90 } });
@@ -176,26 +191,22 @@ export class AppMonitoringTabComponent implements OnInit, OnDestroy {
   private readonly effectiveReplica = computed(() => {
     const replicas = this.availableReplicas();
     const pod = this.selectedPodName();
-    if (pod) return replicas.find(r => r.pod === pod) ?? null;
+    if (pod) return replicas.find((r) => r.pod === pod) ?? null;
     if (replicas.length === 1) return replicas[0];
     return null;
   });
 
-  readonly activeCpu = computed(() =>
-    this.effectiveReplica()?.cpu ?? this.metrics()?.cpu ?? null
+  readonly activeCpu = computed(() => this.effectiveReplica()?.cpu ?? this.metrics()?.cpu ?? null);
+
+  readonly activeMemory = computed(
+    () => this.effectiveReplica()?.memory ?? this.metrics()?.memory ?? null,
   );
 
-  readonly activeMemory = computed(() =>
-    this.effectiveReplica()?.memory ?? this.metrics()?.memory ?? null
+  readonly activeNetwork = computed(
+    () => this.effectiveReplica()?.network ?? this.metrics()?.network ?? null,
   );
 
-  readonly activeNetwork = computed(() =>
-    this.effectiveReplica()?.network ?? this.metrics()?.network ?? null
-  );
-
-  readonly activeReplicaStatus = computed(() =>
-    this.effectiveReplica()?.status ?? null
-  );
+  readonly activeReplicaStatus = computed(() => this.effectiveReplica()?.status ?? null);
 
   selectPod(podName: string | null): void {
     this.selectedPodName.set(podName);
@@ -250,7 +261,8 @@ export class AppMonitoringTabComponent implements OnInit, OnDestroy {
     const restartsHour = podStatus?.restart_rate_1h ?? appStatus?.restart_rate_1h ?? 0;
     const cpuPct = this.cpuPct();
     const memoryPct = this.memoryPct();
-    const spark = (data: TimeSeriesChartData | null) => data?.series[0]?.data.map((p) => p.value) ?? [];
+    const spark = (data: TimeSeriesChartData | null) =>
+      data?.series[0]?.data.map((p) => p.value) ?? [];
     const netIn = net?.receive_bytes_rate ?? 0;
     const netOut = net?.transmit_bytes_rate ?? 0;
     return [
@@ -321,7 +333,9 @@ export class AppMonitoringTabComponent implements OnInit, OnDestroy {
     const notes: StatTileNote[] = [];
     if (known && busy > 0) {
       const last =
-        idle === 0 && checks!.last_failure_at ? ` · last at ${this.formatClock(checks!.last_failure_at)}` : '';
+        idle === 0 && checks!.last_failure_at
+          ? ` · last at ${this.formatClock(checks!.last_failure_at)}`
+          : '';
       notes.push({ text: `Too busy to answer ${busy} ${this.times(busy)}${last}` });
     }
     if (known && checks!.restarts_by_liveness > 0) {
@@ -356,7 +370,11 @@ export class AppMonitoringTabComponent implements OnInit, OnDestroy {
     return ready == null || desired == null ? '—' : `${ready}/${desired}`;
   }
 
-  private replicasFootnote(ready: number | null, desired: number | null, unavailable: number): string {
+  private replicasFootnote(
+    ready: number | null,
+    desired: number | null,
+    unavailable: number,
+  ): string {
     if (ready == null || desired == null) return 'no data';
     if (unavailable > 0) return `${unavailable} unavailable`;
     if (desired === 0) return 'none running';
@@ -365,7 +383,10 @@ export class AppMonitoringTabComponent implements OnInit, OnDestroy {
 
   private formatDipTime(iso: string): string {
     return new Date(iso).toLocaleString('en-US', {
-      day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
+      day: '2-digit',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
     });
   }
 
@@ -414,11 +435,26 @@ export class AppMonitoringTabComponent implements OnInit, OnDestroy {
     let step: string;
 
     switch (range) {
-      case '1h': start.setHours(start.getHours() - 1); step = '30s'; break;
-      case '2h': start.setHours(start.getHours() - 2); step = '1m'; break;
-      case '3h': start.setHours(start.getHours() - 3); step = '1m'; break;
-      case '6h': start.setHours(start.getHours() - 6); step = '2m'; break;
-      case '1d': start.setDate(start.getDate() - 1); step = '5m'; break;
+      case '1h':
+        start.setHours(start.getHours() - 1);
+        step = '30s';
+        break;
+      case '2h':
+        start.setHours(start.getHours() - 2);
+        step = '1m';
+        break;
+      case '3h':
+        start.setHours(start.getHours() - 3);
+        step = '1m';
+        break;
+      case '6h':
+        start.setHours(start.getHours() - 6);
+        step = '2m';
+        break;
+      case '1d':
+        start.setDate(start.getDate() - 1);
+        step = '5m';
+        break;
     }
 
     return { start, end, step };
@@ -434,8 +470,11 @@ export class AppMonitoringTabComponent implements OnInit, OnDestroy {
 
       const response = await firstValueFrom(
         this.metricsApi.applicationMetricsControllerGetAppMetricsHistory(
-          appId, start.toISOString(), end.toISOString(), step
-        )
+          appId,
+          start.toISOString(),
+          end.toISOString(),
+          step,
+        ),
       );
       this.transformHistoryData(response);
     } catch (error) {
@@ -450,40 +489,49 @@ export class AppMonitoringTabComponent implements OnInit, OnDestroy {
     this.historyPoints.set(dp);
     if (dp.length === 0) return;
 
-    const cpuSeries: TimeSeriesSeries[] = [{
-      name: 'Used',
-      data: dp
-        .filter(p => p.cpu_utilization_percent != null)
-        .map(p => ({ timestamp: new Date(p.datetime), value: p.cpu_utilization_percent! })),
-      smooth: true,
-      color: '#3b82f6',
-    }];
+    const cpuSeries: TimeSeriesSeries[] = [
+      {
+        name: 'Used',
+        data: dp
+          .filter((p) => p.cpu_utilization_percent != null)
+          .map((p) => ({ timestamp: new Date(p.datetime), value: p.cpu_utilization_percent! })),
+        smooth: true,
+        color: '#3b82f6',
+      },
+    ];
     const throttled = dp
-      .filter(p => p.cpu_throttled_percent != null)
-      .map(p => ({ timestamp: new Date(p.datetime), value: p.cpu_throttled_percent! }));
+      .filter((p) => p.cpu_throttled_percent != null)
+      .map((p) => ({ timestamp: new Date(p.datetime), value: p.cpu_throttled_percent! }));
     if (throttled.length > 0) {
-      cpuSeries.push({ name: 'Throttled', data: throttled, smooth: true, color: DEFAULT_CHART_COLORS.warning[0] });
+      cpuSeries.push({
+        name: 'Throttled',
+        data: throttled,
+        smooth: true,
+        color: DEFAULT_CHART_COLORS.warning[0],
+      });
     }
     this.cpuHistoryData.set({ title: 'CPU Usage History', series: cpuSeries });
 
     // Memory chart
-    const memorySeries: TimeSeriesSeries[] = [{
-      name: 'Memory %',
-      data: dp
-        .filter(p => p.memory_utilization_percent != null)
-        .map(p => ({ timestamp: new Date(p.datetime), value: p.memory_utilization_percent! })),
-      smooth: true,
-      color: '#8b5cf6',
-    }];
+    const memorySeries: TimeSeriesSeries[] = [
+      {
+        name: 'Memory %',
+        data: dp
+          .filter((p) => p.memory_utilization_percent != null)
+          .map((p) => ({ timestamp: new Date(p.datetime), value: p.memory_utilization_percent! })),
+        smooth: true,
+        color: '#8b5cf6',
+      },
+    ];
     this.memoryHistoryData.set({ title: 'Memory Usage History', series: memorySeries });
 
     // Network chart (2 series)
     const netIn = dp
-      .filter(p => p.network_receive_rate != null)
-      .map(p => ({ timestamp: new Date(p.datetime), value: p.network_receive_rate! }));
+      .filter((p) => p.network_receive_rate != null)
+      .map((p) => ({ timestamp: new Date(p.datetime), value: p.network_receive_rate! }));
     const netOut = dp
-      .filter(p => p.network_transmit_rate != null)
-      .map(p => ({ timestamp: new Date(p.datetime), value: p.network_transmit_rate! }));
+      .filter((p) => p.network_transmit_rate != null)
+      .map((p) => ({ timestamp: new Date(p.datetime), value: p.network_transmit_rate! }));
 
     this.networkHistoryData.set({
       title: 'Network I/O History',
@@ -494,11 +542,11 @@ export class AppMonitoringTabComponent implements OnInit, OnDestroy {
     });
 
     const ready = dp
-      .filter(p => p.replicas_ready != null)
-      .map(p => ({ timestamp: new Date(p.datetime), value: p.replicas_ready! }));
+      .filter((p) => p.replicas_ready != null)
+      .map((p) => ({ timestamp: new Date(p.datetime), value: p.replicas_ready! }));
     const desired = dp
-      .filter(p => p.replicas_desired != null)
-      .map(p => ({ timestamp: new Date(p.datetime), value: p.replicas_desired! }));
+      .filter((p) => p.replicas_desired != null)
+      .map((p) => ({ timestamp: new Date(p.datetime), value: p.replicas_desired! }));
     this.replicasHistoryData.set(
       ready.length || desired.length
         ? {
@@ -519,8 +567,11 @@ export class AppMonitoringTabComponent implements OnInit, OnDestroy {
 
   formatHealthDate(iso: string): string {
     return new Date(iso).toLocaleString('en-US', {
-      day: '2-digit', month: 'short', year: 'numeric',
-      hour: '2-digit', minute: '2-digit',
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
   }
 

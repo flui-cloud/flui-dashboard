@@ -1,7 +1,20 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCircleAlert, lucideExternalLink, lucideLoader, lucideWaypoints } from '@ng-icons/lucide';
+import {
+  lucideCircleAlert,
+  lucideExternalLink,
+  lucideLoader,
+  lucideWaypoints,
+} from '@ng-icons/lucide';
 import { Application } from '../../model/application.models';
 import { evaluateEndpointReadiness } from '../../model/endpoint-readiness';
 import { buildOpenAppUrl, CATALOG_APP_LABEL } from '../../model/open-app-url';
@@ -20,7 +33,9 @@ type InternalReadiness = 'pending' | 'failed' | 'ready' | 'not-configured';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterLink, NgIcon, AppOverviewFactsComponent],
-  providers: [provideIcons({ lucideCircleAlert, lucideExternalLink, lucideLoader, lucideWaypoints })],
+  providers: [
+    provideIcons({ lucideCircleAlert, lucideExternalLink, lucideLoader, lucideWaypoints }),
+  ],
   host: { class: 'block' },
   template: `
     @let a = app();
@@ -44,18 +59,26 @@ type InternalReadiness = 'pending' | 'failed' | 'ready' | 'not-configured';
                     <ng-icon name="lucideExternalLink" class="h-3.5 w-3.5 shrink-0" />
                   </a>
                 } @else {
-                  <span class="truncate font-mono text-base font-medium text-foreground" [attr.title]="r.detail">
+                  <span
+                    class="truncate font-mono text-base font-medium text-foreground"
+                    [attr.title]="r.detail"
+                  >
                     {{ scheme() }}://{{ ep.fqdn }}
                   </span>
                 }
                 @if (counts().extraInSync > 0) {
-                  <span class="shrink-0 text-xs text-muted-foreground">+{{ counts().extraInSync }} more</span>
+                  <span class="shrink-0 text-xs text-muted-foreground"
+                    >+{{ counts().extraInSync }} more</span
+                  >
                 }
               </div>
             </div>
             @if (r.isReady) {
               @if (health(); as h) {
-                <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium" [class]="pill[h.tone]">
+                <span
+                  class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium"
+                  [class]="pill[h.tone]"
+                >
                   <span class="h-1.5 w-1.5 rounded-full" [class]="dot[h.tone]"></span>
                   {{ h.label }}
                 </span>
@@ -74,7 +97,11 @@ type InternalReadiness = 'pending' | 'failed' | 'ready' | 'not-configured';
                   />
                   {{ r.label }}
                 </span>
-                <a [routerLink]="['../dns']" class="text-xs font-medium text-primary hover:underline">Details</a>
+                <a
+                  [routerLink]="['../dns']"
+                  class="text-xs font-medium text-primary hover:underline"
+                  >Details</a
+                >
               </span>
             }
           </div>
@@ -95,7 +122,10 @@ type InternalReadiness = 'pending' | 'failed' | 'ready' | 'not-configured';
                 <ng-icon name="lucideExternalLink" class="h-3.5 w-3.5 shrink-0" />
               </a>
             } @else if (i === 'not-configured') {
-              <p class="mt-0.5 text-sm text-muted-foreground" title="Internal app hosting not configured for this cluster.">
+              <p
+                class="mt-0.5 text-sm text-muted-foreground"
+                title="Internal app hosting not configured for this cluster."
+              >
                 Internal app hosting not configured · ask your cluster admin
               </p>
             } @else {
@@ -105,7 +135,10 @@ type InternalReadiness = 'pending' | 'failed' | 'ready' | 'not-configured';
             }
           </div>
           @if (internalBadge(); as b) {
-            <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium" [class]="pill[b.tone]">
+            <span
+              class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium"
+              [class]="pill[b.tone]"
+            >
               <span class="h-1.5 w-1.5 rounded-full" [class]="dot[b.tone]"></span>
               {{ b.label }}
             </span>
@@ -113,12 +146,20 @@ type InternalReadiness = 'pending' | 'failed' | 'ready' | 'not-configured';
         </div>
       }
 
-      <div [class.border-t]="hasEndpointLine()" [class.pt-5]="hasEndpointLine()" class="border-border">
+      <div
+        [class.border-t]="hasEndpointLine()"
+        [class.pt-5]="hasEndpointLine()"
+        class="border-border"
+      >
         <app-overview-facts [app]="a" [showDns]="isPublic()" />
       </div>
       <div class="flex justify-end border-t border-border pt-4">
-        <a routerLink="/topology" [queryParams]="serviceMap()" data-testid="overview-service-map"
-           class="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline">
+        <a
+          routerLink="/topology"
+          [queryParams]="serviceMap()"
+          data-testid="overview-service-map"
+          class="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+        >
           <ng-icon name="lucideWaypoints" class="h-3.5 w-3.5" />What it connects to
         </a>
       </div>
@@ -133,7 +174,13 @@ export class AppOverviewSummaryComponent {
 
   protected readonly serviceMap = computed(() => {
     const a = this.app();
-    return { view: 'services', level: 'app', app: a.id, cluster: a.clusterId, focus: `app:${a.id}` };
+    return {
+      view: 'services',
+      level: 'app',
+      app: a.id,
+      cluster: a.clusterId,
+      focus: `app:${a.id}`,
+    };
   });
 
   protected readonly pill = TONE_PILL;
@@ -141,9 +188,13 @@ export class AppOverviewSummaryComponent {
 
   protected readonly isPublic = computed(() => hasPublicEndpoint(this.app()));
   protected readonly isBuildingBlock = computed(() => isBuildingBlock(this.app()));
-  protected readonly counts = computed(() => endpointCountsOf(this.endpoints.endpoints(), this.app().id));
+  protected readonly counts = computed(() =>
+    endpointCountsOf(this.endpoints.endpoints(), this.app().id),
+  );
   protected readonly readiness = computed(() => evaluateEndpointReadiness(this.counts().primary));
-  protected readonly scheme = computed(() => (this.counts().primary?.tlsEnabled ? 'https' : 'http'));
+  protected readonly scheme = computed(() =>
+    this.counts().primary?.tlsEnabled ? 'https' : 'http',
+  );
 
   protected readonly health = computed(() => {
     const h = endpointHealth(this.app(), this.counts().primary?.tlsEnabled ?? null);

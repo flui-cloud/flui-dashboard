@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  computed,
-  input,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, input, signal } from '@angular/core';
 
 type JsonKind = 'object' | 'array' | 'primitive' | 'bson';
 

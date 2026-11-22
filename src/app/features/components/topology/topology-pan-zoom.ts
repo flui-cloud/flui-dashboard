@@ -9,7 +9,8 @@ export class PanZoom {
   readonly offset = signal({ x: 0, y: 0 });
   private from: { x: number; y: number } | null = null;
 
-  readonly transform = () => `translate(${this.offset().x}px,${this.offset().y}px) scale(${this.scale()})`;
+  readonly transform = () =>
+    `translate(${this.offset().x}px,${this.offset().y}px) scale(${this.scale()})`;
 
   /** The whole drawing in the box, centred, never enlarged past 125 %. */
   fit(box: DOMRect, size: { width: number; height: number }): void {
@@ -33,7 +34,10 @@ export class PanZoom {
     const after = clamp(before * (event.deltaY < 0 ? 1.1 : 1 / 1.1));
     const cx = event.clientX - box.left;
     const cy = event.clientY - box.top;
-    this.offset.update((o) => ({ x: cx - ((cx - o.x) * after) / before, y: cy - ((cy - o.y) * after) / before }));
+    this.offset.update((o) => ({
+      x: cx - ((cx - o.x) * after) / before,
+      y: cy - ((cy - o.y) * after) / before,
+    }));
     this.scale.set(after);
   }
 
@@ -42,7 +46,8 @@ export class PanZoom {
   }
 
   move(event: PointerEvent): void {
-    if (this.from) this.offset.set({ x: event.clientX - this.from.x, y: event.clientY - this.from.y });
+    if (this.from)
+      this.offset.set({ x: event.clientX - this.from.x, y: event.clientY - this.from.y });
   }
 
   end(): void {

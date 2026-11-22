@@ -1,17 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
-import {
-  EntryNature,
-  EntryReach,
-  WriteContextEntry,
-} from '../../model/operating-context.models';
+import { EntryNature, EntryReach, WriteContextEntry } from '../../model/operating-context.models';
 import { OperatingContextService } from '../../service/operating-context.service';
 import { ContextNoteFormComponent } from './context-note-form.component';
 
-const reachFor = (
-  scopeType: EntryReach['scopeType'],
-  nature: EntryNature,
-): EntryReach => ({
+const reachFor = (scopeType: EntryReach['scopeType'], nature: EntryNature): EntryReach => ({
   audience: scopeType === 'global' ? 'installation' : 'cluster',
   scopeType,
   scopeRef: null,
@@ -34,12 +27,9 @@ describe('writing a note', () => {
       scopeType: EntryReach['scopeType'],
       nature: EntryNature,
       scopeRef?: string | null,
-    ) => ReturnType<OperatingContextService['reach']> = (t, n) =>
-      of(reachFor(t, n)),
+    ) => ReturnType<OperatingContextService['reach']> = (t, n) => of(reachFor(t, n)),
   ): Promise<void> => {
-    api = jasmine.createSpyObj<OperatingContextService>('OperatingContextService', [
-      'reach',
-    ]);
+    api = jasmine.createSpyObj<OperatingContextService>('OperatingContextService', ['reach']);
     api.reach.and.callFake(reach);
     await TestBed.configureTestingModule({
       imports: [ContextNoteFormComponent],
@@ -127,9 +117,9 @@ describe('writing a note', () => {
   it('offers no live comparison for a note about the whole installation', async () => {
     await build();
     expect(find('no-probe-here-toggle')).not.toBeNull();
-    const options = Array.from(
-      (find('check-kind') as HTMLSelectElement).options,
-    ).map((o) => o.value);
+    const options = Array.from((find('check-kind') as HTMLSelectElement).options).map(
+      (o) => o.value,
+    );
     expect(options).not.toContain('probe');
   });
 
@@ -137,9 +127,9 @@ describe('writing a note', () => {
     await build();
     await pick('about-axis', 'apps');
     expect(find('no-probe-here')).toBeNull();
-    const options = Array.from(
-      (find('check-kind') as HTMLSelectElement).options,
-    ).map((o) => o.value);
+    const options = Array.from((find('check-kind') as HTMLSelectElement).options).map(
+      (o) => o.value,
+    );
     expect(options).toContain('probe');
   });
 
@@ -249,9 +239,7 @@ describe('writing a note', () => {
 
     it('asks one question per parameter instead of an empty key/value editor', async () => {
       await leaning();
-      const asked = fixture.nativeElement.querySelectorAll(
-        '[data-testid="declared-param"]',
-      );
+      const asked = fixture.nativeElement.querySelectorAll('[data-testid="declared-param"]');
       expect(asked).toHaveSize(2);
       expect(find('param-name')).toBeNull();
       expect(find('add-param')).toBeNull();
@@ -261,9 +249,9 @@ describe('writing a note', () => {
 
     it('offers the values the fact accepts, rather than a box to mistype them into', async () => {
       await leaning();
-      const options = Array.from(
-        (find('param-field') as HTMLSelectElement).options,
-      ).map((o) => o.value);
+      const options = Array.from((find('param-field') as HTMLSelectElement).options).map(
+        (o) => o.value,
+      );
       expect(options).toEqual(['', 'status', 'replicas']);
     });
 

@@ -7,7 +7,7 @@ import {
   OnInit,
   OnDestroy,
   NgZone,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
 } from '@angular/core';
 
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -37,7 +37,18 @@ const MIN_H = 280;
   selector: 'app-quick-ssh-overlay',
   standalone: true,
   imports: [NgIcon, SshTerminalComponent],
-  providers: [provideIcons({ lucideX, lucideMinus, lucideTerminal, lucideRefreshCw, lucideMonitor, lucideChevronRight, lucideMaximize2, lucideMinimize2 })],
+  providers: [
+    provideIcons({
+      lucideX,
+      lucideMinus,
+      lucideTerminal,
+      lucideRefreshCw,
+      lucideMonitor,
+      lucideChevronRight,
+      lucideMaximize2,
+      lucideMinimize2,
+    }),
+  ],
   template: `
     @if (sshService.isOpen()) {
       <div
@@ -48,30 +59,38 @@ const MIN_H = 280;
         [style.right.px]="16"
         [class.cursor-nw-resize]="activeEdge() === 'top-left'"
         [class.cursor-n-resize]="activeEdge() === 'top'"
-        [class.cursor-w-resize]="activeEdge() === 'left'">
-
+        [class.cursor-w-resize]="activeEdge() === 'left'"
+      >
         <!-- Resize handle: top edge -->
         <div
           class="absolute top-0 left-3 right-3 h-1.5 cursor-n-resize z-10 group"
-          (mousedown)="startResize($event, 'top')">
-          <div class="absolute inset-x-0 top-0.5 h-0.5 rounded bg-border opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          (mousedown)="startResize($event, 'top')"
+        >
+          <div
+            class="absolute inset-x-0 top-0.5 h-0.5 rounded bg-border opacity-0 group-hover:opacity-100 transition-opacity"
+          ></div>
         </div>
 
         <!-- Resize handle: left edge -->
         <div
           class="absolute left-0 top-3 bottom-3 w-1.5 cursor-w-resize z-10 group"
-          (mousedown)="startResize($event, 'left')">
-          <div class="absolute inset-y-0 left-0.5 w-0.5 rounded bg-border opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          (mousedown)="startResize($event, 'left')"
+        >
+          <div
+            class="absolute inset-y-0 left-0.5 w-0.5 rounded bg-border opacity-0 group-hover:opacity-100 transition-opacity"
+          ></div>
         </div>
 
         <!-- Resize handle: top-left corner -->
         <div
           class="absolute top-0 left-0 w-4 h-4 cursor-nw-resize z-20"
-          (mousedown)="startResize($event, 'top-left')">
-        </div>
+          (mousedown)="startResize($event, 'top-left')"
+        ></div>
 
         <!-- Panel header -->
-        <div class="flex items-center gap-2 px-3 py-2 bg-muted/60 border-b border-border flex-shrink-0">
+        <div
+          class="flex items-center gap-2 px-3 py-2 bg-muted/60 border-b border-border flex-shrink-0"
+        >
           <ng-icon name="lucideTerminal" class="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
 
           @if (sshService.activeSession(); as session) {
@@ -89,7 +108,8 @@ const MIN_H = 280;
             </div>
             <button
               (click)="changeNode()"
-              class="text-xs text-muted-foreground hover:text-foreground px-1.5 py-0.5 rounded hover:bg-muted transition-colors ml-1 flex-shrink-0">
+              class="text-xs text-muted-foreground hover:text-foreground px-1.5 py-0.5 rounded hover:bg-muted transition-colors ml-1 flex-shrink-0"
+            >
               Change
             </button>
           } @else {
@@ -100,19 +120,25 @@ const MIN_H = 280;
             <button
               (click)="toggleSize()"
               class="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-              [title]="isExpanded() ? 'Compact' : 'Expand'">
-              <ng-icon [name]="isExpanded() ? 'lucideMinimize2' : 'lucideMaximize2'" class="h-3.5 w-3.5" />
+              [title]="isExpanded() ? 'Compact' : 'Expand'"
+            >
+              <ng-icon
+                [name]="isExpanded() ? 'lucideMinimize2' : 'lucideMaximize2'"
+                class="h-3.5 w-3.5"
+              />
             </button>
             <button
               (click)="sshService.minimize()"
               class="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-              title="Minimize">
+              title="Minimize"
+            >
               <ng-icon name="lucideMinus" class="h-3.5 w-3.5" />
             </button>
             <button
               (click)="close()"
               class="p-1 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors"
-              title="Close">
+              title="Close"
+            >
               <ng-icon name="lucideX" class="h-3.5 w-3.5" />
             </button>
           </div>
@@ -128,7 +154,8 @@ const MIN_H = 280;
                 placeholder="Search nodes..."
                 [value]="searchQuery()"
                 (input)="searchQuery.set($any($event.target).value)"
-                class="w-full text-xs px-2.5 py-1.5 rounded-md border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
+                class="w-full text-xs px-2.5 py-1.5 rounded-md border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              />
             </div>
 
             @if (isLoadingNodes()) {
@@ -137,7 +164,9 @@ const MIN_H = 280;
                 <span class="text-xs">Loading nodes...</span>
               </div>
             } @else if (filteredNodes().length === 0) {
-              <div class="flex flex-col items-center justify-center flex-1 gap-1 text-muted-foreground">
+              <div
+                class="flex flex-col items-center justify-center flex-1 gap-1 text-muted-foreground"
+              >
                 <ng-icon name="lucideMonitor" class="h-8 w-8 opacity-30" />
                 <span class="text-xs">No running nodes found</span>
               </div>
@@ -146,21 +175,31 @@ const MIN_H = 280;
                 @for (node of filteredNodes(); track node.id) {
                   <button
                     (click)="connectToNode(node)"
-                    class="w-full text-left px-2.5 py-2 rounded-lg hover:bg-muted transition-colors mb-1 border border-transparent hover:border-border group">
+                    class="w-full text-left px-2.5 py-2 rounded-lg hover:bg-muted transition-colors mb-1 border border-transparent hover:border-border group"
+                  >
                     <div class="flex items-center gap-2">
                       <div class="h-1.5 w-1.5 rounded-full bg-green-500 flex-shrink-0"></div>
                       <span class="text-xs font-medium text-foreground truncate flex-1">
                         {{ node.displayName || node.name }}
                       </span>
-                      <span class="text-xs text-muted-foreground uppercase flex-shrink-0">{{ node.provider }}</span>
-                      <ng-icon name="lucideChevronRight" class="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                      <span class="text-xs text-muted-foreground uppercase flex-shrink-0">{{
+                        node.provider
+                      }}</span>
+                      <ng-icon
+                        name="lucideChevronRight"
+                        class="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                      />
                     </div>
                     <div class="flex items-center gap-2 mt-0.5 pl-3.5">
                       @if (node.ipConfig?.v4?.ip) {
-                        <span class="text-xs text-muted-foreground font-mono">{{ node.ipConfig!.v4!.ip }}</span>
+                        <span class="text-xs text-muted-foreground font-mono">{{
+                          node.ipConfig!.v4!.ip
+                        }}</span>
                       }
                       @if (getNodeClusterName(node)) {
-                        <span class="text-xs text-muted-foreground">· {{ getNodeClusterName(node) }}</span>
+                        <span class="text-xs text-muted-foreground"
+                          >· {{ getNodeClusterName(node) }}</span
+                        >
                       }
                     </div>
                   </button>
@@ -171,7 +210,8 @@ const MIN_H = 280;
             <div class="px-3 pb-2 flex-shrink-0">
               <button
                 (click)="loadNodes()"
-                class="w-full text-xs text-muted-foreground hover:text-foreground flex items-center justify-center gap-1 py-1 rounded hover:bg-muted transition-colors">
+                class="w-full text-xs text-muted-foreground hover:text-foreground flex items-center justify-center gap-1 py-1 rounded hover:bg-muted transition-colors"
+              >
                 <ng-icon name="lucideRefreshCw" class="h-3 w-3" />
                 Refresh
               </button>
@@ -193,11 +233,13 @@ const MIN_H = 280;
     }
   `,
   changeDetection: ChangeDetectionStrategy.Eager,
-  styles: [`
-    :host {
-      display: contents;
-    }
-  `]
+  styles: [
+    `
+      :host {
+        display: contents;
+      }
+    `,
+  ],
 })
 export class QuickSshOverlayComponent implements OnInit, OnDestroy {
   protected readonly sshService = inject(QuickSshService);
@@ -226,11 +268,12 @@ export class QuickSshOverlayComponent implements OnInit, OnDestroy {
   protected readonly filteredNodes = computed(() => {
     const query = this.searchQuery().toLowerCase();
     if (!query) return this.nodes();
-    return this.nodes().filter(n =>
-      (n.displayName || n.name).toLowerCase().includes(query) ||
-      n.provider.toLowerCase().includes(query) ||
-      (n.ipConfig?.v4?.ip || '').includes(query) ||
-      (this.getNodeClusterName(n) || '').toLowerCase().includes(query)
+    return this.nodes().filter(
+      (n) =>
+        (n.displayName || n.name).toLowerCase().includes(query) ||
+        n.provider.toLowerCase().includes(query) ||
+        (n.ipConfig?.v4?.ip || '').includes(query) ||
+        (this.getNodeClusterName(n) || '').toLowerCase().includes(query),
     );
   });
 
@@ -322,21 +365,33 @@ export class QuickSshOverlayComponent implements OnInit, OnDestroy {
 
   loadNodes(): void {
     this.isLoadingNodes.set(true);
-    this.instancesService.instancesControllerFindAll(
-      undefined, 'running', undefined, undefined, undefined, undefined, undefined, undefined, true
-    ).subscribe({
-      next: (response: InstanceResponseDto) => {
-        const allInstances = (response.data || []) as InstanceWithLabels[];
-        // Only this installation's own nodes are reachable over SSH; nodes from
-        // a parallel installation sharing the provider account are hidden.
-        this.nodes.set(allInstances.filter(i => getOwnership(i) === 'self' && !!i.ipConfig?.v4?.ip));
-        this.isLoadingNodes.set(false);
-      },
-      error: () => {
-        this.nodes.set([]);
-        this.isLoadingNodes.set(false);
-      }
-    });
+    this.instancesService
+      .instancesControllerFindAll(
+        undefined,
+        'running',
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        true,
+      )
+      .subscribe({
+        next: (response: InstanceResponseDto) => {
+          const allInstances = (response.data || []) as InstanceWithLabels[];
+          // Only this installation's own nodes are reachable over SSH; nodes from
+          // a parallel installation sharing the provider account are hidden.
+          this.nodes.set(
+            allInstances.filter((i) => getOwnership(i) === 'self' && !!i.ipConfig?.v4?.ip),
+          );
+          this.isLoadingNodes.set(false);
+        },
+        error: () => {
+          this.nodes.set([]);
+          this.isLoadingNodes.set(false);
+        },
+      });
   }
 
   connectToNode(node: InstanceWithLabels): void {

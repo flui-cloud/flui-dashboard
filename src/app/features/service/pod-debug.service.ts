@@ -38,9 +38,7 @@ export class PodDebugService {
     this.loadingData.set(true);
     this.errorData.set(null);
     try {
-      const result = await firstValueFrom(
-        this.api.podDebugControllerListPods(appId),
-      );
+      const result = await firstValueFrom(this.api.podDebugControllerListPods(appId));
       const list = Array.isArray(result) ? (result as PodDebugInfo[]) : [];
       this.podsData.set(list);
       this.lastFetchedAtData.set(Date.now());
@@ -54,9 +52,7 @@ export class PodDebugService {
   async loadOne(appId: string, podName: string): Promise<PodDebugInfo | null> {
     if (this.isRateLimited()) return null;
     try {
-      const result = await firstValueFrom(
-        this.api.podDebugControllerGetPod(appId, podName),
-      );
+      const result = await firstValueFrom(this.api.podDebugControllerGetPod(appId, podName));
       const pod = result as PodDebugInfo;
       this.upsert(pod);
       return pod;
@@ -75,8 +71,8 @@ export class PodDebugService {
   }
 
   private upsert(pod: PodDebugInfo): void {
-    this.podsData.update(list => {
-      const idx = list.findIndex(p => p.name === pod.name);
+    this.podsData.update((list) => {
+      const idx = list.findIndex((p) => p.name === pod.name);
       if (idx === -1) return [...list, pod];
       const copy = list.slice();
       copy[idx] = pod;

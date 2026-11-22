@@ -1,7 +1,13 @@
 import { TestBed, fakeAsync, flushMicrotasks } from '@angular/core/testing';
 import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ActivatedRouteSnapshot, Router, RouterStateSnapshot, UrlTree, provideRouter } from '@angular/router';
+import {
+  ActivatedRouteSnapshot,
+  Router,
+  RouterStateSnapshot,
+  UrlTree,
+  provideRouter,
+} from '@angular/router';
 import { authGuard } from './auth.guard';
 import { authInterceptor } from '../interceptors/auth.interceptor';
 import { AuthService } from '../services/auth.service';
@@ -48,7 +54,9 @@ describe('a page reload after the visit ended', () => {
         { provide: SandboxService, useValue: sandbox },
         {
           provide: ApiAuthService,
-          useFactory: (http: HttpClient) => ({ authControllerMe: () => http.get(`${API}/api/v1/auth/me`) }),
+          useFactory: (http: HttpClient) => ({
+            authControllerMe: () => http.get(`${API}/api/v1/auth/me`),
+          }),
           deps: [HttpClient],
         },
       ],
@@ -64,7 +72,10 @@ describe('a page reload after the visit ended', () => {
     auth.loadCurrentUser().subscribe();
     backend
       .expectOne(`${API}/api/v1/auth/me`)
-      .flush({ statusCode: 401, code, message: 'over' }, { status: 401, statusText: 'Unauthorized' });
+      .flush(
+        { statusCode: 401, code, message: 'over' },
+        { status: 401, statusText: 'Unauthorized' },
+      );
     flushMicrotasks();
     const result = TestBed.runInInjectionContext(() =>
       authGuard({} as ActivatedRouteSnapshot, { url: '/dashboard' } as RouterStateSnapshot),
@@ -92,6 +103,8 @@ describe('a page reload after the visit ended', () => {
     const result = TestBed.runInInjectionContext(() =>
       authGuard({} as ActivatedRouteSnapshot, { url: '/dashboard' } as RouterStateSnapshot),
     );
-    expect(TestBed.inject(Router).serializeUrl(result as UrlTree)).toBe('/login?redirect=%2Fdashboard');
+    expect(TestBed.inject(Router).serializeUrl(result as UrlTree)).toBe(
+      '/login?redirect=%2Fdashboard',
+    );
   });
 });

@@ -45,7 +45,11 @@ describe('guest home readings', () => {
 
   it('asks for sixty points across the window', () => {
     const range = historyRange('3h', Date.parse('2026-10-11T12:00:00Z'));
-    expect(range).toEqual({ start: '2026-10-11T09:00:00.000Z', end: '2026-10-11T12:00:00.000Z', step: '180s' });
+    expect(range).toEqual({
+      start: '2026-10-11T09:00:00.000Z',
+      end: '2026-10-11T12:00:00.000Z',
+      step: '180s',
+    });
   });
 
   it('writes sizes the way people read them', () => {

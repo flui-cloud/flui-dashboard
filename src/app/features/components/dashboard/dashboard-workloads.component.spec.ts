@@ -19,12 +19,16 @@ describe('DashboardWorkloadsComponent', () => {
   let fixture: ComponentFixture<DashboardWorkloadsComponent>;
   const groups = signal<AppGroupView[]>([]);
 
-  const q = (id: string): HTMLElement | null => fixture.nativeElement.querySelector(`[data-testid="${id}"]`);
+  const q = (id: string): HTMLElement | null =>
+    fixture.nativeElement.querySelector(`[data-testid="${id}"]`);
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [DashboardWorkloadsComponent],
-      providers: [provideRouter([]), { provide: ApplicationService, useValue: { applicationGroups: groups } }],
+      providers: [
+        provideRouter([]),
+        { provide: ApplicationService, useValue: { applicationGroups: groups } },
+      ],
     }).compileComponents();
     fixture = TestBed.createComponent(DashboardWorkloadsComponent);
   });

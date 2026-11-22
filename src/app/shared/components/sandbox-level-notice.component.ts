@@ -24,7 +24,12 @@ import {
         @if (icon(); as name) {
           <ng-icon [name]="name" class="h-4 w-4 flex-shrink-0 opacity-70" />
         }
-        <app-explain [label]="label()" labelClass="text-[13px] font-medium text-foreground" floating>{{ why() }}</app-explain>
+        <app-explain
+          [label]="label()"
+          labelClass="text-[13px] font-medium text-foreground"
+          floating
+          >{{ why() }}</app-explain
+        >
       </div>
     }
   `,
@@ -34,9 +39,7 @@ export class SandboxLevelNoticeComponent {
 
   private readonly sandbox = inject(SandboxService);
 
-  protected readonly level = computed<SandboxLevel>(() =>
-    this.sandbox.levelOf(this.area()),
-  );
+  protected readonly level = computed<SandboxLevel>(() => this.sandbox.levelOf(this.area()));
   protected readonly visible = computed(() => this.level() !== 'full');
   protected readonly label = computed(() => SANDBOX_LEVEL_LABEL[this.level()]);
   protected readonly why = computed(() => this.sandbox.whyFor(this.area()));

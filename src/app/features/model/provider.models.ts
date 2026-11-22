@@ -1,5 +1,4 @@
-import { ProviderDefinitionDto } from "../../core/api";
-
+import { ProviderDefinitionDto } from '../../core/api';
 
 export enum ProviderStatus {
   NOT_CONFIGURED = 'not_configured',
@@ -7,7 +6,7 @@ export enum ProviderStatus {
   VALIDATING = 'validating',
   ACTIVE = 'active',
   ERROR = 'error',
-  DISABLED = 'disabled'
+  DISABLED = 'disabled',
 }
 
 export interface ProviderRegion {

@@ -29,7 +29,11 @@ export class VisitEndService {
     const next =
       kind === 'merged'
         ? this.oidc.dropVisit().then(() => this.oidc.login())
-        : this.oidc.dropVisit().then(() => this.router.navigate(['/try'], { queryParams: { ended: '1' }, replaceUrl: true }));
+        : this.oidc
+            .dropVisit()
+            .then(() =>
+              this.router.navigate(['/try'], { queryParams: { ended: '1' }, replaceUrl: true }),
+            );
     void next
       .catch(() => undefined)
       .finally(() => {
@@ -39,6 +43,8 @@ export class VisitEndService {
 
   /** Where a page that needs a session goes instead of the sign-in page, once a visit ended. */
   landing(): UrlTree | null {
-    return this._ended() === 'gone' ? this.router.createUrlTree(['/try'], { queryParams: { ended: '1' } }) : null;
+    return this._ended() === 'gone'
+      ? this.router.createUrlTree(['/try'], { queryParams: { ended: '1' } })
+      : null;
   }
 }

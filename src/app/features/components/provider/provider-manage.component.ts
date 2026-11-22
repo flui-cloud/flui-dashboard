@@ -1,4 +1,13 @@
-import { Component, OnDestroy, computed, effect, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnDestroy,
+  computed,
+  effect,
+  inject,
+  signal,
+  OnInit,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -25,13 +34,27 @@ import { ProviderRegionsPanelComponent } from './provider-regions-panel.componen
 import { ProviderInferencePanelComponent } from './provider-inference-panel.component';
 import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-section.directive';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
-import { ProviderSurfaceInput, ProviderSurfaceRevision, buildProviderSurface, presentedContent } from './provider-surface';
+import {
+  ProviderSurfaceInput,
+  ProviderSurfaceRevision,
+  buildProviderSurface,
+  presentedContent,
+} from './provider-surface';
 import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
 
 @Component({
   selector: 'provider-manage',
   standalone: true,
-  imports: [ProviderMarkComponent, MaskIdPipe, ReadOnlySectionDirective, RouterLink, NgIcon, ProviderCredentialsPanelComponent, ProviderRegionsPanelComponent, ProviderInferencePanelComponent],
+  imports: [
+    ProviderMarkComponent,
+    MaskIdPipe,
+    ReadOnlySectionDirective,
+    RouterLink,
+    NgIcon,
+    ProviderCredentialsPanelComponent,
+    ProviderRegionsPanelComponent,
+    ProviderInferencePanelComponent,
+  ],
   providers: [
     provideIcons({
       lucideActivity,
@@ -67,18 +90,26 @@ import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
         <div class="bg-card border border-border rounded-lg p-12 text-center">
           <ng-icon name="lucideTriangleAlert" class="h-10 w-10 mx-auto text-yellow-500 mb-4" />
           <h2 class="text-lg font-semibold mb-2">Provider not found</h2>
-          <p class="text-sm text-muted-foreground">The provider <span class="font-mono">{{ providerId() }}</span> doesn't exist.</p>
+          <p class="text-sm text-muted-foreground">
+            The provider <span class="font-mono">{{ providerId() }}</span> doesn't exist.
+          </p>
         </div>
       } @else {
         <!-- Hero -->
-        <div class="relative overflow-hidden rounded-xl border border-border bg-gradient-to-br from-card via-card to-muted/30 p-6 md:p-8 mb-6">
+        <div
+          class="relative overflow-hidden rounded-xl border border-border bg-gradient-to-br from-card via-card to-muted/30 p-6 md:p-8 mb-6"
+        >
           <div class="flex flex-col md:flex-row md:items-center gap-5">
-            <div class="flex items-center justify-center h-16 w-16 rounded-xl bg-background border border-border shadow-sm shrink-0">
+            <div
+              class="flex items-center justify-center h-16 w-16 rounded-xl bg-background border border-border shadow-sm shrink-0"
+            >
               <app-provider-mark [name]="provider()!.displayName" [size]="40" />
             </div>
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2 flex-wrap">
-                <h1 class="text-2xl md:text-3xl font-bold tracking-tight">{{ provider()!.displayName }}</h1>
+                <h1 class="text-2xl md:text-3xl font-bold tracking-tight">
+                  {{ provider()!.displayName }}
+                </h1>
                 <span [class]="statusBadgeClass()">
                   <ng-icon
                     [name]="statusIcon()"
@@ -89,10 +120,18 @@ import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
               </div>
               <p class="text-sm text-muted-foreground mt-1">{{ provider()!.description }}</p>
               <div class="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
-                <a [href]="provider()!.websiteUrl" target="_blank" class="inline-flex items-center hover:text-foreground transition-colors">
+                <a
+                  [href]="provider()!.websiteUrl"
+                  target="_blank"
+                  class="inline-flex items-center hover:text-foreground transition-colors"
+                >
                   <ng-icon name="lucideExternalLink" class="h-3 w-3 mr-1" /> Website
                 </a>
-                <a [href]="provider()!.documentationUrl" target="_blank" class="inline-flex items-center hover:text-foreground transition-colors">
+                <a
+                  [href]="provider()!.documentationUrl"
+                  target="_blank"
+                  class="inline-flex items-center hover:text-foreground transition-colors"
+                >
                   <ng-icon name="lucideExternalLink" class="h-3 w-3 mr-1" /> Docs
                 </a>
               </div>
@@ -101,8 +140,13 @@ import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
         </div>
 
         @if (errorMessage()) {
-          <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-start gap-3 mb-6">
-            <ng-icon name="lucideTriangleAlert" class="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5 shrink-0" />
+          <div
+            class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-start gap-3 mb-6"
+          >
+            <ng-icon
+              name="lucideTriangleAlert"
+              class="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5 shrink-0"
+            />
             <p class="text-sm text-red-800 dark:text-red-200">{{ errorMessage() }}</p>
           </div>
         }
@@ -110,7 +154,11 @@ import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
         @if (!configuration()) {
           <div class="card-surface p-6 text-center">
             <p class="text-sm text-muted-foreground mb-4">This provider isn't connected yet.</p>
-            <a routerLink="/management/providers" [queryParams]="{ configure: providerId() }" class="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+            <a
+              routerLink="/management/providers"
+              [queryParams]="{ configure: providerId() }"
+              class="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
               Connect {{ provider()!.displayName }}
             </a>
           </div>
@@ -124,25 +172,30 @@ import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
                 (updated)="onConfigUpdated($event)"
               />
 
-              <provider-regions-panel
-                [provider]="provider()!"
-                [configuration]="configuration()!"
-              />
+              <provider-regions-panel [provider]="provider()!" [configuration]="configuration()!" />
 
               <provider-inference-panel [providerId]="providerId()" />
 
               <!-- Health card -->
               <section class="bg-card border border-border rounded-xl overflow-hidden">
-                <header class="px-6 py-4 border-b border-border bg-muted/30 flex items-center gap-2">
+                <header
+                  class="px-6 py-4 border-b border-border bg-muted/30 flex items-center gap-2"
+                >
                   <ng-icon name="lucideShieldCheck" class="h-4 w-4 text-muted-foreground" />
-                  <h2 class="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Health</h2>
-                  <button appReadOnlySection="providers"
+                  <h2 class="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                    Health
+                  </h2>
+                  <button
+                    appReadOnlySection="providers"
                     type="button"
                     (click)="refreshHealth()"
                     [disabled]="isCheckingHealth()"
                     class="ml-auto inline-flex items-center text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
                   >
-                    <ng-icon name="lucideRefreshCw" [class]="'h-3.5 w-3.5 mr-1 ' + (isCheckingHealth() ? 'animate-spin' : '')" />
+                    <ng-icon
+                      name="lucideRefreshCw"
+                      [class]="'h-3.5 w-3.5 mr-1 ' + (isCheckingHealth() ? 'animate-spin' : '')"
+                    />
                     Refresh
                   </button>
                 </header>
@@ -153,13 +206,19 @@ import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
                         <ng-icon [name]="healthIcon(h.status)" class="h-5 w-5" />
                       </div>
                       <div class="flex-1">
-                        <p [class]="'font-semibold capitalize ' + healthTextClass(h.status)">{{ h.status }}</p>
+                        <p [class]="'font-semibold capitalize ' + healthTextClass(h.status)">
+                          {{ h.status }}
+                        </p>
                         <p class="text-xs text-muted-foreground mt-0.5">
                           Checked {{ formatDate(h.lastCheck.toISOString()) }}
-                          @if (h.responseTime !== undefined) { · {{ h.responseTime }}ms }
+                          @if (h.responseTime !== undefined) {
+                            · {{ h.responseTime }}ms
+                          }
                         </p>
                         @if (h.errors?.length) {
-                          <p class="text-sm text-red-600 dark:text-red-400 mt-2">{{ h.errors![0] }}</p>
+                          <p class="text-sm text-red-600 dark:text-red-400 mt-2">
+                            {{ h.errors![0] }}
+                          </p>
                         }
                       </div>
                     </div>
@@ -176,34 +235,56 @@ import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
             <aside class="space-y-6">
               <section class="bg-card border border-border rounded-xl overflow-hidden">
                 <header class="px-6 py-4 border-b border-border bg-muted/30">
-                  <h2 class="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Quick actions</h2>
+                  <h2 class="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                    Quick actions
+                  </h2>
                 </header>
                 <div class="p-3 space-y-1">
-                  <button appReadOnlySection="providers"
+                  <button
+                    appReadOnlySection="providers"
                     type="button"
                     (click)="toggleEnabled()"
                     [disabled]="isToggling()"
                     class="w-full inline-flex items-center px-3 py-2.5 rounded-md text-sm font-medium hover:bg-accent transition-colors disabled:opacity-50"
                   >
                     @if (isToggling()) {
-                      <ng-icon name="lucideLoader" class="h-4 w-4 mr-3 text-muted-foreground animate-spin" />
+                      <ng-icon
+                        name="lucideLoader"
+                        class="h-4 w-4 mr-3 text-muted-foreground animate-spin"
+                      />
                     } @else {
-                      <ng-icon name="lucidePower" [class]="'h-4 w-4 mr-3 ' + (configuration()!.isActive ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground')" />
+                      <ng-icon
+                        name="lucidePower"
+                        [class]="
+                          'h-4 w-4 mr-3 ' +
+                          (configuration()!.isActive
+                            ? 'text-green-600 dark:text-green-400'
+                            : 'text-muted-foreground')
+                        "
+                      />
                     }
                     {{ configuration()!.isActive ? 'Disable provider' : 'Enable provider' }}
                   </button>
-                  <button appReadOnlySection="providers"
+                  <button
+                    appReadOnlySection="providers"
                     type="button"
                     (click)="refreshHealth()"
                     [disabled]="isCheckingHealth()"
                     class="w-full inline-flex items-center px-3 py-2.5 rounded-md text-sm font-medium hover:bg-accent transition-colors disabled:opacity-50"
                   >
-                    <ng-icon name="lucideRefreshCw" [class]="'h-4 w-4 mr-3 text-muted-foreground ' + (isCheckingHealth() ? 'animate-spin' : '')" />
+                    <ng-icon
+                      name="lucideRefreshCw"
+                      [class]="
+                        'h-4 w-4 mr-3 text-muted-foreground ' +
+                        (isCheckingHealth() ? 'animate-spin' : '')
+                      "
+                    />
                     Run health check
                   </button>
                 </div>
                 <div class="p-3 pt-0 border-t border-border mt-1">
-                  <button appReadOnlySection="providers"
+                  <button
+                    appReadOnlySection="providers"
                     type="button"
                     (click)="confirmRemove.set(true)"
                     class="w-full inline-flex items-center px-3 py-2.5 rounded-md text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
@@ -217,12 +298,16 @@ import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
               <!-- Metadata -->
               <section class="bg-card border border-border rounded-xl overflow-hidden">
                 <header class="px-6 py-4 border-b border-border bg-muted/30">
-                  <h2 class="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Metadata</h2>
+                  <h2 class="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                    Metadata
+                  </h2>
                 </header>
                 <dl class="p-6 space-y-3 text-sm">
                   <div class="flex justify-between gap-4">
                     <dt class="text-muted-foreground shrink-0">ID</dt>
-                    <dd class="font-mono text-xs truncate" [title]="configuration()!.id | maskId">{{ configuration()!.id | maskId }}</dd>
+                    <dd class="font-mono text-xs truncate" [title]="configuration()!.id | maskId">
+                      {{ configuration()!.id | maskId }}
+                    </dd>
                   </div>
                   <div class="flex justify-between gap-4">
                     <dt class="text-muted-foreground">Active</dt>
@@ -230,12 +315,16 @@ import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
                   </div>
                   <div class="flex justify-between gap-4">
                     <dt class="text-muted-foreground">Last update</dt>
-                    <dd class="font-medium text-right">{{ formatDate(configuration()!.updatedAt) }}</dd>
+                    <dd class="font-medium text-right">
+                      {{ formatDate(configuration()!.updatedAt) }}
+                    </dd>
                   </div>
                   @if (configuration()!.lastHealthCheck) {
                     <div class="flex justify-between gap-4">
                       <dt class="text-muted-foreground">Last check</dt>
-                      <dd class="font-medium text-right">{{ formatDate(configuration()!.lastHealthCheck) }}</dd>
+                      <dd class="font-medium text-right">
+                        {{ formatDate(configuration()!.lastHealthCheck) }}
+                      </dd>
                     </div>
                   }
                 </dl>
@@ -246,27 +335,49 @@ import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
 
         <!-- Remove confirm dialog -->
         @if (confirmRemove()) {
-          <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" (click)="confirmRemove.set(false)">
-            <div class="bg-card border border-border rounded-lg p-6 max-w-md w-full space-y-4" (click)="$event.stopPropagation()">
+          <div
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+            (click)="confirmRemove.set(false)"
+          >
+            <div
+              class="bg-card border border-border rounded-lg p-6 max-w-md w-full space-y-4"
+              (click)="$event.stopPropagation()"
+            >
               <div class="flex items-start gap-3">
-                <div class="h-10 w-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center shrink-0">
-                  <ng-icon name="lucideTriangleAlert" class="h-5 w-5 text-red-600 dark:text-red-400" />
+                <div
+                  class="h-10 w-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center shrink-0"
+                >
+                  <ng-icon
+                    name="lucideTriangleAlert"
+                    class="h-5 w-5 text-red-600 dark:text-red-400"
+                  />
                 </div>
                 <div>
                   <h3 class="text-lg font-semibold">Remove {{ provider()!.displayName }}?</h3>
                   <p class="text-sm text-muted-foreground mt-1">
-                    This removes the saved credentials and configuration. Resources already provisioned on this provider are not affected.
+                    This removes the saved credentials and configuration. Resources already
+                    provisioned on this provider are not affected.
                   </p>
                 </div>
               </div>
               <div class="flex justify-end gap-2 pt-2">
-                <button type="button" (click)="confirmRemove.set(false)" [disabled]="isRemoving()"
-                  class="inline-flex items-center justify-center rounded-md border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-accent transition-colors disabled:opacity-50">
+                <button
+                  type="button"
+                  (click)="confirmRemove.set(false)"
+                  [disabled]="isRemoving()"
+                  class="inline-flex items-center justify-center rounded-md border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-accent transition-colors disabled:opacity-50"
+                >
                   Cancel
                 </button>
-                <button type="button" (click)="remove()" [disabled]="isRemoving()"
-                  class="inline-flex items-center justify-center rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors disabled:opacity-50">
-                  @if (isRemoving()) { <ng-icon name="lucideLoader" class="h-4 w-4 mr-2 animate-spin" /> }
+                <button
+                  type="button"
+                  (click)="remove()"
+                  [disabled]="isRemoving()"
+                  class="inline-flex items-center justify-center rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors disabled:opacity-50"
+                >
+                  @if (isRemoving()) {
+                    <ng-icon name="lucideLoader" class="h-4 w-4 mr-2 animate-spin" />
+                  }
                   Remove
                 </button>
               </div>
@@ -300,18 +411,21 @@ export class ProviderManageComponent implements OnInit, OnDestroy {
     this.providersService.configuredProviders().find((c) => c.provider === this.providerId()),
   );
 
-
   protected statusLabel = computed(() =>
-    (this.configuration()?.status ?? 'not_configured').replaceAll('_',  ' '),
+    (this.configuration()?.status ?? 'not_configured').replaceAll('_', ' '),
   );
 
   protected statusIcon = computed(() => {
     switch (this.configuration()?.status) {
-      case 'active': return 'lucideCircleCheck';
-      case 'error': return 'lucideCircleX';
+      case 'active':
+        return 'lucideCircleCheck';
+      case 'error':
+        return 'lucideCircleX';
       case 'configuring':
-      case 'validating': return 'lucideLoader';
-      default: return 'lucideActivity';
+      case 'validating':
+        return 'lucideLoader';
+      default:
+        return 'lucideActivity';
     }
   });
 
@@ -323,12 +437,17 @@ export class ProviderManageComponent implements OnInit, OnDestroy {
   protected statusBadgeClass = computed(() => {
     const base = 'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize';
     switch (this.configuration()?.status) {
-      case 'active': return `${base} bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300`;
-      case 'error': return `${base} bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300`;
-      case 'disabled': return `${base} bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300`;
+      case 'active':
+        return `${base} bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300`;
+      case 'error':
+        return `${base} bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300`;
+      case 'disabled':
+        return `${base} bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300`;
       case 'configuring':
-      case 'validating': return `${base} bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300`;
-      default: return `${base} bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300`;
+      case 'validating':
+        return `${base} bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300`;
+      default:
+        return `${base} bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300`;
     }
   });
 
@@ -359,7 +478,8 @@ export class ProviderManageComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.providerId.set(this.route.snapshot.paramMap.get('id') ?? '');
     if (!this.providersService.availableProviders().length) this.providersService.loadProviders();
-    if (!this.providersService.configuredProviders().length) this.providersService.loadConfigurations();
+    if (!this.providersService.configuredProviders().length)
+      this.providersService.loadConfigurations();
     queueMicrotask(() => {
       this.isLoading.set(false);
       if (this.configuration()) this.refreshHealth();
@@ -423,29 +543,41 @@ export class ProviderManageComponent implements OnInit, OnDestroy {
 
   protected healthIcon(status: string): string {
     switch (status) {
-      case 'healthy': return 'lucideCircleCheck';
-      case 'degraded': return 'lucideTriangleAlert';
-      case 'unhealthy': return 'lucideCircleX';
-      default: return 'lucideActivity';
+      case 'healthy':
+        return 'lucideCircleCheck';
+      case 'degraded':
+        return 'lucideTriangleAlert';
+      case 'unhealthy':
+        return 'lucideCircleX';
+      default:
+        return 'lucideActivity';
     }
   }
 
   protected healthTextClass(status: string): string {
     switch (status) {
-      case 'healthy': return 'text-green-600 dark:text-green-400';
-      case 'degraded': return 'text-yellow-600 dark:text-yellow-400';
-      case 'unhealthy': return 'text-red-600 dark:text-red-400';
-      default: return '';
+      case 'healthy':
+        return 'text-green-600 dark:text-green-400';
+      case 'degraded':
+        return 'text-yellow-600 dark:text-yellow-400';
+      case 'unhealthy':
+        return 'text-red-600 dark:text-red-400';
+      default:
+        return '';
     }
   }
 
   protected healthIconWrapClass(status: string): string {
     const base = 'h-10 w-10 rounded-full flex items-center justify-center shrink-0';
     switch (status) {
-      case 'healthy': return `${base} bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400`;
-      case 'degraded': return `${base} bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400`;
-      case 'unhealthy': return `${base} bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400`;
-      default: return `${base} bg-muted text-muted-foreground`;
+      case 'healthy':
+        return `${base} bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400`;
+      case 'degraded':
+        return `${base} bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400`;
+      case 'unhealthy':
+        return `${base} bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400`;
+      default:
+        return `${base} bg-muted text-muted-foreground`;
     }
   }
 

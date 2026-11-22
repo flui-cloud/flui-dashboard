@@ -49,9 +49,7 @@ export class PermissionService {
 
   load(): void {
     this.http
-      .get<MePermissionsResponse>(
-        `${this.appConfig.apiBaseUrl}/api/v1/me/permissions`,
-      )
+      .get<MePermissionsResponse>(`${this.appConfig.apiBaseUrl}/api/v1/me/permissions`)
       .subscribe({
         next: (res) => {
           this._permissions.set(new Set(res.permissions));
@@ -67,22 +65,18 @@ export class PermissionService {
   }
 
   loadSections(): void {
-    this.http
-      .get<MeSectionsResponse>(
-        `${this.appConfig.apiBaseUrl}/api/v1/me/sections`,
-      )
-      .subscribe({
-        next: (res) => {
-          this._sections.set(new Set(res.sections));
-          this._readOnlySections.set(new Set(res.readOnlySections ?? []));
-          this._isAdmin.set(res.isAdmin);
-          this._sectionsLoaded.set(true);
-        },
-        error: () => {
-          this._sections.set(new Set());
-          this._readOnlySections.set(new Set());
-          this._sectionsLoaded.set(true);
-        },
-      });
+    this.http.get<MeSectionsResponse>(`${this.appConfig.apiBaseUrl}/api/v1/me/sections`).subscribe({
+      next: (res) => {
+        this._sections.set(new Set(res.sections));
+        this._readOnlySections.set(new Set(res.readOnlySections ?? []));
+        this._isAdmin.set(res.isAdmin);
+        this._sectionsLoaded.set(true);
+      },
+      error: () => {
+        this._sections.set(new Set());
+        this._readOnlySections.set(new Set());
+        this._sectionsLoaded.set(true);
+      },
+    });
   }
 }

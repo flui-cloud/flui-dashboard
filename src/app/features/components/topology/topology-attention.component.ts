@@ -98,10 +98,16 @@ export function attentionOf(t: TopologyResponseDto | null): {
             <ul class="space-y-1">
               @for (item of group.items; track item.key) {
                 <li>
-                  <button type="button" class="flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left hover:bg-muted"
-                          (click)="selected.emit(item.focus)">
+                  <button
+                    type="button"
+                    class="flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left hover:bg-muted"
+                    (click)="selected.emit(item.focus)"
+                  >
                     <span class="flex min-w-0 max-w-[60%] flex-none items-center gap-2">
-                      <span class="h-1.5 w-1.5 flex-none rounded-full" [class]="'dot-' + item.tone"></span>
+                      <span
+                        class="h-1.5 w-1.5 flex-none rounded-full"
+                        [class]="'dot-' + item.tone"
+                      ></span>
                       <span class="truncate text-foreground">{{ item.label }}</span>
                     </span>
                     <span class="text-sub truncate">{{ item.detail }}</span>
@@ -128,7 +134,9 @@ export class TopologyAttentionComponent {
       {
         title: 'Spread across clusters',
         items: spread,
-        empty: this.snapshot()?.apps.length ? 'Every app runs on one cluster.' : 'No app to place yet.',
+        empty: this.snapshot()?.apps.length
+          ? 'Every app runs on one cluster.'
+          : 'No app to place yet.',
       },
     ];
   });

@@ -10,15 +10,8 @@ import {
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideLoader,
-  lucideTrash2,
-  lucideTriangleAlert,
-} from '@ng-icons/lucide';
-import {
-  ApplicationService,
-  RemovalPreview,
-} from '../../service/application.service';
+import { lucideLoader, lucideTrash2, lucideTriangleAlert } from '@ng-icons/lucide';
+import { ApplicationService, RemovalPreview } from '../../service/application.service';
 import { CatalogService } from '../../service/catalog.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AppGroupView, Application } from '../../model/application.models';
@@ -29,9 +22,7 @@ import { AppGroupView, Application } from '../../model/application.models';
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'contents' },
   imports: [NgIcon, FormsModule],
-  providers: [
-    provideIcons({ lucideLoader, lucideTrash2, lucideTriangleAlert }),
-  ],
+  providers: [provideIcons({ lucideLoader, lucideTrash2, lucideTriangleAlert })],
   template: `
     @if (canDelete() && compact()) {
       <div
@@ -51,12 +42,8 @@ import { AppGroupView, Application } from '../../model/application.models';
         </button>
       </div>
     } @else if (canDelete()) {
-      <section
-        class="rounded-2xl border border-red-200 dark:border-red-900/40 bg-card p-6"
-      >
-        <h2
-          class="text-xs font-semibold uppercase tracking-wide text-red-600 dark:text-red-500"
-        >
+      <section class="rounded-2xl border border-red-200 dark:border-red-900/40 bg-card p-6">
+        <h2 class="text-xs font-semibold uppercase tracking-wide text-red-600 dark:text-red-500">
           Danger zone
         </h2>
         <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
@@ -92,10 +79,7 @@ import { AppGroupView, Application } from '../../model/application.models';
             <div
               class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-destructive/10"
             >
-              <ng-icon
-                name="lucideTriangleAlert"
-                class="h-5 w-5 text-destructive"
-              />
+              <ng-icon name="lucideTriangleAlert" class="h-5 w-5 text-destructive" />
             </div>
             <div class="min-w-0 flex-1">
               <h3 class="text-lg font-semibold text-foreground">
@@ -108,23 +92,16 @@ import { AppGroupView, Application } from '../../model/application.models';
           </div>
 
           <div class="mt-4 space-y-2">
-            <p class="text-sm text-foreground">
-              The following will be permanently deleted:
-            </p>
+            <p class="text-sm text-foreground">The following will be permanently deleted:</p>
             <div
               class="max-h-48 space-y-1 overflow-auto rounded-md border border-border bg-muted/40 p-2"
             >
               @for (c of deleteTargets(); track c.id) {
-                <div
-                  class="flex items-center justify-between gap-2 px-1 text-sm"
-                >
-                  <span class="truncate font-medium text-foreground">{{
-                    componentRole(c)
+                <div class="flex items-center justify-between gap-2 px-1 text-sm">
+                  <span class="truncate font-medium text-foreground">{{ componentRole(c) }}</span>
+                  <span class="shrink-0 truncate font-mono text-xs text-muted-foreground">{{
+                    c.slug
                   }}</span>
-                  <span
-                    class="shrink-0 truncate font-mono text-xs text-muted-foreground"
-                    >{{ c.slug }}</span
-                  >
                 </div>
               }
             </div>
@@ -143,9 +120,8 @@ import { AppGroupView, Application } from '../../model/application.models';
                   class="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800
                           dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300"
                 >
-                  The volumes this would delete could not be read from the
-                  cluster. Assume data will be lost — it is not known to be
-                  none.
+                  The volumes this would delete could not be read from the cluster. Assume data will
+                  be lost — it is not known to be none.
                 </p>
               } @else if (p.volumes.length) {
                 <div
@@ -163,24 +139,18 @@ import { AppGroupView, Application } from '../../model/application.models';
                         class="flex items-center justify-between gap-2 text-xs text-red-700/90 dark:text-red-400/90"
                       >
                         <span class="truncate font-mono">{{ v.name }}</span>
-                        <span class="shrink-0 font-semibold">{{
-                          v.sizeLabel
-                        }}</span>
+                        <span class="shrink-0 font-semibold">{{ v.sizeLabel }}</span>
                       </li>
                     }
                   </ul>
                 </div>
               } @else {
                 <p class="text-xs text-muted-foreground">
-                  No persistent volume is attached — there is no stored data to
-                  lose.
+                  No persistent volume is attached — there is no stored data to lose.
                 </p>
               }
               @if (p?.backupNote) {
-                <p
-                  class="mt-2 text-xs text-muted-foreground"
-                  data-testid="backup-note"
-                >
+                <p class="mt-2 text-xs text-muted-foreground" data-testid="backup-note">
                   {{ p?.backupNote }}
                 </p>
               }
@@ -190,9 +160,7 @@ import { AppGroupView, Application } from '../../model/application.models';
           <div class="mt-4 space-y-1.5">
             <label class="block text-xs text-muted-foreground">
               Type
-              <span class="font-mono font-semibold text-foreground">{{
-                deleteToken()
-              }}</span>
+              <span class="font-mono font-semibold text-foreground">{{ deleteToken() }}</span>
               to confirm
             </label>
             <input
@@ -262,24 +230,14 @@ export class AppDeleteDialogComponent {
   protected readonly preview = signal<RemovalPreview | null>(null);
   protected readonly loadingPreview = signal(false);
 
-  protected readonly isComposed = computed(
-    () => this.group()?.type === 'composed',
-  );
-  protected readonly deleteTargets = computed(
-    () => this.group()?.components ?? [],
-  );
+  protected readonly isComposed = computed(() => this.group()?.type === 'composed');
+  protected readonly deleteTargets = computed(() => this.group()?.components ?? []);
   protected readonly deleteToken = computed(() => this.group()?.name ?? '');
 
   protected readonly canDelete = computed(() => {
     const g = this.group();
     const p = this.primary();
-    return (
-      !!g &&
-      !!p &&
-      !p.systemProtected &&
-      g.status !== 'deleted' &&
-      g.status !== 'deleting'
-    );
+    return !!g && !!p && !p.systemProtected && g.status !== 'deleted' && g.status !== 'deleting';
   });
 
   protected readonly deleteHeading = computed(() =>
@@ -296,9 +254,7 @@ export class AppDeleteDialogComponent {
   protected readonly canConfirmDelete = computed(() => {
     const token = this.deleteToken().trim().toLowerCase();
     return (
-      !this.isDeleting() &&
-      token.length > 0 &&
-      this.confirmInput().trim().toLowerCase() === token
+      !this.isDeleting() && token.length > 0 && this.confirmInput().trim().toLowerCase() === token
     );
   });
 
@@ -347,11 +303,7 @@ export class AppDeleteDialogComponent {
         const componentIds = result?.applicationIds?.length
           ? result.applicationIds
           : g.components.map((c) => c.id);
-        this.appService.trackBundleUninstall(
-          componentIds,
-          result?.operationId,
-          g.name,
-        );
+        this.appService.trackBundleUninstall(componentIds, result?.operationId, g.name);
         this.notifications.add({
           title: `Uninstalling ${g.name}`,
           body: 'The bundle and its components are being removed.',

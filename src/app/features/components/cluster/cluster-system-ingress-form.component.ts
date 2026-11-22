@@ -2,7 +2,12 @@ import { Component, inject, input, signal, ChangeDetectionStrategy } from '@angu
 import { FormsModule } from '@angular/forms';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
-  lucideSettings2, lucideLoader, lucideCheckCircle, lucideAlertCircle, lucideChevronDown, lucideChevronUp
+  lucideSettings2,
+  lucideLoader,
+  lucideCheckCircle,
+  lucideAlertCircle,
+  lucideChevronDown,
+  lucideChevronUp,
 } from '@ng-icons/lucide';
 import { ClusterDnsZoneService } from '../../service/cluster-dns-zone.service';
 import { ConfigureSystemIngressDto } from '../../../core/api/model/configureSystemIngressDto';
@@ -12,7 +17,14 @@ import { ConfigureSystemIngressDto } from '../../../core/api/model/configureSyst
   standalone: true,
   imports: [FormsModule, NgIconComponent],
   providers: [
-    provideIcons({ lucideSettings2, lucideLoader, lucideCheckCircle, lucideAlertCircle, lucideChevronDown, lucideChevronUp }),
+    provideIcons({
+      lucideSettings2,
+      lucideLoader,
+      lucideCheckCircle,
+      lucideAlertCircle,
+      lucideChevronDown,
+      lucideChevronUp,
+    }),
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
@@ -37,7 +49,6 @@ import { ConfigureSystemIngressDto } from '../../../core/api/model/configureSyst
 
       @if (showForm()) {
         <div class="border border-border rounded-lg p-4 space-y-4 card-inner">
-
           <div class="grid grid-cols-2 gap-3">
             <div class="space-y-1">
               <label class="text-xs font-medium text-foreground">
@@ -75,14 +86,18 @@ import { ConfigureSystemIngressDto } from '../../../core/api/model/configureSyst
           </div>
 
           @if (error()) {
-            <div class="flex items-center gap-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-xs text-red-700 dark:text-red-400">
+            <div
+              class="flex items-center gap-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-xs text-red-700 dark:text-red-400"
+            >
               <ng-icon name="lucideAlertCircle" class="h-3.5 w-3.5 flex-shrink-0" />
               {{ error() }}
             </div>
           }
 
           @if (success()) {
-            <div class="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded text-xs text-green-700 dark:text-green-400">
+            <div
+              class="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded text-xs text-green-700 dark:text-green-400"
+            >
               <ng-icon name="lucideCheckCircle" class="h-3.5 w-3.5 flex-shrink-0" />
               System ingress configured successfully.
             </div>
@@ -126,14 +141,18 @@ export class ClusterSystemIngressFormComponent {
   protected error = signal<string | null>(null);
   protected success = signal(false);
 
-  protected form: { apiDomain: string; appDomain: string; issuer: ConfigureSystemIngressDto.IssuerEnum } = {
+  protected form: {
+    apiDomain: string;
+    appDomain: string;
+    issuer: ConfigureSystemIngressDto.IssuerEnum;
+  } = {
     apiDomain: '',
     appDomain: '',
     issuer: ConfigureSystemIngressDto.IssuerEnum.LetsEncryptStaging,
   };
 
   protected toggleForm(): void {
-    this.showForm.update(v => !v);
+    this.showForm.update((v) => !v);
   }
 
   protected async submit(): Promise<void> {

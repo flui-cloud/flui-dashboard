@@ -22,7 +22,12 @@ describe('PanZoom', () => {
 
   it('zooms around the pointer, so the point under it stays put', () => {
     const view = new PanZoom();
-    const event = { clientX: 300, clientY: 200, deltaY: -1, preventDefault: () => undefined } as WheelEvent;
+    const event = {
+      clientX: 300,
+      clientY: 200,
+      deltaY: -1,
+      preventDefault: () => undefined,
+    } as WheelEvent;
     view.wheel(event, box);
     const s = view.scale();
     const o = view.offset();

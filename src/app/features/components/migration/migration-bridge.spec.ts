@@ -23,7 +23,11 @@ const bridge = (over: Partial<MigrationBridge> = {}): MigrationBridge => ({
   ...over,
 });
 
-const row = (status: string, b: MigrationBridge | null, extra: Partial<MigrationRow> = {}): MigrationRow =>
+const row = (
+  status: string,
+  b: MigrationBridge | null,
+  extra: Partial<MigrationRow> = {},
+): MigrationRow =>
   ({
     type: 'app',
     id: 'm1',
@@ -40,7 +44,11 @@ describe('migration bridge on the migrations list', () => {
   it('offers Destroy source while bridging and after a completed migration, once', () => {
     expect(canDestroySource(row('bridging', bridge()))).toBeTrue();
     expect(canDestroySource(row('completed', null))).toBeTrue();
-    expect(canDestroySource(row('completed', null, { sourceDestroyedAt: '2026-10-11T12:00:00Z' } as never))).toBeFalse();
+    expect(
+      canDestroySource(
+        row('completed', null, { sourceDestroyedAt: '2026-10-11T12:00:00Z' } as never),
+      ),
+    ).toBeFalse();
     expect(canDestroySource(row('ready', bridge({ state: 'preparing' })))).toBeFalse();
   });
 
@@ -70,10 +78,14 @@ describe('migration bridge on the migrations list', () => {
   });
 
   it('offers to resume a cutover only when the API says it can be resumed', () => {
-    const stuck = row('cutover', bridge({ state: 'preparing' }), { canResumeCutover: true } as never);
+    const stuck = row('cutover', bridge({ state: 'preparing' }), {
+      canResumeCutover: true,
+    } as never);
     expect(canResumeCutover(stuck)).toBeTrue();
     expect(cutoverLabel(stuck)).toBe('Resume cutover');
-    expect(canResumeCutover(row('cutover', null, { canResumeCutover: false } as never))).toBeFalse();
+    expect(
+      canResumeCutover(row('cutover', null, { canResumeCutover: false } as never)),
+    ).toBeFalse();
     expect(cutoverLabel(row('ready', null))).toBe('Cutover');
   });
 
@@ -84,7 +96,10 @@ describe('migration bridge on the migrations list', () => {
   });
 
   it('stops offering Destroy source on a full move whose source is already gone', () => {
-    const gone = row('completed', null, { type: 'full', nextSteps: [{ key: 'protect-database', text: 'x' }] } as never);
+    const gone = row('completed', null, {
+      type: 'full',
+      nextSteps: [{ key: 'protect-database', text: 'x' }],
+    } as never);
     const standing = row('completed', null, {
       type: 'full',
       nextSteps: [{ key: 'destroy-source', text: 'y' }],

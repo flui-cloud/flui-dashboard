@@ -24,12 +24,18 @@ describe('the server tile map', () => {
   });
 
   it('groups by provider on demand', () => {
-    expect(tileGroups(t, 'memory', 'provider', null).map((g) => g.name)).toEqual(['hetzner', 'contabo']);
+    expect(tileGroups(t, 'memory', 'provider', null).map((g) => g.name)).toEqual([
+      'hetzner',
+      'contabo',
+    ]);
   });
 
   it('lights the servers that run the focused app, with their replica count, and dims the rest', () => {
     const [eu, asia] = tileGroups(t, 'memory', 'cluster', { type: 'app', id: 'a-web' });
-    expect(eu.tiles.map((x) => [x.replicas, x.dimmed])).toEqual([[2, false], [1, false]]);
+    expect(eu.tiles.map((x) => [x.replicas, x.dimmed])).toEqual([
+      [2, false],
+      [1, false],
+    ]);
     expect(eu.replicas).toBe(3);
     expect(asia.dimmed).toBeTrue();
     expect(asia.tiles[0].dimmed).toBeTrue();
@@ -60,7 +66,13 @@ describe('the server tile map', () => {
   });
 
   it('gives a group of few servers cards, a crowded one compact tiles', () => {
-    expect([1, 6, 7, 20, 21].map(densityOf)).toEqual(['card', 'card', 'medium', 'medium', 'compact']);
+    expect([1, 6, 7, 20, 21].map(densityOf)).toEqual([
+      'card',
+      'card',
+      'medium',
+      'medium',
+      'compact',
+    ]);
     const [eu] = tileGroups(t, 'memory', 'cluster', null);
     expect(eu.density).toBe('card');
     expect(eu.columns).toBe(2);
@@ -89,12 +101,20 @@ describe('the network mode', () => {
   it('describes how the control reaches every other cluster', () => {
     const fleet = topologyFixture();
     fleet.clusters.push({ ...fleet.clusters[0], id: 'c-ctl', name: 'control', type: 'control' });
-    fleet.clusterLinks = [{ fromClusterId: 'c-asia', toClusterId: 'c-eu', linkCount: 2, rps: null, viaTunnel: false }];
+    fleet.clusterLinks = [
+      { fromClusterId: 'c-asia', toClusterId: 'c-eu', linkCount: 2, rps: null, viaTunnel: false },
+    ];
     const { control, connections } = clusterConnections(fleet);
     expect(control?.name).toBe('control');
     expect(connections).toEqual([
       { clusterId: 'c-eu', name: 'prod-eu', kind: 'tunnel', crossProvider: false, appLinks: 2 },
-      { clusterId: 'c-asia', name: 'edge-asia', kind: 'public-address', crossProvider: true, appLinks: 2 },
+      {
+        clusterId: 'c-asia',
+        name: 'edge-asia',
+        kind: 'public-address',
+        crossProvider: true,
+        appLinks: 2,
+      },
     ]);
   });
 });
@@ -112,7 +132,10 @@ describe('the panels under the map', () => {
 
   it('does not call two replicas on two servers a pile', () => {
     const fleet = topologyFixture();
-    fleet.apps[0].replicas = [{ serverId: 's-1', count: 2 }, { serverId: 's-2', count: 2 }];
+    fleet.apps[0].replicas = [
+      { serverId: 's-1', count: 2 },
+      { serverId: 's-2', count: 2 },
+    ];
     fleet.apps[0].replicaCount = 4;
     expect(replicaSpread(fleet, 'a-web')[0].piledOn).toBeNull();
   });
@@ -127,7 +150,10 @@ describe('the panels under the map', () => {
     const tiles = tileGroups(t, 'memory', 'cluster', null, 'p-shop').flatMap((g) => g.tiles);
     const shop = t.apps.filter((a) => a.projectId === 'p-shop');
     for (const tile of tiles) {
-      const count = shop.reduce((n, a) => n + (a.replicas.find((r) => r.serverId === tile.server.id)?.count ?? 0), 0);
+      const count = shop.reduce(
+        (n, a) => n + (a.replicas.find((r) => r.serverId === tile.server.id)?.count ?? 0),
+        0,
+      );
       expect(tile.replicas).toBe(count);
       expect(tile.dimmed).toBe(count === 0);
     }
@@ -135,7 +161,11 @@ describe('the panels under the map', () => {
 
   it('names each fullest server without the part its cluster servers share, so two never read the same', () => {
     const t = topologyFixture();
-    t.servers = t.servers.map((s, i) => ({ ...s, clusterId: 'c-eu', nodeName: `control-cluster-staging-hz-${i ? 'worker-1' : 'master'}` }));
+    t.servers = t.servers.map((s, i) => ({
+      ...s,
+      clusterId: 'c-eu',
+      nodeName: `control-cluster-staging-hz-${i ? 'worker-1' : 'master'}`,
+    }));
     const labels = fullestServers(t, 'memory').map((r) => r.label);
     expect(labels).toContain('master');
     expect(labels).toContain('worker-1');

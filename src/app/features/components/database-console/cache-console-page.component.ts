@@ -1,10 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  inject,
-  viewChild
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -31,12 +25,7 @@ import { bytes, hitRatio, uptime } from './cache-format';
   selector: 'app-cache-console-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    NgIcon,
-    FormsModule,
-    ConfirmationDialogComponent,
-    CacheLookupResultComponent,
-  ],
+  imports: [NgIcon, FormsModule, ConfirmationDialogComponent, CacheLookupResultComponent],
   providers: [
     CacheConsoleStateService,
     provideIcons({
@@ -93,9 +82,7 @@ import { bytes, hitRatio, uptime } from './cache-format';
             [class.text-amber-600]="!s.readOnly()"
           >
             <ng-icon
-              [name]="
-                s.readOnly() ? 'lucideLockKeyhole' : 'lucideLockKeyholeOpen'
-              "
+              [name]="s.readOnly() ? 'lucideLockKeyhole' : 'lucideLockKeyholeOpen'"
               class="h-3.5 w-3.5"
             />
             {{ s.readOnly() ? 'Read-only' : 'Writes on' }}
@@ -166,13 +153,8 @@ import { bytes, hitRatio, uptime } from './cache-format';
 
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div class="rounded-md border border-border p-3">
-            <div
-              class="mb-2 flex items-center gap-2 text-sm font-medium text-foreground"
-            >
-              <ng-icon
-                name="lucideSearch"
-                class="h-4 w-4 text-muted-foreground"
-              />
+            <div class="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
+              <ng-icon name="lucideSearch" class="h-4 w-4 text-muted-foreground" />
               Look up a key
             </div>
             <div class="mb-2 flex items-center gap-2">
@@ -190,10 +172,7 @@ import { bytes, hitRatio, uptime } from './cache-format';
                 class="inline-flex h-8 items-center gap-1 rounded-md border border-border px-3 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-50"
               >
                 @if (s.getting()) {
-                  <ng-icon
-                    name="lucideLoader"
-                    class="h-3.5 w-3.5 animate-spin"
-                  />
+                  <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
                 }
                 Get
               </button>
@@ -208,9 +187,7 @@ import { bytes, hitRatio, uptime } from './cache-format';
           </div>
 
           <div class="rounded-md border border-border p-3">
-            <div
-              class="mb-2 flex items-center gap-2 text-sm font-medium text-foreground"
-            >
+            <div class="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
               <ng-icon name="lucideSave" class="h-4 w-4 text-muted-foreground" />
               Set a value
             </div>
@@ -243,22 +220,15 @@ import { bytes, hitRatio, uptime } from './cache-format';
                 class="inline-flex h-8 items-center gap-1 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground disabled:opacity-50"
               >
                 @if (s.setting()) {
-                  <ng-icon
-                    name="lucideLoader"
-                    class="h-3.5 w-3.5 animate-spin"
-                  />
+                  <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
                 }
                 Set
               </button>
               @if (s.readOnly()) {
-                <span class="text-xs text-muted-foreground"
-                  >Turn off read-only to write.</span
-                >
+                <span class="text-xs text-muted-foreground">Turn off read-only to write.</span>
               }
               @if (s.setOk()) {
-                <span class="text-xs text-emerald-600 dark:text-emerald-400"
-                  >Stored.</span
-                >
+                <span class="text-xs text-emerald-600 dark:text-emerald-400">Stored.</span>
               }
               @if (s.setError()) {
                 <span class="text-xs text-destructive">{{ s.setError() }}</span>
@@ -267,15 +237,11 @@ import { bytes, hitRatio, uptime } from './cache-format';
           </div>
         </div>
 
-        <div
-          class="mt-4 flex items-center gap-3 rounded-md border border-border p-3"
-        >
+        <div class="mt-4 flex items-center gap-3 rounded-md border border-border p-3">
           <ng-icon name="lucideTrash2" class="h-4 w-4 text-muted-foreground" />
           <div class="min-w-0 flex-1">
             <p class="text-sm font-medium text-foreground">Flush the cache</p>
-            <p class="text-xs text-muted-foreground">
-              Remove every entry. This cannot be undone.
-            </p>
+            <p class="text-xs text-muted-foreground">Remove every entry. This cannot be undone.</p>
           </div>
           <button
             type="button"
@@ -303,9 +269,7 @@ import { bytes, hitRatio, uptime } from './cache-format';
       <app-confirmation-dialog
         #removeDialog
         title="Delete key"
-        [message]="
-          'Delete key “' + (s.pendingRemove() ?? '') + '”? This cannot be undone.'
-        "
+        [message]="'Delete key “' + (s.pendingRemove() ?? '') + '”? This cannot be undone.'"
         confirmText="Delete"
         variant="danger"
         (confirmed)="s.confirmRemove(removeDialog)"
@@ -318,10 +282,9 @@ export class CacheConsolePageComponent implements OnInit {
   protected readonly s = inject(CacheConsoleStateService);
   private readonly route = inject(ActivatedRoute);
 
-  readonly applicationId = toSignal(
-    this.route.paramMap.pipe(map((p) => p.get('applicationId'))),
-    { initialValue: this.route.snapshot.paramMap.get('applicationId') },
-  );
+  readonly applicationId = toSignal(this.route.paramMap.pipe(map((p) => p.get('applicationId'))), {
+    initialValue: this.route.snapshot.paramMap.get('applicationId'),
+  });
 
   private readonly flushDialog = viewChild<ConfirmationDialogComponent>('flushDialog');
   private readonly removeDialog = viewChild<ConfirmationDialogComponent>('removeDialog');

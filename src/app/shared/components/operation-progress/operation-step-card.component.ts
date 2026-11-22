@@ -31,7 +31,10 @@ import { ClusterCreationStep } from '../../../features/model/cluster.models';
 
       <div class="flex-1 min-w-0">
         <div class="flex items-baseline justify-between gap-4">
-          <p class="text-sm" [class]="step().status === 'pending' ? 'text-muted-foreground' : 'text-foreground'">
+          <p
+            class="text-sm"
+            [class]="step().status === 'pending' ? 'text-muted-foreground' : 'text-foreground'"
+          >
             {{ step().title }}
           </p>
           <span class="flex-shrink-0 text-xs text-muted-foreground tabular-nums">
@@ -45,12 +48,18 @@ import { ClusterCreationStep } from '../../../features/model/cluster.models';
 
         @if (step().status === 'running' && currentStepProgress() !== undefined) {
           <div class="mt-2 h-1 w-full rounded-full bg-muted">
-            <div class="h-1 rounded-full bg-primary transition-all duration-500 ease-out" [style.width.%]="currentStepProgress()"></div>
+            <div
+              class="h-1 rounded-full bg-primary transition-all duration-500 ease-out"
+              [style.width.%]="currentStepProgress()"
+            ></div>
           </div>
         }
 
         @if (step().details) {
-          <p class="mt-1 text-xs" [class]="step().status === 'error' ? 'text-destructive' : 'text-muted-foreground'">
+          <p
+            class="mt-1 text-xs"
+            [class]="step().status === 'error' ? 'text-destructive' : 'text-muted-foreground'"
+          >
             {{ step().details }}
           </p>
         }

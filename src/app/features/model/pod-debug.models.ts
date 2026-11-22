@@ -131,14 +131,12 @@ export function totalRestarts(pod: PodDebugInfo): number {
 }
 
 export function hasUnreadyContainer(pod: PodDebugInfo): boolean {
-  return pod.containers.some(c => !c.ready);
+  return pod.containers.some((c) => !c.ready);
 }
 
 export function hasMissingResources(pod: PodDebugInfo): boolean {
-  const envMissing = pod.containers.some(c =>
-    c.env.some(e => e.valueFrom?.exists === false),
-  );
-  const volMissing = pod.volumes.some(v => v.exists === false);
+  const envMissing = pod.containers.some((c) => c.env.some((e) => e.valueFrom?.exists === false));
+  const volMissing = pod.volumes.some((v) => v.exists === false);
   return envMissing || volMissing;
 }
 

@@ -130,21 +130,15 @@ export class SandboxService {
   readonly areas = this._areas.asReadonly();
   readonly inSandbox = computed(() => this._session() !== null);
   readonly secondsRemaining = this._secondsRemaining.asReadonly();
-  readonly workloadTtlHours = computed(
-    () => this._session()?.workloadTtlHours ?? null,
-  );
+  readonly workloadTtlHours = computed(() => this._session()?.workloadTtlHours ?? null);
 
   readonly hasArea = computed(() => this._session()?.hasArea === true);
   readonly visitor = computed(() => this._session()?.visitor === true);
   readonly appsKeptUntil = computed(() => this._session()?.appsKeptUntil ?? null);
   readonly catalogExcluded = computed(() => new Set(this._session()?.catalogExcluded ?? []));
 
-  readonly urgent = computed(
-    () => this.hasArea() && this._secondsRemaining() < 3600,
-  );
-  readonly expired = computed(
-    () => this.hasArea() && this._secondsRemaining() <= 0,
-  );
+  readonly urgent = computed(() => this.hasArea() && this._secondsRemaining() < 3600);
+  readonly expired = computed(() => this.hasArea() && this._secondsRemaining() <= 0);
 
   private get base(): string {
     return `${this.appConfig.apiBaseUrl}/api/v1/sandbox`;
@@ -340,10 +334,7 @@ export function isSandboxRefusal(error: unknown): boolean {
   return sandboxRefusalCode(error) !== null;
 }
 
-export function sandboxFailureMessage(
-  error: unknown,
-  fallback: string,
-): string | null {
+export function sandboxFailureMessage(error: unknown, fallback: string): string | null {
   return isSandboxRefusal(error) ? null : fallback;
 }
 

@@ -47,9 +47,7 @@ describe('what the delete dialog says will be lost', () => {
     dataWarning: 'This also deletes 10 GiB of data in 1 volume. It cannot be undone.',
   };
 
-  const build = async (
-    answer: () => Promise<RemovalPreview>,
-  ): Promise<void> => {
+  const build = async (answer: () => Promise<RemovalPreview>): Promise<void> => {
     getRemovalPreview = jasmine.createSpy('getRemovalPreview').and.callFake(answer);
     TestBed.resetTestingModule();
     await TestBed.configureTestingModule({

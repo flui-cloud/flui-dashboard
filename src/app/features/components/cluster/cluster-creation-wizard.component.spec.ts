@@ -52,7 +52,11 @@ describe('ClusterCreationWizardComponent across three locations', () => {
       providers: [
         {
           provide: ClusterService,
-          useValue: { clusters: signal([]), createCluster, highAvailabilityPlan: jasmine.createSpy() },
+          useValue: {
+            clusters: signal([]),
+            createCluster,
+            highAvailabilityPlan: jasmine.createSpy(),
+          },
         },
         { provide: ClusterAutoscaleService, useValue: {} },
         {
@@ -63,7 +67,9 @@ describe('ClusterCreationWizardComponent across three locations', () => {
           provide: ProviderWizardService,
           useValue: {
             serverTypesData: signal({
-              'hetzner:fsn1': [{ id: 'cpx22', name: 'cpx22', pricePerHour: 0.02, architecture: 'x86' }],
+              'hetzner:fsn1': [
+                { id: 'cpx22', name: 'cpx22', pricePerHour: 0.02, architecture: 'x86' },
+              ],
             }),
             providersData: signal([]),
             regionsData: signal({}),
@@ -139,7 +145,10 @@ describe('ClusterService.createCluster across three locations', () => {
       .and.returnValue(of({ operation_id: 'op-1', cluster_id: 'c-1' }));
     TestBed.configureTestingModule({
       providers: [
-        { provide: InfrastructureClustersService, useValue: { clustersControllerCreateCluster: create } },
+        {
+          provide: InfrastructureClustersService,
+          useValue: { clustersControllerCreateCluster: create },
+        },
         {
           provide: InfrastructureOperationsService,
           useValue: { infrastructureOperationsControllerGetOperationStatus: () => NEVER },
@@ -148,7 +157,10 @@ describe('ClusterService.createCluster across three locations', () => {
         { provide: ProviderManagementService, useValue: {} },
         {
           provide: InfrastructureWebSocketService,
-          useValue: { subscribeToOperation: () => undefined, unsubscribeFromOperation: () => undefined },
+          useValue: {
+            subscribeToOperation: () => undefined,
+            unsubscribeFromOperation: () => undefined,
+          },
         },
         { provide: InstallLogService, useValue: {} },
         { provide: SandboxService, useValue: {} },

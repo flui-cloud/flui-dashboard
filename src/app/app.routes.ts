@@ -13,16 +13,14 @@ export const routes: Routes = [
   {
     path: 'login',
     loadComponent: () =>
-      import('./features/components/auth/login/login.component').then(
-        (m) => m.LoginComponent
-      ),
+      import('./features/components/auth/login/login.component').then((m) => m.LoginComponent),
     title: 'Login - flui.cloud',
   },
   {
     path: 'auth/callback',
     loadComponent: () =>
       import('./features/components/auth/callback/callback.component').then(
-        (m) => m.CallbackComponent
+        (m) => m.CallbackComponent,
       ),
     title: 'Auth - flui.cloud',
   },
@@ -31,7 +29,7 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () =>
       import('./features/components/auth/gateway-login.component').then(
-        (m) => m.GatewayLoginComponent
+        (m) => m.GatewayLoginComponent,
       ),
     title: 'Sign in - flui.cloud',
   },
@@ -39,9 +37,7 @@ export const routes: Routes = [
     path: 'try',
     pathMatch: 'full',
     loadComponent: () =>
-      import('./features/components/auth/try/try.component').then(
-        (m) => m.TryComponent
-      ),
+      import('./features/components/auth/try/try.component').then((m) => m.TryComponent),
     title: 'Demo - flui.cloud',
   },
   // Fixtures, for the visual bench. Left out of a production build entirely:
@@ -70,9 +66,9 @@ export const routes: Routes = [
   {
     path: 'github/installed',
     loadComponent: () =>
-      import(
-        './features/components/application/github-installed.component'
-      ).then((m) => m.GithubInstalledComponent),
+      import('./features/components/application/github-installed.component').then(
+        (m) => m.GithubInstalledComponent,
+      ),
     title: 'GitHub — flui.cloud',
   },
 
@@ -80,7 +76,7 @@ export const routes: Routes = [
     path: '',
     loadComponent: () =>
       import('./layout/components/shell/shell-layout.component').then(
-        (m) => m.ShellLayoutComponent
+        (m) => m.ShellLayoutComponent,
       ),
     canActivate: [authGuard],
     children: [
@@ -93,7 +89,7 @@ export const routes: Routes = [
         path: 'dashboard',
         loadComponent: () =>
           import('./features/components/dashboard/dashboard.component').then(
-            (m) => m.DashboardComponent
+            (m) => m.DashboardComponent,
           ),
         title: 'Dashboard - flui.cloud',
       },
@@ -101,7 +97,7 @@ export const routes: Routes = [
         path: 'topology',
         loadComponent: () =>
           import('./features/components/topology/topology-page.component').then(
-            (m) => m.TopologyPageComponent
+            (m) => m.TopologyPageComponent,
           ),
         data: { width: 'full' },
         title: 'Topology - flui.cloud',
@@ -137,16 +133,14 @@ export const routes: Routes = [
       {
         path: 'account',
         loadComponent: () =>
-          import('./features/components/account/account.component').then(
-            (m) => m.AccountComponent
-          ),
+          import('./features/components/account/account.component').then((m) => m.AccountComponent),
         title: 'Account - flui.cloud',
       },
       {
         path: 'settings',
         loadComponent: () =>
           import('./features/components/settings/settings.component').then(
-            (m) => m.SettingsComponent
+            (m) => m.SettingsComponent,
           ),
         title: 'Settings - flui.cloud',
       },
@@ -154,7 +148,7 @@ export const routes: Routes = [
         path: 'chart-demo',
         loadComponent: () =>
           import('./shared/components/charts/chart-demo/chart-demo.component').then(
-            (m) => m.ChartDemoComponent
+            (m) => m.ChartDemoComponent,
           ),
         title: 'Chart Demo - flui.cloud',
       },

@@ -31,16 +31,11 @@ import { canApplyPlan, planBlockers } from './platform-upgrade-plan';
         (click)="$event.stopPropagation()"
       >
         <div class="shrink-0 border-b border-border p-5">
-          <h3 class="text-base font-semibold">
-            Update to Flui {{ updates.availableVersion() }}
-          </h3>
+          <h3 class="text-base font-semibold">Update to Flui {{ updates.availableVersion() }}</h3>
           <p class="text-sub">
             From
-            <span class="font-mono">{{
-              updates.status()?.installedVersion
-            }}</span
-            >. This runs on the control cluster and cannot be paused once
-            started.
+            <span class="font-mono">{{ updates.status()?.installedVersion }}</span>. This runs on
+            the control cluster and cannot be paused once started.
           </p>
         </div>
         <div class="min-h-0 flex-1 space-y-4 overflow-y-auto p-5">
@@ -52,26 +47,17 @@ import { canApplyPlan, planBlockers } from './platform-upgrade-plan';
           } @else if (updates.plan$(); as plan) {
             <ol class="space-y-2">
               @for (phase of plan.phases; track phase.key; let i = $index) {
-                <li
-                  class="flex gap-2.5 text-sm"
-                  [class.opacity-60]="!phase.willRun"
-                >
-                  <span class="font-mono text-muted-foreground"
-                    >{{ i + 1 }}.</span
-                  >
+                <li class="flex gap-2.5 text-sm" [class.opacity-60]="!phase.willRun">
+                  <span class="font-mono text-muted-foreground">{{ i + 1 }}.</span>
                   <span>
                     <span class="font-semibold">{{ phase.title }}</span>
-                    <span class="block text-xs text-muted-foreground">{{
-                      phase.summary
-                    }}</span>
+                    <span class="block text-xs text-muted-foreground">{{ phase.summary }}</span>
                   </span>
                 </li>
               }
             </ol>
             @for (blocker of hardBlockers(); track blocker.message) {
-              <p
-                class="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive"
-              >
+              <p class="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
                 {{ blocker.message }}
               </p>
             }
@@ -96,22 +82,13 @@ import { canApplyPlan, planBlockers } from './platform-upgrade-plan';
               (click)="planDetails.set(!planDetails())"
               class="text-xs text-primary hover:underline"
             >
-              {{
-                planDetails()
-                  ? 'Hide the plan details'
-                  : 'Show the plan details'
-              }}
+              {{ planDetails() ? 'Hide the plan details' : 'Show the plan details' }}
             </button>
             @if (planDetails()) {
               <div class="space-y-2 rounded-md bg-muted p-3 text-xs">
-                <p class="font-mono text-muted-foreground">
-                  plan {{ plan.planId }}
-                </p>
+                <p class="font-mono text-muted-foreground">plan {{ plan.planId }}</p>
                 @for (phase of plan.phases; track phase.key) {
-                  @for (
-                    cluster of phase.clusters ?? [];
-                    track cluster.clusterId
-                  ) {
+                  @for (cluster of phase.clusters ?? []; track cluster.clusterId) {
                     <p>
                       <span class="font-semibold">{{ phase.title }}</span> ·
                       {{ cluster.clusterName }}:
@@ -162,22 +139,17 @@ import { canApplyPlan, planBlockers } from './platform-upgrade-plan';
                 (change)="acknowledged.set($any($event.target).checked)"
               />
               <span class="text-muted-foreground">
-                I understand the database migrations in this release are not
-                reverted by a rollback.
+                I understand the database migrations in this release are not reverted by a rollback.
               </span>
             </label>
           }
           @if (updates.error(); as error) {
-            <p
-              class="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive"
-            >
+            <p class="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
               {{ error }}
             </p>
           }
         </div>
-        <div
-          class="flex shrink-0 justify-end gap-2 border-t border-border bg-muted/50 p-4"
-        >
+        <div class="flex shrink-0 justify-end gap-2 border-t border-border bg-muted/50 p-4">
           <button
             type="button"
             (click)="closed.emit()"
@@ -211,12 +183,9 @@ export class PlatformUpgradeConfirmComponent {
   protected readonly planDetails = signal(false);
   protected readonly acknowledgement = WITHOUT_BACKUP_ACKNOWLEDGEMENT;
 
-  protected readonly migrations = computed(
-    () => this.updates.status()?.migrations ?? 0,
-  );
+  protected readonly migrations = computed(() => this.updates.status()?.migrations ?? 0);
   protected readonly warnings = computed(
-    () =>
-      this.updates.status()?.advisories.filter((a) => a.level !== 'info') ?? [],
+    () => this.updates.status()?.advisories.filter((a) => a.level !== 'info') ?? [],
   );
   protected readonly hardBlockers = computed(() => {
     const plan = this.updates.plan$();

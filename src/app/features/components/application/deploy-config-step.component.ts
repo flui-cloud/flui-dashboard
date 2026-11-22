@@ -90,9 +90,9 @@ export class DeployConfigStepComponent {
 
   updateConfig<K extends keyof ReturnType<typeof this.state.deployConfig>>(
     key: K,
-    value: ReturnType<typeof this.state.deployConfig>[K]
+    value: ReturnType<typeof this.state.deployConfig>[K],
   ): void {
-    this.state.deployConfig.update(c => ({ ...c, [key]: value }));
+    this.state.deployConfig.update((c) => ({ ...c, [key]: value }));
   }
 
   getProfileButtonClass(profile: string): string {

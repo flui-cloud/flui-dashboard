@@ -37,9 +37,14 @@ interface AppSection {
         Reading which applications there are…
       </div>
     } @else if (loadError()) {
-      <div class="flex items-start gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+      <div
+        class="flex items-start gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+      >
         <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-4 w-4 shrink-0" />
-        <span>The application list could not be read. Every application stays reachable — nothing to narrow it with.</span>
+        <span
+          >The application list could not be read. Every application stays reachable — nothing to
+          narrow it with.</span
+        >
       </div>
     } @else if (apps().length === 0) {
       <p class="text-sm text-muted-foreground">
@@ -108,9 +113,11 @@ interface AppSection {
                     <label
                       [attr.data-testid]="'app-' + app.id"
                       class="flex cursor-pointer items-center gap-2 rounded-md border px-2.5 py-1.5 text-sm transition-colors"
-                      [class]="section.category === 'system'
-                        ? 'border-border/70 bg-background/60 hover:border-primary/40'
-                        : 'border-border hover:border-primary/40 hover:bg-accent/40'"
+                      [class]="
+                        section.category === 'system'
+                          ? 'border-border/70 bg-background/60 hover:border-primary/40'
+                          : 'border-border hover:border-primary/40 hover:bg-accent/40'
+                      "
                     >
                       <input
                         type="checkbox"
@@ -242,9 +249,7 @@ export class AgentKeyApplicationPickerComponent implements OnInit {
   }
 
   protected clearSection(section: AppSection): void {
-    const inSection = new Set(
-      section.clusters.flatMap((c) => c.apps.map((a) => a.id)),
-    );
+    const inSection = new Set(section.clusters.flatMap((c) => c.apps.map((a) => a.id)));
     const next = new Set([...this.picked()].filter((id) => !inSection.has(id)));
     this.picked.set(next);
     this.selectionChange.emit([...next]);

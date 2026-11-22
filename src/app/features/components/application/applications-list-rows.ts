@@ -114,8 +114,12 @@ export function originOf(app: Application | undefined, group?: AppGroupView): st
 /** The first line of why an application is not running, as the API recorded it. */
 export function failureReason(app: Application | undefined): string | null {
   if (!app) return null;
-  const raw = app.reconciliationError ?? app.lastOperation?.errorMessage ?? app.endpointError ?? null;
-  const line = raw?.split('\n').map((l) => l.trim()).find(Boolean);
+  const raw =
+    app.reconciliationError ?? app.lastOperation?.errorMessage ?? app.endpointError ?? null;
+  const line = raw
+    ?.split('\n')
+    .map((l) => l.trim())
+    .find(Boolean);
   return line ?? null;
 }
 
@@ -150,8 +154,13 @@ function pct(v: number | null): string {
 
 type CoverageSummary = ListRow['backup'] & { noBackup: boolean };
 
-function backupOf(group: AppGroupView, coverage: ReadonlyMap<string, AppCoverageRow> | null, now: number): CoverageSummary {
-  if (!coverage) return { label: '—', tone: 'muted', title: 'Backup state unavailable', noBackup: false };
+function backupOf(
+  group: AppGroupView,
+  coverage: ReadonlyMap<string, AppCoverageRow> | null,
+  now: number,
+): CoverageSummary {
+  if (!coverage)
+    return { label: '—', tone: 'muted', title: 'Backup state unavailable', noBackup: false };
   const rows = group.components
     .map((c) => coverage.get(c.id))
     .filter((r): r is AppCoverageRow => !!r && r.holdsData);
@@ -171,13 +180,28 @@ function backupOf(group: AppGroupView, coverage: ReadonlyMap<string, AppCoverage
     };
   }
   if (rows.some((r) => r.coverage === 'pending')) {
-    return { label: 'First backup due', tone: 'info', title: 'A policy covers it and has not run yet', noBackup: false };
+    return {
+      label: 'First backup due',
+      tone: 'info',
+      title: 'A policy covers it and has not run yet',
+      noBackup: false,
+    };
   }
   if (rows.some((r) => r.coverage === 'to_verify')) {
-    return { label: 'To verify', tone: 'muted', title: 'Covered by a label selector Flui cannot check', noBackup: false };
+    return {
+      label: 'To verify',
+      tone: 'muted',
+      title: 'Covered by a label selector Flui cannot check',
+      noBackup: false,
+    };
   }
   if (rows.some((r) => r.coverage === 'not_backed_up_by_choice')) {
-    return { label: 'Not backed up', tone: 'muted', title: 'Not backed up by choice', noBackup: false };
+    return {
+      label: 'Not backed up',
+      tone: 'muted',
+      title: 'Not backed up by choice',
+      noBackup: false,
+    };
   }
   const oldest = rows
     .map((r) => r.lastSuccessAt)
@@ -209,7 +233,15 @@ interface SubtitleInput {
   endpointBroken: boolean;
 }
 
-function subtitleOf({ group, primary, status, host, replicas, replicaShort, endpointBroken }: SubtitleInput): ListRow['subtitle'] {
+function subtitleOf({
+  group,
+  primary,
+  status,
+  host,
+  replicas,
+  replicaShort,
+  endpointBroken,
+}: SubtitleInput): ListRow['subtitle'] {
   if (ATTENTION_STATUSES.has(status)) {
     const reason = failureReason(primary);
     return {
@@ -219,7 +251,11 @@ function subtitleOf({ group, primary, status, host, replicas, replicaShort, endp
     };
   }
   if (replicaShort) {
-    return { text: `${replicas.ready} of ${replicas.desired} replicas ready`, tone: 'warn', href: null };
+    return {
+      text: `${replicas.ready} of ${replicas.desired} replicas ready`,
+      tone: 'warn',
+      href: null,
+    };
   }
   if (endpointBroken) {
     return {
@@ -230,7 +266,8 @@ function subtitleOf({ group, primary, status, host, replicas, replicaShort, endp
   }
   if (host) return { text: host, tone: 'info', href: group.url ?? primary?.url ?? null };
   if (BUSY_STATUSES.has(status)) return { text: getStatusLabel(status), tone: 'info', href: null };
-  if (status === ApplicationStatusEnum.Stopped) return { text: 'Stopped', tone: 'muted', href: null };
+  if (status === ApplicationStatusEnum.Stopped)
+    return { text: 'Stopped', tone: 'muted', href: null };
   return { text: 'Reachable inside the cluster', tone: 'muted', href: null };
 }
 
@@ -277,11 +314,21 @@ export function buildListRow(group: AppGroupView, ctx: ListRowContext): ListRow 
   const attention = ATTENTION_STATUSES.has(status) || replicaShort || endpointBroken;
 
   const host = hostOf(group.url ?? primary?.url);
-  const subtitle = subtitleOf({ group, primary, status, host, replicas, replicaShort, endpointBroken });
+  const subtitle = subtitleOf({
+    group,
+    primary,
+    status,
+    host,
+    replicas,
+    replicaShort,
+    endpointBroken,
+  });
   const ready = readyOf(replicas);
 
   const cpu = highest(group.components.map((c) => ctx.usage.get(c.id)?.cpu?.utilization_percent));
-  const memory = highest(group.components.map((c) => ctx.usage.get(c.id)?.memory?.utilization_percent));
+  const memory = highest(
+    group.components.map((c) => ctx.usage.get(c.id)?.memory?.utilization_percent),
+  );
   const composed = group.type === 'composed';
   const usageTitle = usageTitleOf(cpu, memory, composed);
 
@@ -299,7 +346,11 @@ export function buildListRow(group: AppGroupView, ctx: ListRowContext): ListRow 
     tool: isTool(primary),
     partOf: ctx.partOf ?? null,
     project: ctx.project,
-    cluster: { name: ctx.clusterName || '—', provider: ctx.providerName, chip: providerChip(ctx.providerName || '?') },
+    cluster: {
+      name: ctx.clusterName || '—',
+      provider: ctx.providerName,
+      chip: providerChip(ctx.providerName || '?'),
+    },
     ready,
     origin: originOf(primary, group),
     cpu,

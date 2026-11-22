@@ -9,11 +9,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideShieldCheck,
-  lucideShieldAlert,
-  lucideLoader,
-} from '@ng-icons/lucide';
+import { lucideShieldCheck, lucideShieldAlert, lucideLoader } from '@ng-icons/lucide';
 import { ApplicationResponseDto } from '../../../core/api';
 import { databaseEngineOf } from '../../model/db-engine';
 import { DbHaService, DatabaseHaView } from '../../service/db-ha.service';
@@ -23,9 +19,7 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
   selector: 'app-database-ha-card',
   standalone: true,
   imports: [NgIconComponent, ConfirmationDialogComponent],
-  providers: [
-    provideIcons({ lucideShieldCheck, lucideShieldAlert, lucideLoader }),
-  ],
+  providers: [provideIcons({ lucideShieldCheck, lucideShieldAlert, lucideLoader })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (isPostgres() && view(); as v) {
@@ -55,10 +49,7 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
               {{ subtitle() }}
             </div>
             @if (placementLine()) {
-              <div
-                class="mt-0.5 text-xs text-muted-foreground"
-                data-testid="database-ha-placement"
-              >
+              <div class="mt-0.5 text-xs text-muted-foreground" data-testid="database-ha-placement">
                 {{ placementLine() }}
               </div>
             }
@@ -97,9 +88,7 @@ export class DatabaseHaCardComponent {
   readonly error = signal<string | null>(null);
   readonly dialog = viewChild.required(ConfirmationDialogComponent);
 
-  readonly isPostgres = computed(
-    () => databaseEngineOf(this.app()) === 'postgres',
-  );
+  readonly isPostgres = computed(() => databaseEngineOf(this.app()) === 'postgres');
   readonly active = computed(() => this.view()?.state?.state === 'active');
 
   readonly details = [
@@ -112,20 +101,16 @@ export class DatabaseHaCardComponent {
   readonly title = computed(() => {
     const s = this.view()?.state;
     if (!s) return 'Single instance';
-    if (s.state === 'active')
-      return `Highly available: ${s.instances} instances, one per location`;
+    if (s.state === 'active') return `Highly available: ${s.instances} instances, one per location`;
     if (s.state === 'copying') return 'Being made highly available';
     return 'Making it highly available stopped';
   });
 
   readonly subtitle = computed(() => {
     const s = this.view()?.state;
-    if (!s)
-      return 'If its server is lost, the database stops until it returns.';
-    if (s.state === 'active')
-      return 'Losing a server or a location loses no confirmed write.';
-    if (s.state === 'copying')
-      return 'The copy is catching up; the single instance still serves.';
+    if (!s) return 'If its server is lost, the database stops until it returns.';
+    if (s.state === 'active') return 'Losing a server or a location loses no confirmed write.';
+    if (s.state === 'copying') return 'The copy is catching up; the single instance still serves.';
     return s.detail ?? 'No detail recorded.';
   });
 
@@ -137,9 +122,7 @@ export class DatabaseHaCardComponent {
       const where = c.zone ?? c.instance;
       if (!c.ready) return `${where} not ready`;
       if (!c.confirms) return `${where} not streaming`;
-      return c.flushLagMs === null
-        ? `${where} up to date`
-        : `${where} ${c.flushLagMs} ms behind`;
+      return c.flushLagMs === null ? `${where} up to date` : `${where} ${c.flushLagMs} ms behind`;
     });
     return `Primary in ${p.primary.zone ?? p.primary.instance}. Copies: ${copies.join(', ')}.`;
   });

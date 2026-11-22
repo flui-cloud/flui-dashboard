@@ -1,36 +1,20 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  input,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { HlmBadgeDirective } from '@spartan-ng/ui-badge-helm';
 import { ScalingDecision } from '../../model/scaling-group.models';
 import { outcomeBadgeClass, whenLabel } from './fleet-history.geometry';
-import {
-  operationDetail,
-  operationLabel,
-  operationTone,
-} from './decision-operation';
+import { operationDetail, operationLabel, operationTone } from './decision-operation';
 
 @Component({
   selector: 'app-fleet-history-detail',
   standalone: true,
   imports: [HlmBadgeDirective],
   template: `
-    <div
-      class="card-surface space-y-3 p-4"
-      data-testid="decision-detail"
-      aria-live="polite"
-    >
+    <div class="card-surface space-y-3 p-4" data-testid="decision-detail" aria-live="polite">
       <div class="flex flex-wrap items-center gap-2">
         <span [class]="badgeClass()" data-testid="detail-outcome">
           {{ decision().outcome.replaceAll('-', ' ') }}
         </span>
-        <span
-          class="font-mono text-[11px] text-muted-foreground"
-          data-testid="detail-force"
-        >
+        <span class="font-mono text-[11px] text-muted-foreground" data-testid="detail-force">
           {{ decision().force }}
         </span>
         @if (decision().shape) {
@@ -79,9 +63,7 @@ import {
 export class FleetHistoryDetailComponent {
   readonly decision = input.required<ScalingDecision>();
 
-  protected readonly badgeClass = computed(() =>
-    outcomeBadgeClass(this.decision().outcome),
-  );
+  protected readonly badgeClass = computed(() => outcomeBadgeClass(this.decision().outcome));
 
   protected readonly when = computed(() => whenLabel(this.decision().at));
 

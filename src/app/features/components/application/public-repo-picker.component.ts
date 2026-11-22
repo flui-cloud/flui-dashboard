@@ -1,4 +1,12 @@
-import { Component, signal, inject, OnInit, OnDestroy, output, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  signal,
+  inject,
+  OnInit,
+  OnDestroy,
+  output,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
@@ -26,7 +34,10 @@ import { PublicRepoSearchResultDto } from '../../../core/api/model/publicRepoSea
     <div class="space-y-3">
       <!-- Search input -->
       <div class="relative">
-        <ng-icon name="lucideSearch" class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+        <ng-icon
+          name="lucideSearch"
+          class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none"
+        />
         <input
           type="text"
           [(ngModel)]="searchQuery"
@@ -66,14 +77,18 @@ import { PublicRepoSearchResultDto } from '../../../core/api/model/publicRepoSea
                   <div class="flex items-center gap-2 flex-wrap">
                     <span class="font-medium text-sm">{{ repo.full_name }}</span>
                     @if (repo.language) {
-                      <span class="text-xs px-2 py-0.5 rounded bg-muted text-muted-foreground">{{ repo.language }}</span>
+                      <span class="text-xs px-2 py-0.5 rounded bg-muted text-muted-foreground">{{
+                        repo.language
+                      }}</span>
                     }
                     <span class="text-xs text-muted-foreground flex items-center gap-1">
                       <ng-icon name="lucideGitBranch" class="h-3 w-3" />{{ repo.default_branch }}
                     </span>
                   </div>
                   @if (repo.description) {
-                    <p class="text-xs text-muted-foreground mt-1 truncate">{{ repo.description }}</p>
+                    <p class="text-xs text-muted-foreground mt-1 truncate">
+                      {{ repo.description }}
+                    </p>
                   }
                 </div>
                 <div class="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
@@ -88,12 +103,16 @@ import { PublicRepoSearchResultDto } from '../../../core/api/model/publicRepoSea
 
       <!-- Empty state after search -->
       @if (!searching() && searchQuery.length > 1 && results().length === 0 && !searchError()) {
-        <p class="text-sm text-muted-foreground text-center py-4">No repositories found for "{{ searchQuery }}"</p>
+        <p class="text-sm text-muted-foreground text-center py-4">
+          No repositories found for "{{ searchQuery }}"
+        </p>
       }
 
       <!-- Hint before search -->
       @if (!searching() && searchQuery.length <= 1 && results().length === 0) {
-        <p class="text-sm text-muted-foreground text-center py-4">Type at least 2 characters to search</p>
+        <p class="text-sm text-muted-foreground text-center py-4">
+          Type at least 2 characters to search
+        </p>
       }
     </div>
   `,
@@ -111,7 +130,9 @@ export class PublicRepoPickerComponent implements OnInit, OnDestroy {
   private readonly querySubject = new Subject<string>();
 
   ngOnInit(): void {
-    this.querySubject.pipe(debounceTime(350), distinctUntilChanged()).subscribe(q => this.doSearch(q));
+    this.querySubject
+      .pipe(debounceTime(350), distinctUntilChanged())
+      .subscribe((q) => this.doSearch(q));
   }
 
   ngOnDestroy(): void {

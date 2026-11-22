@@ -49,20 +49,14 @@ export class ScalingGroupStore {
     stream: ({ params }) => this.api.preview(params),
   });
 
-  readonly preview = loadedOf<ScalingPreview>(
-    this.previewRes,
-    'What this group would do now',
-  );
+  readonly preview = loadedOf<ScalingPreview>(this.previewRes, 'What this group would do now');
 
   private readonly decisionsRes = rxResource({
     params: () => this.id() ?? undefined,
     stream: ({ params }) => this.api.decisions(params),
   });
 
-  readonly decisions = loadedOf<ScalingDecision[]>(
-    this.decisionsRes,
-    'The decision log',
-  );
+  readonly decisions = loadedOf<ScalingDecision[]>(this.decisionsRes, 'The decision log');
 
   private readonly catalogueRes = rxResource({
     params: () => this.group().data?.id,
@@ -74,10 +68,7 @@ export class ScalingGroupStore {
     },
   });
 
-  readonly catalogue = loadedOf<ShapeCatalogue>(
-    this.catalogueRes,
-    "The provider's catalogue",
-  );
+  readonly catalogue = loadedOf<ShapeCatalogue>(this.catalogueRes, "The provider's catalogue");
 
   readonly outlook = computed<Record<string, AvailabilityOutlook>>(() => {
     const byShape: Record<string, AvailabilityOutlook> = {};
@@ -100,10 +91,7 @@ export class ScalingGroupStore {
     stream: ({ params }) => this.api.history(params.id, params.window, params.zoom),
   });
 
-  readonly history = loadedOf<FleetHistory>(
-    this.historyRes,
-    'The fleet history',
-  );
+  readonly history = loadedOf<FleetHistory>(this.historyRes, 'The fleet history');
 
   private readonly fleetRes = rxResource({
     params: () => this.clusterId(),

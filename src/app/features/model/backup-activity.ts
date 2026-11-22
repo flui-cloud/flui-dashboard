@@ -1,8 +1,4 @@
-import type {
-  BackupHealthState,
-  BackupPolicyActivity,
-  BackupRun,
-} from './backup-run.models';
+import type { BackupHealthState, BackupPolicyActivity, BackupRun } from './backup-run.models';
 
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
@@ -14,7 +10,10 @@ function parse(iso: string | null | undefined): number | null {
   return Number.isNaN(t) ? null : t;
 }
 
-export function formatRelativeTime(iso: string | null | undefined, now: number = Date.now()): string {
+export function formatRelativeTime(
+  iso: string | null | undefined,
+  now: number = Date.now(),
+): string {
   const t = parse(iso);
   if (t == null) return '—';
   const diff = t - now;
@@ -97,11 +96,16 @@ export function healthNeedsAttention(state: BackupHealthState | null | undefined
   return state === 'missed' || state === 'failed';
 }
 
-export function activityByPolicyId(list: BackupPolicyActivity[]): Map<string, BackupPolicyActivity> {
+export function activityByPolicyId(
+  list: BackupPolicyActivity[],
+): Map<string, BackupPolicyActivity> {
   return new Map(list.map((a) => [a.policyId, a]));
 }
 
-export function sortByAttention<T>(rows: T[], stateOf: (row: T) => BackupHealthState | null | undefined): T[] {
+export function sortByAttention<T>(
+  rows: T[],
+  stateOf: (row: T) => BackupHealthState | null | undefined,
+): T[] {
   return rows
     .map((row, index) => ({ row, index, urgent: healthNeedsAttention(stateOf(row)) }))
     .sort((a, b) => {

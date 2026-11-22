@@ -12,8 +12,7 @@ const IPV4_CIDR_REGEX =
   /^(25[0-5]|2[0-4]\d|[01]?\d\d?)\.(25[0-5]|2[0-4]\d|[01]?\d\d?)\.(25[0-5]|2[0-4]\d|[01]?\d\d?)\.(25[0-5]|2[0-4]\d|[01]?\d\d?)\/(\d|[12]\d|3[0-2])$/;
 
 // IPv6 CIDR regex (simplified, accepts standard notation)
-const IPV6_CIDR_REGEX =
-  /^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}\/(\d|[1-9]\d|1[01]\d|12[0-8])$/;
+const IPV6_CIDR_REGEX = /^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}\/(\d|[1-9]\d|1[01]\d|12[0-8])$/;
 
 /**
  * Validate a single CIDR string.

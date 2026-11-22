@@ -116,12 +116,7 @@ export function snapshotSizeLabel(snap: ApplicationSnapshot): {
  * Mirrors the CLI's `formatBytes` so the dashboard shows the same numbers.
  */
 export function formatBytes(bytes: number | undefined): string | null {
-  if (
-    bytes === undefined ||
-    bytes === null ||
-    !Number.isFinite(bytes) ||
-    bytes < 0
-  ) {
+  if (bytes === undefined || bytes === null || !Number.isFinite(bytes) || bytes < 0) {
     return null;
   }
   if (bytes === 0) return '0 B';
@@ -138,9 +133,7 @@ export function formatBytes(bytes: number | undefined): string | null {
 
 export type SnapshotKind = 'native' | 'clone';
 
-export function getSnapshotKind(
-  snap: Pick<ApplicationSnapshot, 'sink'>,
-): SnapshotKind {
+export function getSnapshotKind(snap: Pick<ApplicationSnapshot, 'sink'>): SnapshotKind {
   return snap.sink === 'pvc-clone' ? 'clone' : 'native';
 }
 

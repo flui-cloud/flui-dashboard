@@ -78,7 +78,10 @@ export class AccountService {
   }
 
   startTotp(currentPassword?: string): Observable<TotpRegistration> {
-    return this.http.post<TotpRegistration>(`${this.base}/totp`, currentPassword ? { currentPassword } : {});
+    return this.http.post<TotpRegistration>(
+      `${this.base}/totp`,
+      currentPassword ? { currentPassword } : {},
+    );
   }
 
   verifyTotp(code: string): Observable<unknown> {

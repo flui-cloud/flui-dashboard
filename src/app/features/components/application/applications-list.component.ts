@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnDestroy,
+  OnInit,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
@@ -11,7 +20,14 @@ import { FleetService } from '../../service/fleet.service';
 import { ApplicationMetricsService } from '../../../core/api/api/applicationMetrics.service';
 import type { AppMetricsDto } from '../../../core/api/model/appMetricsDto';
 import { AppGroupView } from '../../model/application.models';
-import { WorkloadEntry, WorkloadList, isWorkloadList, workloadEntries, workloadTypeOf, workloadTypeOptions } from '../../model/workload-list';
+import {
+  WorkloadEntry,
+  WorkloadList,
+  isWorkloadList,
+  workloadEntries,
+  workloadTypeOf,
+  workloadTypeOptions,
+} from '../../model/workload-list';
 import { ClusterStatus } from '../../model/cluster.models';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
 import { SandboxService } from '../../../core/services/sandbox.service';
@@ -23,9 +39,26 @@ import {
   buildApplicationsListSurface,
   presentedContent,
 } from './applications-list-surface';
-import { ListFilters, ListRow, buildListRow, matchesView, primaryOf, sortRows, viewCounts } from './applications-list-rows';
-import { EMPTY_FILTERS, activeFilterCount, listCopy, listSummary, providerName } from './applications-list-kind';
-import { ApplicationsListShowcaseComponent, showcaseNote } from './applications-list-showcase.component';
+import {
+  ListFilters,
+  ListRow,
+  buildListRow,
+  matchesView,
+  primaryOf,
+  sortRows,
+  viewCounts,
+} from './applications-list-rows';
+import {
+  EMPTY_FILTERS,
+  activeFilterCount,
+  listCopy,
+  listSummary,
+  providerName,
+} from './applications-list-kind';
+import {
+  ApplicationsListShowcaseComponent,
+  showcaseNote,
+} from './applications-list-showcase.component';
 import { ApplicationsListTableComponent } from './applications-list-table.component';
 import { ApplicationsListToolbarComponent } from './applications-list-toolbar.component';
 import { AddScope, AddWorkloadMenuComponent } from './add-workload-menu.component';
@@ -33,7 +66,13 @@ import { AddScope, AddWorkloadMenuComponent } from './add-workload-menu.componen
 @Component({
   selector: 'app-applications-list',
   standalone: true,
-  imports: [NgIconComponent, ApplicationsListToolbarComponent, ApplicationsListTableComponent, ApplicationsListShowcaseComponent, AddWorkloadMenuComponent],
+  imports: [
+    NgIconComponent,
+    ApplicationsListToolbarComponent,
+    ApplicationsListTableComponent,
+    ApplicationsListShowcaseComponent,
+    AddWorkloadMenuComponent,
+  ],
   providers: [provideIcons({ lucideRefreshCw, lucidePackage, lucideLoader, lucideCircleAlert })],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
@@ -41,7 +80,9 @@ import { AddScope, AddWorkloadMenuComponent } from './add-workload-menu.componen
       <div class="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 class="text-2xl font-bold text-foreground">{{ pageTitle() }}</h1>
-          <p class="mt-1 text-sm text-muted-foreground" data-testid="apps-summary">{{ summary() }}</p>
+          <p class="mt-1 text-sm text-muted-foreground" data-testid="apps-summary">
+            {{ summary() }}
+          </p>
         </div>
         <div class="flex items-center gap-3">
           @if (isBackgroundRefreshing()) {
@@ -75,7 +116,9 @@ import { AddScope, AddWorkloadMenuComponent } from './add-workload-menu.componen
       />
 
       @if (errorMessage() && !isLoading()) {
-        <div class="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+        <div
+          class="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3"
+        >
           <ng-icon name="lucideCircleAlert" class="h-4 w-4 text-destructive" />
           <p class="text-sm text-foreground">{{ errorMessage() }}</p>
         </div>
@@ -94,7 +137,9 @@ import { AddScope, AddWorkloadMenuComponent } from './add-workload-menu.componen
           <p class="text-xs text-muted-foreground mb-4">
             @if (activeFiltersCount() > 0) {
               Nothing matches these filters.
-              <button type="button" (click)="clearFilters()" class="text-primary hover:underline">Clear filters</button>
+              <button type="button" (click)="clearFilters()" class="text-primary hover:underline">
+                Clear filters
+              </button>
             } @else {
               {{ emptySubtitle() }}
             }
@@ -104,7 +149,11 @@ import { AddScope, AddWorkloadMenuComponent } from './add-workload-menu.componen
           }
         </div>
       } @else {
-        <app-applications-list-table [rows]="ownRows()" [nameHeader]="list() === 'data' ? 'Data store' : 'Application'" (open)="openRecap($event)" />
+        <app-applications-list-table
+          [rows]="ownRows()"
+          [nameHeader]="list() === 'data' ? 'Data store' : 'Application'"
+          (open)="openRecap($event)"
+        />
       }
 
       @if (showcaseRows().length > 0) {
@@ -118,7 +167,6 @@ import { AddScope, AddWorkloadMenuComponent } from './add-workload-menu.componen
     </div>
   `,
 })
-
 export class ApplicationsListComponent implements OnInit, OnDestroy {
   private readonly appService = inject(ApplicationService);
   private readonly clusterService = inject(ClusterService);
@@ -135,7 +183,9 @@ export class ApplicationsListComponent implements OnInit, OnDestroy {
   readonly skeletonRows = [1, 2, 3, 4, 5];
 
   readonly list = signal<WorkloadList>(
-    isWorkloadList(this.route.snapshot.data['list']) ? this.route.snapshot.data['list'] : 'applications',
+    isWorkloadList(this.route.snapshot.data['list'])
+      ? this.route.snapshot.data['list']
+      : 'applications',
   );
   filtersState = signal<ListFilters>({
     ...EMPTY_FILTERS,
@@ -163,15 +213,18 @@ export class ApplicationsListComponent implements OnInit, OnDestroy {
   private readonly entries = computed(() => workloadEntries(this.allGroups(), this.list()));
 
   private readonly partOfById = computed(
-    () => new Map(this.entries().filter((e) => e.partOf).map((e) => [e.group.id, e.partOf!])),
+    () =>
+      new Map(
+        this.entries()
+          .filter((e) => e.partOf)
+          .map((e) => [e.group.id, e.partOf!]),
+      ),
   );
 
   listGroups = computed(() => this.entries().map((e: WorkloadEntry) => e.group));
 
   /** The counts are the caller's own: the showcase belongs to whoever runs this instance. */
-  listOwnGroups = computed(() =>
-    this.listGroups().filter((g) => !this.isShowcase(g)),
-  );
+  listOwnGroups = computed(() => this.listGroups().filter((g) => !this.isShowcase(g)));
 
   readonly typeOptions = computed(() => workloadTypeOptions(this.listGroups(), this.list()));
 
@@ -196,7 +249,10 @@ export class ApplicationsListComponent implements OnInit, OnDestroy {
         g.id,
         buildListRow(g, {
           clusterName: cluster?.name ?? '',
-          providerName: providerName(cluster?.provider, (id) => this.providers.getProviderById(id)?.displayName),
+          providerName: providerName(
+            cluster?.provider,
+            (id) => this.providers.getProviderById(id)?.displayName,
+          ),
           project: (projectId && projects.get(projectId)) || null,
           usage,
           coverage,
@@ -241,9 +297,7 @@ export class ApplicationsListComponent implements OnInit, OnDestroy {
     return this.projects.projects().filter((p) => used.has(p.id));
   });
 
-  isInitialLoading = computed(
-    () => this.isLoading() && this.allApplications().length === 0,
-  );
+  isInitialLoading = computed(() => this.isLoading() && this.allApplications().length === 0);
 
   filteredGroups = computed(() => {
     const f = this.filtersState();
@@ -273,12 +327,8 @@ export class ApplicationsListComponent implements OnInit, OnDestroy {
     return !!accessOf(primaryOf(g))?.showcase;
   }
 
-  ownGroups = computed(() =>
-    this.filteredGroups().filter((g) => !this.isShowcase(g)),
-  );
-  showcaseGroups = computed(() =>
-    this.filteredGroups().filter((g) => this.isShowcase(g)),
-  );
+  ownGroups = computed(() => this.filteredGroups().filter((g) => !this.isShowcase(g)));
+  showcaseGroups = computed(() => this.filteredGroups().filter((g) => this.isShowcase(g)));
 
   ownRows = computed(() => sortRows(this.rowsOf(this.ownGroups())));
   showcaseRows = computed(() => sortRows(this.rowsOf(this.showcaseGroups())));
@@ -288,7 +338,9 @@ export class ApplicationsListComponent implements OnInit, OnDestroy {
     this.showcaseGroups().every((g) => !!accessOf(primaryOf(g))?.readOnly),
   );
 
-  showcaseWhy = computed(() => showcaseNote(this.sandbox.whyFor('showcase'), this.installPrompt.readOnly()));
+  showcaseWhy = computed(() =>
+    showcaseNote(this.sandbox.whyFor('showcase'), this.installPrompt.readOnly()),
+  );
 
   activeFiltersCount = computed(() => activeFilterCount(this.filtersState()));
 
@@ -350,7 +402,9 @@ export class ApplicationsListComponent implements OnInit, OnDestroy {
       return !s || s === ClusterStatus.ACTIVE;
     });
     const results = await Promise.allSettled(
-      ids.map((id) => firstValueFrom(this.metricsApi.applicationMetricsControllerGetClusterAppsMetrics(id))),
+      ids.map((id) =>
+        firstValueFrom(this.metricsApi.applicationMetricsControllerGetClusterAppsMetrics(id)),
+      ),
     );
     const next = new Map<string, AppMetricsDto>();
     for (const r of results) {

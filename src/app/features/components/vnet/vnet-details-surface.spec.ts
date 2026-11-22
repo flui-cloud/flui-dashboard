@@ -23,7 +23,18 @@ const VNET: VNetInfo = {
   ipRange: '10.0.0.0/16',
   labels: [{ key: 'env', value: 'prod' }],
   status: VNetStatus.ACTIVE,
-  subnets: [{ id: 's1', vnetId: 'vnet-1', ipRange: '10.0.1.0/24', networkZone: 'eu-central', gateway: '10.0.1.1', attachedServerIds: ['srv-1'], createdAt: new Date(), updatedAt: new Date() }],
+  subnets: [
+    {
+      id: 's1',
+      vnetId: 'vnet-1',
+      ipRange: '10.0.1.0/24',
+      networkZone: 'eu-central',
+      gateway: '10.0.1.1',
+      attachedServerIds: ['srv-1'],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  ],
   routes: [{ id: 'r1', destination: '0.0.0.0/0', gateway: '10.0.0.1' }],
   createdAt: new Date('2026-01-01T00:00:00.000Z'),
   updatedAt: new Date('2026-01-01T00:00:00.000Z'),
@@ -61,13 +72,17 @@ function input(over: Partial<VNetDetailSurfaceInput> = {}): VNetDetailSurfaceInp
 }
 
 function snapshotOf(over: Partial<VNetDetailSurfaceInput> = {}): SurfaceSnapshot {
-  const snapshot = buildVNetDetailSurface(input(over), { revision: 1, generatedAt: '2026-08-20T09:13:00.000Z' });
+  const snapshot = buildVNetDetailSurface(input(over), {
+    revision: 1,
+    generatedAt: '2026-08-20T09:13:00.000Z',
+  });
   if (!snapshot) throw new Error('the producer described nothing');
   return snapshot;
 }
 
 const pageScope = (s: SurfaceSnapshot) => s.scopes.find((x) => x.kind === 'page')!;
-const observation = (s: SurfaceSnapshot, key: string) => pageScope(s).observations?.find((o) => o.key === key);
+const observation = (s: SurfaceSnapshot, key: string) =>
+  pageScope(s).observations?.find((o) => o.key === key);
 
 describe('vnet detail surface producer', () => {
   it('emits a snapshot that validates against the real schema and passes semantic checks', () => {
@@ -81,8 +96,14 @@ describe('vnet detail surface producer', () => {
   it('claims the page and the vnet itself, with reason route', () => {
     const snapshot = snapshotOf();
     const ref = vnetEntityRef('vnet-1');
-    expect(snapshot.attention).toEqual([{ scopeId: 'vnet-detail:vnet-1', entityRef: ref, reason: 'route' }]);
-    expect(pageScope(snapshot).entities![0]).toEqual({ ref, label: 'prod-network', role: 'primary' });
+    expect(snapshot.attention).toEqual([
+      { scopeId: 'vnet-detail:vnet-1', entityRef: ref, reason: 'route' },
+    ]);
+    expect(pageScope(snapshot).entities![0]).toEqual({
+      ref,
+      label: 'prod-network',
+      role: 'primary',
+    });
   });
 
   it('names an attached, resolved server as a related entity using the canonical instance ref', () => {
@@ -128,9 +149,15 @@ describe('vnet detail surface producer', () => {
 
   it('bumps the revision on real change, and validateSurfaceSemantics accepts it against the previous snapshot', () => {
     const tracker = new VNetDetailSurfaceRevision();
-    const first = buildVNetDetailSurface(input(), { revision: tracker.next(presentedContent(input())!), generatedAt: '2026-08-20T09:13:00.000Z' })!;
+    const first = buildVNetDetailSurface(input(), {
+      revision: tracker.next(presentedContent(input())!),
+      generatedAt: '2026-08-20T09:13:00.000Z',
+    })!;
     const changed = input({ vnet: { ...VNET, status: VNetStatus.FAILED } });
-    const second = buildVNetDetailSurface(changed, { revision: tracker.next(presentedContent(changed)!), generatedAt: '2026-08-20T09:14:00.000Z' })!;
+    const second = buildVNetDetailSurface(changed, {
+      revision: tracker.next(presentedContent(changed)!),
+      generatedAt: '2026-08-20T09:14:00.000Z',
+    })!;
     expect(second.surface.revision).toBe(first.surface.revision + 1);
     expect(validateSurfaceSemantics(second, { previousSnapshot: first })).toEqual([]);
   });
@@ -138,12 +165,22 @@ describe('vnet detail surface producer', () => {
   // The invalid-revision check needs a real failing case exercised, not just trusted.
   it('flags a snapshot whose revision does not advance on the previous one', () => {
     const first = snapshotOf();
-    const stale = { ...snapshotOf(), surface: { ...snapshotOf().surface, revision: first.surface.revision } };
+    const stale = {
+      ...snapshotOf(),
+      surface: { ...snapshotOf().surface, revision: first.surface.revision },
+    };
     const issues = validateSurfaceSemantics(stale, { previousSnapshot: first });
-    expect(issues).toEqual([jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' })]);
+    expect(issues).toEqual([
+      jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' }),
+    ]);
   });
 
   it('produces no snapshot at all when there is no vnet loaded — no invented selection', () => {
-    expect(buildVNetDetailSurface(input({ vnet: null }), { revision: 1, generatedAt: '2026-08-20T09:13:00.000Z' })).toBeNull();
+    expect(
+      buildVNetDetailSurface(input({ vnet: null }), {
+        revision: 1,
+        generatedAt: '2026-08-20T09:13:00.000Z',
+      }),
+    ).toBeNull();
   });
 });

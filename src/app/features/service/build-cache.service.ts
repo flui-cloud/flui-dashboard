@@ -84,7 +84,7 @@ export class BuildCacheService implements OnDestroy {
     this.statusErrorData.set(null);
     try {
       const data = await firstValueFrom(
-        this.buildNamespaceApi.buildNamespaceControllerGetCacheInfo(clusterId)
+        this.buildNamespaceApi.buildNamespaceControllerGetCacheInfo(clusterId),
       );
       this.cacheStatusData.set(data);
     } catch (e: any) {
@@ -106,7 +106,7 @@ export class BuildCacheService implements OnDestroy {
 
     try {
       const response = await firstValueFrom(
-        this.buildNamespaceApi.buildNamespaceControllerClearCache(clusterId)
+        this.buildNamespaceApi.buildNamespaceControllerClearCache(clusterId),
       );
 
       this.activeOperationId.set(response.operationId);
@@ -147,7 +147,7 @@ export class BuildCacheService implements OnDestroy {
     this.breakdownErrorData.set(null);
     try {
       const data = await firstValueFrom(
-        this.buildNamespaceApi.buildNamespaceControllerGetCacheBreakdown(clusterId)
+        this.buildNamespaceApi.buildNamespaceControllerGetCacheBreakdown(clusterId),
       );
       this.breakdownData.set(data);
       if (data.scanStatus === 'in_progress') {
@@ -168,7 +168,7 @@ export class BuildCacheService implements OnDestroy {
     this.breakdownErrorData.set(null);
     try {
       const res = await firstValueFrom(
-        this.buildNamespaceApi.buildNamespaceControllerRefreshCacheBreakdown(clusterId)
+        this.buildNamespaceApi.buildNamespaceControllerRefreshCacheBreakdown(clusterId),
       );
       if (res.status === 'skipped') {
         this.refreshSkippedData.set(true);
@@ -202,7 +202,7 @@ export class BuildCacheService implements OnDestroy {
     this.breakdownPollInterval = setInterval(async () => {
       try {
         const data = await firstValueFrom(
-          this.buildNamespaceApi.buildNamespaceControllerGetCacheBreakdown(clusterId)
+          this.buildNamespaceApi.buildNamespaceControllerGetCacheBreakdown(clusterId),
         );
         this.breakdownData.set(data);
         if (data.scanStatus !== 'in_progress') {

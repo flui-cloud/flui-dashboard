@@ -1,19 +1,7 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  effect,
-  inject,
-  input,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideClock,
-  lucideHistory,
-  lucideLoader,
-  lucideTriangleAlert,
-} from '@ng-icons/lucide';
+import { lucideClock, lucideHistory, lucideLoader, lucideTriangleAlert } from '@ng-icons/lucide';
 import { DbPitrService, DbPitrStatus } from '../../service/db-pitr.service';
 
 /**
@@ -46,29 +34,22 @@ import { DbPitrService, DbPitrStatus } from '../../service/db-pitr.service';
             />
             <div class="min-w-0 flex-1">
               <h3 class="text-base font-semibold">
-                {{
-                  s.pointInTime === false
-                    ? 'Scheduled dumps'
-                    : 'Point-in-time recovery'
-                }}
+                {{ s.pointInTime === false ? 'Scheduled dumps' : 'Point-in-time recovery' }}
               </h3>
               <p class="mt-0.5 text-sm text-muted-foreground">
                 @if (s.pointInTime === false) {
-                  This database's image cannot back up continuously, so it is
-                  dumped on a schedule. A restore brings back the latest dump
-                  into a
-                  <span class="font-medium">new install</span> — changes after
-                  it are not kept.
+                  This database's image cannot back up continuously, so it is dumped on a schedule.
+                  A restore brings back the latest dump into a
+                  <span class="font-medium">new install</span> — changes after it are not kept.
                 } @else if (s.continuousBackupEnabled) {
                   Continuous backup is on.
                 } @else {
-                  Continuous backup is currently off — you can still recover
-                  from the {{ s.backupCount }} existing backup(s).
+                  Continuous backup is currently off — you can still recover from the
+                  {{ s.backupCount }} existing backup(s).
                 }
                 @if (s.pointInTime !== false) {
                   Restore this database as of an instant into a
-                  <span class="font-medium">new install</span> — the live
-                  database is untouched.
+                  <span class="font-medium">new install</span> — the live database is untouched.
                 }
               </p>
 
@@ -86,9 +67,7 @@ import { DbPitrService, DbPitrStatus } from '../../service/db-pitr.service';
                   <dd>
                     {{ fmt($safeNavigationMigration(s.window?.newest)) }}
                     @if (s.pointInTime !== false) {
-                      <span class="text-xs text-muted-foreground"
-                        >(last change archived)</span
-                      >
+                      <span class="text-xs text-muted-foreground">(last change archived)</span>
                     }
                   </dd>
                 </div>
@@ -114,13 +93,9 @@ import { DbPitrService, DbPitrStatus } from '../../service/db-pitr.service';
                   }}
                 </button>
               } @else {
-                <div
-                  class="mt-3 space-y-3 rounded-md border border-border bg-muted/40 p-3"
-                >
+                <div class="mt-3 space-y-3 rounded-md border border-border bg-muted/40 p-3">
                   <div>
-                    <label
-                      class="block text-xs font-medium text-muted-foreground"
-                      for="pitr-name"
+                    <label class="block text-xs font-medium text-muted-foreground" for="pitr-name"
                       >New install name</label
                     >
                     <input
@@ -133,21 +108,18 @@ import { DbPitrService, DbPitrStatus } from '../../service/db-pitr.service';
                     />
                   </div>
                   @if (s.pointInTime !== false) {
-                  <div>
-                    <label
-                      class="block text-xs font-medium text-muted-foreground"
-                      for="pitr-at"
-                    >
-                      Recover to (leave empty for the latest recoverable point)
-                    </label>
-                    <input
-                      id="pitr-at"
-                      type="datetime-local"
-                      [ngModel]="at()"
-                      (ngModelChange)="at.set($event)"
-                      class="mt-1 w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm"
-                    />
-                  </div>
+                    <div>
+                      <label class="block text-xs font-medium text-muted-foreground" for="pitr-at">
+                        Recover to (leave empty for the latest recoverable point)
+                      </label>
+                      <input
+                        id="pitr-at"
+                        type="datetime-local"
+                        [ngModel]="at()"
+                        (ngModelChange)="at.set($event)"
+                        class="mt-1 w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm"
+                      />
+                    </div>
                   }
 
                   <div class="flex items-center gap-2">
@@ -182,9 +154,7 @@ import { DbPitrService, DbPitrStatus } from '../../service/db-pitr.service';
                 </p>
               }
               @if (error(); as e) {
-                <p
-                  class="mt-2 flex items-center gap-1.5 text-xs text-destructive"
-                >
+                <p class="mt-2 flex items-center gap-1.5 text-xs text-destructive">
                   <ng-icon name="lucideTriangleAlert" class="h-3.5 w-3.5" />
                   {{ e }}
                 </p>
@@ -232,9 +202,7 @@ export class DbPitrComponent {
     this.ok.set(null);
     // datetime-local is a local wall-clock string; send an absolute instant.
     const local = this.at().trim();
-    const recoveryTargetTime = local
-      ? new Date(local).toISOString()
-      : undefined;
+    const recoveryTargetTime = local ? new Date(local).toISOString() : undefined;
     this.svc.restore(id, { name, recoveryTargetTime }).subscribe({
       next: (r) => {
         this.restoring.set(false);

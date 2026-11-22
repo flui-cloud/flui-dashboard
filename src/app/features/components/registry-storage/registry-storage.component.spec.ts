@@ -259,7 +259,9 @@ describe('image registry page', () => {
     });
 
     it('offers to go back to GitHub only while no application uses the registry', async () => {
-      registry.mode.set(mode({ mode: 'flui', storage: 'volume', ready: true, applicationsOnRegistry: 2 }));
+      registry.mode.set(
+        mode({ mode: 'flui', storage: 'volume', ready: true, applicationsOnRegistry: 2 }),
+      );
       await render(status({ mode: 'flui' }));
       expect(q('registry-disable')).toBeNull();
 
@@ -274,14 +276,23 @@ describe('image registry page', () => {
 
   it('draws a refusal calmly, without the error box', async () => {
     registry.refused.set(true);
-    registry.refusalMessage.set('Managing the image registry needs the permission to manage integrations.');
+    registry.refusalMessage.set(
+      'Managing the image registry needs the permission to manage integrations.',
+    );
     await render(null);
     expect(q('registry-refused')!.textContent).toContain('permission to manage integrations');
     expect(q('registry-error')).toBeNull();
   });
 
   it('notes a connected bucket that is not in use yet', async () => {
-    await render(status({ connected: true, provider: 'scaleway_object_storage', region: 'fr-par', bucket: 'b1' }));
+    await render(
+      status({
+        connected: true,
+        provider: 'scaleway_object_storage',
+        region: 'fr-par',
+        bucket: 'b1',
+      }),
+    );
     expect(q('registry-connected')!.textContent).toContain('Scaleway');
     expect(q('registry-not-in-use')).not.toBeNull();
     expect(q('registry-connect')).toBeNull();
@@ -296,7 +307,14 @@ describe('image registry page', () => {
   });
 
   it('asks before replacing a connected bucket', async () => {
-    await render(status({ connected: true, provider: 'scaleway_object_storage', region: 'fr-par', bucket: 'b1' }));
+    await render(
+      status({
+        connected: true,
+        provider: 'scaleway_object_storage',
+        region: 'fr-par',
+        bucket: 'b1',
+      }),
+    );
     q('registry-replace')!.click();
     fixture.detectChanges();
     q('registry-scaleway-submit')!.click();
@@ -360,9 +378,22 @@ describe('image registry page', () => {
     registry.buckets.set([
       bucket({ id: 'b-new', bucket: 'flui-registry-new', active: true }),
       bucket(),
-      bucket({ id: 'b-own', bucket: 'my-images', provider: 'ovh_object_storage', region: 'gra', createdByFlui: false }),
+      bucket({
+        id: 'b-own',
+        bucket: 'my-images',
+        provider: 'ovh_object_storage',
+        region: 'gra',
+        createdByFlui: false,
+      }),
     ]);
-    await render(status({ connected: true, provider: 'scaleway_object_storage', region: 'fr-par', bucket: 'flui-registry-new' }));
+    await render(
+      status({
+        connected: true,
+        provider: 'scaleway_object_storage',
+        region: 'fr-par',
+        bucket: 'flui-registry-new',
+      }),
+    );
     expect(registry.loadBuckets).toHaveBeenCalled();
     const list = q('registry-replaced')!;
     expect(list.querySelectorAll('li')).toHaveSize(2);
@@ -402,7 +433,9 @@ describe('image registry page', () => {
     await render(status({ connected: true, bucket: 'flui-registry-new' }));
     q('registry-remove-b-own')!.click();
     fixture.detectChanges();
-    expect(q('registry-remove-message')!.textContent).toContain('Forget my-images? What it holds stays in your account.');
+    expect(q('registry-remove-message')!.textContent).toContain(
+      'Forget my-images? What it holds stays in your account.',
+    );
     q('registry-remove-submit')!.click();
     await fixture.whenStable();
     expect(toast.showSuccess).toHaveBeenCalledWith('Forgot my-images');
@@ -410,7 +443,9 @@ describe('image registry page', () => {
 
   it('shows the API message when a removal is refused', async () => {
     registry.buckets.set([bucket()]);
-    registry.removeError.set('The registry keeps its images in this bucket: connect another one first');
+    registry.removeError.set(
+      'The registry keeps its images in this bucket: connect another one first',
+    );
     await render(status({ connected: true, bucket: 'flui-registry-new' }));
     expect(q('registry-remove-error')!.textContent).toContain('connect another one first');
   });
@@ -427,18 +462,29 @@ describe('image registry page', () => {
     expect(q('registry-traffic-refused')!.classList).not.toContain('text-amber-600');
     expect(q('registry-traffic-failed')!.classList).not.toContain('text-destructive');
     expect(q('registry-traffic-bucket')).toBeNull();
-    const cards = Array.from(el().querySelectorAll('section')).map((s) => s.getAttribute('data-testid'));
+    const cards = Array.from(el().querySelectorAll('section')).map((s) =>
+      s.getAttribute('data-testid'),
+    );
     expect(cards.indexOf('registry-traffic')).toBe(cards.indexOf('registry-usage') + 1);
     expect(cards.indexOf('registry-apps')).toBe(cards.indexOf('registry-traffic') + 1);
   });
 
   it('highlights refused and failed requests, and the bucket read when there is one', async () => {
-    registry.traffic.set(traffic({ outcomes: { ok: 1, refused: 2, notFound: 0, failed: 1 }, readFromBucketBytes: 3 * GIB }));
+    registry.traffic.set(
+      traffic({
+        outcomes: { ok: 1, refused: 2, notFound: 0, failed: 1 },
+        readFromBucketBytes: 3 * GIB,
+      }),
+    );
     await render(status({ backend: 's3', connected: true, bucket: 'images' }));
     expect(q('registry-traffic-refused')!.classList).toContain('text-amber-600');
-    expect(q('registry-traffic-refused')!.getAttribute('title')).toContain('over an application quota');
+    expect(q('registry-traffic-refused')!.getAttribute('title')).toContain(
+      'over an application quota',
+    );
     expect(q('registry-traffic-failed')!.classList).toContain('text-destructive');
-    expect(q('registry-traffic-bucket')!.textContent).toContain('3.0 GiB read from the bucket to serve pulls');
+    expect(q('registry-traffic-bucket')!.textContent).toContain(
+      '3.0 GiB read from the bucket to serve pulls',
+    );
   });
 
   it('switches the traffic window', async () => {

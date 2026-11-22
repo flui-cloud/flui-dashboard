@@ -9,7 +9,7 @@ import {
   computed,
   effect,
   viewChild,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
 } from '@angular/core';
 
 import { Terminal } from 'xterm';
@@ -52,90 +52,95 @@ import { TerminalService } from '../../../core/services/terminal.service';
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.Eager,
-  styles: [`
-    :host {
-      display: block;
-      height: 100%;
-    }
+  styles: [
+    `
+      :host {
+        display: block;
+        height: 100%;
+      }
 
-    .terminal-container {
-      position: relative;
-      height: 100%;
-      background: #1e1e1e;
-      border-radius: 6px;
-      overflow: hidden;
-      border: 1px solid hsl(var(--border));
-    }
+      .terminal-container {
+        position: relative;
+        height: 100%;
+        background: #1e1e1e;
+        border-radius: 6px;
+        overflow: hidden;
+        border: 1px solid hsl(var(--border));
+      }
 
-    .xterm-wrapper {
-      width: 100%;
-      height: 100%;
-      padding: 8px 8px 16px 8px; /* top right bottom left - more space at bottom */
-      box-sizing: border-box;
-    }
+      .xterm-wrapper {
+        width: 100%;
+        height: 100%;
+        padding: 8px 8px 16px 8px; /* top right bottom left - more space at bottom */
+        box-sizing: border-box;
+      }
 
-    .status-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(0, 0, 0, 0.85);
-      backdrop-filter: blur(4px);
-      color: white;
-      z-index: 10;
-    }
+      .status-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(4px);
+        color: white;
+        z-index: 10;
+      }
 
-    .status-content {
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-    }
+      .status-content {
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+      }
 
-    .spinner {
-      width: 40px;
-      height: 40px;
-      border: 3px solid rgba(255, 255, 255, 0.3);
-      border-top-color: white;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
+      .spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
 
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
 
-    .error-icon, .info-icon {
-      font-size: 48px;
-    }
+      .error-icon,
+      .info-icon {
+        font-size: 48px;
+      }
 
-    .error-message {
-      font-weight: 600;
-      font-size: 16px;
-    }
+      .error-message {
+        font-weight: 600;
+        font-size: 16px;
+      }
 
-    .error-hint {
-      font-size: 14px;
-      color: rgba(255, 255, 255, 0.7);
-    }
+      .error-hint {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.7);
+      }
 
-    :host ::ng-deep .xterm {
-      height: 100%;
-    }
+      :host ::ng-deep .xterm {
+        height: 100%;
+      }
 
-    :host ::ng-deep .xterm-viewport {
-      overflow-y: auto;
-    }
+      :host ::ng-deep .xterm-viewport {
+        overflow-y: auto;
+      }
 
-    :host ::ng-deep .xterm-screen {
-      cursor: text;
-    }
-  `]
+      :host ::ng-deep .xterm-screen {
+        cursor: text;
+      }
+    `,
+  ],
 })
 export class SshTerminalComponent implements OnInit, AfterViewInit, OnDestroy {
   // Inputs
@@ -162,8 +167,9 @@ export class SshTerminalComponent implements OnInit, AfterViewInit, OnDestroy {
 
   showOverlay = computed(() => {
     const state = this.connectionState();
-    return state === 'connecting' || state === 'error' ||
-           (state === 'disconnected' && this.hasAttempted);
+    return (
+      state === 'connecting' || state === 'error' || (state === 'disconnected' && this.hasAttempted)
+    );
   });
 
   hasAttemptedConnection = computed(() => this.hasAttempted);
@@ -218,7 +224,7 @@ export class SshTerminalComponent implements OnInit, AfterViewInit, OnDestroy {
         brightBlue: '#3b8eea',
         brightMagenta: '#d670d6',
         brightCyan: '#29b8db',
-        brightWhite: '#ffffff'
+        brightWhite: '#ffffff',
       },
       cols: 80,
       rows: 24,
@@ -228,13 +234,13 @@ export class SshTerminalComponent implements OnInit, AfterViewInit, OnDestroy {
       allowTransparency: false,
       windowOptions: {},
       // Critical for proper character handling
-      convertEol: false,  // Don't convert line endings - let the server handle it
+      convertEol: false, // Don't convert line endings - let the server handle it
       disableStdin: false, // Enable stdin
       screenReaderMode: false,
       // Better scrolling
       fastScrollModifier: 'shift',
       fastScrollSensitivity: 5,
-      scrollSensitivity: 1
+      scrollSensitivity: 1,
     });
 
     this.fitAddon = new FitAddon();
@@ -252,8 +258,12 @@ export class SshTerminalComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.terminal.open(terminalContainer.nativeElement);
 
-    this.wheelListener = (e: WheelEvent) => { e.stopPropagation(); };
-    terminalContainer.nativeElement.addEventListener('wheel', this.wheelListener, { passive: false });
+    this.wheelListener = (e: WheelEvent) => {
+      e.stopPropagation();
+    };
+    terminalContainer.nativeElement.addEventListener('wheel', this.wheelListener, {
+      passive: false,
+    });
 
     this.terminal.writeln('\x1b[36mFlui Cloud Terminal\x1b[0m');
     this.terminal.writeln('Initializing terminal...');
@@ -327,7 +337,7 @@ export class SshTerminalComponent implements OnInit, AfterViewInit, OnDestroy {
         rows: actualRows,
         useBootstrapKey: this.useBootstrapKey(),
         clusterId: this.clusterId(),
-      }
+      },
     );
   }
 

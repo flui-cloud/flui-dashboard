@@ -1,9 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
-import {
-  NodeDisksService,
-  NodeDisksView,
-} from '../../service/node-disks.service';
+import { NodeDisksService, NodeDisksView } from '../../service/node-disks.service';
 import { ClusterNodeDisksCardComponent } from './cluster-node-disks-card.component';
 
 const view: NodeDisksView = {
@@ -33,9 +30,7 @@ describe('ClusterNodeDisksCardComponent', () => {
   function render() {
     TestBed.configureTestingModule({
       imports: [ClusterNodeDisksCardComponent],
-      providers: [
-        { provide: NodeDisksService, useValue: { get: () => of(view) } },
-      ],
+      providers: [{ provide: NodeDisksService, useValue: { get: () => of(view) } }],
     });
     fixture = TestBed.createComponent(ClusterNodeDisksCardComponent);
     fixture.componentRef.setInput('clusterId', 'c1');
@@ -52,8 +47,6 @@ describe('ClusterNodeDisksCardComponent', () => {
 
   it('shows the warning of a node running short', () => {
     const el = render();
-    expect(el.textContent).toContain(
-      'lab-worker-1 has 4 of 40 GiB free on its disk',
-    );
+    expect(el.textContent).toContain('lab-worker-1 has 4 of 40 GiB free on its disk');
   });
 });

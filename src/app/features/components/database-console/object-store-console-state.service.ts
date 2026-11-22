@@ -69,11 +69,7 @@ export class ObjectStoreConsoleStateService {
         this.api.listBuckets(id).subscribe({
           next: (buckets) => {
             this.buckets.set(buckets);
-            const initial =
-              this.selectedBucket() ??
-              info.defaultBucket ??
-              buckets[0]?.name ??
-              null;
+            const initial = this.selectedBucket() ?? info.defaultBucket ?? buckets[0]?.name ?? null;
             this.selectedBucket.set(initial);
             this.conn.set('connected');
             this.loadShares();
@@ -168,9 +164,7 @@ export class ObjectStoreConsoleStateService {
         bucket,
         prefix: this.prefix(),
         delimiter: '/',
-        continuationToken: append
-          ? (this.listing()?.continuationToken ?? undefined)
-          : undefined,
+        continuationToken: append ? (this.listing()?.continuationToken ?? undefined) : undefined,
       })
       .subscribe({
         next: (page) => {
@@ -277,18 +271,16 @@ export class ObjectStoreConsoleStateService {
     if (!clean) return;
     const marker = new File([], `${clean}/`);
     this.busy.set(true);
-    this.api
-      .upload(id, bucket, `${this.prefix()}${clean}/`, marker)
-      .subscribe({
-        next: () => {
-          this.busy.set(false);
-          this.load();
-        },
-        error: (e) => {
-          this.actionError.set(consoleError(e));
-          this.busy.set(false);
-        },
-      });
+    this.api.upload(id, bucket, `${this.prefix()}${clean}/`, marker).subscribe({
+      next: () => {
+        this.busy.set(false);
+        this.load();
+      },
+      error: (e) => {
+        this.actionError.set(consoleError(e));
+        this.busy.set(false);
+      },
+    });
   }
 
   openShare(o: S3ObjectEntry): void {

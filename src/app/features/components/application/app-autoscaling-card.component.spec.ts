@@ -18,14 +18,21 @@ describe('the autoscaling card of an app', () => {
   let setAutoscaling: jasmine.Spy;
 
   const build = async (a: AppAutoscaling): Promise<void> => {
-    setAutoscaling = jasmine.createSpy('setAutoscaling').and.callFake(
-      async (_id: string, body: Partial<AppAutoscaling>) => ({ ...a, ...body, running: true }),
-    );
+    setAutoscaling = jasmine
+      .createSpy('setAutoscaling')
+      .and.callFake(async (_id: string, body: Partial<AppAutoscaling>) => ({
+        ...a,
+        ...body,
+        running: true,
+      }));
     await TestBed.configureTestingModule({
       imports: [AppAutoscalingCardComponent],
       providers: [
         { provide: AppRuntimeService, useValue: { autoscaling: async () => a, setAutoscaling } },
-        { provide: ToastService, useValue: { showSuccess: () => undefined, showError: () => undefined } },
+        {
+          provide: ToastService,
+          useValue: { showSuccess: () => undefined, showError: () => undefined },
+        },
       ],
     }).compileComponents();
     fixture = TestBed.createComponent(AppAutoscalingCardComponent);
@@ -54,7 +61,12 @@ describe('the autoscaling card of an app', () => {
     type('autoscaling-max', '4');
     find<HTMLButtonElement>('autoscaling-save')!.click();
     await fixture.whenStable();
-    expect(setAutoscaling).toHaveBeenCalledWith('a-1', { enabled: true, min: 1, max: 4, targetCPU: 80 });
+    expect(setAutoscaling).toHaveBeenCalledWith('a-1', {
+      enabled: true,
+      min: 1,
+      max: 4,
+      targetCPU: 80,
+    });
   });
 
   it('will not save a range that cannot grow', async () => {

@@ -23,7 +23,10 @@ describe('authInterceptor and a visitor asked to sign in', () => {
       providers: [
         provideHttpClient(withInterceptors([authInterceptor])),
         provideHttpClientTesting(),
-        { provide: AppConfigService, useValue: { authMode: 'oidc', apiBaseUrl: 'https://api.example.test' } },
+        {
+          provide: AppConfigService,
+          useValue: { authMode: 'oidc', apiBaseUrl: 'https://api.example.test' },
+        },
         { provide: AuthService, useValue: { getToken: () => 'token' } },
         { provide: LocalAuthService, useValue: {} },
         {
@@ -67,7 +70,10 @@ describe('authInterceptor and a visitor asked to sign in', () => {
     http.get('https://api.example.test/api/v1/auth/me').subscribe({ error: () => undefined });
     backend
       .expectOne('https://api.example.test/api/v1/auth/me')
-      .flush({ statusCode: 401, message: 'jwt expired' }, { status: 401, statusText: 'Unauthorized' });
+      .flush(
+        { statusCode: 401, message: 'jwt expired' },
+        { status: 401, statusText: 'Unauthorized' },
+      );
     backend.expectOne('https://api.example.test/api/v1/auth/me').flush({ ok: true });
 
     expect(renewed).toBe(1);
@@ -100,7 +106,10 @@ describe('authInterceptor when a visit is over', () => {
       providers: [
         provideHttpClient(withInterceptors([authInterceptor])),
         provideHttpClientTesting(),
-        { provide: AppConfigService, useValue: { authMode: 'oidc', apiBaseUrl: 'https://api.example.test' } },
+        {
+          provide: AppConfigService,
+          useValue: { authMode: 'oidc', apiBaseUrl: 'https://api.example.test' },
+        },
         { provide: AuthService, useValue: { getToken: () => 'token' } },
         { provide: LocalAuthService, useValue: {} },
         { provide: OidcAuthService, useValue: oidc },
@@ -116,10 +125,15 @@ describe('authInterceptor when a visit is over', () => {
 
   const refuse = (code: string) => {
     let seen = '';
-    http.get('https://api.example.test/api/v1/applications').subscribe({ error: (e) => (seen = e.error.code) });
+    http
+      .get('https://api.example.test/api/v1/applications')
+      .subscribe({ error: (e) => (seen = e.error.code) });
     backend
       .expectOne('https://api.example.test/api/v1/applications')
-      .flush({ statusCode: 401, code, message: 'over' }, { status: 401, statusText: 'Unauthorized' });
+      .flush(
+        { statusCode: 401, code, message: 'over' },
+        { status: 401, statusText: 'Unauthorized' },
+      );
     return seen;
   };
 
@@ -128,7 +142,10 @@ describe('authInterceptor when a visit is over', () => {
     flushMicrotasks();
     expect(oidc.dropVisit).toHaveBeenCalledTimes(1);
     expect(sandbox.forget).toHaveBeenCalledTimes(1);
-    expect(router.navigate).toHaveBeenCalledWith(['/try'], { queryParams: { ended: '1' }, replaceUrl: true });
+    expect(router.navigate).toHaveBeenCalledWith(['/try'], {
+      queryParams: { ended: '1' },
+      replaceUrl: true,
+    });
     expect(oidc.renewToken).not.toHaveBeenCalled();
     expect(oidc.redirectToLogin).not.toHaveBeenCalled();
     expect(oidc.login).not.toHaveBeenCalled();

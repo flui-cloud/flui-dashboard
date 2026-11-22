@@ -41,9 +41,7 @@ import { ObjectStoreConsoleStateService } from './object-store-console-state.ser
         <ng-icon name="lucideLink" class="h-4 w-4 text-muted-foreground" />
         Shared links
         @if (s.shares().length) {
-          <span class="font-normal text-muted-foreground"
-            >({{ s.shares().length }})</span
-          >
+          <span class="font-normal text-muted-foreground">({{ s.shares().length }})</span>
         }
       </button>
 
@@ -93,11 +91,7 @@ import { ObjectStoreConsoleStateService } from './object-store-console-state.ser
                       {{ rec.expiresAt | date: 'short' }}
                     </td>
                     <td class="px-3 py-2 text-xs text-muted-foreground">
-                      {{
-                        rec.lastAccessedAt
-                          ? (rec.lastAccessedAt | date: 'short')
-                          : '—'
-                      }}
+                      {{ rec.lastAccessedAt ? (rec.lastAccessedAt | date: 'short') : '—' }}
                     </td>
                     <td class="px-3 py-2 text-right">
                       @if (rec.status === 'active') {
@@ -169,9 +163,7 @@ import { ObjectStoreConsoleStateService } from './object-store-console-state.ser
           </div>
 
           @if (s.shareLink(); as link) {
-            <div
-              class="flex items-center gap-2 rounded-md border border-border bg-muted/40 p-2"
-            >
+            <div class="flex items-center gap-2 rounded-md border border-border bg-muted/40 p-2">
               <input
                 readonly
                 [value]="link"
@@ -190,8 +182,7 @@ import { ObjectStoreConsoleStateService } from './object-store-console-state.ser
               </button>
             </div>
             <p class="mt-2 text-xs text-muted-foreground">
-              Anyone with this link can open the file until it expires. No Flui
-              account needed.
+              Anyone with this link can open the file until it expires. No Flui account needed.
             </p>
           }
         </div>

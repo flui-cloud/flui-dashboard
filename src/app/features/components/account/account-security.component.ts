@@ -78,10 +78,18 @@ export function requirementMet(rule: string, password: string, minLength: number
           autocomplete="current-password"
           [(ngModel)]="confirmPassword"
         />
-        <button hlmBtn size="sm" variant="destructive" type="submit" [disabled]="busy() || !confirmPassword">
+        <button
+          hlmBtn
+          size="sm"
+          variant="destructive"
+          type="submit"
+          [disabled]="busy() || !confirmPassword"
+        >
           Remove
         </button>
-        <button hlmBtn size="sm" variant="ghost" type="button" (click)="cancelPending()">Cancel</button>
+        <button hlmBtn size="sm" variant="ghost" type="button" (click)="cancelPending()">
+          Cancel
+        </button>
       </form>
     </ng-template>
 
@@ -96,23 +104,48 @@ export function requirementMet(rule: string, password: string, minLength: number
       <div hlmCardContent class="pt-6 space-y-4">
         <h4 class="text-sm font-medium">Password</h4>
         @if (overview().security.password) {
-          <form class="space-y-3 max-w-md" (ngSubmit)="changePassword()" data-testid="password-form">
+          <form
+            class="space-y-3 max-w-md"
+            (ngSubmit)="changePassword()"
+            data-testid="password-form"
+          >
             <div class="space-y-1.5">
               <label hlmLabel for="current">Current password</label>
-              <input hlmInput id="current" name="current" type="password" class="w-full"
-                autocomplete="current-password" [(ngModel)]="current" />
+              <input
+                hlmInput
+                id="current"
+                name="current"
+                type="password"
+                class="w-full"
+                autocomplete="current-password"
+                [(ngModel)]="current"
+              />
             </div>
             <div class="space-y-1.5">
               <label hlmLabel for="next">New password</label>
-              <input hlmInput id="next" name="next" type="password" class="w-full"
-                autocomplete="new-password" [(ngModel)]="next" (ngModelChange)="typed.set($event)" />
+              <input
+                hlmInput
+                id="next"
+                name="next"
+                type="password"
+                class="w-full"
+                autocomplete="new-password"
+                [(ngModel)]="next"
+                (ngModelChange)="typed.set($event)"
+              />
             </div>
             @if (policy(); as p) {
               <ul class="space-y-0.5 text-xs" data-testid="requirements">
                 @for (r of p.requirements; track r.rule) {
-                  <li class="flex items-center gap-1.5"
-                    [class.text-green-600]="met(r.rule)" [class.text-muted-foreground]="!met(r.rule)">
-                    <ng-icon [name]="met(r.rule) ? 'lucideCheck' : 'lucideCircle'" class="h-3 w-3" />
+                  <li
+                    class="flex items-center gap-1.5"
+                    [class.text-green-600]="met(r.rule)"
+                    [class.text-muted-foreground]="!met(r.rule)"
+                  >
+                    <ng-icon
+                      [name]="met(r.rule) ? 'lucideCheck' : 'lucideCircle'"
+                      class="h-3 w-3"
+                    />
                     {{ r.label }}
                   </li>
                 }
@@ -120,16 +153,27 @@ export function requirementMet(rule: string, password: string, minLength: number
             }
             <div class="space-y-1.5">
               <label hlmLabel for="again">New password again</label>
-              <input hlmInput id="again" name="again" type="password" class="w-full"
-                autocomplete="new-password" [(ngModel)]="again" />
+              <input
+                hlmInput
+                id="again"
+                name="again"
+                type="password"
+                class="w-full"
+                autocomplete="new-password"
+                [(ngModel)]="again"
+              />
               @if (again && next !== again) {
                 <p class="text-xs text-destructive">The two passwords differ.</p>
               }
             </div>
-            <button hlmBtn type="submit" [disabled]="busy() || !canChangePassword()">Change password</button>
+            <button hlmBtn type="submit" [disabled]="busy() || !canChangePassword()">
+              Change password
+            </button>
           </form>
         } @else {
-          <p class="text-sm text-muted-foreground">You sign in with a linked account, without a password.</p>
+          <p class="text-sm text-muted-foreground">
+            You sign in with a linked account, without a password.
+          </p>
         }
       </div>
     </div>
@@ -138,7 +182,11 @@ export function requirementMet(rule: string, password: string, minLength: number
       <div hlmCardContent class="pt-6 space-y-3">
         <div class="flex items-center gap-2">
           <h4 class="text-sm font-medium">Authenticator app</h4>
-          <span hlmBadge [variant]="overview().security.totp ? 'default' : 'secondary'" class="text-xs">
+          <span
+            hlmBadge
+            [variant]="overview().security.totp ? 'default' : 'secondary'"
+            class="text-xs"
+          >
             {{ overview().security.totp ? 'On' : 'Off' }}
           </span>
         </div>
@@ -146,35 +194,88 @@ export function requirementMet(rule: string, password: string, minLength: number
           @if (pending()?.kind === 'totp') {
             <ng-container [ngTemplateOutlet]="confirm" />
           } @else {
-            <button hlmBtn size="sm" variant="outline" (click)="ask({ kind: 'totp', id: 'totp', label: 'authenticator app' })">
+            <button
+              hlmBtn
+              size="sm"
+              variant="outline"
+              (click)="ask({ kind: 'totp', id: 'totp', label: 'authenticator app' })"
+            >
               Remove
             </button>
           }
         } @else if (totp(); as reg) {
           <div class="space-y-2 max-w-md" data-testid="totp-setup">
-            <p class="text-sm">Scan the code with your authenticator app, or add the secret by hand, then type the code it shows.</p>
+            <p class="text-sm">
+              Scan the code with your authenticator app, or add the secret by hand, then type the
+              code it shows.
+            </p>
             @if (totpQr(); as qr) {
-              <img [src]="qr" alt="Authenticator app QR code" width="176" height="176"
-                class="rounded-md border border-border bg-white p-2" data-testid="totp-qr" />
+              <img
+                [src]="qr"
+                alt="Authenticator app QR code"
+                width="176"
+                height="176"
+                class="rounded-md border border-border bg-white p-2"
+                data-testid="totp-qr"
+              />
             }
-            <code class="block break-all rounded-md bg-muted px-3 py-2 text-sm" data-testid="totp-secret">{{ reg.secret }}</code>
-            <a class="text-xs text-primary underline-offset-4 hover:underline" [href]="reg.uri">Open in an authenticator app on this device</a>
+            <code
+              class="block break-all rounded-md bg-muted px-3 py-2 text-sm"
+              data-testid="totp-secret"
+              >{{ reg.secret }}</code
+            >
+            <a class="text-xs text-primary underline-offset-4 hover:underline" [href]="reg.uri"
+              >Open in an authenticator app on this device</a
+            >
             <form class="flex items-center gap-2" (ngSubmit)="verifyTotp()">
-              <input hlmInput name="code" class="w-32" inputmode="numeric" autocomplete="one-time-code"
-                placeholder="123456" [(ngModel)]="code" />
-              <button hlmBtn size="sm" type="submit" [disabled]="busy() || !code.trim()">Confirm</button>
-              <button hlmBtn size="sm" variant="ghost" type="button" (click)="totp.set(null)">Cancel</button>
+              <input
+                hlmInput
+                name="code"
+                class="w-32"
+                inputmode="numeric"
+                autocomplete="one-time-code"
+                placeholder="123456"
+                [(ngModel)]="code"
+              />
+              <button hlmBtn size="sm" type="submit" [disabled]="busy() || !code.trim()">
+                Confirm
+              </button>
+              <button hlmBtn size="sm" variant="ghost" type="button" (click)="totp.set(null)">
+                Cancel
+              </button>
             </form>
           </div>
         } @else if (askingTotpPassword()) {
-          <form class="flex flex-wrap items-center gap-2" (ngSubmit)="startTotp()" data-testid="totp-password-form">
-            <input hlmInput type="password" name="totpPassword" class="w-56" placeholder="Current password"
-              autocomplete="current-password" [(ngModel)]="totpPassword" />
-            <button hlmBtn size="sm" type="submit" [disabled]="busy() || !totpPassword">Continue</button>
-            <button hlmBtn size="sm" variant="ghost" type="button" (click)="cancelTotp()">Cancel</button>
+          <form
+            class="flex flex-wrap items-center gap-2"
+            (ngSubmit)="startTotp()"
+            data-testid="totp-password-form"
+          >
+            <input
+              hlmInput
+              type="password"
+              name="totpPassword"
+              class="w-56"
+              placeholder="Current password"
+              autocomplete="current-password"
+              [(ngModel)]="totpPassword"
+            />
+            <button hlmBtn size="sm" type="submit" [disabled]="busy() || !totpPassword">
+              Continue
+            </button>
+            <button hlmBtn size="sm" variant="ghost" type="button" (click)="cancelTotp()">
+              Cancel
+            </button>
           </form>
         } @else {
-          <button hlmBtn size="sm" variant="outline" [disabled]="busy()" (click)="beginTotp()" data-testid="totp-start">
+          <button
+            hlmBtn
+            size="sm"
+            variant="outline"
+            [disabled]="busy()"
+            (click)="beginTotp()"
+            data-testid="totp-start"
+          >
             Set up
           </button>
         }
@@ -188,11 +289,21 @@ export function requirementMet(rule: string, password: string, minLength: number
           @for (k of keys(); track k.id) {
             <div class="rounded-md border border-border px-3 py-2">
               <div class="flex items-center justify-between gap-2">
-                <span class="text-sm">{{ k.name || 'Unnamed' }}
-                  <span class="text-xs text-muted-foreground">{{ k.kind === 'passkey' ? 'Passkey' : 'Security key' }}</span>
+                <span class="text-sm"
+                  >{{ k.name || 'Unnamed' }}
+                  <span class="text-xs text-muted-foreground">{{
+                    k.kind === 'passkey' ? 'Passkey' : 'Security key'
+                  }}</span>
                 </span>
                 @if (pending()?.id !== k.id) {
-                  <button hlmBtn size="sm" variant="ghost" (click)="ask({ kind: k.kind, id: k.id, label: k.name || 'key' })">Remove</button>
+                  <button
+                    hlmBtn
+                    size="sm"
+                    variant="ghost"
+                    (click)="ask({ kind: k.kind, id: k.id, label: k.name || 'key' })"
+                  >
+                    Remove
+                  </button>
                 }
               </div>
               @if (pending()?.id === k.id) {
@@ -211,12 +322,30 @@ export function requirementMet(rule: string, password: string, minLength: number
           @for (l of overview().security.links; track l.idpId + l.externalUserId) {
             <div class="rounded-md border border-border px-3 py-2">
               <div class="flex items-center justify-between gap-2">
-                <span class="text-sm">{{ l.provider }}
-                  <span class="text-xs text-muted-foreground">{{ l.externalUserName || l.externalUserId }}</span>
+                <span class="text-sm"
+                  >{{ l.provider }}
+                  <span class="text-xs text-muted-foreground">{{
+                    l.externalUserName || l.externalUserId
+                  }}</span>
                 </span>
-                @if (overview().limits.canUnlink && pending()?.id !== l.idpId + ':' + l.externalUserId) {
-                  <button hlmBtn size="sm" variant="ghost" data-testid="unlink"
-                    (click)="ask({ kind: 'link', id: l.idpId + ':' + l.externalUserId, label: l.provider, idpId: l.idpId, externalUserId: l.externalUserId })">
+                @if (
+                  overview().limits.canUnlink && pending()?.id !== l.idpId + ':' + l.externalUserId
+                ) {
+                  <button
+                    hlmBtn
+                    size="sm"
+                    variant="ghost"
+                    data-testid="unlink"
+                    (click)="
+                      ask({
+                        kind: 'link',
+                        id: l.idpId + ':' + l.externalUserId,
+                        label: l.provider,
+                        idpId: l.idpId,
+                        externalUserId: l.externalUserId,
+                      })
+                    "
+                  >
                     Unlink
                   </button>
                 }
@@ -227,7 +356,9 @@ export function requirementMet(rule: string, password: string, minLength: number
             </div>
           }
           @if (overview().limits.guest) {
-            <p class="text-xs text-muted-foreground" data-testid="guest-link-note">Stays linked during the trial.</p>
+            <p class="text-xs text-muted-foreground" data-testid="guest-link-note">
+              Stays linked during the trial.
+            </p>
           }
         </div>
       </div>
@@ -278,7 +409,8 @@ export class AccountSecurityComponent implements OnInit {
 
   protected canChangePassword(): boolean {
     const p = this.policy();
-    const rulesMet = !p || p.requirements.every((r) => requirementMet(r.rule, this.next, p.minLength));
+    const rulesMet =
+      !p || p.requirements.every((r) => requirementMet(r.rule, this.next, p.minLength));
     return !!this.current && !!this.next && this.next === this.again && rulesMet;
   }
 
@@ -377,7 +509,12 @@ export class AccountSecurityComponent implements OnInit {
         break;
       case 'link':
         call = this.account.unlink(
-          { idpId: item.idpId, externalUserId: item.externalUserId, provider: item.label, externalUserName: '' },
+          {
+            idpId: item.idpId,
+            externalUserId: item.externalUserId,
+            provider: item.label,
+            externalUserName: '',
+          },
           pw,
         );
         break;

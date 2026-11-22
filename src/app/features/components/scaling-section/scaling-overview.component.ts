@@ -13,10 +13,7 @@ import { ScalingApiService } from '../../service/scaling-api.service';
 import { OverviewClusterTableComponent } from './overview-cluster-table.component';
 import { OverviewSituationComponent } from './overview-situation.component';
 import { loadedOf } from './section-reading';
-import {
-  SectionFailureComponent,
-  SectionSkeletonComponent,
-} from './section-states.component';
+import { SectionFailureComponent, SectionSkeletonComponent } from './section-states.component';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
 import {
   ScalingSurfaceInput,
@@ -40,12 +37,10 @@ import {
     <div class="mx-auto max-w-7xl space-y-4 p-6" data-testid="scaling-overview">
       <header class="flex flex-wrap items-start justify-between gap-3">
         <div class="space-y-1">
-          <h1 class="m-0 text-2xl font-semibold tracking-tight text-foreground">
-            Scaling
-          </h1>
+          <h1 class="m-0 text-2xl font-semibold tracking-tight text-foreground">Scaling</h1>
           <p class="m-0 max-w-prose text-sm text-muted-foreground">
-            Every cluster in the installation, whether or not it can scale
-            itself. Nothing is filtered out.
+            Every cluster in the installation, whether or not it can scale itself. Nothing is
+            filtered out.
           </p>
         </div>
       </header>
@@ -57,12 +52,7 @@ import {
           label="the situation across every cluster"
           testid="situation"
         />
-        <app-section-skeleton
-          variant="table"
-          [count]="5"
-          label="every cluster"
-          testid="clusters"
-        />
+        <app-section-skeleton variant="table" [count]="5" label="every cluster" testid="clusters" />
       } @else if (failed()) {
         <app-section-failure
           [message]="failed() ?? ''"
@@ -87,8 +77,7 @@ import {
           labelClass="text-[13px] font-medium text-foreground"
           testid="bounds-why"
         >
-          The floor is held now. The target is only approached. The ceiling is
-          as far as it may go.
+          The floor is held now. The target is only approached. The ceiling is as far as it may go.
         </app-explain>
 
         <app-explain
@@ -97,8 +86,8 @@ import {
           labelClass="text-[13px] font-medium text-foreground"
           testid="alarm-why"
         >
-          It clears when the group decides something else — never because time
-          passed. What it asks for is on the cluster's own screen.
+          It clears when the group decides something else — never because time passed. What it asks
+          for is on the cluster's own screen.
         </app-explain>
       </section>
     </div>

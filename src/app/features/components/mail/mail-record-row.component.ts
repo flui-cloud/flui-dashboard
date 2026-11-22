@@ -55,7 +55,9 @@ const PURPOSE_LABEL: Record<string, string> = {
         @if (priority(); as mx) {
           <div class="flex items-start gap-2">
             <span class="w-12 shrink-0 pt-0.5 text-[11px] text-muted-foreground">Priority</span>
-            <span class="min-w-0 flex-1 font-mono text-[11px] text-foreground">{{ mx.priority }}</span>
+            <span class="min-w-0 flex-1 font-mono text-[11px] text-foreground">{{
+              mx.priority
+            }}</span>
           </div>
           <div class="flex items-start gap-2">
             <span class="w-12 shrink-0 pt-0.5 text-[11px] text-muted-foreground">Value</span>

@@ -3,7 +3,8 @@ import { CatalogResponseDto } from '../../../core/api/model/models';
 import { catalogQueryFor } from '../application/add-workload-menu.component';
 import { catalogScopeOf, catalogSectionOf, inCatalogScope } from './catalog-scope';
 
-const entry = (appKind: string, appType: string) => ({ appKind, appType }) as unknown as CatalogResponseDto;
+const entry = (appKind: string, appType: string) =>
+  ({ appKind, appType }) as unknown as CatalogResponseDto;
 
 describe('catalog scope', () => {
   it('reads the list the Add menu sends, and the older kind parameter', () => {

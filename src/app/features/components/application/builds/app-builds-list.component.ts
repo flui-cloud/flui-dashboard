@@ -1,10 +1,16 @@
-import { Component, OnInit, OnDestroy, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  computed,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { Router, ActivatedRoute } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideHammer, lucideLoader, lucideRefreshCw, lucideTriangleAlert,
-} from '@ng-icons/lucide';
+import { lucideHammer, lucideLoader, lucideRefreshCw, lucideTriangleAlert } from '@ng-icons/lucide';
 import { firstValueFrom } from 'rxjs';
 import { AppBuildsService } from '../../../../core/api/api/appBuilds.service';
 import { AppBuildResponseDto } from '../../../../core/api/model/appBuildResponseDto';
@@ -31,14 +37,24 @@ import { AppBuildRowComponent } from './app-build-row.component';
           <p class="text-sm text-muted-foreground mt-0.5">Build history for this application</p>
         </div>
         <div class="flex items-center gap-2">
-          <button (click)="loadBuilds()" [disabled]="isLoading()"
-            class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors">
-            <ng-icon name="lucideRefreshCw" [class]="isLoading() ? 'animate-spin' : ''" class="h-4 w-4 mr-1.5" />
+          <button
+            (click)="loadBuilds()"
+            [disabled]="isLoading()"
+            class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ng-icon
+              name="lucideRefreshCw"
+              [class]="isLoading() ? 'animate-spin' : ''"
+              class="h-4 w-4 mr-1.5"
+            />
             Refresh
           </button>
           @if (canForceGhaBuild()) {
-            <button (click)="forceGhaBuild()" [disabled]="isForcingBuild()"
-              class="inline-flex items-center text-sm text-primary hover:text-primary/80 disabled:opacity-50 transition-colors">
+            <button
+              (click)="forceGhaBuild()"
+              [disabled]="isForcingBuild()"
+              class="inline-flex items-center text-sm text-primary hover:text-primary/80 disabled:opacity-50 transition-colors"
+            >
               @if (isForcingBuild()) {
                 <ng-icon name="lucideLoader" class="h-4 w-4 mr-1.5 animate-spin" />
               } @else {
@@ -52,7 +68,9 @@ import { AppBuildRowComponent } from './app-build-row.component';
 
       <!-- Error -->
       @if (error()) {
-        <div class="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300">
+        <div
+          class="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300"
+        >
           <ng-icon name="lucideTriangleAlert" class="h-4 w-4 flex-shrink-0" />
           {{ error() }}
         </div>
@@ -102,7 +120,8 @@ import { AppBuildRowComponent } from './app-build-row.component';
                   [deploying]="deployingBuildId() === build.id"
                   [currentAppImageRef]="currentAppImageRef()"
                   (view)="onView($event)"
-                  (deploy)="onDeploy($event)" />
+                  (deploy)="onDeploy($event)"
+                />
               }
             </tbody>
           </table>
@@ -141,7 +160,9 @@ export class AppBuildsListComponent implements OnInit, OnDestroy {
   private fastPollIntervalId: ReturnType<typeof setInterval> | null = null;
 
   private static readonly TERMINAL_STATES: ReadonlyArray<AppBuildResponseDto['status']> = [
-    'COMPLETED', 'FAILED', 'CANCELLED',
+    'COMPLETED',
+    'FAILED',
+    'CANCELLED',
   ];
 
   ngOnInit(): void {
@@ -183,7 +204,9 @@ export class AppBuildsListComponent implements OnInit, OnDestroy {
     this.isLoading.set(true);
     this.error.set(null);
     try {
-      const builds = await firstValueFrom(this.appBuildsApi.appBuildsControllerListBuilds(this.appId));
+      const builds = await firstValueFrom(
+        this.appBuildsApi.appBuildsControllerListBuilds(this.appId),
+      );
       this.builds.set(builds);
     } catch (e: any) {
       this.error.set(e?.error?.message ?? 'Failed to load builds');

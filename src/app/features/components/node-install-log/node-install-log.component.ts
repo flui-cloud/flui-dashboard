@@ -14,10 +14,7 @@ import {
 } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import {
-  InstallLogChunk,
-  InstallLogService,
-} from '../../service/install-log.service';
+import { InstallLogChunk, InstallLogService } from '../../service/install-log.service';
 
 const NEAR_END_PX = 24;
 
@@ -32,9 +29,7 @@ const NEAR_END_PX = 24;
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-      <span class="text-gray-300" data-testid="install-log-state">{{
-        stateLine()
-      }}</span>
+      <span class="text-gray-300" data-testid="install-log-state">{{ stateLine() }}</span>
       <span class="flex-1"></span>
       @if (!finished()) {
         <button
@@ -152,9 +147,7 @@ export class NodeInstallLogComponent implements OnInit {
   protected onScroll(): void {
     const el = this.box()?.nativeElement;
     if (!el) return;
-    this.stick.set(
-      el.scrollHeight - el.scrollTop - el.clientHeight < NEAR_END_PX,
-    );
+    this.stick.set(el.scrollHeight - el.scrollTop - el.clientHeight < NEAR_END_PX);
   }
 
   protected jumpToEnd(): void {
@@ -163,9 +156,7 @@ export class NodeInstallLogComponent implements OnInit {
   }
 
   protected save(): void {
-    const url = URL.createObjectURL(
-      new Blob([this.text()], { type: 'text/plain' }),
-    );
+    const url = URL.createObjectURL(new Blob([this.text()], { type: 'text/plain' }));
     const a = document.createElement('a');
     a.href = url;
     a.download = `install-${this.operationId()}.log`;
@@ -180,9 +171,7 @@ export class NodeInstallLogComponent implements OnInit {
     try {
       let chunk: InstallLogChunk;
       do {
-        chunk = await firstValueFrom(
-          this.logs.readChunk(this.operationId(), this.cursor),
-        );
+        chunk = await firstValueFrom(this.logs.readChunk(this.operationId(), this.cursor));
         if (!this.alive) return;
         if (chunk.text) this.append(chunk.text);
         this.cursor = chunk.next;
@@ -196,14 +185,10 @@ export class NodeInstallLogComponent implements OnInit {
       }
     } catch (err: unknown) {
       if (err instanceof HttpErrorResponse && err.status === 404) {
-        this.failed.set(
-          'The install log could not be read: the operation was not found.',
-        );
+        this.failed.set('The install log could not be read: the operation was not found.');
         retry = false;
       } else {
-        this.failed.set(
-          'The install log could not be read just now; trying again.',
-        );
+        this.failed.set('The install log could not be read just now; trying again.');
       }
     } finally {
       this.reading = false;

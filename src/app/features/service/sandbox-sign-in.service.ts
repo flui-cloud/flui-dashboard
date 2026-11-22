@@ -67,12 +67,12 @@ export class SandboxSignInService {
   }
 
   disconnect(provider: SignInProvider): Observable<SignInProviderStatus> {
-    return this.http.delete<SignInProviderStatus>(
-      `${this.base}/${encodeURIComponent(provider)}`,
-    );
+    return this.http.delete<SignInProviderStatus>(`${this.base}/${encodeURIComponent(provider)}`);
   }
 
   visitorStats(): Observable<VisitorStats> {
-    return this.http.get<VisitorStats>(`${this.appConfig.apiBaseUrl}/api/v1/sandbox/visitors/stats`);
+    return this.http.get<VisitorStats>(
+      `${this.appConfig.apiBaseUrl}/api/v1/sandbox/visitors/stats`,
+    );
   }
 }

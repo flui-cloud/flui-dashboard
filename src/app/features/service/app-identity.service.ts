@@ -42,26 +42,44 @@ export class AppIdentityService {
   }
 
   users(installId: string): Observable<IdentityUser[]> {
-    return this.http.get<IdentityUser[]>(this.api(`/identity/installs/${encodeURIComponent(installId)}/users`));
+    return this.http.get<IdentityUser[]>(
+      this.api(`/identity/installs/${encodeURIComponent(installId)}/users`),
+    );
   }
 
-  invite(installId: string, person: { email: string; givenName: string; familyName: string }): Observable<{ id: string }> {
-    return this.http.post<{ id: string }>(this.api(`/identity/installs/${encodeURIComponent(installId)}/users`), person);
+  invite(
+    installId: string,
+    person: { email: string; givenName: string; familyName: string },
+  ): Observable<{ id: string }> {
+    return this.http.post<{ id: string }>(
+      this.api(`/identity/installs/${encodeURIComponent(installId)}/users`),
+      person,
+    );
   }
 
   setBlocked(installId: string, userId: string, blocked: boolean): Observable<void> {
     return this.http.post<void>(
-      this.api(`/identity/installs/${encodeURIComponent(installId)}/users/${encodeURIComponent(userId)}/${blocked ? 'block' : 'unblock'}`),
+      this.api(
+        `/identity/installs/${encodeURIComponent(installId)}/users/${encodeURIComponent(userId)}/${blocked ? 'block' : 'unblock'}`,
+      ),
       {},
     );
   }
 
   link(appId: string): Observable<AppIdentityLink | null> {
-    return this.http.get<AppIdentityLink | null>(this.api(`/applications/${encodeURIComponent(appId)}/identity`));
+    return this.http.get<AppIdentityLink | null>(
+      this.api(`/applications/${encodeURIComponent(appId)}/identity`),
+    );
   }
 
-  connect(appId: string, body: { identityInstallId: string; redirectPaths: string[] }): Observable<AppIdentityLink> {
-    return this.http.put<AppIdentityLink>(this.api(`/applications/${encodeURIComponent(appId)}/identity`), body);
+  connect(
+    appId: string,
+    body: { identityInstallId: string; redirectPaths: string[] },
+  ): Observable<AppIdentityLink> {
+    return this.http.put<AppIdentityLink>(
+      this.api(`/applications/${encodeURIComponent(appId)}/identity`),
+      body,
+    );
   }
 
   disconnect(appId: string): Observable<void> {

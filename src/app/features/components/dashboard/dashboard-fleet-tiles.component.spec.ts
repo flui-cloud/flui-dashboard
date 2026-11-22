@@ -4,7 +4,15 @@ import { FleetMetrics, FleetReadState, FleetService } from '../../service/fleet.
 import { DashboardFleetTilesComponent } from './dashboard-fleet-tiles.component';
 
 const now = new Date().toISOString();
-const point = { timestamp: now, cpuPercent: 13.7, memoryPercent: 45, diskPercent: 12.2, networkInBytesPerSecond: 7168, networkOutBytesPerSecond: 60416, nodes: 2 };
+const point = {
+  timestamp: now,
+  cpuPercent: 13.7,
+  memoryPercent: 45,
+  diskPercent: 12.2,
+  networkInBytesPerSecond: 7168,
+  networkOutBytesPerSecond: 60416,
+  nodes: 2,
+};
 
 const METRICS: FleetMetrics = {
   window: '3h',
@@ -12,7 +20,13 @@ const METRICS: FleetMetrics = {
   rangeStart: now,
   rangeEnd: now,
   queriedAt: now,
-  fleet: { clustersTotal: 2, clustersReporting: 2, nodesReporting: 2, current: point, series: [point, point] },
+  fleet: {
+    clustersTotal: 2,
+    clustersReporting: 2,
+    nodesReporting: 2,
+    current: point,
+    series: [point, point],
+  },
   clusters: [],
 };
 
@@ -22,14 +36,17 @@ describe('DashboardFleetTilesComponent', () => {
   const metrics = signal<FleetMetrics | null>(METRICS);
   const loadMetrics = jasmine.createSpy('loadMetrics');
 
-  const q = (id: string): HTMLElement | null => fixture.nativeElement.querySelector(`[data-testid="${id}"]`);
+  const q = (id: string): HTMLElement | null =>
+    fixture.nativeElement.querySelector(`[data-testid="${id}"]`);
 
   beforeEach(async () => {
     state.set('ready');
     metrics.set(METRICS);
     await TestBed.configureTestingModule({
       imports: [DashboardFleetTilesComponent],
-      providers: [{ provide: FleetService, useValue: { metrics, metricsState: state, loadMetrics } }],
+      providers: [
+        { provide: FleetService, useValue: { metrics, metricsState: state, loadMetrics } },
+      ],
     }).compileComponents();
     fixture = TestBed.createComponent(DashboardFleetTilesComponent);
     fixture.detectChanges();

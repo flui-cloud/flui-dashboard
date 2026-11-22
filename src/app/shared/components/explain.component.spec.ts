@@ -53,8 +53,6 @@ describe('a label with its explanation folded behind it', () => {
     fixture.detectChanges();
 
     expect(toggle.getAttribute('aria-expanded')).toBe('true');
-    expect(toggle.getAttribute('aria-controls')).toBe(
-      find('nature-help')!.getAttribute('id'),
-    );
+    expect(toggle.getAttribute('aria-controls')).toBe(find('nature-help')!.getAttribute('id'));
   });
 });

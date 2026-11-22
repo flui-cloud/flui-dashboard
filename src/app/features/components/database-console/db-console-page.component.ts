@@ -5,7 +5,7 @@ import {
   inject,
   signal,
   viewChild,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -24,10 +24,7 @@ import {
 import { DbConsoleService } from '../../service/db-console.service';
 import { ApplicationService } from '../../service/application.service';
 import { accessOf } from '../../model/app-access';
-import {
-  AssistFn,
-  DbAssistantChatComponent,
-} from './db-assistant-chat.component';
+import { AssistFn, DbAssistantChatComponent } from './db-assistant-chat.component';
 import { SchemaTree, SqlQueryResult } from '../../model/db-console.models';
 import { DbEngine, engineDescriptor } from '../../model/db-engine';
 import { DbSchemaTreeComponent } from './db-schema-tree.component';
@@ -88,7 +85,9 @@ type ConnState = 'connecting' | 'connected' | 'error';
               </span>
             }
             @case ('connected') {
-              <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300">
+              <span
+                class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300"
+              >
                 Connected
               </span>
             }
@@ -154,7 +153,9 @@ type ConnState = 'connecting' | 'connected' | 'error';
             </button>
 
             @if (reader()) {
-              <span class="text-sm text-muted-foreground" data-testid="db-console-reader">Read-only · the showcase's own data</span>
+              <span class="text-sm text-muted-foreground" data-testid="db-console-reader"
+                >Read-only · the showcase's own data</span
+              >
             } @else {
               <label class="flex items-center gap-2 text-sm">
                 <input type="checkbox" [(ngModel)]="readOnly" /> Read-only
@@ -221,16 +222,14 @@ export class DbConsolePageComponent implements OnInit {
   private readonly applications = inject(ApplicationService);
 
   protected readonly isMac =
-    typeof navigator !== 'undefined' &&
-    /Mac|iP(hone|ad|od)/.test(navigator.userAgent || '');
+    typeof navigator !== 'undefined' && /Mac|iP(hone|ad|od)/.test(navigator.userAgent || '');
   protected readonly runShortcut = this.isMac ? '⌘↵' : 'Ctrl+↵';
 
   readonly editor = viewChild(SqlEditorComponent);
 
-  readonly applicationId = toSignal(
-    this.route.paramMap.pipe(map((p) => p.get('applicationId'))),
-    { initialValue: this.route.snapshot.paramMap.get('applicationId') },
-  );
+  readonly applicationId = toSignal(this.route.paramMap.pipe(map((p) => p.get('applicationId'))), {
+    initialValue: this.route.snapshot.paramMap.get('applicationId'),
+  });
 
   readonly conn = signal<ConnState>('connecting');
   readonly connError = signal<string | null>(null);

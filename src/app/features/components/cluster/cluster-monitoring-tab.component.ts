@@ -30,9 +30,13 @@ import { ClusterAppsTableComponent } from './cluster-apps-table.component';
   providers: [provideIcons({ lucideRefreshCw, lucideActivity })],
   templateUrl: './cluster-monitoring-tab.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  styles: [`
-    :host { display: block; }
-  `],
+  styles: [
+    `
+      :host {
+        display: block;
+      }
+    `,
+  ],
 })
 export class ClusterMonitoringTabComponent implements OnInit, OnDestroy {
   readonly clusterService = inject(ClusterService);
@@ -55,7 +59,6 @@ export class ClusterMonitoringTabComponent implements OnInit, OnDestroy {
     { value: '6h', label: '6h' },
     { value: '1d', label: '24h' },
   ];
-
 
   /** Keeps the stored window reaching the present; the live figures poll separately. */
   private historyTimer?: number;
@@ -103,7 +106,7 @@ export class ClusterMonitoringTabComponent implements OnInit, OnDestroy {
     this.clearHistoryRefresh();
     this.historyTimer = globalThis.window.setInterval(
       () => void this.loadHistory(),
-      this.history.refreshIntervalMs()
+      this.history.refreshIntervalMs(),
     );
   }
 

@@ -1,17 +1,30 @@
 import { Component, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
-  lucideExternalLink, lucideLock, lucideLockOpen,
-  lucideAlertTriangle, lucideCopy, lucideCheck, lucideShieldCheck, lucideShieldAlert,
-  lucideFileText, lucideX, lucideDownload, lucidePencil, lucideTrash2, lucideRefreshCw
+  lucideExternalLink,
+  lucideLock,
+  lucideLockOpen,
+  lucideAlertTriangle,
+  lucideCopy,
+  lucideCheck,
+  lucideShieldCheck,
+  lucideShieldAlert,
+  lucideFileText,
+  lucideX,
+  lucideDownload,
+  lucidePencil,
+  lucideTrash2,
+  lucideRefreshCw,
 } from '@ng-icons/lucide';
 import { AppEndpointResponseDto } from '../../../core/api/model/appEndpointResponseDto';
 import { CanDirective } from '../../../core/directives/can.directive';
 import {
   buildEndpointUrl,
-  getReconciliationBadgeColor, getReconciliationBadgeLabel,
-  getCertificateBadgeColor, getCertificateBadgeLabel,
-  isEndpointManaged
+  getReconciliationBadgeColor,
+  getReconciliationBadgeLabel,
+  getCertificateBadgeColor,
+  getCertificateBadgeLabel,
+  isEndpointManaged,
 } from '../../model/dns.models';
 
 interface ErrorCause {
@@ -40,11 +53,24 @@ interface CertificatePhase {
   selector: 'app-dns-endpoints-list',
   standalone: true,
   imports: [NgIconComponent, CanDirective],
-  providers: [provideIcons({
-    lucideExternalLink, lucideLock, lucideLockOpen,
-    lucideAlertTriangle, lucideCopy, lucideCheck, lucideShieldCheck, lucideShieldAlert,
-    lucideFileText, lucideX, lucideDownload, lucidePencil, lucideTrash2, lucideRefreshCw
-  })],
+  providers: [
+    provideIcons({
+      lucideExternalLink,
+      lucideLock,
+      lucideLockOpen,
+      lucideAlertTriangle,
+      lucideCopy,
+      lucideCheck,
+      lucideShieldCheck,
+      lucideShieldAlert,
+      lucideFileText,
+      lucideX,
+      lucideDownload,
+      lucidePencil,
+      lucideTrash2,
+      lucideRefreshCw,
+    }),
+  ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (endpoints().length > 0) {
@@ -52,12 +78,18 @@ interface CertificatePhase {
         @for (ep of endpoints(); track ep.id) {
           <div class="rounded-lg border border-gray-200 dark:border-gray-600 overflow-hidden">
             <!-- Main row -->
-            <div class="flex items-center justify-between gap-4 px-4 py-3 bg-gray-50 dark:bg-gray-700/50">
+            <div
+              class="flex items-center justify-between gap-4 px-4 py-3 bg-gray-50 dark:bg-gray-700/50"
+            >
               <div class="flex items-center gap-3 min-w-0">
                 <ng-icon
                   [name]="ep.tlsEnabled ? 'lucideLock' : 'lucideLockOpen'"
                   class="h-4 w-4 flex-shrink-0"
-                  [class]="ep.tlsEnabled ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'"
+                  [class]="
+                    ep.tlsEnabled
+                      ? 'text-green-600 dark:text-green-400'
+                      : 'text-gray-400 dark:text-gray-500'
+                  "
                 />
                 <div class="min-w-0">
                   <a
@@ -75,9 +107,14 @@ interface CertificatePhase {
                     @if (phase.step !== 'issued' && phase.step !== 'none' && phase.detail) {
                       <span
                         class="block text-xs"
-                        [class]="phase.step === 'failed' ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'"
+                        [class]="
+                          phase.step === 'failed'
+                            ? 'text-red-600 dark:text-red-400'
+                            : 'text-gray-500 dark:text-gray-400'
+                        "
                         data-testid="endpoint-cert-detail"
-                      >{{ phase.detail }}</span>
+                        >{{ phase.detail }}</span
+                      >
                     }
                   }
                 </div>
@@ -111,14 +148,18 @@ interface CertificatePhase {
                       <ng-icon name="lucideRefreshCw" class="h-3 w-3 animate-spin" />
                     } @else {
                       <ng-icon
-                        [name]="isCertOk(ep.certificateStatus) ? 'lucideShieldCheck' : 'lucideShieldAlert'"
+                        [name]="
+                          isCertOk(ep.certificateStatus) ? 'lucideShieldCheck' : 'lucideShieldAlert'
+                        "
                         class="h-3 w-3"
                       />
                     }
                     {{ certBadgeLabel(ep) }}
                   </span>
                   @if (ep.certificateProvider === 'lets_encrypt_staging') {
-                    <span class="text-xs px-2 py-0.5 rounded font-medium bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
+                    <span
+                      class="text-xs px-2 py-0.5 rounded font-medium bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                    >
                       Staging
                     </span>
                   }
@@ -139,12 +180,18 @@ interface CertificatePhase {
                     (click)="openError(ep)"
                     title="View details"
                     class="p-1 rounded transition-colors"
-                    [class]="ep.errorMessage || phaseOf(ep)?.step === 'failed' ? 'text-red-400 hover:text-red-600 dark:hover:text-red-300' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'"
+                    [class]="
+                      ep.errorMessage || phaseOf(ep)?.step === 'failed'
+                        ? 'text-red-400 hover:text-red-600 dark:hover:text-red-300'
+                        : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                    "
                   >
                     <ng-icon name="lucideFileText" class="h-3.5 w-3.5" />
                   </button>
                 }
-                <span class="text-xs px-2 py-0.5 rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 font-mono">
+                <span
+                  class="text-xs px-2 py-0.5 rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 font-mono"
+                >
                   {{ ep.dnsRecordType }}
                 </span>
                 <a
@@ -156,27 +203,31 @@ interface CertificatePhase {
                   <ng-icon name="lucideExternalLink" class="h-3.5 w-3.5" />
                 </a>
                 @if (writable()) {
-                <!-- Divider + inline action buttons -->
-                <span class="w-px h-3.5 bg-gray-300 dark:bg-gray-600"></span>
-                <button
-                  type="button"
-                  (click)="editAction.emit(ep)"
-                  class="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                  title="Edit endpoint"
-                >
-                  <ng-icon name="lucidePencil" class="h-3 w-3" />
-                  Edit
-                </button>
-                <button
-                  type="button"
-                  (click)="reconcileAction.emit(ep)"
-                  [disabled]="reconcilingId() === ep.id"
-                  class="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors disabled:opacity-50"
-                  title="Reconcile endpoint"
-                >
-                  <ng-icon name="lucideRefreshCw" class="h-3 w-3" [class.animate-spin]="reconcilingId() === ep.id" />
-                  Sync
-                </button>
+                  <!-- Divider + inline action buttons -->
+                  <span class="w-px h-3.5 bg-gray-300 dark:bg-gray-600"></span>
+                  <button
+                    type="button"
+                    (click)="editAction.emit(ep)"
+                    class="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    title="Edit endpoint"
+                  >
+                    <ng-icon name="lucidePencil" class="h-3 w-3" />
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    (click)="reconcileAction.emit(ep)"
+                    [disabled]="reconcilingId() === ep.id"
+                    class="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors disabled:opacity-50"
+                    title="Reconcile endpoint"
+                  >
+                    <ng-icon
+                      name="lucideRefreshCw"
+                      class="h-3 w-3"
+                      [class.animate-spin]="reconcilingId() === ep.id"
+                    />
+                    Sync
+                  </button>
                 }
                 @if (writable()) {
                   <button
@@ -196,9 +247,14 @@ interface CertificatePhase {
 
             <!-- BYOD DNS instruction row -->
             @if (!isManaged(ep) && ep.dnsRecordValue) {
-              <div class="flex items-center justify-between gap-3 px-3 py-2 bg-amber-50 dark:bg-amber-900/15 border-t border-amber-200 dark:border-amber-800">
+              <div
+                class="flex items-center justify-between gap-3 px-3 py-2 bg-amber-50 dark:bg-amber-900/15 border-t border-amber-200 dark:border-amber-800"
+              >
                 <div class="flex items-center gap-2 min-w-0">
-                  <ng-icon name="lucideAlertTriangle" class="h-3.5 w-3.5 flex-shrink-0 text-amber-500 dark:text-amber-400" />
+                  <ng-icon
+                    name="lucideAlertTriangle"
+                    class="h-3.5 w-3.5 flex-shrink-0 text-amber-500 dark:text-amber-400"
+                  />
                   <p class="text-xs text-amber-800 dark:text-amber-300">
                     Create an <strong>A record</strong> pointing
                     <span class="font-mono">{{ ep.fqdn }}</span>
@@ -213,7 +269,10 @@ interface CertificatePhase {
                   [title]="isCopied(ep.id) ? 'Copied!' : 'Copy IP'"
                   class="flex-shrink-0 p-1 rounded text-amber-500 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-200 transition-colors"
                 >
-                  <ng-icon [name]="isCopied(ep.id) ? 'lucideCheck' : 'lucideCopy'" class="h-3.5 w-3.5" />
+                  <ng-icon
+                    [name]="isCopied(ep.id) ? 'lucideCheck' : 'lucideCopy'"
+                    class="h-3.5 w-3.5"
+                  />
                 </button>
               </div>
             }
@@ -221,7 +280,9 @@ interface CertificatePhase {
         }
       </div>
     } @else {
-      <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-4">No endpoints configured</p>
+      <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+        No endpoints configured
+      </p>
     }
 
     <!-- Error detail modal -->
@@ -235,12 +296,18 @@ interface CertificatePhase {
           (click)="$event.stopPropagation()"
         >
           <!-- Header -->
-          <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+          <div
+            class="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex-shrink-0"
+          >
             <div class="flex items-center gap-2">
               <ng-icon name="lucideFileText" class="h-4 w-4 text-red-500" />
-              <span class="text-sm font-semibold text-gray-900 dark:text-white">{{ activeError()!.title }}</span>
+              <span class="text-sm font-semibold text-gray-900 dark:text-white">{{
+                activeError()!.title
+              }}</span>
               @if (activeError()!.httpCode) {
-                <span class="text-xs px-2 py-0.5 rounded bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 font-mono">
+                <span
+                  class="text-xs px-2 py-0.5 rounded bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 font-mono"
+                >
                   HTTP {{ activeError()!.httpCode }}
                 </span>
               }
@@ -272,18 +339,29 @@ interface CertificatePhase {
             @if (activeError()!.certMessage) {
               <div>
                 <div class="flex items-center justify-between mb-1.5">
-                  <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Certificate Error</p>
+                  <p class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                    Certificate Error
+                  </p>
                   <button
                     type="button"
                     (click)="copyCertMessage(activeError()!.certMessage!)"
                     [title]="certMessageCopied() ? 'Copied!' : 'Copy message'"
                     class="p-1 rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
                   >
-                    <ng-icon [name]="certMessageCopied() ? 'lucideCheck' : 'lucideCopy'" class="h-3.5 w-3.5" />
+                    <ng-icon
+                      [name]="certMessageCopied() ? 'lucideCheck' : 'lucideCopy'"
+                      class="h-3.5 w-3.5"
+                    />
                   </button>
                 </div>
-                <div class="rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/15 px-3 py-2">
-                  <p class="text-xs text-red-700 dark:text-red-300 break-all font-mono leading-relaxed">{{ activeError()!.certMessage }}</p>
+                <div
+                  class="rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/15 px-3 py-2"
+                >
+                  <p
+                    class="text-xs text-red-700 dark:text-red-300 break-all font-mono leading-relaxed"
+                  >
+                    {{ activeError()!.certMessage }}
+                  </p>
                 </div>
               </div>
             }
@@ -292,7 +370,9 @@ interface CertificatePhase {
             @if (activeError()!.k8sMessage) {
               <div>
                 <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Message</p>
-                <p class="text-sm text-gray-800 dark:text-gray-200">{{ activeError()!.k8sMessage }}</p>
+                <p class="text-sm text-gray-800 dark:text-gray-200">
+                  {{ activeError()!.k8sMessage }}
+                </p>
               </div>
             }
 
@@ -302,11 +382,18 @@ interface CertificatePhase {
                 <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Causes</p>
                 <div class="space-y-2">
                   @for (cause of activeError()!.causes; track $index) {
-                    <div class="rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/15 px-3 py-2 space-y-0.5">
+                    <div
+                      class="rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/15 px-3 py-2 space-y-0.5"
+                    >
                       <div class="flex items-center gap-2">
-                        <span class="text-xs font-mono font-medium text-red-700 dark:text-red-400">{{ cause.reason }}</span>
+                        <span
+                          class="text-xs font-mono font-medium text-red-700 dark:text-red-400"
+                          >{{ cause.reason }}</span
+                        >
                         @if (cause.field) {
-                          <span class="text-xs font-mono text-gray-500 dark:text-gray-400">· {{ cause.field }}</span>
+                          <span class="text-xs font-mono text-gray-500 dark:text-gray-400"
+                            >· {{ cause.field }}</span
+                          >
                         }
                       </div>
                       <p class="text-xs text-gray-700 dark:text-gray-300">{{ cause.message }}</p>
@@ -317,8 +404,14 @@ interface CertificatePhase {
             }
 
             <!-- Fallback: raw -->
-            @if (!activeError()!.certMessage && !activeError()!.k8sMessage && activeError()!.causes.length === 0) {
-              <pre class="text-xs font-mono bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded p-3 overflow-x-auto whitespace-pre-wrap break-all text-gray-700 dark:text-gray-300">{{ activeError()!.rawJson }}</pre>
+            @if (
+              !activeError()!.certMessage &&
+              !activeError()!.k8sMessage &&
+              activeError()!.causes.length === 0
+            ) {
+              <pre
+                class="text-xs font-mono bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded p-3 overflow-x-auto whitespace-pre-wrap break-all text-gray-700 dark:text-gray-300"
+                >{{ activeError()!.rawJson }}</pre>
             }
           </div>
         </div>
@@ -366,9 +459,13 @@ export class DnsEndpointsListComponent {
 
   copyDnsValue(id: string, value: string): void {
     navigator.clipboard.writeText(value).then(() => {
-      this.copiedIds.update(s => new Set([...s, id]));
+      this.copiedIds.update((s) => new Set([...s, id]));
       setTimeout(() => {
-        this.copiedIds.update(s => { const n = new Set(s); n.delete(id); return n; });
+        this.copiedIds.update((s) => {
+          const n = new Set(s);
+          n.delete(id);
+          return n;
+        });
       }, 2000);
     });
   }
@@ -465,11 +562,16 @@ export class DnsEndpointsListComponent {
 
   certBadgeLabel(ep: AppEndpointResponseDto): string {
     const phase = this.phaseOf(ep);
-    return phase && phase.step !== 'issued' ? phase.label : this.getCertLabel(ep.certificateStatus ?? null);
+    return phase && phase.step !== 'issued'
+      ? phase.label
+      : this.getCertLabel(ep.certificateStatus ?? null);
   }
 
   phaseOf(ep: AppEndpointResponseDto): CertificatePhase | null {
-    return (ep as AppEndpointResponseDto & { certificatePhase?: CertificatePhase }).certificatePhase ?? null;
+    return (
+      (ep as AppEndpointResponseDto & { certificatePhase?: CertificatePhase }).certificatePhase ??
+      null
+    );
   }
 
   /** The raw message, kept behind the details button; Flui's own sentences are shown in the row. */
@@ -490,21 +592,26 @@ export class DnsEndpointsListComponent {
     return status === 'valid';
   }
 
-  getModeBadgeLabel(hostnameMode: string | undefined | null, certChallenge: string | undefined | null): string {
+  getModeBadgeLabel(
+    hostnameMode: string | undefined | null,
+    certChallenge: string | undefined | null,
+  ): string {
     if (hostnameMode === 'ip') return 'Test address';
     if (certChallenge === 'dns-01') return 'Domain · Wildcard';
     return 'Domain';
   }
 
   getModeBadgeClass(hostnameMode: string | undefined | null): string {
-    return hostnameMode === 'ip'
-      ? this.colorToClass('gray')
-      : this.colorToClass('blue');
+    return hostnameMode === 'ip' ? this.colorToClass('gray') : this.colorToClass('blue');
   }
 
-  getModeBadgeTitle(hostnameMode: string | undefined | null, certChallenge: string | undefined | null): string {
+  getModeBadgeTitle(
+    hostnameMode: string | undefined | null,
+    certChallenge: string | undefined | null,
+  ): string {
     if (hostnameMode === 'ip') return 'Auto-generated test address — works without DNS setup';
-    if (certChallenge === 'dns-01') return 'Custom domain with a wildcard certificate covering the cluster zone';
+    if (certChallenge === 'dns-01')
+      return 'Custom domain with a wildcard certificate covering the cluster zone';
     return 'Custom domain with a single-domain certificate';
   }
 

@@ -94,7 +94,9 @@ interface PlanAnswer {
             data-testid="availability-three-locations"
           >
             <span class="font-medium">High availability · three locations</span>
-            <span class="mt-1 text-xs text-muted-foreground">Keeps running if a location goes down</span>
+            <span class="mt-1 text-xs text-muted-foreground"
+              >Keeps running if a location goes down</span
+            >
           </button>
         </div>
 
@@ -131,21 +133,36 @@ interface PlanAnswer {
               </div>
             } @else if (plan(); as p) {
               @if (p.possible) {
-                <ul class="rounded-lg border border-border divide-y divide-border text-sm" data-testid="ha-plan">
+                <ul
+                  class="rounded-lg border border-border divide-y divide-border text-sm"
+                  data-testid="ha-plan"
+                >
                   @for (server of p.servers; track server.zone) {
-                    <li class="grid grid-cols-3 items-center gap-3 px-3 py-2" data-testid="ha-plan-server">
+                    <li
+                      class="grid grid-cols-3 items-center gap-3 px-3 py-2"
+                      data-testid="ha-plan-server"
+                    >
                       <span class="flex items-center gap-2">
                         <span class="font-mono">{{ server.zone }}</span>
                         @if (server.first) {
-                          <span class="text-[11px] px-1.5 py-0.5 rounded bg-primary/10 text-primary" data-testid="ha-plan-first">first</span>
+                          <span
+                            class="text-[11px] px-1.5 py-0.5 rounded bg-primary/10 text-primary"
+                            data-testid="ha-plan-first"
+                            >first</span
+                          >
                         }
                       </span>
-                      <span class="text-muted-foreground">{{ server.role === 'data' ? 'copies of data' : 'votes' }}</span>
+                      <span class="text-muted-foreground">{{
+                        server.role === 'data' ? 'copies of data' : 'votes'
+                      }}</span>
                       <span class="font-mono text-right">{{ server.shape }}</span>
                     </li>
                   }
                   @for (zone of p.later; track zone) {
-                    <li class="grid grid-cols-3 items-center gap-3 px-3 py-2" data-testid="ha-plan-later">
+                    <li
+                      class="grid grid-cols-3 items-center gap-3 px-3 py-2"
+                      data-testid="ha-plan-later"
+                    >
                       <span class="font-mono">{{ zone }}</span>
                       <span class="col-span-2 text-amber-600 dark:text-amber-400">added later</span>
                     </li>
@@ -153,7 +170,8 @@ interface PlanAnswer {
                 </ul>
                 @if (p.measured === false) {
                   <p class="text-xs text-muted-foreground" data-testid="ha-plan-unmeasured">
-                    The provider declares these as close zones of one region; Flui has not measured them yet.
+                    The provider declares these as close zones of one region; Flui has not measured
+                    them yet.
                   </p>
                 }
                 @if (monthlyCost(); as cost) {
@@ -162,7 +180,11 @@ interface PlanAnswer {
                   </p>
                 }
               } @else {
-                <p class="text-sm text-red-600 dark:text-red-400" role="alert" data-testid="ha-refusal">
+                <p
+                  class="text-sm text-red-600 dark:text-red-400"
+                  role="alert"
+                  data-testid="ha-refusal"
+                >
                   {{ p.refusal }}
                 </p>
               }
@@ -190,8 +212,8 @@ interface PlanAnswer {
               </button>
               @if (showWhy()) {
                 <p class="mt-1 text-xs text-muted-foreground leading-relaxed">
-                  One server in each location, joined one at a time. Each location marked copies
-                  of data keeps one copy of your data, any other only votes, so the cluster keeps
+                  One server in each location, joined one at a time. Each location marked copies of
+                  data keeps one copy of your data, any other only votes, so the cluster keeps
                   working when one location is lost. Add more servers once it is ready.
                 </p>
               }
@@ -258,9 +280,7 @@ export class ClusterAvailabilityChoiceComponent {
 
   private readonly answerHere = computed(() => {
     const answer = this.answer();
-    return answer?.provider === this.provider() && answer?.region === this.region()
-      ? answer
-      : null;
+    return answer?.provider === this.provider() && answer?.region === this.region() ? answer : null;
   });
 
   readonly loading = computed(() => {
@@ -358,12 +378,14 @@ export class ClusterAvailabilityChoiceComponent {
   }
 
   cardClass(active: boolean): string {
-    const base = 'flex flex-col items-start rounded-lg border p-4 text-left transition w-full hover:bg-accent/40';
+    const base =
+      'flex flex-col items-start rounded-lg border p-4 text-left transition w-full hover:bg-accent/40';
     return active ? `${base} border-primary bg-primary/5` : `${base} border-border`;
   }
 
   chipClass(active: boolean): string {
-    const base = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-mono transition-colors';
+    const base =
+      'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-mono transition-colors';
     return active
       ? `${base} border-primary bg-primary/10 text-foreground`
       : `${base} border-border text-muted-foreground hover:text-foreground hover:border-foreground/30`;

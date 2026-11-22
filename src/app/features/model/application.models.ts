@@ -82,8 +82,7 @@ export interface AppGroupView {
 
 export function getGroupKind(group: AppGroupView): ApplicationKind {
   const primary =
-    group.components.find((c) => c.id === group.primaryComponentId) ??
-    group.components[0];
+    group.components.find((c) => c.id === group.primaryComponentId) ?? group.components[0];
   return primary?.kind ?? ApplicationKindEnum.Application;
 }
 
@@ -142,8 +141,18 @@ export function getKindLabel(kind: ApplicationKind): string {
 }
 
 const DB_IMAGE_PREFIXES = [
-  'postgres', 'postgresql', 'mysql', 'mariadb', 'redis', 'valkey',
-  'mongo', 'mongodb', 'ferretdb', 'clickhouse', 'cockroachdb', 'cassandra',
+  'postgres',
+  'postgresql',
+  'mysql',
+  'mariadb',
+  'redis',
+  'valkey',
+  'mongo',
+  'mongodb',
+  'ferretdb',
+  'clickhouse',
+  'cockroachdb',
+  'cassandra',
 ];
 
 export function suggestKindFromImageRef(imageRef: string | undefined): ApplicationKind {
@@ -319,7 +328,8 @@ export interface FrameworkDetectionResult {
   framework: Framework;
   version?: string;
   confidence: number;
-  detectedFrom: 'package.json' | 'Dockerfile' | '.flui.yaml' | 'composer.json' | 'requirements.txt' | 'manual';
+  detectedFrom:
+    'package.json' | 'Dockerfile' | '.flui.yaml' | 'composer.json' | 'requirements.txt' | 'manual';
   buildCommand?: string;
   startCommand?: string;
   defaultPort?: number;
@@ -392,7 +402,10 @@ export interface Availability {
 
 /** What the API says about a tab or action in the app's current state; available when it says nothing. */
 export function availabilityOf(
-  app: { availability?: Array<{ key: string; state: string; reason: string | null }> } | null | undefined,
+  app:
+    | { availability?: Array<{ key: string; state: string; reason: string | null }> }
+    | null
+    | undefined,
   key: string,
 ): Availability {
   const entry = app?.availability?.find((e) => e.key === key);

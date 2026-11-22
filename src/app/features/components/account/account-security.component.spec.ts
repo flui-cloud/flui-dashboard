@@ -3,7 +3,10 @@ import { of, throwError } from 'rxjs';
 import { AccountOverview, AccountService } from '../../service/account.service';
 import { AccountSecurityComponent, requirementMet } from './account-security.component';
 
-const base = (over: Partial<AccountOverview['security']> = {}, limits = { guest: false, canUnlink: true }): AccountOverview => ({
+const base = (
+  over: Partial<AccountOverview['security']> = {},
+  limits = { guest: false, canUnlink: true },
+): AccountOverview => ({
   profile: {
     userName: 'ada',
     email: 'ada@example.com',
@@ -38,7 +41,9 @@ describe('AccountSecurityComponent', () => {
         }),
       ),
       changePassword: jasmine.createSpy('changePassword').and.returnValue(of({ success: true })),
-      startTotp: jasmine.createSpy('startTotp').and.returnValue(of({ uri: 'otpauth://x', secret: 'SECRET' })),
+      startTotp: jasmine
+        .createSpy('startTotp')
+        .and.returnValue(of({ uri: 'otpauth://x', secret: 'SECRET' })),
       verifyTotp: jasmine.createSpy('verifyTotp').and.returnValue(of({ success: true })),
       removePasskey: jasmine.createSpy('removePasskey').and.returnValue(of({ success: true })),
       unlink: jasmine.createSpy('unlink').and.returnValue(of({ success: true })),
@@ -62,13 +67,20 @@ describe('AccountSecurityComponent', () => {
 
   it('shows the policy, and no sessions until the identity provider can list them', () => {
     const { el } = build(base());
-    expect(el.querySelector('[data-testid="requirements"]')?.textContent).toContain('At least 8 characters');
+    expect(el.querySelector('[data-testid="requirements"]')?.textContent).toContain(
+      'At least 8 characters',
+    );
     expect(el.querySelector('[data-testid="sessions-card"]')).toBeNull();
   });
 
   it('sends the current and new password, and only when the rules are met', () => {
     const { cmp } = build(base());
-    const c = cmp as unknown as { current: string; next: string; again: string; changePassword(): void };
+    const c = cmp as unknown as {
+      current: string;
+      next: string;
+      again: string;
+      changePassword(): void;
+    };
     c.current = 'old';
     c.next = 'short';
     c.again = 'short';
@@ -130,7 +142,9 @@ describe('AccountSecurityComponent', () => {
 
   it('offers no unlink to a guest, and says the sign-in stays', () => {
     const link = { idpId: 'gh', provider: 'GitHub', externalUserId: '1', externalUserName: 'ada' };
-    const { el } = build(base({ links: [link], password: false }, { guest: true, canUnlink: false }));
+    const { el } = build(
+      base({ links: [link], password: false }, { guest: true, canUnlink: false }),
+    );
     expect(el.querySelector('[data-testid="links-card"]')?.textContent).toContain('GitHub');
     expect(el.querySelector('[data-testid="unlink"]')).toBeNull();
     expect(el.querySelector('[data-testid="guest-link-note"]')).not.toBeNull();
@@ -140,7 +154,12 @@ describe('AccountSecurityComponent', () => {
   it('shows the API’s refusal in its own words', () => {
     const { fixture, el, cmp } = build(base());
     api['changePassword'].and.returnValue(
-      throwError(() => ({ error: { code: 'CURRENT_PASSWORD_INVALID', message: 'Your current password is not correct.' } })),
+      throwError(() => ({
+        error: {
+          code: 'CURRENT_PASSWORD_INVALID',
+          message: 'Your current password is not correct.',
+        },
+      })),
     );
     const c = cmp as unknown as { current: string; next: string; again: string };
     c.current = 'bad';

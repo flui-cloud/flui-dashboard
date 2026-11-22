@@ -38,7 +38,13 @@ export function listCopy(list: WorkloadList): ListCopy {
   return LIST_COPY[list];
 }
 
-export const EMPTY_FILTERS: ListFilters = { search: '', view: 'all', type: '', cluster: '', project: '' };
+export const EMPTY_FILTERS: ListFilters = {
+  search: '',
+  view: 'all',
+  type: '',
+  cluster: '',
+  project: '',
+};
 
 const PROVIDER_NAMES: Record<string, string> = {
   hetzner: 'Hetzner',
@@ -48,7 +54,10 @@ const PROVIDER_NAMES: Record<string, string> = {
   byos: 'Your server',
 };
 
-export function providerName(provider: string | undefined, displayNameOf: (id: string) => string | undefined): string {
+export function providerName(
+  provider: string | undefined,
+  displayNameOf: (id: string) => string | undefined,
+): string {
   if (!provider) return '';
   return displayNameOf(provider) || PROVIDER_NAMES[provider] || provider;
 }
@@ -62,5 +71,11 @@ export function listSummary(groups: AppGroupView[], list: WorkloadList): string 
 }
 
 export function activeFilterCount(f: ListFilters): number {
-  return (f.search ? 1 : 0) + (f.view === 'all' ? 0 : 1) + (f.type ? 1 : 0) + (f.cluster ? 1 : 0) + (f.project ? 1 : 0);
+  return (
+    (f.search ? 1 : 0) +
+    (f.view === 'all' ? 0 : 1) +
+    (f.type ? 1 : 0) +
+    (f.cluster ? 1 : 0) +
+    (f.project ? 1 : 0)
+  );
 }

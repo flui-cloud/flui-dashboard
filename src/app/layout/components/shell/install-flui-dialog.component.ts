@@ -22,7 +22,9 @@ import { INSTALL_FLUI_URL } from '../../../core/utils/install-flui';
   template: `
     @if (prompt.dialogOpen()) {
       <div class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm" (click)="close()">
-        <div class="fixed left-[50%] top-[50%] z-50 w-full max-w-sm translate-x-[-50%] translate-y-[-50%] p-4">
+        <div
+          class="fixed left-[50%] top-[50%] z-50 w-full max-w-sm translate-x-[-50%] translate-y-[-50%] p-4"
+        >
           <div
             role="dialog"
             aria-modal="true"
@@ -33,11 +35,15 @@ import { INSTALL_FLUI_URL } from '../../../core/utils/install-flui';
           >
             <div class="flex items-start justify-between gap-4">
               <div>
-                <h3 id="install-flui-title" class="text-lg font-semibold text-gray-900 dark:text-white">
+                <h3
+                  id="install-flui-title"
+                  class="text-lg font-semibold text-gray-900 dark:text-white"
+                >
                   Want the full experience?
                 </h3>
                 <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  This demo is read-only. Install Flui on your own server: it is free and open source.
+                  This demo is read-only. Install Flui on your own server: it is free and open
+                  source.
                 </p>
               </div>
               <button
@@ -67,7 +73,13 @@ import { INSTALL_FLUI_URL } from '../../../core/utils/install-flui';
                 Install Flui
                 <ng-icon name="lucideExternalLink" class="h-4 w-4 ml-1.5" />
               </a>
-              <button hlmBtn variant="ghost" type="button" data-testid="install-flui-stay" (click)="close()">
+              <button
+                hlmBtn
+                variant="ghost"
+                type="button"
+                data-testid="install-flui-stay"
+                (click)="close()"
+              >
                 Keep looking around
               </button>
             </div>

@@ -1,11 +1,4 @@
-import {
-  Component,
-  Input,
-  signal,
-  input,
-  output,
-  ChangeDetectionStrategy
-} from '@angular/core';
+import { Component, Input, signal, input, output, ChangeDetectionStrategy } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -25,10 +18,7 @@ import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (isOpen()) {
-      <div
-        class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm"
-        (click)="onCancel()"
-      >
+      <div class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm" (click)="onCancel()">
         <div
           class="fixed left-[50%] top-[50%] z-50 w-full max-w-md translate-x-[-50%] translate-y-[-50%] p-4"
         >
@@ -41,15 +31,10 @@ import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
                 <div
                   class="flex h-12 w-12 items-center justify-center rounded-full flex-shrink-0 bg-blue-100 dark:bg-blue-900/20"
                 >
-                  <ng-icon
-                    [name]="icon()"
-                    class="h-6 w-6 text-blue-600 dark:text-blue-400"
-                  />
+                  <ng-icon [name]="icon()" class="h-6 w-6 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div class="flex-1">
-                  <h3
-                    class="text-lg font-semibold text-gray-900 dark:text-white"
-                  >
+                  <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
                     {{ title() }}
                   </h3>
                   @if (message) {
@@ -105,10 +90,7 @@ import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
                 class="min-w-[100px] bg-blue-600 hover:bg-blue-700 text-white"
               >
                 @if (isProcessing()) {
-                  <ng-icon
-                    name="lucideLoader"
-                    class="h-4 w-4 mr-2 animate-spin"
-                  />
+                  <ng-icon name="lucideLoader" class="h-4 w-4 mr-2 animate-spin" />
                   {{ confirmText() }}…
                 } @else {
                   {{ confirmText() }}

@@ -8,7 +8,11 @@ describe('the machine list of a scaling group', () => {
   const find = (testid: string): HTMLElement | null =>
     fixture.nativeElement.querySelector(`[data-testid="${testid}"]`);
 
-  function render(items: string[], choices: ListChoice[], architectures: Record<string, string | null>): void {
+  function render(
+    items: string[],
+    choices: ListChoice[],
+    architectures: Record<string, string | null>,
+  ): void {
     TestBed.configureTestingModule({ imports: [SettingsListEditorComponent] });
     fixture = TestBed.createComponent(SettingsListEditorComponent);
     fixture.componentRef.setInput('kind', 'machine');
@@ -23,7 +27,11 @@ describe('the machine list of a scaling group', () => {
 
   it('names the architecture beside each listed machine', () => {
     render(['cx33'], [], { cx33: 'x86' });
-    expect(find('machine-cx33')?.querySelector('[data-testid="architecture-badge"]')?.textContent?.trim()).toBe('x86');
+    expect(
+      find('machine-cx33')
+        ?.querySelector('[data-testid="architecture-badge"]')
+        ?.textContent?.trim(),
+    ).toBe('x86');
   });
 
   it('puts the architecture first in each option', () => {
@@ -32,10 +40,14 @@ describe('the machine list of a scaling group', () => {
   });
 
   it('offers an arm machine like any other, with the warning on hover', () => {
-    render([], [
-      { value: 'cx33', label: 'cx33', architecture: 'x86' },
-      { value: 'cax21', label: 'cax21', architecture: 'arm', warning: ARM_WARNING },
-    ], {});
+    render(
+      [],
+      [
+        { value: 'cx33', label: 'cx33', architecture: 'x86' },
+        { value: 'cax21', label: 'cax21', architecture: 'arm', warning: ARM_WARNING },
+      ],
+      {},
+    );
     const arm = find('machine-option-cax21') as HTMLOptionElement;
     expect(arm.disabled).toBeFalse();
     expect(arm.getAttribute('title')).toBe(ARM_WARNING);
@@ -51,7 +63,9 @@ describe('the machine list of a scaling group', () => {
   it('says the warning once when an arm machine is listed', () => {
     render(['cax21', 'cax31'], [], { cax21: 'arm', cax31: 'arm' });
     expect(find('machine-warning')?.textContent?.trim()).toBe(ARM_WARNING);
-    expect(fixture.nativeElement.querySelectorAll('[data-testid="machine-warning"]').length).toBe(1);
+    expect(fixture.nativeElement.querySelectorAll('[data-testid="machine-warning"]').length).toBe(
+      1,
+    );
   });
 
   it('says nothing when only x86 machines are listed', () => {

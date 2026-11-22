@@ -16,17 +16,15 @@ import { FirewallRuleResponseDto } from '../../../core/api/model/models';
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <!-- Desired Rules Column -->
       <div class="space-y-2">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
-          Desired Rules
-        </h3>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Desired Rules</h3>
         @if (desiredRules().length === 0) {
-          <p class="text-sm text-gray-500 dark:text-gray-400 italic">
-            No desired rules configured
-          </p>
+          <p class="text-sm text-gray-500 dark:text-gray-400 italic">No desired rules configured</p>
         } @else {
           <div class="space-y-2">
             @for (rule of desiredRules(); track $index) {
-              <div class="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <div
+                class="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg"
+              >
                 <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
                   {{ rule.description }}
                 </div>
@@ -41,9 +39,7 @@ import { FirewallRuleResponseDto } from '../../../core/api/model/models';
 
       <!-- Applied Rules Column -->
       <div class="space-y-2">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
-          Applied Rules
-        </h3>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Applied Rules</h3>
         @if (!appliedRules() || appliedRules().length === 0) {
           <p class="text-sm text-gray-500 dark:text-gray-400 italic">
             No rules have been applied yet
@@ -51,7 +47,9 @@ import { FirewallRuleResponseDto } from '../../../core/api/model/models';
         } @else {
           <div class="space-y-2">
             @for (rule of appliedRules(); track $index) {
-              <div class="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+              <div
+                class="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg"
+              >
                 <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
                   {{ rule.description }}
                 </div>
@@ -67,9 +65,7 @@ import { FirewallRuleResponseDto } from '../../../core/api/model/models';
 
     @if (showHashComparison()) {
       <div class="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-        <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
-          Hash Comparison
-        </h4>
+        <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">Hash Comparison</h4>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
           <div>
             <div class="text-gray-600 dark:text-gray-400 mb-1">Desired Hash:</div>
@@ -88,11 +84,13 @@ import { FirewallRuleResponseDto } from '../../../core/api/model/models';
     }
   `,
   changeDetection: ChangeDetectionStrategy.Eager,
-  styles: [`
-    :host {
-      display: block;
-    }
-  `]
+  styles: [
+    `
+      :host {
+        display: block;
+      }
+    `,
+  ],
 })
 export class FirewallRuleComparisonComponent {
   // Input signals

@@ -1,4 +1,3 @@
-
 import { Component, Input, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -31,8 +30,8 @@ import { ArchitectureBadgeComponent } from '../../../shared/components/architect
     InstanceManagedBadgeComponent,
     InstanceActionsComponent,
     InstanceStatusBadgeComponent,
-    ArchitectureBadgeComponent
-],
+    ArchitectureBadgeComponent,
+  ],
   providers: [
     provideIcons({
       lucideServer,
@@ -59,17 +58,24 @@ import { ArchitectureBadgeComponent } from '../../../shared/components/architect
             {{ instance.displayName || instance.name }}
           </span>
           @if (instance.displayName && instance.displayName !== instance.name) {
-            <span class="text-xs text-muted-foreground font-mono truncate hidden sm:inline">{{ instance.name }}</span>
+            <span class="text-xs text-muted-foreground font-mono truncate hidden sm:inline">{{
+              instance.name
+            }}</span>
           }
           @if (instance.osType) {
-            <span class="text-xs text-muted-foreground hidden lg:inline">· {{ instance.osType }}</span>
+            <span class="text-xs text-muted-foreground hidden lg:inline"
+              >· {{ instance.osType }}</span
+            >
           }
         </div>
         <app-instance-actions [instance]="instance" [isManaged]="isSelf()" />
       </div>
 
       <!-- Details row -->
-      <div class="grid items-center gap-x-4 px-4 py-2 text-sm" style="grid-template-columns: 1fr auto 2fr 1fr 1.5fr auto">
+      <div
+        class="grid items-center gap-x-4 px-4 py-2 text-sm"
+        style="grid-template-columns: 1fr auto 2fr 1fr 1.5fr auto"
+      >
         <!-- Provider -->
         <div class="flex items-center gap-2">
           <app-provider-mark [name]="instance.provider" [size]="20" />
@@ -101,7 +107,9 @@ import { ArchitectureBadgeComponent } from '../../../shared/components/architect
         <!-- Location -->
         <div class="flex items-center gap-1">
           <ng-icon name="lucideMapPin" class="h-3 w-3 text-orange-600 flex-shrink-0" />
-          <span class="text-xs text-muted-foreground">{{ instance.regionName || instance.region }}</span>
+          <span class="text-xs text-muted-foreground">{{
+            instance.regionName || instance.region
+          }}</span>
         </div>
 
         <!-- IP with copy -->
@@ -111,7 +119,10 @@ import { ArchitectureBadgeComponent } from '../../../shared/components/architect
               <ng-icon name="lucideGlobe" class="h-3 w-3 text-blue-600 flex-shrink-0" />
               <span class="font-mono text-xs">{{ instance.ipConfig?.v4?.ip }}</span>
               <button
-                (click)="copyIp($safeNavigationMigration(instance.ipConfig?.v4?.ip)); $event.stopPropagation()"
+                (click)="
+                  copyIp($safeNavigationMigration(instance.ipConfig?.v4?.ip));
+                  $event.stopPropagation()
+                "
                 class="p-0.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
                 [title]="copiedIp() ? 'Copied!' : 'Copy IP'"
               >
@@ -132,7 +143,6 @@ import { ArchitectureBadgeComponent } from '../../../shared/components/architect
   `,
 })
 export class InstanceRowComponent {
-
   @Input({ required: true }) instance!: InstanceWithLabels;
 
   ownership = computed(() => getOwnership(this.instance));

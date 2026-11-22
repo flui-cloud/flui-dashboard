@@ -18,11 +18,19 @@ import { PlatformUpdateOperation } from '../../service/platform-update.service';
           No platform update has been applied from here yet.
         </div>
       } @else {
-        <div class="grid grid-cols-[110px_200px_1fr_110px_150px] gap-3 bg-muted px-5 py-2 text-label">
-          <div>Outcome</div><div>Release</div><div>Detail</div><div>Duration</div><div>When</div>
+        <div
+          class="grid grid-cols-[110px_200px_1fr_110px_150px] gap-3 bg-muted px-5 py-2 text-label"
+        >
+          <div>Outcome</div>
+          <div>Release</div>
+          <div>Detail</div>
+          <div>Duration</div>
+          <div>When</div>
         </div>
         @for (operation of operations(); track operation.id) {
-          <div class="grid grid-cols-[110px_200px_1fr_110px_150px] items-center gap-3 border-t border-border px-5 py-3 text-xs">
+          <div
+            class="grid grid-cols-[110px_200px_1fr_110px_150px] items-center gap-3 border-t border-border px-5 py-3 text-xs"
+          >
             <div>
               <span class="badge" [class]="badgeClass(operation)">{{ label(operation) }}</span>
             </div>
@@ -31,7 +39,9 @@ import { PlatformUpdateOperation } from '../../service/platform-update.service';
               <span class="mx-1.5 text-muted-foreground/50">&rarr;</span>
               <span class="font-semibold">{{ operation.targetVersion }}</span>
             </div>
-            <div class="text-muted-foreground truncate" [title]="detail(operation)">{{ detail(operation) }}</div>
+            <div class="text-muted-foreground truncate" [title]="detail(operation)">
+              {{ detail(operation) }}
+            </div>
             <div class="text-muted-foreground">{{ duration(operation) }}</div>
             <div class="text-muted-foreground">{{ when(operation) }}</div>
           </div>

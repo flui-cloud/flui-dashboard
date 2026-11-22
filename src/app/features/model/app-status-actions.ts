@@ -3,19 +3,20 @@
  * Defines which actions are allowed for each application status.
  */
 
-export type AppAction = 'deploy' | 'rollback' | 'stop' | 'start' | 'delete' | 'reconcile' | 'update_config';
+export type AppAction =
+  'deploy' | 'rollback' | 'stop' | 'start' | 'delete' | 'reconcile' | 'update_config';
 
 export const STATUS_ACTIONS: Record<string, AppAction[]> = {
-  pending:        ['deploy', 'delete'],
+  pending: ['deploy', 'delete'],
   awaiting_build: [],
-  provisioning:   [],
-  running:        ['deploy', 'rollback', 'stop', 'update_config', 'reconcile'],
-  updating:       [],
-  rolling_back:   [],
-  stopped:        ['start', 'deploy', 'delete'],
-  degraded:       ['deploy', 'rollback', 'stop', 'reconcile'],
-  failed:         ['deploy', 'rollback', 'delete', 'reconcile'],
-  deleting:       [],
+  provisioning: [],
+  running: ['deploy', 'rollback', 'stop', 'update_config', 'reconcile'],
+  updating: [],
+  rolling_back: [],
+  stopped: ['start', 'deploy', 'delete'],
+  degraded: ['deploy', 'rollback', 'stop', 'reconcile'],
+  failed: ['deploy', 'rollback', 'delete', 'reconcile'],
+  deleting: [],
 };
 
 export function isActionAvailable(status: string, action: AppAction): boolean {

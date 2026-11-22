@@ -1,10 +1,7 @@
 import { Component, Input, Output, EventEmitter, signal, computed } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
-import {
-  FirewallRuleFormData,
-  validateFirewallRule
-} from '../../model/firewall-v2.models';
+import { FirewallRuleFormData, validateFirewallRule } from '../../model/firewall-v2.models';
 
 /**
  * Firewall Rule Editor Component
@@ -15,7 +12,7 @@ import {
   standalone: true,
   imports: [FormsModule],
   templateUrl: './firewall-rule-editor.component.html',
-  styleUrls: ['./firewall-rule-editor.component.scss']
+  styleUrls: ['./firewall-rule-editor.component.scss'],
 })
 export class FirewallRuleEditorComponent {
   @Input() set initialRules(rules: FirewallRuleFormData[] | null) {
@@ -39,7 +36,7 @@ export class FirewallRuleEditorComponent {
     protocol: 'tcp',
     port: '',
     sourceIps: [],
-    destinationIps: []
+    destinationIps: [],
   });
 
   // Validation
@@ -64,15 +61,15 @@ export class FirewallRuleEditorComponent {
     if (form.direction === 'in' && this.sourceIpsText()) {
       form.sourceIps = this.sourceIpsText()
         .split(',')
-        .map(ip => ip.trim())
-        .filter(ip => ip.length > 0);
+        .map((ip) => ip.trim())
+        .filter((ip) => ip.length > 0);
     }
 
     if (form.direction === 'out' && this.destinationIpsText()) {
       form.destinationIps = this.destinationIpsText()
         .split(',')
-        .map(ip => ip.trim())
-        .filter(ip => ip.length > 0);
+        .map((ip) => ip.trim())
+        .filter((ip) => ip.length > 0);
     }
 
     const errors = validateFirewallRule(form);
@@ -96,7 +93,7 @@ export class FirewallRuleEditorComponent {
     this.editForm.set({
       ...rule,
       sourceIps: rule.sourceIps ? [...rule.sourceIps] : [],
-      destinationIps: rule.destinationIps ? [...rule.destinationIps] : []
+      destinationIps: rule.destinationIps ? [...rule.destinationIps] : [],
     });
 
     // Set IPs as text for editing
@@ -116,10 +113,9 @@ export class FirewallRuleEditorComponent {
    */
   deleteRule(index: number) {
     if (confirm('Are you sure you want to delete this rule?')) {
-      this.rules.update(rules => rules.filter((_, i) => i !== index));
+      this.rules.update((rules) => rules.filter((_, i) => i !== index));
     }
   }
-
 
   /**
    * Save the current form (add or update)
@@ -131,15 +127,15 @@ export class FirewallRuleEditorComponent {
     if (form.direction === 'in' && this.sourceIpsText()) {
       form.sourceIps = this.sourceIpsText()
         .split(',')
-        .map(ip => ip.trim())
-        .filter(ip => ip.length > 0);
+        .map((ip) => ip.trim())
+        .filter((ip) => ip.length > 0);
     }
 
     if (form.direction === 'out' && this.destinationIpsText()) {
       form.destinationIps = this.destinationIpsText()
         .split(',')
-        .map(ip => ip.trim())
-        .filter(ip => ip.length > 0);
+        .map((ip) => ip.trim())
+        .filter((ip) => ip.length > 0);
     }
 
     // Validate
@@ -152,10 +148,10 @@ export class FirewallRuleEditorComponent {
     const editIndex = this.editingIndex();
     if (editIndex === null) {
       // Add new rule
-      this.rules.update(rules => [...rules, { ...form }]);
+      this.rules.update((rules) => [...rules, { ...form }]);
     } else {
       // Update existing rule
-      this.rules.update(rules => {
+      this.rules.update((rules) => {
         const newRules = [...rules];
         newRules[editIndex] = { ...form };
         return newRules;
@@ -184,7 +180,7 @@ export class FirewallRuleEditorComponent {
       protocol: 'tcp',
       port: '',
       sourceIps: [],
-      destinationIps: []
+      destinationIps: [],
     });
     this.sourceIpsText.set('');
     this.destinationIpsText.set('');
@@ -195,7 +191,7 @@ export class FirewallRuleEditorComponent {
    * Update form field
    */
   updateField<K extends keyof FirewallRuleFormData>(field: K, value: FirewallRuleFormData[K]) {
-    this.editForm.update(form => ({ ...form, [field]: value }));
+    this.editForm.update((form) => ({ ...form, [field]: value }));
 
     // Clear validation errors when user makes changes
     this.validationErrors.set([]);

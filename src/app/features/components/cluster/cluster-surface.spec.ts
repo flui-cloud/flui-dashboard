@@ -37,7 +37,10 @@ function input(over: Partial<ClusterSurfaceInput> = {}): ClusterSurfaceInput {
 }
 
 function snapshotOf(over: Partial<ClusterSurfaceInput> = {}): SurfaceSnapshot {
-  const snapshot = buildClusterSurface(input(over), { revision: 1, generatedAt: '2026-08-20T09:13:00.000Z' });
+  const snapshot = buildClusterSurface(input(over), {
+    revision: 1,
+    generatedAt: '2026-08-20T09:13:00.000Z',
+  });
   if (!snapshot) throw new Error('the producer described nothing');
   return snapshot;
 }
@@ -58,11 +61,14 @@ describe('cluster surface producer', () => {
 
   it('bumps the revision on real change, and validateSurfaceSemantics accepts it against the previous snapshot', () => {
     const tracker = new ClusterSurfaceRevision();
-    const first = buildClusterSurface(input(), { revision: tracker.next(presentedContent(input())!), generatedAt: '2026-08-20T09:13:00.000Z' })!;
-    const second = buildClusterSurface(
-      input({ activeTab: 'monitoring' }),
-      { revision: tracker.next(presentedContent(input({ activeTab: 'monitoring' }))!), generatedAt: '2026-08-20T09:14:00.000Z' },
-    )!;
+    const first = buildClusterSurface(input(), {
+      revision: tracker.next(presentedContent(input())!),
+      generatedAt: '2026-08-20T09:13:00.000Z',
+    })!;
+    const second = buildClusterSurface(input({ activeTab: 'monitoring' }), {
+      revision: tracker.next(presentedContent(input({ activeTab: 'monitoring' }))!),
+      generatedAt: '2026-08-20T09:14:00.000Z',
+    })!;
     expect(second.surface.revision).toBe(first.surface.revision + 1);
     expect(validateSurfaceSemantics(second, { previousSnapshot: first })).toEqual([]);
   });
@@ -82,7 +88,10 @@ describe('cluster surface producer', () => {
   // The invalid-revision check needs a real failing case exercised, not just trusted.
   it('flags a snapshot whose revision does not advance on the previous one', () => {
     const first = snapshotOf();
-    const stale = { ...snapshotOf(), surface: { ...snapshotOf().surface, revision: first.surface.revision } };
+    const stale = {
+      ...snapshotOf(),
+      surface: { ...snapshotOf().surface, revision: first.surface.revision },
+    };
     const issues = validateSurfaceSemantics(stale, { previousSnapshot: first });
     expect(issues).toEqual([
       jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' }),
@@ -92,7 +101,11 @@ describe('cluster surface producer', () => {
   it('claims the page and the cluster itself, with reason route', () => {
     const snapshot = snapshotOf();
     expect(snapshot.attention).toEqual([
-      { scopeId: `cluster-detail:${CLUSTER.id}`, entityRef: clusterEntityRef(CLUSTER.id!), reason: 'route' },
+      {
+        scopeId: `cluster-detail:${CLUSTER.id}`,
+        entityRef: clusterEntityRef(CLUSTER.id!),
+        reason: 'route',
+      },
     ]);
     expect(pageScope(snapshot).entities).toEqual([
       { ref: clusterEntityRef(CLUSTER.id!), label: CLUSTER.name, role: 'primary' },
@@ -119,10 +132,25 @@ describe('cluster surface producer', () => {
   });
 
   it('says nothing about read-only/control-cluster when neither applies, and names them when they do', () => {
-    expect(observation(snapshotOf({ readOnly: false, isControlCluster: false }), 'flui.cluster.read_only')).toBeUndefined();
-    expect(observation(snapshotOf({ readOnly: false, isControlCluster: false }), 'flui.cluster.control_cluster')).toBeUndefined();
-    expect(observation(snapshotOf({ readOnly: true }), 'flui.cluster.read_only')?.presentedAs.value).toBe(true);
-    expect(observation(snapshotOf({ isControlCluster: true }), 'flui.cluster.control_cluster')?.presentedAs.value).toBe(true);
+    expect(
+      observation(
+        snapshotOf({ readOnly: false, isControlCluster: false }),
+        'flui.cluster.read_only',
+      ),
+    ).toBeUndefined();
+    expect(
+      observation(
+        snapshotOf({ readOnly: false, isControlCluster: false }),
+        'flui.cluster.control_cluster',
+      ),
+    ).toBeUndefined();
+    expect(
+      observation(snapshotOf({ readOnly: true }), 'flui.cluster.read_only')?.presentedAs.value,
+    ).toBe(true);
+    expect(
+      observation(snapshotOf({ isControlCluster: true }), 'flui.cluster.control_cluster')
+        ?.presentedAs.value,
+    ).toBe(true);
   });
 
   it('never presents cluster.status — this shell page renders no status text of its own (§4.3 also means: no invented observation for what is not shown)', () => {
@@ -131,10 +159,18 @@ describe('cluster surface producer', () => {
   });
 
   it('produces no snapshot at all when there is no cluster loaded — no invented selection', () => {
-    expect(buildClusterSurface(input({ cluster: null }), { revision: 1, generatedAt: '2026-08-20T09:13:00.000Z' }))
-      .toBeNull();
-    expect(buildClusterSurface(input({ cluster: { ...CLUSTER, id: undefined } }), { revision: 1, generatedAt: '2026-08-20T09:13:00.000Z' }))
-      .toBeNull();
+    expect(
+      buildClusterSurface(input({ cluster: null }), {
+        revision: 1,
+        generatedAt: '2026-08-20T09:13:00.000Z',
+      }),
+    ).toBeNull();
+    expect(
+      buildClusterSurface(input({ cluster: { ...CLUSTER, id: undefined } }), {
+        revision: 1,
+        generatedAt: '2026-08-20T09:13:00.000Z',
+      }),
+    ).toBeNull();
   });
 
   it('redacts: no raw master IP, no internal metadata beyond the entity ref reach the snapshot', () => {

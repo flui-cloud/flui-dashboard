@@ -51,7 +51,10 @@ function input(over: Partial<ComputeInstancesSurfaceInput> = {}): ComputeInstanc
 }
 
 function snapshotOf(over: Partial<ComputeInstancesSurfaceInput> = {}): SurfaceSnapshot {
-  return buildComputeInstancesSurface(input(over), { revision: 1, generatedAt: '2026-08-20T09:13:00.000Z' });
+  return buildComputeInstancesSurface(input(over), {
+    revision: 1,
+    generatedAt: '2026-08-20T09:13:00.000Z',
+  });
 }
 
 const listScope = (s: SurfaceSnapshot) => s.scopes.find((x) => x.kind === 'list')!;
@@ -73,7 +76,10 @@ describe('compute instances surface producer', () => {
 
   it('lists every visible instance as a related entity, never primary', () => {
     const snapshot = snapshotOf({
-      visibleInstances: [instance(), instance({ providerId: 'srv-200', name: 'web-02', displayName: 'web-02' })],
+      visibleInstances: [
+        instance(),
+        instance({ providerId: 'srv-200', name: 'web-02', displayName: 'web-02' }),
+      ],
       totalCount: 2,
     });
     const roles = rowScopes(snapshot).map((r) => r.entities![0].role);
@@ -96,12 +102,15 @@ describe('compute instances surface producer', () => {
 
   it('bumps the revision on real change, and validateSurfaceSemantics accepts it against the previous snapshot', () => {
     const tracker = new ComputeInstancesSurfaceRevision();
-    const first = buildComputeInstancesSurface(input(), { revision: tracker.next(presentedContent(input())), generatedAt: '2026-08-20T09:13:00.000Z' });
+    const first = buildComputeInstancesSurface(input(), {
+      revision: tracker.next(presentedContent(input())),
+      generatedAt: '2026-08-20T09:13:00.000Z',
+    });
     const two = [instance(), instance({ providerId: 'srv-200' })];
-    const second = buildComputeInstancesSurface(
-      input({ visibleInstances: two, totalCount: 2 }),
-      { revision: tracker.next(presentedContent(input({ visibleInstances: two, totalCount: 2 }))), generatedAt: '2026-08-20T09:14:00.000Z' },
-    );
+    const second = buildComputeInstancesSurface(input({ visibleInstances: two, totalCount: 2 }), {
+      revision: tracker.next(presentedContent(input({ visibleInstances: two, totalCount: 2 }))),
+      generatedAt: '2026-08-20T09:14:00.000Z',
+    });
     expect(second.surface.revision).toBe(first.surface.revision + 1);
     expect(validateSurfaceSemantics(second, { previousSnapshot: first })).toEqual([]);
   });
@@ -116,9 +125,14 @@ describe('compute instances surface producer', () => {
   // The invalid-revision check needs a real failing case exercised, not just trusted.
   it('flags a snapshot whose revision does not advance on the previous one', () => {
     const first = snapshotOf();
-    const stale = { ...snapshotOf(), surface: { ...snapshotOf().surface, revision: first.surface.revision } };
+    const stale = {
+      ...snapshotOf(),
+      surface: { ...snapshotOf().surface, revision: first.surface.revision },
+    };
     const issues = validateSurfaceSemantics(stale, { previousSnapshot: first });
-    expect(issues).toEqual([jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' })]);
+    expect(issues).toEqual([
+      jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' }),
+    ]);
   });
 
   it('marks the list loading/empty from the real signals, never inventing rows', () => {
@@ -128,10 +142,14 @@ describe('compute instances surface producer', () => {
   });
 
   it('presents active filters as UI observations, and nothing for a cleared filter', () => {
-    const snapshot = snapshotOf({ filters: { search: 'web', provider: '', status: 'running', region: '' } });
+    const snapshot = snapshotOf({
+      filters: { search: 'web', provider: '', status: 'running', region: '' },
+    });
     const obs = listScope(snapshot).observations ?? [];
     expect(obs.find((o) => o.key === 'flui.compute.search_query')?.presentedAs.text).toBe('web');
-    expect(obs.find((o) => o.key === 'flui.compute.status_filter')?.presentedAs.text).toBe('running');
+    expect(obs.find((o) => o.key === 'flui.compute.status_filter')?.presentedAs.text).toBe(
+      'running',
+    );
     expect(obs.find((o) => o.key === 'flui.compute.provider_filter')).toBeUndefined();
   });
 

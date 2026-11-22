@@ -36,18 +36,12 @@ export function withExpansion(
   return {
     name: group.name,
     bounds: { ...group.bounds, desired },
-    standingOrders: [
-      ...ordersOf(group),
-      { kind: 'expand', ...order, replaces: null },
-    ],
+    standingOrders: [...ordersOf(group), { kind: 'expand', ...order, replaces: null }],
   };
 }
 
 /** Taking an expansion back also takes back the target it raised. */
-export function withoutOrder(
-  group: SectionGroup,
-  index: number,
-): WriteScalingGroup {
+export function withoutOrder(group: SectionGroup, index: number): WriteScalingGroup {
   const orders = ordersOf(group);
   const [dropped] = orders.splice(index, 1);
   const lowered =

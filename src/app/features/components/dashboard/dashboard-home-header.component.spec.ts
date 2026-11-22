@@ -11,20 +11,33 @@ import { DashboardHomeHeaderComponent } from './dashboard-home-header.component'
 describe('DashboardHomeHeaderComponent', () => {
   let fixture: ComponentFixture<DashboardHomeHeaderComponent>;
   const state = signal<FleetReadState>('ready');
-  const pulse = signal({ backendOnline: true, activeOperations: 1, providersConnected: 3, totalClusters: 4, runningApps: 17 });
+  const pulse = signal({
+    backendOnline: true,
+    activeOperations: 1,
+    providersConnected: 3,
+    totalClusters: 4,
+    runningApps: 17,
+  });
   const setWindow = jasmine.createSpy('setWindow').and.returnValue(Promise.resolve());
   const inSandbox = signal(false);
   const groups = signal<unknown[]>([]);
 
-  const q = (id: string): HTMLElement | null => fixture.nativeElement.querySelector(`[data-testid="${id}"]`);
+  const q = (id: string): HTMLElement | null =>
+    fixture.nativeElement.querySelector(`[data-testid="${id}"]`);
 
   const build = async (fresh = false) => {
     await TestBed.configureTestingModule({
       imports: [DashboardHomeHeaderComponent],
       providers: [
         provideRouter([]),
-        { provide: FleetService, useValue: { metricsState: state, window: signal('3h'), setWindow } },
-        { provide: DashboardService, useValue: { pulseSummary: pulse, lastRefreshedAt: signal(new Date()) } },
+        {
+          provide: FleetService,
+          useValue: { metricsState: state, window: signal('3h'), setWindow },
+        },
+        {
+          provide: DashboardService,
+          useValue: { pulseSummary: pulse, lastRefreshedAt: signal(new Date()) },
+        },
         { provide: PermissionService, useValue: { hasSection: (s: string) => s === 'deploy' } },
         { provide: SandboxService, useValue: { inSandbox } },
         { provide: ApplicationService, useValue: { applicationGroups: groups } },

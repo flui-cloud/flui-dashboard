@@ -11,7 +11,7 @@ import {
   lucideLoader,
   lucideActivity,
   lucideZap,
-  lucideCheck
+  lucideCheck,
 } from '@ng-icons/lucide';
 import { ClusterService } from '../../service/cluster.service';
 import { ClusterViewMode } from '../../model/cluster.models';
@@ -31,13 +31,12 @@ import { ClusterListComponent } from './cluster-list.component';
       lucideLoader,
       lucideActivity,
       lucideZap,
-      lucideCheck
-    })
+      lucideCheck,
+    }),
   ],
   template: `
     <div class="space-y-6">
       @switch (currentView()) {
-
         @case (ClusterViewMode.LOADING) {
           <!-- Loading State with Pulse Effect -->
           <div class="space-y-6 p-6">
@@ -129,7 +128,9 @@ import { ClusterListComponent } from './cluster-list.component';
 
         @case (ClusterViewMode.NO_PROVIDER) {
           <!-- Header -->
-          <div class="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
+          <div
+            class="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0"
+          >
             <div>
               <h1 class="text-3xl font-bold tracking-tight">Cluster</h1>
               <p class="text-muted-foreground">
@@ -140,13 +141,15 @@ import { ClusterListComponent } from './cluster-list.component';
 
           <!-- No Provider Configured -->
           <div class="rounded-lg border border-border bg-card p-8 text-center">
-            <div class="mx-auto mb-4 h-12 w-12 rounded-full bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center">
+            <div
+              class="mx-auto mb-4 h-12 w-12 rounded-full bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center"
+            >
               <ng-icon name="lucideSettings" class="h-6 w-6 text-orange-600 dark:text-orange-400" />
             </div>
             <h2 class="text-xl font-semibold mb-2">No Cloud Provider Configured</h2>
             <p class="text-muted-foreground mb-6 max-w-md mx-auto">
-              Before creating your cluster, you need to configure at least one cloud provider.
-              This allows us to deploy servers on your preferred infrastructure.
+              Before creating your cluster, you need to configure at least one cloud provider. This
+              allows us to deploy servers on your preferred infrastructure.
             </p>
             <a
               routerLink="/management/providers"
@@ -161,7 +164,9 @@ import { ClusterListComponent } from './cluster-list.component';
 
         @case (ClusterViewMode.NO_CLUSTER) {
           <!-- Header -->
-          <div class="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
+          <div
+            class="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0"
+          >
             <div>
               <h1 class="text-3xl font-bold tracking-tight">Cluster</h1>
               <p class="text-muted-foreground">
@@ -172,13 +177,15 @@ import { ClusterListComponent } from './cluster-list.component';
 
           <!-- No Cluster Created -->
           <div class="rounded-lg border border-border bg-card p-8 text-center">
-            <div class="mx-auto mb-4 h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
+            <div
+              class="mx-auto mb-4 h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center"
+            >
               <ng-icon name="lucideCloud" class="h-6 w-6 text-blue-600 dark:text-blue-400" />
             </div>
             <h2 class="text-xl font-semibold mb-2">Ready to Create Your Cluster</h2>
             <p class="text-muted-foreground mb-6 max-w-md mx-auto">
-              You have {{ configuredProvidersCount() }} provider(s) configured.
-              Now let's create your cloud cluster to start deploying applications.
+              You have {{ configuredProvidersCount() }} provider(s) configured. Now let's create
+              your cloud cluster to start deploying applications.
             </p>
             <button
               (click)="startClusterCreation()"
@@ -194,7 +201,9 @@ import { ClusterListComponent } from './cluster-list.component';
 
       <!-- Success Message Toast -->
       @if (showSuccessMessage()) {
-        <div class="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transition-all z-50">
+        <div
+          class="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transition-all z-50"
+        >
           <div class="flex items-center space-x-2">
             <ng-icon name="lucideCheck" class="h-5 w-5" />
             <span>{{ successMessage() }}</span>
@@ -205,7 +214,6 @@ import { ClusterListComponent } from './cluster-list.component';
   `,
 })
 export class ClusterOverviewComponent implements OnInit {
-
   private readonly clusterService = inject(ClusterService);
   private readonly router = inject(Router);
 
@@ -218,10 +226,11 @@ export class ClusterOverviewComponent implements OnInit {
   readonly allClusters = this.clusterService.clusters;
 
   // Combined loading state for all API calls
-  readonly isAnyLoading = computed(() =>
-    this.clusterService.loading() ||
-    this.clusterService.listIsLoading() ||
-    this.clusterService.providersIsLoading()
+  readonly isAnyLoading = computed(
+    () =>
+      this.clusterService.loading() ||
+      this.clusterService.listIsLoading() ||
+      this.clusterService.providersIsLoading(),
   );
 
   // View management

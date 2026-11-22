@@ -1,4 +1,13 @@
-import { Component, OnInit, computed, inject, signal, input, output, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  computed,
+  inject,
+  signal,
+  input,
+  output,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
@@ -41,11 +50,22 @@ const TODAY_PLUS_DAYS = (days: number): string => {
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" (click)="onBackdrop($event)">
-      <div class="bg-white dark:bg-slate-800 rounded-lg max-w-md w-full shadow-xl" (click)="$event.stopPropagation()">
-        <div class="flex items-center justify-between p-5 border-b border-slate-200 dark:border-slate-700">
+    <div
+      class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      (click)="onBackdrop($event)"
+    >
+      <div
+        class="bg-white dark:bg-slate-800 rounded-lg max-w-md w-full shadow-xl"
+        (click)="$event.stopPropagation()"
+      >
+        <div
+          class="flex items-center justify-between p-5 border-b border-slate-200 dark:border-slate-700"
+        >
           <h3 class="text-base font-semibold text-slate-900 dark:text-white">{{ title() }}</h3>
-          <button (click)="cancelled.emit()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+          <button
+            (click)="cancelled.emit()"
+            class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+          >
             <ng-icon name="lucideX" class="h-5 w-5" />
           </button>
         </div>
@@ -95,25 +115,33 @@ const TODAY_PLUS_DAYS = (days: number): string => {
           @if (mode() !== 'update-expiry') {
             <div class="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
               <p class="text-xs text-slate-500 dark:text-slate-400">
-                Required scopes: <span class="font-mono">read:packages</span>
-                (or <span class="font-mono">write:packages</span>)
-                and <span class="font-mono">delete:packages</span>.
+                Required scopes: <span class="font-mono">read:packages</span> (or
+                <span class="font-mono">write:packages</span>) and
+                <span class="font-mono">delete:packages</span>.
               </p>
               <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                Needed because GitHub App tokens can't pull or delete private container packages outside of GitHub Actions.
+                Needed because GitHub App tokens can't pull or delete private container packages
+                outside of GitHub Actions.
               </p>
             </div>
           }
 
           @if (errorMsg()) {
-            <div class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
-              <ng-icon name="lucideAlertCircle" class="h-4 w-4 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+            <div
+              class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800"
+            >
+              <ng-icon
+                name="lucideAlertCircle"
+                class="h-4 w-4 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5"
+              />
               <p class="text-xs text-red-700 dark:text-red-400">{{ errorMsg() }}</p>
             </div>
           }
         </div>
 
-        <div class="flex items-center justify-end gap-2 p-5 border-t border-slate-200 dark:border-slate-700">
+        <div
+          class="flex items-center justify-end gap-2 p-5 border-t border-slate-200 dark:border-slate-700"
+        >
           <button
             (click)="cancelled.emit()"
             [disabled]="busy()"
@@ -130,7 +158,16 @@ const TODAY_PLUS_DAYS = (days: number): string => {
               <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
               <span>Saving…</span>
             } @else {
-              <ng-icon [name]="mode() === 'rotate' ? 'lucideRefreshCw' : (mode() === 'update-expiry' ? 'lucideCalendar' : 'lucideKey')" class="h-4 w-4" />
+              <ng-icon
+                [name]="
+                  mode() === 'rotate'
+                    ? 'lucideRefreshCw'
+                    : mode() === 'update-expiry'
+                      ? 'lucideCalendar'
+                      : 'lucideKey'
+                "
+                class="h-4 w-4"
+              />
               <span>{{ submitLabel() }}</span>
             }
           </button>
@@ -168,17 +205,23 @@ export class GhcrPatModalComponent implements OnInit {
 
   title = computed(() => {
     switch (this.mode()) {
-      case 'rotate': return 'Rotate GHCR token';
-      case 'update-expiry': return 'Update token expiration';
-      default: return 'Connect GHCR token';
+      case 'rotate':
+        return 'Rotate GHCR token';
+      case 'update-expiry':
+        return 'Update token expiration';
+      default:
+        return 'Connect GHCR token';
     }
   });
 
   submitLabel = computed(() => {
     switch (this.mode()) {
-      case 'rotate': return 'Rotate token';
-      case 'update-expiry': return 'Update expiration';
-      default: return 'Save token';
+      case 'rotate':
+        return 'Rotate token';
+      case 'update-expiry':
+        return 'Update expiration';
+      default:
+        return 'Save token';
     }
   });
 

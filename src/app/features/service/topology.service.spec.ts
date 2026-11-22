@@ -51,7 +51,10 @@ describe('TopologyDashboardService stream', () => {
 
   it('asks for system apps until someone chooses to hide them', () => {
     service.startStream();
-    expect(fetchSpy).toHaveBeenCalledWith('http://api.test/api/v1/topology/stream?system=1', jasmine.any(Object));
+    expect(fetchSpy).toHaveBeenCalledWith(
+      'http://api.test/api/v1/topology/stream?system=1',
+      jasmine.any(Object),
+    );
   });
 
   it('leaves system apps out once someone has hidden them', () => {
@@ -69,7 +72,10 @@ describe('TopologyDashboardService stream', () => {
     });
     service = TestBed.inject(TopologyDashboardService);
     service.startStream();
-    expect(fetchSpy).toHaveBeenCalledWith('http://api.test/api/v1/topology/stream', jasmine.any(Object));
+    expect(fetchSpy).toHaveBeenCalledWith(
+      'http://api.test/api/v1/topology/stream',
+      jasmine.any(Object),
+    );
   });
 
   it('asks the API to mask the stream while mask mode is on', () => {
@@ -83,7 +89,9 @@ describe('TopologyDashboardService stream', () => {
     const closedAtOnce = {
       ok: true,
       status: 200,
-      body: { getReader: () => ({ read: () => Promise.resolve({ done: true, value: undefined }) }) },
+      body: {
+        getReader: () => ({ read: () => Promise.resolve({ done: true, value: undefined }) }),
+      },
     };
     fetchSpy.and.callFake(() => Promise.resolve(closedAtOnce as unknown as Response));
     spyOn(service, 'load').and.returnValue(Promise.resolve({} as never));

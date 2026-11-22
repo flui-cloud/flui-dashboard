@@ -1,10 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  inject,
-  viewChild
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
@@ -31,12 +25,7 @@ import { SearchConsoleResultsComponent } from './search-console-results.componen
   selector: 'app-search-console-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    NgIcon,
-    DbAssistantChatComponent,
-    RestConsoleComponent,
-    SearchConsoleResultsComponent,
-  ],
+  imports: [NgIcon, DbAssistantChatComponent, RestConsoleComponent, SearchConsoleResultsComponent],
   providers: [
     SearchConsoleStateService,
     provideIcons({
@@ -75,9 +64,7 @@ import { SearchConsoleResultsComponent } from './search-console-results.componen
         </div>
         <div class="ml-auto flex items-center gap-2">
           @if (s.conn() === 'connected') {
-            <div
-              class="inline-flex overflow-hidden rounded-md border border-border"
-            >
+            <div class="inline-flex overflow-hidden rounded-md border border-border">
               <button
                 type="button"
                 (click)="s.view.set('browse')"
@@ -164,10 +151,9 @@ export class SearchConsolePageComponent implements OnInit {
   protected readonly s = inject(SearchConsoleStateService);
   private readonly route = inject(ActivatedRoute);
 
-  readonly applicationId = toSignal(
-    this.route.paramMap.pipe(map((p) => p.get('applicationId'))),
-    { initialValue: this.route.snapshot.paramMap.get('applicationId') },
-  );
+  readonly applicationId = toSignal(this.route.paramMap.pipe(map((p) => p.get('applicationId'))), {
+    initialValue: this.route.snapshot.paramMap.get('applicationId'),
+  });
 
   private readonly shell = viewChild(RestConsoleComponent);
 

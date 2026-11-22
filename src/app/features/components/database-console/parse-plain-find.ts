@@ -6,7 +6,15 @@ export interface PlainFind {
   sortText: string;
 }
 
-const ALLOWED_MODS = new Set(['sort', 'limit', 'skip', 'project', 'projection', 'pretty', 'toArray']);
+const ALLOWED_MODS = new Set([
+  'sort',
+  'limit',
+  'skip',
+  'project',
+  'projection',
+  'pretty',
+  'toArray',
+]);
 
 /** Read a balanced (…) block starting at `s[start] === '('`; tolerant of quoted strings. */
 function readParens(s: string, start: number): { inner: string; end: number } | null {

@@ -20,16 +20,25 @@ export function parseMemoryToMi(value: string | undefined | null): number {
   if (!m) return 0;
   const n = Number.parseFloat(m[1]);
   switch (m[2]) {
-    case 'Ki': return Math.round(n / 1024);
-    case 'Mi': return Math.round(n);
-    case 'Gi': return Math.round(n * 1024);
-    case 'Ti': return Math.round(n * 1024 * 1024);
+    case 'Ki':
+      return Math.round(n / 1024);
+    case 'Mi':
+      return Math.round(n);
+    case 'Gi':
+      return Math.round(n * 1024);
+    case 'Ti':
+      return Math.round(n * 1024 * 1024);
     // Decimal units — convert to Mi using decimal → binary approximation.
-    case 'K':  return Math.round((n * 1000) / (1024 * 1024));
-    case 'M':  return Math.round((n * 1000 * 1000) / (1024 * 1024));
-    case 'G':  return Math.round((n * 1000 * 1000 * 1000) / (1024 * 1024));
-    case 'T':  return Math.round((n * 1000 * 1000 * 1000 * 1000) / (1024 * 1024));
-    default:   return Math.round(n);
+    case 'K':
+      return Math.round((n * 1000) / (1024 * 1024));
+    case 'M':
+      return Math.round((n * 1000 * 1000) / (1024 * 1024));
+    case 'G':
+      return Math.round((n * 1000 * 1000 * 1000) / (1024 * 1024));
+    case 'T':
+      return Math.round((n * 1000 * 1000 * 1000 * 1000) / (1024 * 1024));
+    default:
+      return Math.round(n);
   }
 }
 

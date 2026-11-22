@@ -24,7 +24,12 @@ const coverage = (over: Partial<AppCoverageRow> = {}): AppCoverageRow => ({
   lastSuccessAt: null,
   protectedUntil: null,
   protectPath: null,
-  pending: { outcome: 'waiting', reason: 'the database is not running yet', at: '', protectHelps: false },
+  pending: {
+    outcome: 'waiting',
+    reason: 'the database is not running yet',
+    at: '',
+    protectHelps: false,
+  },
   decision: null,
   ...over,
 });
@@ -33,10 +38,15 @@ describe('AppBackupDecisionComponent', () => {
   let fixture: ComponentFixture<AppBackupDecisionComponent>;
   let api: { appProtectionControllerSetBackupDecision: jasmine.Spy };
 
-  const q = (id: string) => (fixture.nativeElement as HTMLElement).querySelector(`[data-testid="${id}"]`) as HTMLElement | null;
+  const q = (id: string) =>
+    (fixture.nativeElement as HTMLElement).querySelector(
+      `[data-testid="${id}"]`,
+    ) as HTMLElement | null;
 
   beforeEach(async () => {
-    api = { appProtectionControllerSetBackupDecision: jasmine.createSpy('set').and.returnValue(of({})) };
+    api = {
+      appProtectionControllerSetBackupDecision: jasmine.createSpy('set').and.returnValue(of({})),
+    };
     await TestBed.configureTestingModule({
       imports: [AppBackupDecisionComponent],
       providers: [provideRouter([]), { provide: BackupsService, useValue: api }],
@@ -60,7 +70,10 @@ describe('AppBackupDecisionComponent', () => {
   it('asks for the protection below when protecting would help', () => {
     let asked = 0;
     fixture.componentInstance.protect.subscribe(() => asked++);
-    show({ coverage: coverage({ pending: null, protectPath: '/management/backup/policies/new?x=1' }), policies: [] });
+    show({
+      coverage: coverage({ pending: null, protectPath: '/management/backup/policies/new?x=1' }),
+      policies: [],
+    });
     q('backup-decision-protect')!.click();
     expect(asked).toBe(1);
   });
@@ -103,14 +116,20 @@ describe('AppBackupDecisionComponent', () => {
     expect(text).toContain('Not backed up by choice');
     expect(q('backup-decision-note')!.textContent).toContain('scratch copy');
     expect(text).toContain('Dawit · 1 Oct 2026');
-    expect(q('backup-decision-running')!.querySelector('a')!.getAttribute('href')).toBe('/management/backup/policies/p-1');
+    expect(q('backup-decision-running')!.querySelector('a')!.getAttribute('href')).toBe(
+      '/management/backup/policies/p-1',
+    );
     q('backup-decision-undo')!.click();
     await fixture.whenStable();
-    expect(api.appProtectionControllerSetBackupDecision).toHaveBeenCalledWith('a-1', { notBackedUp: false });
+    expect(api.appProtectionControllerSetBackupDecision).toHaveBeenCalledWith('a-1', {
+      notBackedUp: false,
+    });
   });
 
   it('says so when the decision could not be saved', async () => {
-    api.appProtectionControllerSetBackupDecision.and.returnValue(throwError(() => ({ error: { message: 'Refused' } })));
+    api.appProtectionControllerSetBackupDecision.and.returnValue(
+      throwError(() => ({ error: { message: 'Refused' } })),
+    );
     show({ coverage: coverage(), policies: [] });
     q('backup-decision-skip')!.click();
     fixture.detectChanges();

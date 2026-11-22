@@ -135,14 +135,26 @@ const FAMILY_TYPE: Record<DbEngineFamily, WorkloadType> = {
   secrets: { key: 'secrets', label: 'Secrets' },
 };
 
-const TYPE_ORDER = ['application', 'tool', 'sql', 'keyvalue', 'document', 'messaging', 'search', 'objects', 'secrets'];
+const TYPE_ORDER = [
+  'application',
+  'tool',
+  'sql',
+  'keyvalue',
+  'document',
+  'messaging',
+  'search',
+  'objects',
+  'secrets',
+];
 
 /** The chip a row answers to: application or tool in Applications, the engine family in Data. */
 export function workloadTypeOf(group: AppGroupView): WorkloadType | null {
   const primary = primaryComponentOf(group);
   switch (groupListOf(group)) {
     case 'applications':
-      return isTool(primary) ? { key: 'tool', label: 'Tools' } : { key: 'application', label: 'Applications' };
+      return isTool(primary)
+        ? { key: 'tool', label: 'Tools' }
+        : { key: 'application', label: 'Applications' };
     case 'data': {
       const family = engineFamilyOf(primary);
       return family ? FAMILY_TYPE[family] : null;

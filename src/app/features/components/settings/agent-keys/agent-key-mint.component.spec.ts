@@ -36,10 +36,8 @@ describe('minting an agent key', () => {
     fixture.detectChanges();
   });
 
-  const canSubmit = () =>
-    (component as unknown as { canSubmit: () => boolean }).canSubmit();
-  const name = () =>
-    (component as unknown as { name: { set: (v: string) => void } }).name;
+  const canSubmit = () => (component as unknown as { canSubmit: () => boolean }).canSubmit();
+  const name = () => (component as unknown as { name: { set: (v: string) => void } }).name;
   const toggle = (key: string) =>
     (component as unknown as { toggle: (k: string) => void }).toggle(key);
 
@@ -101,13 +99,42 @@ describe('minting an agent key', () => {
 
   it('holds one level per area: a deeper pick replaces the shallower one', () => {
     fixture.componentRef.setInput('catalogue', [
-      { key: 'apps:look', area: 'apps', depth: 'look', label: 'See applications', summary: '', scopes: [], grantable: true, blockedScopes: [] },
-      { key: 'apps:change', area: 'apps', depth: 'change', label: 'Deploy and operate applications', summary: '', scopes: [], grantable: true, blockedScopes: [] },
-      { key: 'backups:look', area: 'backups', depth: 'look', label: 'See backups', summary: '', scopes: [], grantable: true, blockedScopes: [] },
+      {
+        key: 'apps:look',
+        area: 'apps',
+        depth: 'look',
+        label: 'See applications',
+        summary: '',
+        scopes: [],
+        grantable: true,
+        blockedScopes: [],
+      },
+      {
+        key: 'apps:change',
+        area: 'apps',
+        depth: 'change',
+        label: 'Deploy and operate applications',
+        summary: '',
+        scopes: [],
+        grantable: true,
+        blockedScopes: [],
+      },
+      {
+        key: 'backups:look',
+        area: 'backups',
+        depth: 'look',
+        label: 'See backups',
+        summary: '',
+        scopes: [],
+        grantable: true,
+        blockedScopes: [],
+      },
     ]);
     fixture.detectChanges();
     const click = (key: string) =>
-      (fixture.nativeElement.querySelector(`[data-testid="check-${key}"]`) as HTMLButtonElement).click();
+      (
+        fixture.nativeElement.querySelector(`[data-testid="check-${key}"]`) as HTMLButtonElement
+      ).click();
     click('apps:look');
     click('apps:change');
     click('backups:look');

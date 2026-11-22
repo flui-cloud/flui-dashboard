@@ -51,10 +51,7 @@ export class ApplicationGatewayService {
     }
   }
 
-  async addRoute(
-    appId: string,
-    body: AddGatewayRouteRequest,
-  ): Promise<GatewayRoute | null> {
+  async addRoute(appId: string, body: AddGatewayRouteRequest): Promise<GatewayRoute | null> {
     this.savingData.set(true);
     this.errorData.set(null);
     try {
@@ -107,13 +104,9 @@ export class ApplicationGatewayService {
     this.errorData.set(null);
     try {
       await firstValueFrom(
-        this.http.delete<void>(
-          `${this.base(appId)}/routes/${encodeURIComponent(endpointId)}`,
-        ),
+        this.http.delete<void>(`${this.base(appId)}/routes/${encodeURIComponent(endpointId)}`),
       );
-      this.routesData.update((list) =>
-        list.filter((r) => r.endpointId !== endpointId),
-      );
+      this.routesData.update((list) => list.filter((r) => r.endpointId !== endpointId));
       return true;
     } catch (error: any) {
       console.error('Error removing gateway route:', error);
@@ -122,10 +115,7 @@ export class ApplicationGatewayService {
     }
   }
 
-  async reconcile(
-    appId: string,
-    endpointId: string,
-  ): Promise<GatewayRoute | null> {
+  async reconcile(appId: string, endpointId: string): Promise<GatewayRoute | null> {
     this.errorData.set(null);
     try {
       const updated = await firstValueFrom(

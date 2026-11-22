@@ -28,19 +28,28 @@ export class PlatformComponentsService {
   readonly redeploying = this.redeployingData.asReadonly();
 
   readonly allComponents = computed(() =>
-    this.entriesData().flatMap(e =>
-      e.components.map(c => ({ ...c, clusterId: e.clusterId, clusterName: e.clusterName }))
-    )
+    this.entriesData().flatMap((e) =>
+      e.components.map((c) => ({ ...c, clusterId: e.clusterId, clusterName: e.clusterName })),
+    ),
   );
 
-  readonly healthyCount = computed(() =>
-    this.allComponents().filter(c => c.status === PlatformComponentResponseDto.StatusEnum.Healthy).length
+  readonly healthyCount = computed(
+    () =>
+      this.allComponents().filter(
+        (c) => c.status === PlatformComponentResponseDto.StatusEnum.Healthy,
+      ).length,
   );
-  readonly degradedCount = computed(() =>
-    this.allComponents().filter(c => c.status === PlatformComponentResponseDto.StatusEnum.Degraded).length
+  readonly degradedCount = computed(
+    () =>
+      this.allComponents().filter(
+        (c) => c.status === PlatformComponentResponseDto.StatusEnum.Degraded,
+      ).length,
   );
-  readonly missingCount = computed(() =>
-    this.allComponents().filter(c => c.status === PlatformComponentResponseDto.StatusEnum.Missing).length
+  readonly missingCount = computed(
+    () =>
+      this.allComponents().filter(
+        (c) => c.status === PlatformComponentResponseDto.StatusEnum.Missing,
+      ).length,
   );
 
   isRedeploying(clusterId: string, componentKey: string): boolean {
@@ -49,7 +58,7 @@ export class PlatformComponentsService {
 
   async loadForClusters(clusters: { id: string; name: string }[]): Promise<void> {
     this.globalLoadingData.set(true);
-    const initial: ClusterComponentsEntry[] = clusters.map(c => ({
+    const initial: ClusterComponentsEntry[] = clusters.map((c) => ({
       clusterId: c.id,
       clusterName: c.name,
       components: [],
@@ -59,18 +68,16 @@ export class PlatformComponentsService {
     }));
     this.entriesData.set(initial);
 
-    await Promise.allSettled(
-      clusters.map(c => this._loadForCluster(c.id, c.name))
-    );
+    await Promise.allSettled(clusters.map((c) => this._loadForCluster(c.id, c.name)));
     this.globalLoadingData.set(false);
   }
 
   async loadForCluster(clusterId: string, clusterName: string): Promise<void> {
-    const existing = this.entriesData().find(e => e.clusterId === clusterId);
+    const existing = this.entriesData().find((e) => e.clusterId === clusterId);
     if (existing) {
       this._patchEntry(clusterId, { loading: true, error: null, refused: false });
     } else {
-      this.entriesData.update(entries => [
+      this.entriesData.update((entries) => [
         ...entries,
         {
           clusterId,
@@ -87,18 +94,18 @@ export class PlatformComponentsService {
 
   async redeployComponent(
     clusterId: string,
-    componentKey: string
+    componentKey: string,
   ): Promise<RedeployPlatformComponentResponseDto | null> {
     const key = `${clusterId}:${componentKey}`;
-    this.redeployingData.update(s => new Set([...s, key]));
+    this.redeployingData.update((s) => new Set([...s, key]));
     try {
       return await firstValueFrom(
-        this.api.platformComponentsControllerRedeployComponent(clusterId, componentKey)
+        this.api.platformComponentsControllerRedeployComponent(clusterId, componentKey),
       );
     } catch {
       return null;
     } finally {
-      this.redeployingData.update(s => {
+      this.redeployingData.update((s) => {
         const next = new Set(s);
         next.delete(key);
         return next;
@@ -111,11 +118,17 @@ export class PlatformComponentsService {
     componentKey: string,
     podName: string,
     container?: string,
-    tailLines?: number
+    tailLines?: number,
   ): Promise<PlatformComponentLogsResponseDto | null> {
     try {
       return await firstValueFrom(
-        this.api.platformComponentsControllerGetPodLogs(clusterId, componentKey, podName, container, tailLines)
+        this.api.platformComponentsControllerGetPodLogs(
+          clusterId,
+          componentKey,
+          podName,
+          container,
+          tailLines,
+        ),
       );
     } catch {
       return null;
@@ -125,7 +138,7 @@ export class PlatformComponentsService {
   private async _loadForCluster(clusterId: string, clusterName: string): Promise<void> {
     try {
       const components = await firstValueFrom(
-        this.api.platformComponentsControllerListComponents(clusterId)
+        this.api.platformComponentsControllerListComponents(clusterId),
       );
       this._patchEntry(clusterId, {
         components,
@@ -137,16 +150,14 @@ export class PlatformComponentsService {
       this._patchEntry(clusterId, {
         loading: false,
         refused: isSandboxRefusal(err),
-        error:
-          (err?.error?.message as string) ??
-          'Platform components could not be loaded.',
+        error: (err?.error?.message as string) ?? 'Platform components could not be loaded.',
       });
     }
   }
 
   private _patchEntry(clusterId: string, patch: Partial<ClusterComponentsEntry>): void {
-    this.entriesData.update(entries =>
-      entries.map(e => (e.clusterId === clusterId ? { ...e, ...patch } : e))
+    this.entriesData.update((entries) =>
+      entries.map((e) => (e.clusterId === clusterId ? { ...e, ...patch } : e)),
     );
   }
 }

@@ -1,8 +1,16 @@
 import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { MeterBarComponent, NODE_SERIES_COLORS } from '../../../shared/components/charts';
-import { ClusterMonitoringService, ServerMetricsState } from '../../service/cluster-monitoring.service';
+import {
+  ClusterMonitoringService,
+  ServerMetricsState,
+} from '../../service/cluster-monitoring.service';
 import { ClusterAutoscaleService } from '../../service/cluster-autoscale.service';
-import { formatBytes, formatPercent, formatRate, formatUptime } from '../../../shared/utils/metric-format';
+import {
+  formatBytes,
+  formatPercent,
+  formatRate,
+  formatUptime,
+} from '../../../shared/utils/metric-format';
 
 interface NodeRow {
   state: ServerMetricsState;
@@ -52,10 +60,15 @@ interface NodeRow {
                 <td class="px-5 py-3">
                   <div class="flex items-center gap-2.5">
                     @if (row.color) {
-                      <span class="h-2 w-2 rounded-sm shrink-0" [style.background-color]="row.color"></span>
+                      <span
+                        class="h-2 w-2 rounded-sm shrink-0"
+                        [style.background-color]="row.color"
+                      ></span>
                     }
                     <div class="flex flex-col min-w-0">
-                      <span class="text-sm font-medium text-foreground truncate">{{ row.state.serverId }}</span>
+                      <span class="text-sm font-medium text-foreground truncate">{{
+                        row.state.serverId
+                      }}</span>
                       <span class="text-[10px] text-sub truncate">{{ row.state.instance }}</span>
                     </div>
                   </div>
@@ -87,9 +100,15 @@ interface NodeRow {
                     [config]="{ warning: 80, danger: 95 }"
                   />
                 </td>
-                <td class="px-3 py-3 font-mono text-xs text-muted-foreground whitespace-nowrap">{{ row.load }}</td>
-                <td class="px-3 py-3 font-mono text-xs text-muted-foreground whitespace-nowrap">{{ row.network }}</td>
-                <td class="px-5 py-3 font-mono text-xs text-muted-foreground whitespace-nowrap">{{ row.uptime }}</td>
+                <td class="px-3 py-3 font-mono text-xs text-muted-foreground whitespace-nowrap">
+                  {{ row.load }}
+                </td>
+                <td class="px-3 py-3 font-mono text-xs text-muted-foreground whitespace-nowrap">
+                  {{ row.network }}
+                </td>
+                <td class="px-5 py-3 font-mono text-xs text-muted-foreground whitespace-nowrap">
+                  {{ row.uptime }}
+                </td>
               </tr>
             }
           </tbody>
@@ -97,9 +116,13 @@ interface NodeRow {
       </div>
     </div>
   `,
-  styles: [`
-    :host { display: block; }
-  `],
+  styles: [
+    `
+      :host {
+        display: block;
+      }
+    `,
+  ],
 })
 export class ClusterNodesTableComponent {
   private readonly monitoring = inject(ClusterMonitoringService);
@@ -123,7 +146,7 @@ export class ClusterNodesTableComponent {
         : '—',
       network: `${formatRate(state.network.bytesIn)} / ${formatRate(state.network.bytesOut)}`,
       uptime: formatUptime(state.uptimeSeconds),
-    }))
+    })),
   );
 
   readonly summary = computed(() => {

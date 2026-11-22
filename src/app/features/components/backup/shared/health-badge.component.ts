@@ -14,7 +14,10 @@ import { BackupHealthState } from '../../../model/backup-run.models';
       [attr.title]="detail() || null"
       [attr.data-state]="state()"
     >
-      <span class="sr-only">Backup health: </span>{{ style().label }}@if (detail()) {<span class="sr-only">. {{ detail() }}</span>}
+      <span class="sr-only">Backup health: </span>{{ style().label }}
+      @if (detail()) {
+        <span class="sr-only">. {{ detail() }}</span>
+      }
     </span>
   `,
 })

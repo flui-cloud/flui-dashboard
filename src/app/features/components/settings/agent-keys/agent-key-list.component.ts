@@ -24,11 +24,7 @@ import { DeleteConfirmationDialogComponent } from '../../../../shared/components
 import { ApiKeyResponseDto } from '../../../../core/api/model/apiKeyResponseDto';
 import { PermissionGroupDto } from '../../../../core/api/model/permissionGroupDto';
 import { KeySurface, readKeySurface, understatesItself } from './agent-key-surface';
-import {
-  ConnectedKey,
-  KeyConnection,
-  readKeyConnection,
-} from './agent-key-connection';
+import { ConnectedKey, KeyConnection, readKeyConnection } from './agent-key-connection';
 import { AgentKeyApplicationsService } from './agent-key-applications.service';
 import { AgentKeyApplicationPickerComponent } from './agent-key-application-picker.component';
 import { AgentKeyProjectsService } from './agent-key-projects.service';
@@ -76,7 +72,14 @@ function resolveNames(
     AgentKeyPermissionsEditorComponent,
   ],
   providers: [
-    provideIcons({ lucideChevronDown, lucideChevronRight, lucideKeyRound, lucidePencil, lucidePlugZap, lucideTriangleAlert }),
+    provideIcons({
+      lucideChevronDown,
+      lucideChevronRight,
+      lucideKeyRound,
+      lucidePencil,
+      lucidePlugZap,
+      lucideTriangleAlert,
+    }),
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -101,7 +104,12 @@ function resolveNames(
                     <span hlmBadge variant="secondary" class="text-xs">Expired</span>
                   }
                   @if (row.warn) {
-                    <span hlmBadge variant="destructive" class="text-xs" data-testid="beyond-groups">
+                    <span
+                      hlmBadge
+                      variant="destructive"
+                      class="text-xs"
+                      data-testid="beyond-groups"
+                    >
                       Wider than its name
                     </span>
                   }
@@ -111,7 +119,10 @@ function resolveNames(
                     </span>
                   }
                 </div>
-                <p class="text-sm text-muted-foreground" [attr.data-testid]="'headline-' + row.key.id">
+                <p
+                  class="text-sm text-muted-foreground"
+                  [attr.data-testid]="'headline-' + row.key.id"
+                >
                   {{ row.surface.headline }}
                 </p>
               </div>
@@ -163,7 +174,9 @@ function resolveNames(
             @if (row.surface.groups.length) {
               <div class="flex flex-wrap gap-1.5">
                 @for (g of row.surface.groups; track g.key) {
-                  <span hlmBadge variant="outline" class="text-xs" [title]="g.summary">{{ g.label }}</span>
+                  <span hlmBadge variant="outline" class="text-xs" [title]="g.summary">{{
+                    g.label
+                  }}</span>
                 }
               </div>
             }
@@ -199,7 +212,10 @@ function resolveNames(
               [attr.aria-expanded]="isOpen(row.key.id)"
               (click)="toggleDetails(row.key.id)"
             >
-              <ng-icon [name]="isOpen(row.key.id) ? 'lucideChevronDown' : 'lucideChevronRight'" class="h-3 w-3" />
+              <ng-icon
+                [name]="isOpen(row.key.id) ? 'lucideChevronDown' : 'lucideChevronRight'"
+                class="h-3 w-3"
+              />
               Details
             </button>
             <div class="space-y-2" [hidden]="!isOpen(row.key.id)">
@@ -208,15 +224,23 @@ function resolveNames(
                   class="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-foreground"
                   [attr.data-testid]="'caution-' + row.key.id"
                 >
-                  <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-destructive" />
+                  <ng-icon
+                    name="lucideTriangleAlert"
+                    class="mt-0.5 h-3.5 w-3.5 shrink-0 text-destructive"
+                  />
                   <span>{{ caution }}</span>
                 </div>
               }
-              <p class="font-mono text-[11px] text-muted-foreground/80 break-all">{{ row.scopes }}</p>
+              <p class="font-mono text-[11px] text-muted-foreground/80 break-all">
+                {{ row.scopes }}
+              </p>
             </div>
 
             @if (editing()?.keyId === row.key.id && editing()?.field === 'permissions') {
-              <div class="rounded-md border border-border bg-muted/20 p-3" [attr.data-testid]="'edit-permissions-panel-' + row.key.id">
+              <div
+                class="rounded-md border border-border bg-muted/20 p-3"
+                [attr.data-testid]="'edit-permissions-panel-' + row.key.id"
+              >
                 <app-agent-key-permissions-editor
                   [catalogue]="catalogue()"
                   [scopes]="row.key.scopes ?? []"
@@ -229,14 +253,22 @@ function resolveNames(
             }
 
             @if (editing()?.keyId === row.key.id && editing()?.field === 'applications') {
-              <div class="space-y-2 rounded-md border border-border bg-muted/20 p-3" [attr.data-testid]="'edit-applications-panel-' + row.key.id">
+              <div
+                class="space-y-2 rounded-md border border-border bg-muted/20 p-3"
+                [attr.data-testid]="'edit-applications-panel-' + row.key.id"
+              >
                 <app-agent-key-application-picker
                   #editAppPicker
                   [selected]="row.key.applicationIds ?? undefined"
                   (selectionChange)="editPicked.set($event)"
                 />
                 @if (updateApplicationsError(); as e) {
-                  <p class="text-xs text-destructive" [attr.data-testid]="'edit-applications-error-' + row.key.id">{{ e }}</p>
+                  <p
+                    class="text-xs text-destructive"
+                    [attr.data-testid]="'edit-applications-error-' + row.key.id"
+                  >
+                    {{ e }}
+                  </p>
                 }
                 <div class="flex items-center gap-2">
                   <button
@@ -263,14 +295,22 @@ function resolveNames(
             }
 
             @if (editing()?.keyId === row.key.id && editing()?.field === 'projects') {
-              <div class="space-y-2 rounded-md border border-border bg-muted/20 p-3" [attr.data-testid]="'edit-projects-panel-' + row.key.id">
+              <div
+                class="space-y-2 rounded-md border border-border bg-muted/20 p-3"
+                [attr.data-testid]="'edit-projects-panel-' + row.key.id"
+              >
                 <app-agent-key-project-picker
                   #editProjectPicker
                   [selected]="row.key.projectIds ?? undefined"
                   (selectionChange)="editPicked.set($event)"
                 />
                 @if (updateProjectsError(); as e) {
-                  <p class="text-xs text-destructive" [attr.data-testid]="'edit-projects-error-' + row.key.id">{{ e }}</p>
+                  <p
+                    class="text-xs text-destructive"
+                    [attr.data-testid]="'edit-projects-error-' + row.key.id"
+                  >
+                    {{ e }}
+                  </p>
                 }
                 <div class="flex items-center gap-2">
                   <button
@@ -290,7 +330,8 @@ function resolveNames(
                     Cancel
                   </button>
                   <p class="text-xs text-muted-foreground">
-                    Empty means no project grant — an app is still reached individually, if named above.
+                    Empty means no project grant — an app is still reached individually, if named
+                    above.
                   </p>
                 </div>
               </div>
@@ -403,29 +444,21 @@ export class AgentKeyListComponent {
         warn: understatesItself(surface) || surface.shape === 'unscoped',
         expired: !!key.expiresAt && new Date(key.expiresAt).getTime() < Date.now(),
         scopes: key.scopes?.length ? key.scopes.join(' · ') : 'no scope list — unscoped',
-        connection: readKeyConnection(
-          key as ConnectedKey,
-          this.currentSkillVersion(),
-        ),
+        connection: readKeyConnection(key as ConnectedKey, this.currentSkillVersion()),
         appNames: resolveNames(key.applicationIds, appNames),
         projectNames: resolveNames(key.projectIds, projectNames),
       };
     });
   });
 
-  protected toggleEdit(
-    key: ApiKeyResponseDto,
-    field: EditTarget['field'],
-  ): void {
+  protected toggleEdit(key: ApiKeyResponseDto, field: EditTarget['field']): void {
     const current = this.editing();
     if (current?.keyId === key.id && current.field === field) {
       this.editing.set(null);
       return;
     }
     if (field !== 'permissions') {
-      this.editPicked.set(
-        (field === 'applications' ? key.applicationIds : key.projectIds) ?? [],
-      );
+      this.editPicked.set((field === 'applications' ? key.applicationIds : key.projectIds) ?? []);
     }
     this.editing.set({ keyId: key.id, field });
   }
@@ -447,10 +480,7 @@ export class AgentKeyListComponent {
 
   protected ask(key: ApiKeyResponseDto): void {
     this.pending.set(key);
-    const connection = readKeyConnection(
-      key as ConnectedKey,
-      this.currentSkillVersion(),
-    );
+    const connection = readKeyConnection(key as ConnectedKey, this.currentSkillVersion());
     this.dialog().open({
       title: key.current ? 'Revoke the key you are using' : 'Revoke this key',
       description: key.current

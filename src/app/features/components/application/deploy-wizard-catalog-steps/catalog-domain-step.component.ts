@@ -36,8 +36,8 @@ import { CatalogService } from '../../../service/catalog.service';
       <div>
         <h3 class="text-base font-semibold">Domain & endpoint</h3>
         <p class="text-sm text-muted-foreground">
-          Pick how this app will be reached. Flui provisions DNS and TLS automatically
-          when your cluster is ready.
+          Pick how this app will be reached. Flui provisions DNS and TLS automatically when your
+          cluster is ready.
         </p>
       </div>
 
@@ -117,9 +117,7 @@ import { CatalogService } from '../../../service/catalog.service';
 
           @if (state.domainMode() === 'auto') {
             <div class="rounded-lg border border-border bg-muted/30 p-4">
-              <div class="text-xs uppercase tracking-wide text-muted-foreground">
-                Preview
-              </div>
+              <div class="text-xs uppercase tracking-wide text-muted-foreground">Preview</div>
               <div class="mt-1 flex items-baseline gap-2 font-mono text-sm">
                 <span class="text-muted-foreground">https://</span>
                 <span class="text-foreground">{{ autoFqdnPreview() }}</span>
@@ -157,8 +155,8 @@ import { CatalogService } from '../../../service/catalog.service';
                 </p>
               }
               <p class="mt-1 text-xs text-muted-foreground">
-                Make sure a DNS record for this hostname points to your cluster before the
-                install finishes, or the endpoint will fail certificate provisioning.
+                Make sure a DNS record for this hostname points to your cluster before the install
+                finishes, or the endpoint will fail certificate provisioning.
               </p>
             </div>
           }
@@ -167,8 +165,8 @@ import { CatalogService } from '../../../service/catalog.service';
             <div
               class="rounded-lg border border-border bg-muted/30 p-4 text-xs text-muted-foreground"
             >
-              No endpoint will be provisioned. Once the app is running, open its page and
-              add a domain from the DNS tab.
+              No endpoint will be provisioned. Once the app is running, open its page and add a
+              domain from the DNS tab.
             </div>
           }
 
@@ -189,9 +187,9 @@ import { CatalogService } from '../../../service/catalog.service';
                   Provision an HTTPS certificate
                 </span>
                 <span class="mt-0.5 block text-xs text-muted-foreground">
-                  On by default. Turn off to serve the endpoint over plain HTTP — DNS only,
-                  no per-app certificate. Useful to avoid certificate rate limits or when
-                  TLS is terminated upstream.
+                  On by default. Turn off to serve the endpoint over plain HTTP — DNS only, no
+                  per-app certificate. Useful to avoid certificate rate limits or when TLS is
+                  terminated upstream.
                 </span>
               </span>
             </label>
@@ -247,8 +245,7 @@ export class CatalogDomainStepComponent {
   }
 
   modeCardClass(active: boolean): string {
-    const base =
-      'flex flex-col items-start rounded-lg border p-4 text-left transition w-full';
+    const base = 'flex flex-col items-start rounded-lg border p-4 text-left transition w-full';
     return active
       ? `${base} border-primary bg-primary/5`
       : `${base} border-border hover:bg-accent/40`;

@@ -5,6 +5,7 @@ Questo documento mostra come integrare i componenti gauge nel tab di monitoring 
 ## Scenario: Cluster Monitoring Tab
 
 Vogliamo visualizzare le metriche real-time di un cluster:
+
 - CPU Usage
 - Memory Usage
 - Disk Usage
@@ -22,7 +23,7 @@ import {
   RingGaugeComponent,
   GradeGaugeComponent,
   GaugeChartData,
-  GaugeChartConfig
+  GaugeChartConfig,
 } from '@shared/components/charts';
 import { ClusterService } from '@features/service/cluster.service';
 
@@ -30,7 +31,7 @@ import { ClusterService } from '@features/service/cluster.service';
   selector: 'app-cluster-monitoring-tab',
   standalone: true,
   imports: [CommonModule, RingGaugeComponent, GradeGaugeComponent],
-  templateUrl: './cluster-monitoring-tab.component.html'
+  templateUrl: './cluster-monitoring-tab.component.html',
 })
 export class ClusterMonitoringTabComponent implements OnInit, OnDestroy {
   private clusterService = inject(ClusterService);
@@ -47,7 +48,7 @@ export class ClusterMonitoringTabComponent implements OnInit, OnDestroy {
     value: this.cpuMetric().current,
     title: 'CPU Usage',
     subtitle: `${this.cpuMetric().current.toFixed(1)}% utilized`,
-    previousValue: this.cpuMetric().previous
+    previousValue: this.cpuMetric().previous,
   }));
 
   memoryData = computed<GaugeChartData>(() => {
@@ -56,7 +57,7 @@ export class ClusterMonitoringTabComponent implements OnInit, OnDestroy {
       value: m.current,
       title: 'Memory',
       subtitle: `${m.used.toFixed(1)} GB / ${m.total} GB`,
-      previousValue: m.previous
+      previousValue: m.previous,
     };
   });
 
@@ -66,7 +67,7 @@ export class ClusterMonitoringTabComponent implements OnInit, OnDestroy {
       value: d.current,
       title: 'Disk Usage',
       subtitle: `${d.used} GB / ${d.total} GB`,
-      previousValue: d.previous
+      previousValue: d.previous,
     };
   });
 
@@ -74,26 +75,26 @@ export class ClusterMonitoringTabComponent implements OnInit, OnDestroy {
     value: this.networkMetric().current,
     title: 'Network Load',
     subtitle: `${this.networkMetric().current.toFixed(0)} Mbps`,
-    previousValue: this.networkMetric().previous
+    previousValue: this.networkMetric().previous,
   }));
 
   // Configurazioni gauge
   cpuConfig: GaugeChartConfig = {
     unit: '%',
     thresholds: { warning: 70, danger: 90 },
-    height: '220px'
+    height: '220px',
   };
 
   memoryConfig: GaugeChartConfig = {
     unit: '%',
     thresholds: { warning: 75, danger: 90 },
-    height: '220px'
+    height: '220px',
   };
 
   diskConfig: GaugeChartConfig = {
     unit: '%',
     thresholds: { warning: 80, danger: 95 },
-    height: '220px'
+    height: '220px',
   };
 
   networkConfig: GaugeChartConfig = {
@@ -102,7 +103,7 @@ export class ClusterMonitoringTabComponent implements OnInit, OnDestroy {
     unit: ' Mbps',
     severity: 'info',
     height: '220px',
-    valueFormatter: (value) => value.toFixed(0)
+    valueFormatter: (value) => value.toFixed(0),
   };
 
   ngOnInit(): void {
@@ -127,31 +128,31 @@ export class ClusterMonitoringTabComponent implements OnInit, OnDestroy {
       const metrics = await this.clusterService.getClusterMetrics();
 
       // Aggiorna CPU
-      this.cpuMetric.update(current => ({
+      this.cpuMetric.update((current) => ({
         previous: current.current,
-        current: metrics.cpu.usage
+        current: metrics.cpu.usage,
       }));
 
       // Aggiorna Memory
-      this.memoryMetric.update(current => ({
+      this.memoryMetric.update((current) => ({
         previous: current.current,
         current: metrics.memory.percentage,
         used: metrics.memory.used / 1024 / 1024 / 1024, // Converti in GB
-        total: metrics.memory.total / 1024 / 1024 / 1024
+        total: metrics.memory.total / 1024 / 1024 / 1024,
       }));
 
       // Aggiorna Disk
-      this.diskMetric.update(current => ({
+      this.diskMetric.update((current) => ({
         previous: current.current,
         current: metrics.disk.percentage,
         used: metrics.disk.used / 1024 / 1024 / 1024,
-        total: metrics.disk.total / 1024 / 1024 / 1024
+        total: metrics.disk.total / 1024 / 1024 / 1024,
       }));
 
       // Aggiorna Network
-      this.networkMetric.update(current => ({
+      this.networkMetric.update((current) => ({
         previous: current.current,
-        current: metrics.network.throughput / 1024 / 1024 // Converti in Mbps
+        current: metrics.network.throughput / 1024 / 1024, // Converti in Mbps
       }));
     } catch (error) {
       console.error('Failed to load cluster metrics:', error);
@@ -176,9 +177,7 @@ export class ClusterMonitoringTabComponent implements OnInit, OnDestroy {
   <div class="flex items-center justify-between">
     <div>
       <h2 class="text-2xl font-semibold">Cluster Monitoring</h2>
-      <p class="text-sm text-muted-foreground">
-        Real-time metrics updated every 5 seconds
-      </p>
+      <p class="text-sm text-muted-foreground">Real-time metrics updated every 5 seconds</p>
     </div>
     <button
       (click)="refreshMetrics()"
@@ -242,20 +241,20 @@ export class ClusterMonitoringTabComponent implements OnInit, OnDestroy {
 // cluster.service.ts (estensione)
 export interface ClusterMetrics {
   cpu: {
-    usage: number;        // Percentuale 0-100
+    usage: number; // Percentuale 0-100
   };
   memory: {
-    used: number;         // Bytes
-    total: number;        // Bytes
-    percentage: number;   // 0-100
+    used: number; // Bytes
+    total: number; // Bytes
+    percentage: number; // 0-100
   };
   disk: {
-    used: number;         // Bytes
-    total: number;        // Bytes
-    percentage: number;   // 0-100
+    used: number; // Bytes
+    total: number; // Bytes
+    percentage: number; // 0-100
   };
   network: {
-    throughput: number;   // Bytes/sec
+    throughput: number; // Bytes/sec
   };
 }
 
@@ -270,9 +269,7 @@ export class ClusterService {
     }
 
     // Chiama API Prometheus/Loki tramite backend
-    const response = await firstValueFrom(
-      this.apiService.getClusterMetrics(clusterId)
-    );
+    const response = await firstValueFrom(this.apiService.getClusterMetrics(clusterId));
 
     return response;
   }
@@ -359,22 +356,25 @@ System Resources (Grade Gauge)
 ## 🎨 Personalizzazioni Possibili
 
 ### 1. Alert Visual quando Soglia Superata
+
 ```typescript
 showAlert = computed(() => this.cpuData().value >= 90);
 ```
 
 ```html
 @if (showAlert()) {
-  <div class="bg-red-50 border-l-4 border-red-500 p-4">
-    <p class="text-red-700">⚠️ CPU usage critically high!</p>
-  </div>
+<div class="bg-red-50 border-l-4 border-red-500 p-4">
+  <p class="text-red-700">⚠️ CPU usage critically high!</p>
+</div>
 }
 ```
 
 ### 2. Historical Sparkline sotto il Gauge
+
 Aggiungi un mini grafico dei valori passati.
 
 ### 3. Auto-refresh Toggle
+
 ```html
 <label>
   <input type="checkbox" [(ngModel)]="autoRefresh" />
@@ -383,6 +383,7 @@ Aggiungi un mini grafico dei valori passati.
 ```
 
 ### 4. Scelta Ring vs Grade
+
 ```html
 <select [(ngModel)]="gaugeType">
   <option value="ring">Ring Gauge</option>

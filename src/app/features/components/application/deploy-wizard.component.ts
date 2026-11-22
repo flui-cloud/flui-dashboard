@@ -1,11 +1,24 @@
-import { Component, OnInit, OnDestroy, signal, computed, inject, effect, untracked, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  signal,
+  computed,
+  inject,
+  effect,
+  untracked,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { ProjectPickerComponent } from '../projects/project-picker.component';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { firstValueFrom } from 'rxjs';
-import { WizardStepperComponent, WizardStepperStep } from '../../../shared/components/wizard-stepper/wizard-stepper.component';
+import {
+  WizardStepperComponent,
+  WizardStepperStep,
+} from '../../../shared/components/wizard-stepper/wizard-stepper.component';
 import {
   lucideArrowLeft,
   lucideArrowRight,
@@ -44,7 +57,12 @@ import {
   lucideLayers,
   lucideCircleHelp,
 } from '@ng-icons/lucide';
-import { RepositoryService, ConnectedRepository, RepositoryFluiManifest, RepositoryManifestEntry } from '../../service/repository.service';
+import {
+  RepositoryService,
+  ConnectedRepository,
+  RepositoryFluiManifest,
+  RepositoryManifestEntry,
+} from '../../service/repository.service';
 import { ClusterService } from '../../service/cluster.service';
 import { TemplateService } from '../../service/template.service';
 import { DeployWizardStateService, FlowSubtype } from '../../service/deploy-wizard-state.service';
@@ -65,7 +83,10 @@ import { CatalogOverviewStepComponent } from './deploy-wizard-catalog-steps/cata
 import { CatalogInputsStepComponent } from './deploy-wizard-catalog-steps/catalog-inputs-step.component';
 import { CatalogConfigStepComponent } from './deploy-wizard-catalog-steps/catalog-config-step.component';
 import { CatalogDomainStepComponent } from './deploy-wizard-catalog-steps/catalog-domain-step.component';
-import { CatalogFeaturesStepComponent, catalogAuthLabel } from './deploy-wizard-catalog-steps/catalog-features-step.component';
+import {
+  CatalogFeaturesStepComponent,
+  catalogAuthLabel,
+} from './deploy-wizard-catalog-steps/catalog-features-step.component';
 import { catalogOptionEnabled } from './deploy-wizard-catalog-steps/catalog-options';
 import { CatalogLinkedBbStepComponent } from './deploy-wizard-catalog-steps/catalog-linked-bb-step.component';
 import { CatalogDependenciesStepComponent } from './deploy-wizard-catalog-steps/catalog-dependencies-step.component';
@@ -117,8 +138,8 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
     CatalogDependenciesStepComponent,
     CatalogSuccessStepComponent,
     CatalogResourcesReviewComponent,
-    CatalogUdpPortsNoticeComponent
-],
+    CatalogUdpPortsNoticeComponent,
+  ],
   providers: [
     DeployWizardStateService,
     provideIcons({
@@ -177,9 +198,7 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
       <!-- Header -->
       <div class="mb-8">
         <h1 class="text-2xl font-bold mb-2">Deploy New Application</h1>
-        <p class="text-muted-foreground">
-          Deploy your application in a few simple steps
-        </p>
+        <p class="text-muted-foreground">Deploy your application in a few simple steps</p>
 
         <!-- Progress Steps -->
         <div class="mt-6">
@@ -199,7 +218,9 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
             <div class="space-y-5">
               <div>
                 <h3 class="text-base font-semibold mb-1">Choose how to deploy</h3>
-                <p class="text-sm text-muted-foreground">Pick the starting point for your application.</p>
+                <p class="text-sm text-muted-foreground">
+                  Pick the starting point for your application.
+                </p>
               </div>
 
               <!-- Four entry points, same level. Marketplace is a coming-soon placeholder. -->
@@ -213,10 +234,15 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                   <ng-icon name="lucideRocket" class="h-8 w-8 mb-3 text-muted-foreground" />
                   <div class="font-medium mb-1">From a Flui template</div>
                   <p class="text-xs text-muted-foreground">
-                    A ready-made framework starter (Next.js, Spring Boot, FastAPI…). Flui creates a new repo in your GitHub, wires up the build and deploys it — the fastest way to see an end-to-end deploy in action.
+                    A ready-made framework starter (Next.js, Spring Boot, FastAPI…). Flui creates a
+                    new repo in your GitHub, wires up the build and deploys it — the fastest way to
+                    see an end-to-end deploy in action.
                   </p>
                   @if (flowSubtype() === 'template') {
-                    <ng-icon name="lucideCheck" class="absolute top-3 right-3 h-4 w-4 text-primary" />
+                    <ng-icon
+                      name="lucideCheck"
+                      class="absolute top-3 right-3 h-4 w-4 text-primary"
+                    />
                   }
                 </button>
 
@@ -229,10 +255,15 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                   <ng-icon name="lucideContainer" class="h-8 w-8 mb-3 text-muted-foreground" />
                   <div class="font-medium mb-1">From a Docker image</div>
                   <p class="text-xs text-muted-foreground">
-                    Ship a pre-built image from DockerHub or GHCR. No source build step. If the image is not Flui-compliant you'll be asked to fill in the required variables and runtime settings during the next steps.
+                    Ship a pre-built image from DockerHub or GHCR. No source build step. If the
+                    image is not Flui-compliant you'll be asked to fill in the required variables
+                    and runtime settings during the next steps.
                   </p>
                   @if (flowSubtype() === 'image') {
-                    <ng-icon name="lucideCheck" class="absolute top-3 right-3 h-4 w-4 text-primary" />
+                    <ng-icon
+                      name="lucideCheck"
+                      class="absolute top-3 right-3 h-4 w-4 text-primary"
+                    />
                   }
                 </button>
 
@@ -245,10 +276,14 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                   <ng-icon name="lucideGitMerge" class="h-8 w-8 mb-3 text-muted-foreground" />
                   <div class="font-medium mb-1">From an existing repository</div>
                   <p class="text-xs text-muted-foreground">
-                    Deploy from a Git repo you already have. Flui reads its flui.yaml, and its Dockerfile if it builds with one.
+                    Deploy from a Git repo you already have. Flui reads its flui.yaml, and its
+                    Dockerfile if it builds with one.
                   </p>
                   @if (flowSubtype() === 'existing-repo') {
-                    <ng-icon name="lucideCheck" class="absolute top-3 right-3 h-4 w-4 text-primary" />
+                    <ng-icon
+                      name="lucideCheck"
+                      class="absolute top-3 right-3 h-4 w-4 text-primary"
+                    />
                   }
                 </button>
 
@@ -261,30 +296,45 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                   <ng-icon name="lucideStore" class="h-8 w-8 mb-3 text-muted-foreground" />
                   <div class="font-medium mb-1">From the Marketplace</div>
                   <p class="text-xs text-muted-foreground">
-                    One-click install of pre-packaged apps curated by Flui (databases, CMS, analytics, queues…). No code, no Dockerfile — pick it and it runs.
+                    One-click install of pre-packaged apps curated by Flui (databases, CMS,
+                    analytics, queues…). No code, no Dockerfile — pick it and it runs.
                   </p>
                   @if (flowSubtype() === 'marketplace') {
-                    <ng-icon name="lucideCheck" class="absolute top-3 right-3 h-4 w-4 text-primary" />
+                    <ng-icon
+                      name="lucideCheck"
+                      class="absolute top-3 right-3 h-4 w-4 text-primary"
+                    />
                   }
                 </button>
               </div>
 
               <!-- Docker image: what happens during deploy -->
               @if (flowSubtype() === 'image') {
-                <div class="flex items-start gap-3 p-4 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/10">
-                  <ng-icon name="lucideInfo" class="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                <div
+                  class="flex items-start gap-3 p-4 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/10"
+                >
+                  <ng-icon
+                    name="lucideInfo"
+                    class="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5"
+                  />
                   <div class="text-xs text-blue-900 dark:text-blue-100 space-y-2">
                     <p class="font-medium">What happens next</p>
                     <p>
-                      Flui treats your image as an opaque artefact — it won't rebuild it or patch it. If the image is
-                      <span class="font-medium">Flui-compliant</span> (exposes a single port, has a healthcheck endpoint,
-                      runs as non-root) most of the deploy settings will be filled in automatically. Otherwise you'll be
-                      asked to configure port, healthcheck, environment variables and resource limits by hand in the
-                      next steps.
+                      Flui treats your image as an opaque artefact — it won't rebuild it or patch
+                      it. If the image is
+                      <span class="font-medium">Flui-compliant</span> (exposes a single port, has a
+                      healthcheck endpoint, runs as non-root) most of the deploy settings will be
+                      filled in automatically. Otherwise you'll be asked to configure port,
+                      healthcheck, environment variables and resource limits by hand in the next
+                      steps.
                     </p>
                     <p>
                       Want to see what a Flui-compliant image looks like? Every image published by
-                      <button type="button" (click)="navigateToTemplates()" class="inline-flex items-center gap-1 text-blue-700 dark:text-blue-300 hover:underline font-medium">
+                      <button
+                        type="button"
+                        (click)="navigateToTemplates()"
+                        class="inline-flex items-center gap-1 text-blue-700 dark:text-blue-300 hover:underline font-medium"
+                      >
                         a Flui template
                         <ng-icon name="lucideArrowRight" class="h-3 w-3" />
                       </button>
@@ -296,22 +346,42 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
 
               <!-- Structure requirements for the existing-repo flow -->
               @if (flowSubtype() === 'existing-repo') {
-                <div class="flex items-start gap-3 p-4 rounded-lg border border-border bg-muted/40" data-testid="existing-repo-needs">
-                  <ng-icon name="lucideInfo" class="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
+                <div
+                  class="flex items-start gap-3 p-4 rounded-lg border border-border bg-muted/40"
+                  data-testid="existing-repo-needs"
+                >
+                  <ng-icon
+                    name="lucideInfo"
+                    class="h-5 w-5 text-muted-foreground shrink-0 mt-0.5"
+                  />
                   <div class="text-xs text-foreground space-y-2">
                     <p class="font-medium">What Flui needs in the repository</p>
                     <p>
-                      A <code class="font-mono bg-muted px-1 rounded">flui.yaml</code> that describes the app, plus a
-                      <code class="font-mono bg-muted px-1 rounded">Dockerfile</code> if it builds with one. No
-                      <code class="font-mono bg-muted px-1 rounded">flui.yaml</code> yet? An AI agent can write both, or
-                      <code class="font-mono bg-muted px-1 rounded">flui app init</code> copies them from a
-                      <button type="button" (click)="navigateToTemplates()" class="inline-flex items-center gap-1 text-primary hover:underline font-medium">
+                      A <code class="font-mono bg-muted px-1 rounded">flui.yaml</code> that
+                      describes the app, plus a
+                      <code class="font-mono bg-muted px-1 rounded">Dockerfile</code> if it builds
+                      with one. No
+                      <code class="font-mono bg-muted px-1 rounded">flui.yaml</code> yet? An AI
+                      agent can write both, or
+                      <code class="font-mono bg-muted px-1 rounded">flui app init</code> copies them
+                      from a
+                      <button
+                        type="button"
+                        (click)="navigateToTemplates()"
+                        class="inline-flex items-center gap-1 text-primary hover:underline font-medium"
+                      >
                         framework template
-                        <ng-icon name="lucideArrowRight" class="h-3 w-3" />
-                      </button>.
+                        <ng-icon name="lucideArrowRight" class="h-3 w-3" /></button
+                      >.
                     </p>
                     <p>
-                      <a href="https://docs.flui.cloud/concepts/17-the-flui-manifest/" target="_blank" rel="noopener" class="text-primary hover:underline">What the flui.yaml says</a>
+                      <a
+                        href="https://docs.flui.cloud/concepts/17-the-flui-manifest/"
+                        target="_blank"
+                        rel="noopener"
+                        class="text-primary hover:underline"
+                        >What the flui.yaml says</a
+                      >
                     </p>
                   </div>
                 </div>
@@ -324,7 +394,10 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
             <div class="space-y-4">
               <div>
                 <h3 class="text-base font-semibold mb-1">Choose a template</h3>
-                <p class="text-sm text-muted-foreground">Each template ships a Flui-managed Dockerfile with sensible defaults — port, healthcheck, resources are pre-configured.</p>
+                <p class="text-sm text-muted-foreground">
+                  Each template ships a Flui-managed Dockerfile with sensible defaults — port,
+                  healthcheck, resources are pre-configured.
+                </p>
               </div>
               @if (isLoadingTemplates()) {
                 <div class="flex items-center justify-center py-10">
@@ -332,7 +405,9 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                   <span class="ml-2 text-sm text-muted-foreground">Loading templates...</span>
                 </div>
               } @else if (templates().length === 0) {
-                <p class="text-sm text-muted-foreground py-6 text-center">No templates available.</p>
+                <p class="text-sm text-muted-foreground py-6 text-center">
+                  No templates available.
+                </p>
               } @else {
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                   @for (tpl of templates(); track tpl.framework) {
@@ -344,17 +419,29 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                       <div class="flex items-start justify-between mb-2">
                         <div class="flex items-center gap-2">
                           <ng-icon name="lucidePackage" class="h-5 w-5 text-muted-foreground" />
-                          <div class="font-semibold text-sm">{{ tpl.displayName }} <span class="text-muted-foreground font-normal">{{ tpl.version }}</span></div>
+                          <div class="font-semibold text-sm">
+                            {{ tpl.displayName }}
+                            <span class="text-muted-foreground font-normal">{{ tpl.version }}</span>
+                          </div>
                         </div>
                         @if (state.selectedTemplate()?.framework === tpl.framework) {
                           <ng-icon name="lucideCheck" class="h-4 w-4 text-primary shrink-0" />
                         }
                       </div>
-                      <p class="text-xs text-muted-foreground line-clamp-2 mb-3">{{ tpl.description }}</p>
+                      <p class="text-xs text-muted-foreground line-clamp-2 mb-3">
+                        {{ tpl.description }}
+                      </p>
                       <div class="flex flex-wrap gap-1.5 text-[11px]">
-                        <span class="px-1.5 py-0.5 rounded bg-muted text-muted-foreground">Port {{ tpl.port }}</span>
-                        <span class="px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-mono">{{ tpl.healthcheckPath }}</span>
-                        <span class="px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{{ tpl.buildTool }}</span>
+                        <span class="px-1.5 py-0.5 rounded bg-muted text-muted-foreground"
+                          >Port {{ tpl.port }}</span
+                        >
+                        <span
+                          class="px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-mono"
+                          >{{ tpl.healthcheckPath }}</span
+                        >
+                        <span class="px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{{
+                          tpl.buildTool
+                        }}</span>
                       </div>
                     </button>
                   }
@@ -368,23 +455,45 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
             <div class="space-y-5">
               <div>
                 <h3 class="text-base font-semibold mb-1">New repository settings</h3>
-                <p class="text-sm text-muted-foreground">Flui will create a new GitHub repository from the <span class="font-medium text-foreground">{{ state.selectedTemplate()?.displayName }}</span> template in your account.</p>
+                <p class="text-sm text-muted-foreground">
+                  Flui will create a new GitHub repository from the
+                  <span class="font-medium text-foreground">{{
+                    state.selectedTemplate()?.displayName
+                  }}</span>
+                  template in your account.
+                </p>
               </div>
 
               @if (!repoService.hasRepoScope()) {
-                <div class="flex items-start gap-2 p-3 rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 text-sm">
-                  <ng-icon name="lucideTriangleAlert" class="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                <div
+                  class="flex items-start gap-2 p-3 rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 text-sm"
+                >
+                  <ng-icon
+                    name="lucideTriangleAlert"
+                    class="h-4 w-4 text-amber-600 shrink-0 mt-0.5"
+                  />
                   <div class="text-xs text-amber-900 dark:text-amber-100">
                     <p class="font-medium">GitHub connection required</p>
-                    <p>Connect GitHub with the <code class="font-mono">repo</code> scope to create a new repository.</p>
-                    <button type="button" (click)="navigateToRepositories()" class="mt-1 text-amber-700 dark:text-amber-300 hover:underline font-medium">Connect GitHub →</button>
+                    <p>
+                      Connect GitHub with the <code class="font-mono">repo</code> scope to create a
+                      new repository.
+                    </p>
+                    <button
+                      type="button"
+                      (click)="navigateToRepositories()"
+                      class="mt-1 text-amber-700 dark:text-amber-300 hover:underline font-medium"
+                    >
+                      Connect GitHub →
+                    </button>
                   </div>
                 </div>
               }
 
               <!-- Repo name -->
               <div>
-                <label class="text-sm font-medium block mb-1.5">Repository name <span class="text-destructive">*</span></label>
+                <label class="text-sm font-medium block mb-1.5"
+                  >Repository name <span class="text-destructive">*</span></label
+                >
                 <input
                   type="text"
                   [value]="state.newRepoName()"
@@ -399,7 +508,9 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
 
               <!-- Owner (optional) -->
               <div>
-                <label class="text-sm font-medium block mb-1.5">Owner <span class="text-muted-foreground font-normal">(optional)</span></label>
+                <label class="text-sm font-medium block mb-1.5"
+                  >Owner <span class="text-muted-foreground font-normal">(optional)</span></label
+                >
                 <input
                   type="text"
                   [value]="state.newRepoOwner()"
@@ -407,17 +518,27 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                   placeholder="Your GitHub username or organization"
                   class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm font-mono"
                 />
-                <p class="text-xs text-muted-foreground mt-1">Defaults to your personal GitHub account.</p>
+                <p class="text-xs text-muted-foreground mt-1">
+                  Defaults to your personal GitHub account.
+                </p>
               </div>
 
               <!-- Visibility -->
               <div>
                 <label class="text-sm font-medium block mb-1.5">Visibility</label>
                 <div class="flex gap-2">
-                  <button type="button" (click)="state.newRepoPrivate.set(true)" [class]="getVisibilityButtonClass(true)">
+                  <button
+                    type="button"
+                    (click)="state.newRepoPrivate.set(true)"
+                    [class]="getVisibilityButtonClass(true)"
+                  >
                     <ng-icon name="lucideKey" class="h-3.5 w-3.5" /> Private
                   </button>
-                  <button type="button" (click)="state.newRepoPrivate.set(false)" [class]="getVisibilityButtonClass(false)">
+                  <button
+                    type="button"
+                    (click)="state.newRepoPrivate.set(false)"
+                    [class]="getVisibilityButtonClass(false)"
+                  >
                     <ng-icon name="lucideGitBranch" class="h-3.5 w-3.5" /> Public
                   </button>
                 </div>
@@ -426,11 +547,17 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
               <!-- Runtime defaults preview -->
               @if (state.selectedTemplate(); as tpl) {
                 <div class="rounded-md border border-border bg-muted/30 p-3 space-y-1 text-xs">
-                  <p class="font-medium text-foreground mb-1">Runtime defaults from this template</p>
+                  <p class="font-medium text-foreground mb-1">
+                    Runtime defaults from this template
+                  </p>
                   <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-muted-foreground">
-                    <span>Framework:</span><span class="font-medium text-foreground">{{ tpl.displayName }} {{ tpl.version }}</span>
+                    <span>Framework:</span
+                    ><span class="font-medium text-foreground"
+                      >{{ tpl.displayName }} {{ tpl.version }}</span
+                    >
                     <span>Port:</span><span class="font-mono text-foreground">{{ tpl.port }}</span>
-                    <span>Healthcheck:</span><span class="font-mono text-foreground">{{ tpl.healthcheckPath }}</span>
+                    <span>Healthcheck:</span
+                    ><span class="font-mono text-foreground">{{ tpl.healthcheckPath }}</span>
                     <span>Build tool:</span><span class="text-foreground">{{ tpl.buildTool }}</span>
                   </div>
                 </div>
@@ -443,19 +570,30 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
             <div class="space-y-4">
               <div>
                 <h3 class="text-base font-semibold mb-1">Select Docker Image</h3>
-                <p class="text-sm text-muted-foreground">Search DockerHub for an image and select a tag.</p>
+                <p class="text-sm text-muted-foreground">
+                  Search DockerHub for an image and select a tag.
+                </p>
               </div>
               @if (selectedImageRef()) {
-                <div class="flex items-center gap-3 p-3 rounded-md border border-border bg-muted/30">
+                <div
+                  class="flex items-center gap-3 p-3 rounded-md border border-border bg-muted/30"
+                >
                   <ng-icon name="lucideCheck" class="h-4 w-4 text-[hsl(var(--ok))] shrink-0" />
                   <span class="text-sm font-mono font-medium">{{ selectedImageRef() }}</span>
-                  <button type="button" class="ml-auto text-xs text-muted-foreground hover:text-foreground" (click)="clearImageRef()">Change</button>
+                  <button
+                    type="button"
+                    class="ml-auto text-xs text-muted-foreground hover:text-foreground"
+                    (click)="clearImageRef()"
+                  >
+                    Change
+                  </button>
                 </div>
 
                 <div class="space-y-2">
                   <label class="text-sm font-medium">Application kind</label>
                   <p class="text-xs text-muted-foreground">
-                    Determines which menu group this app appears under. Auto-suggested from the image name.
+                    Determines which menu group this app appears under. Auto-suggested from the
+                    image name.
                   </p>
                   <div class="flex flex-wrap gap-2">
                     @for (opt of kindOptions; track opt.value) {
@@ -485,14 +623,12 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
             <div class="space-y-4">
               <!-- Tab switcher -->
               <div class="flex border-b border-border">
-                <button
-                  (click)="repoTab.set('mine')"
-                  [class]="getRepoTabClass('mine')"
-                >My Repositories</button>
-                <button
-                  (click)="repoTab.set('public')"
-                  [class]="getRepoTabClass('public')"
-                >Public Repositories</button>
+                <button (click)="repoTab.set('mine')" [class]="getRepoTabClass('mine')">
+                  My Repositories
+                </button>
+                <button (click)="repoTab.set('public')" [class]="getRepoTabClass('public')">
+                  Public Repositories
+                </button>
               </div>
 
               <!-- My Repositories tab -->
@@ -504,7 +640,10 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                   </div>
                 } @else if (connectedRepos().length === 0) {
                   <div class="text-center py-8">
-                    <ng-icon name="lucideGitBranch" class="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <ng-icon
+                      name="lucideGitBranch"
+                      class="h-12 w-12 mx-auto text-muted-foreground mb-4"
+                    />
                     <h3 class="font-medium mb-2">No repositories connected</h3>
                     <p class="text-sm text-muted-foreground mb-4">
                       Connect a Git repository to get started
@@ -523,16 +662,15 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                     </label>
                     <div class="grid grid-cols-1 gap-3">
                       @for (repo of connectedRepos(); track repo.id) {
-                        <div
-                          [class]="getRepoCardClass(repo.id)"
-                          (click)="selectRepository(repo)"
-                        >
+                        <div [class]="getRepoCardClass(repo.id)" (click)="selectRepository(repo)">
                           <div class="flex items-start justify-between">
                             <div class="flex-1">
                               <div class="flex items-center gap-2">
                                 <h4 class="font-medium">{{ repo.name }}</h4>
                                 @if (repo.private) {
-                                  <span class="text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400 px-2 py-1 rounded">
+                                  <span
+                                    class="text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400 px-2 py-1 rounded"
+                                  >
                                     Private
                                   </span>
                                 }
@@ -556,7 +694,9 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                       <button
                         (click)="navigateToRepositories()"
                         class="text-primary hover:underline font-medium"
-                      >Import them here</button>
+                      >
+                        Import them here
+                      </button>
                     </p>
                   </div>
                 }
@@ -566,10 +706,17 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
               @if (repoTab() === 'public') {
                 <div class="space-y-3">
                   @if (selectedPublicRepo()) {
-                    <div class="flex items-center gap-3 p-3 rounded-md border border-primary bg-primary/5 text-sm">
+                    <div
+                      class="flex items-center gap-3 p-3 rounded-md border border-primary bg-primary/5 text-sm"
+                    >
                       <ng-icon name="lucideCheck" class="h-4 w-4 text-primary shrink-0" />
                       <span class="font-medium">{{ selectedPublicRepo()!.full_name }}</span>
-                      <button (click)="clearPublicRepo()" class="ml-auto text-muted-foreground hover:text-foreground text-xs">Change</button>
+                      <button
+                        (click)="clearPublicRepo()"
+                        class="ml-auto text-muted-foreground hover:text-foreground text-xs"
+                      >
+                        Change
+                      </button>
                     </div>
                   }
                   <app-public-repo-picker (repoSelected)="onPublicRepoSelected($event)" />
@@ -593,17 +740,27 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                   @let m = manifestForSelector()!.manifest!;
                   <div class="p-4 rounded-lg border border-border bg-muted/30 space-y-3">
                     <div class="flex items-start gap-3">
-                      <ng-icon name="lucideCircleCheck" class="h-5 w-5 text-[hsl(var(--ok))] shrink-0 mt-0.5" />
+                      <ng-icon
+                        name="lucideCircleCheck"
+                        class="h-5 w-5 text-[hsl(var(--ok))] shrink-0 mt-0.5"
+                      />
                       <div>
                         @if (validManifests().length > 1) {
-                          <p class="text-sm font-medium text-foreground">{{ validManifests().length }} deployable apps found</p>
+                          <p class="text-sm font-medium text-foreground">
+                            {{ validManifests().length }} deployable apps found
+                          </p>
                           <p class="text-xs text-muted-foreground mt-1">
-                            This repository is a monorepo with one <span class="font-mono">flui.yaml</span> per app. Pick the one to deploy — each app deploys independently (run the wizard again for the others).
+                            This repository is a monorepo with one
+                            <span class="font-mono">flui.yaml</span> per app. Pick the one to deploy
+                            — each app deploys independently (run the wizard again for the others).
                           </p>
                         } @else {
                           <p class="text-sm font-medium text-foreground">flui.yaml found</p>
                           <p class="text-xs text-muted-foreground mt-1">
-                            This repository ships a valid Flui manifest. Port, healthcheck and resources come from the manifest and the repository is built as-is — exactly like <code class="font-mono bg-muted px-1 rounded">flui deploy</code>.
+                            This repository ships a valid Flui manifest. Port, healthcheck and
+                            resources come from the manifest and the repository is built as-is —
+                            exactly like
+                            <code class="font-mono bg-muted px-1 rounded">flui deploy</code>.
                           </p>
                         }
                       </div>
@@ -621,16 +778,31 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                     @if (validManifests().length > 1) {
                       <div class="space-y-1.5">
                         @for (entry of validManifests(); track entry.path) {
-                          <button type="button" (click)="selectManifest(entry.path)"
+                          <button
+                            type="button"
+                            (click)="selectManifest(entry.path)"
                             class="w-full flex items-center gap-3 p-2.5 rounded-md border text-left transition-colors"
-                            [class]="selectedManifestPath() === entry.path
-                              ? 'border-primary bg-primary/5'
-                              : 'border-border hover:bg-accent'">
-                            <span class="h-2 w-2 rounded-full shrink-0"
-                              [class]="selectedManifestPath() === entry.path ? 'bg-primary' : 'bg-muted-foreground/30'"></span>
+                            [class]="
+                              selectedManifestPath() === entry.path
+                                ? 'border-primary bg-primary/5'
+                                : 'border-border hover:bg-accent'
+                            "
+                          >
+                            <span
+                              class="h-2 w-2 rounded-full shrink-0"
+                              [class]="
+                                selectedManifestPath() === entry.path
+                                  ? 'bg-primary'
+                                  : 'bg-muted-foreground/30'
+                              "
+                            ></span>
                             <span class="font-mono text-xs font-semibold">{{ entry.name }}</span>
-                            <span class="font-mono text-[11px] text-muted-foreground">{{ entry.path }}</span>
-                            <span class="ml-auto font-mono text-[11px] text-muted-foreground">port {{ entry.port }}</span>
+                            <span class="font-mono text-[11px] text-muted-foreground">{{
+                              entry.path
+                            }}</span>
+                            <span class="ml-auto font-mono text-[11px] text-muted-foreground"
+                              >port {{ entry.port }}</span
+                            >
                           </button>
                         }
                       </div>
@@ -671,26 +843,54 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                 }
 
                 @case ('manifest-invalid') {
-                  <div class="p-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10 space-y-3">
+                  <div
+                    class="p-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10 space-y-3"
+                  >
                     <div class="flex items-start gap-3">
-                      <ng-icon name="lucideAlertCircle" class="h-5 w-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+                      <ng-icon
+                        name="lucideAlertCircle"
+                        class="h-5 w-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5"
+                      />
                       <div>
-                        <p class="text-sm font-semibold text-red-800 dark:text-red-300">Invalid flui.yaml</p>
+                        <p class="text-sm font-semibold text-red-800 dark:text-red-300">
+                          Invalid flui.yaml
+                        </p>
                         <p class="text-xs text-red-700 dark:text-red-400 mt-1">
-                          Branch <span class="font-mono">{{ selectedBranch() }}</span> has {{ invalidManifests().length === 1 ? 'a flui.yaml, but it is' : 'flui.yaml manifests, but none are' }} valid <span class="font-mono">kind: Application</span> {{ invalidManifests().length === 1 ? 'manifest' : 'manifests' }}:
+                          Branch <span class="font-mono">{{ selectedBranch() }}</span> has
+                          {{
+                            invalidManifests().length === 1
+                              ? 'a flui.yaml, but it is'
+                              : 'flui.yaml manifests, but none are'
+                          }}
+                          valid <span class="font-mono">kind: Application</span>
+                          {{ invalidManifests().length === 1 ? 'manifest' : 'manifests' }}:
                         </p>
                         @for (bad of invalidManifests(); track bad.path) {
-                          <p class="text-xs font-mono mt-2 p-2 rounded bg-red-100/60 dark:bg-red-900/20 text-red-800 dark:text-red-300"><span class="font-semibold">{{ bad.path }}</span> — {{ bad.validationError }}</p>
+                          <p
+                            class="text-xs font-mono mt-2 p-2 rounded bg-red-100/60 dark:bg-red-900/20 text-red-800 dark:text-red-300"
+                          >
+                            <span class="font-semibold">{{ bad.path }}</span> —
+                            {{ bad.validationError }}
+                          </p>
                         }
                         <p class="text-xs text-red-700 dark:text-red-400 mt-2">
                           Fix the manifest, push it, then retry. See the
-                          <a href="https://docs.flui.cloud/cli/deploy/" target="_blank" rel="noopener" class="underline font-medium">manifest reference</a>.
+                          <a
+                            href="https://docs.flui.cloud/cli/deploy/"
+                            target="_blank"
+                            rel="noopener"
+                            class="underline font-medium"
+                            >manifest reference</a
+                          >.
                         </p>
                       </div>
                     </div>
                     <div class="flex items-center gap-2 pt-2">
-                      <button type="button" (click)="triggerManifestCheck()"
-                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors">
+                      <button
+                        type="button"
+                        (click)="triggerManifestCheck()"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors"
+                      >
                         <ng-icon name="lucideLoader" class="h-3.5 w-3.5" /> Retry
                       </button>
                     </div>
@@ -698,67 +898,133 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                 }
 
                 @case ('no-manifest') {
-                  <div class="p-4 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 space-y-3">
+                  <div
+                    class="p-4 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 space-y-3"
+                  >
                     <div class="flex items-start gap-3">
-                      <ng-icon name="lucideTriangleAlert" class="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                      <ng-icon
+                        name="lucideTriangleAlert"
+                        class="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5"
+                      />
                       <div class="space-y-3">
-                        <p class="text-sm font-semibold text-amber-900 dark:text-amber-100">No flui.yaml found</p>
+                        <p class="text-sm font-semibold text-amber-900 dark:text-amber-100">
+                          No flui.yaml found
+                        </p>
                         <p class="text-xs text-amber-700 dark:text-amber-300">
-                          Flui deploys repositories from a <span class="font-mono">flui.yaml</span> manifest, and branch <span class="font-mono">{{ selectedBranch() }}</span> doesn't have one — neither at the repository root nor in a subdirectory (monorepo).
+                          Flui deploys repositories from a
+                          <span class="font-mono">flui.yaml</span> manifest, and branch
+                          <span class="font-mono">{{ selectedBranch() }}</span> doesn't have one —
+                          neither at the repository root nor in a subdirectory (monorepo).
                         </p>
 
-                        <div class="p-3 rounded-md border border-amber-300 dark:border-amber-700 bg-amber-100/50 dark:bg-amber-900/20 space-y-2">
-                          <p class="text-xs font-semibold text-amber-900 dark:text-amber-100 flex items-center gap-1.5">
+                        <div
+                          class="p-3 rounded-md border border-amber-300 dark:border-amber-700 bg-amber-100/50 dark:bg-amber-900/20 space-y-2"
+                        >
+                          <p
+                            class="text-xs font-semibold text-amber-900 dark:text-amber-100 flex items-center gap-1.5"
+                          >
                             <ng-icon name="lucideLayers" class="h-3.5 w-3.5" />
                             Let Flui read the repository
                           </p>
                           <p class="text-xs text-amber-700 dark:text-amber-300">
-                            Flui reads branch <span class="font-mono">{{ selectedBranch() }}</span> and proposes a <span class="font-mono">flui.yaml</span> — with what it found, what it's unsure of, and why. You review it and decide; this doesn't write to your repository and it doesn't deploy anything, it's a read-only map. Applying what it proposes is a separate step.
+                            Flui reads branch
+                            <span class="font-mono">{{ selectedBranch() }}</span> and proposes a
+                            <span class="font-mono">flui.yaml</span> — with what it found, what it's
+                            unsure of, and why. You review it and decide; this doesn't write to your
+                            repository and it doesn't deploy anything, it's a read-only map.
+                            Applying what it proposes is a separate step.
                           </p>
-                          <a [routerLink]="['/apps/repositories', selectedRepo()!.id, 'map']" [queryParams]="{ branch: selectedBranch() }"
-                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-600 dark:bg-amber-700 text-white text-[11px] font-medium hover:bg-amber-700 dark:hover:bg-amber-600 transition-colors">
+                          <a
+                            [routerLink]="['/apps/repositories', selectedRepo()!.id, 'map']"
+                            [queryParams]="{ branch: selectedBranch() }"
+                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-600 dark:bg-amber-700 text-white text-[11px] font-medium hover:bg-amber-700 dark:hover:bg-amber-600 transition-colors"
+                          >
                             <ng-icon name="lucideLayers" class="h-3.5 w-3.5" />
                             View readiness map
                           </a>
                         </div>
 
                         <div class="space-y-1.5">
-                          <p class="text-xs font-semibold text-amber-900 dark:text-amber-100">Or, let your coding agent write it</p>
-                          <p class="text-xs text-amber-700 dark:text-amber-300">
-                            Nothing to install and nothing to log into. Paste this into the agent in your editor:
+                          <p class="text-xs font-semibold text-amber-900 dark:text-amber-100">
+                            Or, let your coding agent write it
                           </p>
-                          <pre class="text-[11px] leading-relaxed font-mono whitespace-pre-wrap p-2.5 rounded bg-amber-100/70 dark:bg-amber-900/30 text-amber-900 dark:text-amber-200">{{ manifestAgentPrompt() }}</pre>
-                          <button type="button" (click)="copyManifestPrompt()"
-                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-amber-300 dark:border-amber-700 text-[11px] font-medium text-amber-900 dark:text-amber-200 hover:bg-amber-100/70 dark:hover:bg-amber-900/30 transition-colors">
-                            <ng-icon [name]="manifestPromptCopied() ? 'lucideCheck' : 'lucideCopy'" class="h-3.5 w-3.5" />
+                          <p class="text-xs text-amber-700 dark:text-amber-300">
+                            Nothing to install and nothing to log into. Paste this into the agent in
+                            your editor:
+                          </p>
+                          <pre
+                            class="text-[11px] leading-relaxed font-mono whitespace-pre-wrap p-2.5 rounded bg-amber-100/70 dark:bg-amber-900/30 text-amber-900 dark:text-amber-200"
+                            >{{ manifestAgentPrompt() }}</pre>
+                          <button
+                            type="button"
+                            (click)="copyManifestPrompt()"
+                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-amber-300 dark:border-amber-700 text-[11px] font-medium text-amber-900 dark:text-amber-200 hover:bg-amber-100/70 dark:hover:bg-amber-900/30 transition-colors"
+                          >
+                            <ng-icon
+                              [name]="manifestPromptCopied() ? 'lucideCheck' : 'lucideCopy'"
+                              class="h-3.5 w-3.5"
+                            />
                             {{ manifestPromptCopied() ? 'Copied' : 'Copy prompt' }}
                           </button>
                         </div>
 
                         <p class="text-xs text-amber-700 dark:text-amber-300">
-                          <span class="font-semibold text-amber-900 dark:text-amber-100">Or scaffold it with the CLI.</span>
-                          <code class="font-mono bg-amber-100/70 dark:bg-amber-900/40 px-1 rounded">flui app init &lt;framework&gt;</code> adds a <span class="font-mono">flui.yaml</span> and a production-ready Dockerfile —
-                          <code class="font-mono bg-amber-100/70 dark:bg-amber-900/40 px-1 rounded">--list</code> shows the frameworks, and in a monorepo
-                          <code class="font-mono bg-amber-100/70 dark:bg-amber-900/40 px-1 rounded">--target ./&lt;dir&gt;</code> runs it once per app. It needs the CLI signed in: run <code class="font-mono bg-amber-100/70 dark:bg-amber-900/40 px-1 rounded">flui auth login</code> first.
+                          <span class="font-semibold text-amber-900 dark:text-amber-100"
+                            >Or scaffold it with the CLI.</span
+                          >
+                          <code class="font-mono bg-amber-100/70 dark:bg-amber-900/40 px-1 rounded"
+                            >flui app init &lt;framework&gt;</code
+                          >
+                          adds a <span class="font-mono">flui.yaml</span> and a production-ready
+                          Dockerfile —
+                          <code class="font-mono bg-amber-100/70 dark:bg-amber-900/40 px-1 rounded"
+                            >--list</code
+                          >
+                          shows the frameworks, and in a monorepo
+                          <code class="font-mono bg-amber-100/70 dark:bg-amber-900/40 px-1 rounded"
+                            >--target ./&lt;dir&gt;</code
+                          >
+                          runs it once per app. It needs the CLI signed in: run
+                          <code class="font-mono bg-amber-100/70 dark:bg-amber-900/40 px-1 rounded"
+                            >flui auth login</code
+                          >
+                          first.
                         </p>
 
                         <p class="text-xs text-amber-700 dark:text-amber-300">
-                          <span class="font-semibold text-amber-900 dark:text-amber-100">Or write it yourself</span> — see the
-                          <a href="https://docs.flui.cloud/cli/deploy/" target="_blank" rel="noopener" class="underline font-medium">manifest reference</a>.
+                          <span class="font-semibold text-amber-900 dark:text-amber-100"
+                            >Or write it yourself</span
+                          >
+                          — see the
+                          <a
+                            href="https://docs.flui.cloud/cli/deploy/"
+                            target="_blank"
+                            rel="noopener"
+                            class="underline font-medium"
+                            >manifest reference</a
+                          >.
                         </p>
 
                         <p class="text-xs text-amber-700 dark:text-amber-300">
-                          Then commit, push to <span class="font-mono">{{ selectedBranch() }}</span>, and retry here.
+                          Then commit, push to
+                          <span class="font-mono">{{ selectedBranch() }}</span>, and retry here.
                         </p>
                       </div>
                     </div>
                     <div class="flex items-center gap-2 pt-2">
-                      <button type="button" (click)="triggerManifestCheck()"
-                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors">
+                      <button
+                        type="button"
+                        (click)="triggerManifestCheck()"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors"
+                      >
                         <ng-icon name="lucideLoader" class="h-3.5 w-3.5" /> Retry
                       </button>
-                      <a href="https://docs.flui.cloud/cli/deploy/" target="_blank" rel="noopener"
-                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-xs font-medium hover:bg-accent transition-colors">
+                      <a
+                        href="https://docs.flui.cloud/cli/deploy/"
+                        target="_blank"
+                        rel="noopener"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-xs font-medium hover:bg-accent transition-colors"
+                      >
                         Read the docs
                       </a>
                     </div>
@@ -766,17 +1032,29 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                 }
 
                 @case ('check-failed') {
-                  <div class="p-4 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 space-y-3">
+                  <div
+                    class="p-4 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 space-y-3"
+                  >
                     <div class="flex items-start gap-3">
-                      <ng-icon name="lucideTriangleAlert" class="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                      <ng-icon
+                        name="lucideTriangleAlert"
+                        class="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5"
+                      />
                       <div>
-                        <p class="text-sm font-semibold text-amber-900 dark:text-amber-100">Could not read flui.yaml</p>
-                        <p class="text-xs text-amber-700 dark:text-amber-300 mt-1">{{ manifestFetchError() }}</p>
+                        <p class="text-sm font-semibold text-amber-900 dark:text-amber-100">
+                          Could not read flui.yaml
+                        </p>
+                        <p class="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                          {{ manifestFetchError() }}
+                        </p>
                       </div>
                     </div>
                     <div class="flex items-center gap-2 pt-2">
-                      <button type="button" (click)="triggerManifestCheck()"
-                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors">
+                      <button
+                        type="button"
+                        (click)="triggerManifestCheck()"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors"
+                      >
                         <ng-icon name="lucideLoader" class="h-3.5 w-3.5" /> Retry
                       </button>
                     </div>
@@ -794,24 +1072,44 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                 @if (iPhase === 'idle') {
                   <div class="text-center py-6">
                     <p class="text-sm text-muted-foreground mb-4">
-                      Ready to install <strong>{{ state.catalogDetail()?.name }}</strong>. Click <strong>Install</strong> to start.
+                      Ready to install <strong>{{ state.catalogDetail()?.name }}</strong>. Click
+                      <strong>Install</strong> to start.
                     </p>
                   </div>
                 } @else if (iPhase === 'failed') {
-                  <div class="p-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10 space-y-2">
+                  <div
+                    class="p-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10 space-y-2"
+                  >
                     @if (state.currentInstall()) {
-                      <p class="text-sm font-medium text-red-800 dark:text-red-300">Connect failed</p>
-                      <p class="text-xs text-red-700 dark:text-red-400">{{ state.installError() }}</p>
-                      <p class="text-xs text-muted-foreground">The app is installed but not connected. Retry the connection without reinstalling.</p>
-                      <button type="button" (click)="retryMarketplaceConnect()"
-                        class="mt-2 inline-flex items-center px-3 py-1.5 rounded-md border border-border text-xs font-medium hover:bg-accent">
+                      <p class="text-sm font-medium text-red-800 dark:text-red-300">
+                        Connect failed
+                      </p>
+                      <p class="text-xs text-red-700 dark:text-red-400">
+                        {{ state.installError() }}
+                      </p>
+                      <p class="text-xs text-muted-foreground">
+                        The app is installed but not connected. Retry the connection without
+                        reinstalling.
+                      </p>
+                      <button
+                        type="button"
+                        (click)="retryMarketplaceConnect()"
+                        class="mt-2 inline-flex items-center px-3 py-1.5 rounded-md border border-border text-xs font-medium hover:bg-accent"
+                      >
                         Retry connect
                       </button>
                     } @else {
-                      <p class="text-sm font-medium text-red-800 dark:text-red-300">Install failed</p>
-                      <p class="text-xs text-red-700 dark:text-red-400">{{ state.installError() }}</p>
-                      <button type="button" (click)="deployApplication()"
-                        class="mt-2 inline-flex items-center px-3 py-1.5 rounded-md border border-border text-xs font-medium hover:bg-accent">
+                      <p class="text-sm font-medium text-red-800 dark:text-red-300">
+                        Install failed
+                      </p>
+                      <p class="text-xs text-red-700 dark:text-red-400">
+                        {{ state.installError() }}
+                      </p>
+                      <button
+                        type="button"
+                        (click)="deployApplication()"
+                        class="mt-2 inline-flex items-center px-3 py-1.5 rounded-md border border-border text-xs font-medium hover:bg-accent"
+                      >
                         Retry
                       </button>
                     }
@@ -822,8 +1120,12 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                   @let progress = catalog.installProgress();
                   <div class="space-y-4">
                     <div class="flex items-center justify-between text-sm">
-                      <span class="font-medium">{{ progress?.stepLabel ?? 'Starting install…' }}</span>
-                      <span class="text-muted-foreground">{{ progress?.overallProgress ?? 0 }}%</span>
+                      <span class="font-medium">{{
+                        progress?.stepLabel ?? 'Starting install…'
+                      }}</span>
+                      <span class="text-muted-foreground"
+                        >{{ progress?.overallProgress ?? 0 }}%</span
+                      >
                     </div>
                     <div class="h-2 w-full rounded-full bg-muted overflow-hidden">
                       <div
@@ -842,14 +1144,25 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                 @let phase = state.orchestrationPhase();
                 @if (phase === 'idle') {
                   <div class="text-center py-6">
-                    <p class="text-sm text-muted-foreground mb-4">Ready to deploy. Click <strong>Deploy Application</strong> to start.</p>
+                    <p class="text-sm text-muted-foreground mb-4">
+                      Ready to deploy. Click <strong>Deploy Application</strong> to start.
+                    </p>
                   </div>
                 } @else if (phase === 'error') {
-                  <div class="p-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10 space-y-2">
-                    <p class="text-sm font-medium text-red-800 dark:text-red-300">Deployment failed</p>
-                    <p class="text-xs text-red-700 dark:text-red-400">{{ state.orchestrationError() }}</p>
-                    <button type="button" (click)="deployApplication()"
-                      class="mt-2 inline-flex items-center px-3 py-1.5 rounded-md border border-border text-xs font-medium hover:bg-accent">
+                  <div
+                    class="p-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10 space-y-2"
+                  >
+                    <p class="text-sm font-medium text-red-800 dark:text-red-300">
+                      Deployment failed
+                    </p>
+                    <p class="text-xs text-red-700 dark:text-red-400">
+                      {{ state.orchestrationError() }}
+                    </p>
+                    <button
+                      type="button"
+                      (click)="deployApplication()"
+                      class="mt-2 inline-flex items-center px-3 py-1.5 rounded-md border border-border text-xs font-medium hover:bg-accent"
+                    >
                       Retry
                     </button>
                   </div>
@@ -864,13 +1177,22 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                             <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
                           }
                         </div>
-                        <span [class]="isOrchestrationStepPending(step.id) ? 'text-muted-foreground' : 'text-foreground'">{{ step.label }}</span>
+                        <span
+                          [class]="
+                            isOrchestrationStepPending(step.id)
+                              ? 'text-muted-foreground'
+                              : 'text-foreground'
+                          "
+                          >{{ step.label }}</span
+                        >
                       </div>
                     }
                   </div>
                   @if (state.workflowPullRequestUrl(); as prUrl) {
                     <div class="rounded-md border border-primary/30 bg-primary/5 p-3 space-y-1.5">
-                      <p class="text-sm">The workflow was proposed, not pushed. Nothing is building yet.</p>
+                      <p class="text-sm">
+                        The workflow was proposed, not pushed. Nothing is building yet.
+                      </p>
                       <a
                         [href]="prUrl"
                         target="_blank"
@@ -879,7 +1201,9 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                       >
                         Review and merge the pull request on GitHub
                       </a>
-                      <p class="text-xs text-muted-foreground">The first build starts when you merge it.</p>
+                      <p class="text-xs text-muted-foreground">
+                        The first build starts when you merge it.
+                      </p>
                     </div>
                   }
                 }
@@ -890,7 +1214,6 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
           <!-- Step: Configuration & Environment -->
           @case ('environment') {
             <div class="space-y-6">
-
               <!-- Flow C (existing repo) — Branch selector + replicas -->
               @if (flowSubtype() === 'existing-repo') {
                 <!-- Branch Selection -->
@@ -899,7 +1222,9 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                     Branch <span class="text-red-500">*</span>
                   </label>
                   @if (isLoadingBranches()) {
-                    <div class="flex h-10 items-center justify-start px-3 border border-input rounded-md bg-background">
+                    <div
+                      class="flex h-10 items-center justify-start px-3 border border-input rounded-md bg-background"
+                    >
                       <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin text-primary mr-2" />
                       <span class="text-sm text-muted-foreground">Loading branches...</span>
                     </div>
@@ -957,15 +1282,25 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
               <!-- Flow B (template) — intro message, no branch selector -->
               @if (flowSubtype() === 'template') {
                 <div class="flex items-start gap-3 p-3 rounded-md border border-border bg-muted/30">
-                  <ng-icon name="lucideInfo" class="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                  <ng-icon
+                    name="lucideInfo"
+                    class="h-4 w-4 text-muted-foreground shrink-0 mt-0.5"
+                  />
                   <div class="text-xs text-muted-foreground space-y-1">
                     <p>
-                      Flui will commit the build workflow to the <span class="font-medium text-foreground">default branch</span> of the new repository
-                      <span class="font-mono text-foreground">{{ state.newRepoOwner() || '(your account)' }}/{{ state.newRepoName() }}</span>.
+                      Flui will commit the build workflow to the
+                      <span class="font-medium text-foreground">default branch</span> of the new
+                      repository
+                      <span class="font-mono text-foreground"
+                        >{{ state.newRepoOwner() || '(your account)' }}/{{
+                          state.newRepoName()
+                        }}</span
+                      >.
                     </p>
                     <p>
-                      Set any environment variables the template needs below — they will be injected into the build and the running container.
-                      You can always add or change them later from the application settings.
+                      Set any environment variables the template needs below — they will be injected
+                      into the build and the running container. You can always add or change them
+                      later from the application settings.
                     </p>
                   </div>
                 </div>
@@ -981,12 +1316,16 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                       <div class="flex items-center gap-2 mb-1.5">
                         <label class="text-sm font-medium">Port</label>
                         @if (portDiscovering()) {
-                          <span class="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                          <span
+                            class="inline-flex items-center gap-1 text-xs text-muted-foreground"
+                          >
                             <ng-icon name="lucideLoader" class="h-3 w-3 animate-spin" />
                             Detecting...
                           </span>
                         } @else if (portAutoDetected() && appPort()) {
-                          <span class="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                          <span
+                            class="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground"
+                          >
                             <ng-icon name="lucideCircleCheck" class="h-3 w-3" />
                             Auto-detected
                           </span>
@@ -996,14 +1335,18 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                         <!-- Multiple ports: show dropdown -->
                         <select
                           [value]="appPort()"
-                          (change)="appPort.set(+$any($event.target).value); portAutoDetected.set(false)"
+                          (change)="
+                            appPort.set(+$any($event.target).value); portAutoDetected.set(false)
+                          "
                           class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                         >
                           @for (p of exposedPorts(); track p) {
                             <option [value]="p">{{ p }}</option>
                           }
                         </select>
-                        <p class="text-xs text-muted-foreground mt-1">{{ exposedPorts().length }} ports found in the image</p>
+                        <p class="text-xs text-muted-foreground mt-1">
+                          {{ exposedPorts().length }} ports found in the image
+                        </p>
                       } @else {
                         <input
                           type="number"
@@ -1011,11 +1354,16 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                           max="65535"
                           [value]="appPort() ?? ''"
                           placeholder="e.g. 80, 3000, 8080"
-                          (input)="appPort.set(+$any($event.target).value || null); portAutoDetected.set(false)"
+                          (input)="
+                            appPort.set(+$any($event.target).value || null);
+                            portAutoDetected.set(false)
+                          "
                           class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                         />
                         <p class="text-xs text-muted-foreground mt-1">
-                          @if (!appPort() && !portDiscovering()) { Enter the port the container listens on }
+                          @if (!appPort() && !portDiscovering()) {
+                            Enter the port the container listens on
+                          }
                         </p>
                       }
                     </div>
@@ -1032,8 +1380,15 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                       <p class="text-xs text-muted-foreground mt-1">
                         {{ appAutoscale() ? 'Fewest replicas' : 'Number of pod replicas' }}
                       </p>
-                      <label class="mt-2 flex items-center gap-2 text-sm" data-testid="wizard-autoscale">
-                        <input type="checkbox" [checked]="appAutoscale()" (change)="appAutoscale.set($any($event.target).checked)" />
+                      <label
+                        class="mt-2 flex items-center gap-2 text-sm"
+                        data-testid="wizard-autoscale"
+                      >
+                        <input
+                          type="checkbox"
+                          [checked]="appAutoscale()"
+                          (change)="appAutoscale.set($any($event.target).checked)"
+                        />
                         Follow the load, up to
                         <input
                           type="number"
@@ -1048,7 +1403,9 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                         replicas
                       </label>
                       @if (appAutoscale() && appMaxReplicas() <= appReplicas()) {
-                        <p class="text-xs text-red-600 dark:text-red-400 mt-1">The most has to be above the fewest.</p>
+                        <p class="text-xs text-red-600 dark:text-red-400 mt-1">
+                          The most has to be above the fewest.
+                        </p>
                       }
                     </div>
                   </div>
@@ -1057,7 +1414,9 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                 <!-- Resource Profile -->
                 <div>
                   <h3 class="text-base font-semibold mb-1">Resource Profile</h3>
-                  <p class="text-sm text-muted-foreground mb-3">Choose CPU and memory allocation for the container</p>
+                  <p class="text-sm text-muted-foreground mb-3">
+                    Choose CPU and memory allocation for the container
+                  </p>
 
                   @if (loadingProfiles()) {
                     <div class="flex items-center gap-2 text-sm text-muted-foreground py-3">
@@ -1072,22 +1431,28 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                           [class]="getProfileCardClass(profile.name)"
                           (click)="selectedProfile.set(profile.name)"
                         >
-                          <div class="text-sm font-semibold mb-1.5">{{ getProfileLabel(profile.name) }}</div>
+                          <div class="text-sm font-semibold mb-1.5">
+                            {{ getProfileLabel(profile.name) }}
+                          </div>
                           <div class="flex items-center gap-1 text-xs text-muted-foreground">
                             <ng-icon name="lucideCpu" class="w-3 h-3 shrink-0" />
                             <span>{{ getProfileCpu(profile) }} CPU</span>
                           </div>
                           <div class="text-xs text-muted-foreground mt-0.5">
-                            {{ getProfileMemory(profile) }} <span class="text-muted-foreground/60">RAM</span>
+                            {{ getProfileMemory(profile) }}
+                            <span class="text-muted-foreground/60">RAM</span>
                           </div>
                         </button>
                       }
                     </div>
                     @if (selectedProfileInfo()) {
-                      <p class="text-xs text-muted-foreground mt-2 pl-1">{{ getProfileDescription(selectedProfile()) }}</p>
+                      <p class="text-xs text-muted-foreground mt-2 pl-1">
+                        {{ getProfileDescription(selectedProfile()) }}
+                      </p>
                     }
                     <p class="text-xs text-muted-foreground mt-3">
-                      You can adjust resource limits at any time from the application settings after deployment.
+                      You can adjust resource limits at any time from the application settings after
+                      deployment.
                     </p>
                   }
                 </div>
@@ -1103,9 +1468,15 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                     <div>
                       <span class="text-sm font-medium">Availability Check</span>
                       <span class="ml-2 text-xs text-muted-foreground">
-                        @if (probeType() === 'none') { Disabled }
-                        @if (probeType() === 'http') { Web request · {{ probeHttpPath() }} :{{ appPort() }} }
-                        @if (probeType() === 'tcp') { Port check · :{{ appPort() }} }
+                        @if (probeType() === 'none') {
+                          Disabled
+                        }
+                        @if (probeType() === 'http') {
+                          Web request · {{ probeHttpPath() }} :{{ appPort() }}
+                        }
+                        @if (probeType() === 'tcp') {
+                          Port check · :{{ appPort() }}
+                        }
                       </span>
                     </div>
                     <ng-icon
@@ -1119,8 +1490,8 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                     <div class="px-4 pb-4 pt-1 border-t border-border space-y-4">
                       <p class="text-xs text-muted-foreground pt-2">
                         Flui can periodically check that your application is responding correctly.
-                        If a check fails repeatedly, the instance is removed from traffic until it recovers.
-                        You can always configure this later from the application settings.
+                        If a check fails repeatedly, the instance is removed from traffic until it
+                        recovers. You can always configure this later from the application settings.
                       </p>
 
                       <div>
@@ -1131,8 +1502,12 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                           class="flex h-10 w-full max-w-sm rounded-md border border-input bg-background px-3 py-2 text-sm"
                         >
                           <option value="none">Disabled — skip availability checks</option>
-                          <option value="http">Web request — check a URL returns a successful response</option>
-                          <option value="tcp">Port check — verify the application port is accepting connections</option>
+                          <option value="http">
+                            Web request — check a URL returns a successful response
+                          </option>
+                          <option value="tcp">
+                            Port check — verify the application port is accepting connections
+                          </option>
                         </select>
                       </div>
 
@@ -1148,47 +1523,91 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                             />
                           </div>
                           <div>
-                            <label class="text-sm font-medium block mb-1.5">Startup grace period</label>
+                            <label class="text-sm font-medium block mb-1.5"
+                              >Startup grace period</label
+                            >
                             <div class="relative">
-                              <input type="number" min="0" [value]="probeInitialDelay()" (input)="probeInitialDelay.set(+$any($event.target).value)"
-                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm pr-8" />
-                              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">s</span>
+                              <input
+                                type="number"
+                                min="0"
+                                [value]="probeInitialDelay()"
+                                (input)="probeInitialDelay.set(+$any($event.target).value)"
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm pr-8"
+                              />
+                              <span
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground"
+                                >s</span
+                              >
                             </div>
-                            <p class="text-xs text-muted-foreground mt-1">Wait before first check</p>
+                            <p class="text-xs text-muted-foreground mt-1">
+                              Wait before first check
+                            </p>
                           </div>
                           <div>
                             <label class="text-sm font-medium block mb-1.5">Check every</label>
                             <div class="relative">
-                              <input type="number" min="1" [value]="probePeriod()" (input)="probePeriod.set(+$any($event.target).value)"
-                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm pr-8" />
-                              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">s</span>
+                              <input
+                                type="number"
+                                min="1"
+                                [value]="probePeriod()"
+                                (input)="probePeriod.set(+$any($event.target).value)"
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm pr-8"
+                              />
+                              <span
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground"
+                                >s</span
+                              >
                             </div>
                           </div>
                           <div>
-                            <label class="text-sm font-medium block mb-1.5">Mark unavailable after</label>
+                            <label class="text-sm font-medium block mb-1.5"
+                              >Mark unavailable after</label
+                            >
                             <div class="relative">
-                              <input type="number" min="1" [value]="probeFailureThreshold()" (input)="probeFailureThreshold.set(+$any($event.target).value)"
-                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm pr-16" />
-                              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">failures</span>
+                              <input
+                                type="number"
+                                min="1"
+                                [value]="probeFailureThreshold()"
+                                (input)="probeFailureThreshold.set(+$any($event.target).value)"
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm pr-16"
+                              />
+                              <span
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground"
+                                >failures</span
+                              >
                             </div>
                           </div>
                         </div>
                         <p class="text-xs text-muted-foreground bg-muted/40 rounded px-3 py-2">
-                          Flui will request <span class="font-mono">{{ probeHttpPath() }}</span> on port {{ appPort() }} every {{ probePeriod() }}s.
-                          The app has {{ probeInitialDelay() }}s to start up before checks begin.
+                          Flui will request <span class="font-mono">{{ probeHttpPath() }}</span> on
+                          port {{ appPort() }} every {{ probePeriod() }}s. The app has
+                          {{ probeInitialDelay() }}s to start up before checks begin.
                         </p>
                       }
 
                       @if (probeType() === 'tcp') {
                         <div class="max-w-xs">
-                          <label class="text-sm font-medium block mb-1.5">Startup grace period</label>
+                          <label class="text-sm font-medium block mb-1.5"
+                            >Startup grace period</label
+                          >
                           <div class="relative">
-                            <input type="number" min="0" [value]="probeInitialDelay()" (input)="probeInitialDelay.set(+$any($event.target).value)"
-                              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm pr-8" />
-                            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">s</span>
+                            <input
+                              type="number"
+                              min="0"
+                              [value]="probeInitialDelay()"
+                              (input)="probeInitialDelay.set(+$any($event.target).value)"
+                              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm pr-8"
+                            />
+                            <span
+                              class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground"
+                              >s</span
+                            >
                           </div>
-                          <p class="text-xs text-muted-foreground mt-3 bg-muted/40 rounded px-3 py-2">
-                            Flui will verify that port {{ appPort() }} is accepting connections. Suitable when the app doesn't expose an HTTP endpoint.
+                          <p
+                            class="text-xs text-muted-foreground mt-3 bg-muted/40 rounded px-3 py-2"
+                          >
+                            Flui will verify that port {{ appPort() }} is accepting connections.
+                            Suitable when the app doesn't expose an HTTP endpoint.
                           </p>
                         </div>
                       }
@@ -1215,22 +1634,35 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
 
               <!-- Warning: auto-filled values not yet reviewed -->
               @if (hasUnreviewedDefaults()) {
-                <div class="flex items-start gap-2 p-3 rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 text-sm text-amber-800 dark:text-amber-300">
+                <div
+                  class="flex items-start gap-2 p-3 rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 text-sm text-amber-800 dark:text-amber-300"
+                >
                   <ng-icon name="lucideTriangleAlert" class="h-4 w-4 shrink-0 mt-0.5" />
-                  <span>Some values were auto-filled from the repository file. Review them before deploying — they may be placeholders or development defaults.</span>
+                  <span
+                    >Some values were auto-filled from the repository file. Review them before
+                    deploying — they may be placeholders or development defaults.</span
+                  >
                 </div>
               }
 
               <!-- Mode Toggle -->
               <div class="flex items-center gap-4">
                 <button
-                  [class]="envMode() === 'key-value' ? 'text-sm font-medium text-primary' : 'text-sm text-muted-foreground hover:text-foreground'"
+                  [class]="
+                    envMode() === 'key-value'
+                      ? 'text-sm font-medium text-primary'
+                      : 'text-sm text-muted-foreground hover:text-foreground'
+                  "
                   (click)="setEnvMode('key-value')"
                 >
                   Key-Value Editor
                 </button>
                 <button
-                  [class]="envMode() === 'json' ? 'text-sm font-medium text-primary' : 'text-sm text-muted-foreground hover:text-foreground'"
+                  [class]="
+                    envMode() === 'json'
+                      ? 'text-sm font-medium text-primary'
+                      : 'text-sm text-muted-foreground hover:text-foreground'
+                  "
                   (click)="setEnvMode('json')"
                 >
                   Raw JSON
@@ -1258,23 +1690,38 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                             (input)="updateEnvValue(i, $any($event.target).value)"
                             [placeholder]="meta?.description ?? 'value'"
                             [title]="meta?.description ?? ''"
-                            [class]="isDefaultValue(envVar)
-                              ? 'flex h-10 w-full rounded-md border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/10 px-3 py-2 text-sm'
-                              : 'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm'"
+                            [class]="
+                              isDefaultValue(envVar)
+                                ? 'flex h-10 w-full rounded-md border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/10 px-3 py-2 text-sm'
+                                : 'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm'
+                            "
                           />
                         </div>
                         @if (isDefaultValue(envVar)) {
-                          <span class="shrink-0 self-center text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 font-medium">Default</span>
+                          <span
+                            class="shrink-0 self-center text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 font-medium"
+                            >Default</span
+                          >
                         } @else if (meta) {
                           @if (meta.optional === false) {
-                            <span class="shrink-0 self-center text-xs px-1.5 py-0.5 rounded bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400 font-medium">Required</span>
+                            <span
+                              class="shrink-0 self-center text-xs px-1.5 py-0.5 rounded bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400 font-medium"
+                              >Required</span
+                            >
                           } @else if (meta.optional === true) {
-                            <span class="shrink-0 self-center text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">Optional</span>
+                            <span
+                              class="shrink-0 self-center text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground"
+                              >Optional</span
+                            >
                           }
                         }
                         <button
                           (click)="toggleEnvSecret(i)"
-                          [class]="envVar.isSecret ? 'p-2 rounded-md border border-primary bg-primary/10 text-primary shrink-0' : 'p-2 rounded-md border border-input bg-background text-muted-foreground hover:text-foreground shrink-0'"
+                          [class]="
+                            envVar.isSecret
+                              ? 'p-2 rounded-md border border-primary bg-primary/10 text-primary shrink-0'
+                              : 'p-2 rounded-md border border-input bg-background text-muted-foreground hover:text-foreground shrink-0'
+                          "
                           title="Toggle secret"
                         >
                           <ng-icon name="lucideKey" class="h-5 w-5" />
@@ -1288,7 +1735,9 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                         </button>
                       </div>
                       @if (meta?.description) {
-                        <p class="text-xs text-muted-foreground pl-[calc(33%+0.5rem)]">{{ meta?.description }}</p>
+                        <p class="text-xs text-muted-foreground pl-[calc(33%+0.5rem)]">
+                          {{ meta?.description }}
+                        </p>
                       }
                     </div>
                   }
@@ -1307,7 +1756,10 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                   <textarea
                     [value]="rawEnvJson()"
                     (input)="updateRawEnvJson($any($event.target).value)"
-                    placeholder='{\n  "API_URL": "https://api.example.com",\n  "NODE_ENV": "production"\n}'
+                    placeholder='{
+  "API_URL": "https://api.example.com",
+  "NODE_ENV": "production"
+}'
                     class="flex min-h-[200px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
                     rows="10"
                   ></textarea>
@@ -1333,7 +1785,10 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                 </div>
               } @else if (activeClusters().length === 0) {
                 <div class="text-center py-8">
-                  <ng-icon name="lucideServer" class="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <ng-icon
+                    name="lucideServer"
+                    class="h-12 w-12 mx-auto text-muted-foreground mb-4"
+                  />
                   <h3 class="font-medium mb-2">No active clusters available</h3>
                   <p class="text-sm text-muted-foreground mb-4">
                     Create a cluster to deploy your application
@@ -1393,53 +1848,120 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                     <app-catalog-udp-ports-notice />
                   } @else if (selectedCluster()) {
                     @if (checkingAvailability()) {
-                      <div class="flex items-center gap-2 text-sm text-muted-foreground p-3 rounded-md border border-border">
+                      <div
+                        class="flex items-center gap-2 text-sm text-muted-foreground p-3 rounded-md border border-border"
+                      >
                         <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin shrink-0" />
                         <span>Checking resource availability...</span>
                       </div>
                     } @else if (resourceAvailability()) {
                       @let av = resourceAvailability()!;
                       @if (!av.canDeploy) {
-                        <div class="flex items-start gap-3 p-3 rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10">
-                          <ng-icon name="lucideCircleX" class="h-5 w-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+                        <div
+                          class="flex items-start gap-3 p-3 rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10"
+                        >
+                          <ng-icon
+                            name="lucideCircleX"
+                            class="h-5 w-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5"
+                          />
                           <div class="flex-1 text-sm">
-                            <p class="font-medium text-red-700 dark:text-red-300">Insufficient resources</p>
-                            <p class="text-red-600 dark:text-red-400 mt-0.5">{{ getAvailabilityMessage() }}</p>
-                            <div class="mt-2 text-[11px] text-muted-foreground grid grid-cols-2 gap-x-4 gap-y-0.5">
-                              <span>Required:</span><span class="text-right">{{ av.required.cpu }} CPU · {{ av.required.memory }} RAM</span>
-                              <span>Available (after 10% reserve):</span><span class="text-right">{{ av.available.cpu }} CPU · {{ av.available.memory }} RAM</span>
-                              <span>Currently used:</span><span class="text-right">{{ av.used.cpu }} CPU · {{ av.used.memory }} RAM</span>
-                              <span>Cluster total:</span><span class="text-right">{{ av.total.cpu }} CPU · {{ av.total.memory }} RAM</span>
+                            <p class="font-medium text-red-700 dark:text-red-300">
+                              Insufficient resources
+                            </p>
+                            <p class="text-red-600 dark:text-red-400 mt-0.5">
+                              {{ getAvailabilityMessage() }}
+                            </p>
+                            <div
+                              class="mt-2 text-[11px] text-muted-foreground grid grid-cols-2 gap-x-4 gap-y-0.5"
+                            >
+                              <span>Required:</span
+                              ><span class="text-right"
+                                >{{ av.required.cpu }} CPU · {{ av.required.memory }} RAM</span
+                              >
+                              <span>Available (after 10% reserve):</span
+                              ><span class="text-right"
+                                >{{ av.available.cpu }} CPU · {{ av.available.memory }} RAM</span
+                              >
+                              <span>Currently used:</span
+                              ><span class="text-right"
+                                >{{ av.used.cpu }} CPU · {{ av.used.memory }} RAM</span
+                              >
+                              <span>Cluster total:</span
+                              ><span class="text-right"
+                                >{{ av.total.cpu }} CPU · {{ av.total.memory }} RAM</span
+                              >
                             </div>
-                            <button type="button" class="mt-2 text-xs text-primary hover:underline" (click)="goToConfigStep()">
+                            <button
+                              type="button"
+                              class="mt-2 text-xs text-primary hover:underline"
+                              (click)="goToConfigStep()"
+                            >
                               Choose a smaller profile →
                             </button>
                           </div>
                         </div>
                       } @else if (av.reason) {
-                        <div class="flex items-start gap-3 p-3 rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10">
-                          <ng-icon name="lucideTriangleAlert" class="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                        <div
+                          class="flex items-start gap-3 p-3 rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10"
+                        >
+                          <ng-icon
+                            name="lucideTriangleAlert"
+                            class="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5"
+                          />
                           <div class="text-sm flex-1">
-                            <p class="font-medium text-amber-700 dark:text-amber-300">Resources tight</p>
-                            <p class="text-amber-600 dark:text-amber-400 mt-0.5">{{ getAvailabilityMessage() }}</p>
-                            <div class="mt-2 text-[11px] text-muted-foreground grid grid-cols-2 gap-x-4 gap-y-0.5">
-                              <span>Required:</span><span class="text-right">{{ av.required.cpu }} CPU · {{ av.required.memory }} RAM</span>
-                              <span>Available (after 10% reserve):</span><span class="text-right">{{ av.available.cpu }} CPU · {{ av.available.memory }} RAM</span>
+                            <p class="font-medium text-amber-700 dark:text-amber-300">
+                              Resources tight
+                            </p>
+                            <p class="text-amber-600 dark:text-amber-400 mt-0.5">
+                              {{ getAvailabilityMessage() }}
+                            </p>
+                            <div
+                              class="mt-2 text-[11px] text-muted-foreground grid grid-cols-2 gap-x-4 gap-y-0.5"
+                            >
+                              <span>Required:</span
+                              ><span class="text-right"
+                                >{{ av.required.cpu }} CPU · {{ av.required.memory }} RAM</span
+                              >
+                              <span>Available (after 10% reserve):</span
+                              ><span class="text-right"
+                                >{{ av.available.cpu }} CPU · {{ av.available.memory }} RAM</span
+                              >
                             </div>
                           </div>
                         </div>
                       } @else {
-                        <div class="flex items-start gap-3 p-3 rounded-md border border-border bg-muted/30">
-                          <ng-icon name="lucideCircleCheck" class="h-5 w-5 text-[hsl(var(--ok))] shrink-0 mt-0.5" />
+                        <div
+                          class="flex items-start gap-3 p-3 rounded-md border border-border bg-muted/30"
+                        >
+                          <ng-icon
+                            name="lucideCircleCheck"
+                            class="h-5 w-5 text-[hsl(var(--ok))] shrink-0 mt-0.5"
+                          />
                           <div class="text-sm flex-1">
                             <p class="font-medium text-foreground">Sufficient resources</p>
-                            <div class="mt-1 text-[11px] text-muted-foreground grid grid-cols-2 gap-x-4 gap-y-0.5">
-                              <span>Required:</span><span class="text-right">{{ av.required.cpu }} CPU · {{ av.required.memory }} RAM</span>
-                              <span>Available (after 10% reserve):</span><span class="text-right">{{ av.available.cpu }} CPU · {{ av.available.memory }} RAM</span>
-                              <span>Currently used:</span><span class="text-right">{{ av.used.cpu }} CPU · {{ av.used.memory }} RAM</span>
-                              <span>Cluster total:</span><span class="text-right">{{ av.total.cpu }} CPU · {{ av.total.memory }} RAM</span>
+                            <div
+                              class="mt-1 text-[11px] text-muted-foreground grid grid-cols-2 gap-x-4 gap-y-0.5"
+                            >
+                              <span>Required:</span
+                              ><span class="text-right"
+                                >{{ av.required.cpu }} CPU · {{ av.required.memory }} RAM</span
+                              >
+                              <span>Available (after 10% reserve):</span
+                              ><span class="text-right"
+                                >{{ av.available.cpu }} CPU · {{ av.available.memory }} RAM</span
+                              >
+                              <span>Currently used:</span
+                              ><span class="text-right"
+                                >{{ av.used.cpu }} CPU · {{ av.used.memory }} RAM</span
+                              >
+                              <span>Cluster total:</span
+                              ><span class="text-right"
+                                >{{ av.total.cpu }} CPU · {{ av.total.memory }} RAM</span
+                              >
                             </div>
-                            <p class="text-[11px] text-muted-foreground mt-1.5 italic">Flui keeps 10% of cluster capacity reserved as headroom.</p>
+                            <p class="text-[11px] text-muted-foreground mt-1.5 italic">
+                              Flui keeps 10% of cluster capacity reserved as headroom.
+                            </p>
                           </div>
                         </div>
                       }
@@ -1449,18 +1971,24 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                   <!-- Exposure toggle — shown after a cluster is picked so capabilities are loaded.
                        For marketplace: only when privatizable === true (public, non-BB, manifest allows override).
                        For non-catalog flows: always shown so the user can pick public vs internal. -->
-                  @if (selectedCluster() && flowSubtype() !== null && (
-                    flowSubtype() !== 'marketplace' ||
-                    (state.catalogDetail()?.exposure === 'public' &&
-                     state.catalogDetail()?.appType !== 'building-block' &&
-                     state.catalogDetail()?.privatizable !== false)
-                  )) {
+                  @if (
+                    selectedCluster() &&
+                    flowSubtype() !== null &&
+                    (flowSubtype() !== 'marketplace' ||
+                      (state.catalogDetail()?.exposure === 'public' &&
+                        state.catalogDetail()?.appType !== 'building-block' &&
+                        state.catalogDetail()?.privatizable !== false))
+                  ) {
                     <div>
                       <h3 class="text-base font-semibold mb-3">Exposure</h3>
                       <div class="space-y-2">
                         <label
                           class="flex items-start gap-3 p-3 rounded-md border cursor-pointer transition-colors"
-                          [class]="state.exposureMode() === 'public' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40'"
+                          [class]="
+                            state.exposureMode() === 'public'
+                              ? 'border-primary bg-primary/5'
+                              : 'border-border hover:border-primary/40'
+                          "
                         >
                           <input
                             type="radio"
@@ -1473,19 +2001,29 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                           <div class="flex-1">
                             <div class="text-sm font-medium text-foreground">Public</div>
                             <div class="text-xs text-muted-foreground">
-                              Reachable from the internet via a custom domain with Ingress + TLS certificate.
+                              Reachable from the internet via a custom domain with Ingress + TLS
+                              certificate.
                             </div>
                           </div>
                         </label>
                         @if (catalog.capabilitiesLoading()) {
-                          <div class="flex items-center gap-2 p-3 rounded-md border border-border text-xs text-muted-foreground">
-                            <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin shrink-0" />
+                          <div
+                            class="flex items-center gap-2 p-3 rounded-md border border-border text-xs text-muted-foreground"
+                          >
+                            <ng-icon
+                              name="lucideLoader"
+                              class="h-3.5 w-3.5 animate-spin shrink-0"
+                            />
                             Checking cluster capabilities…
                           </div>
                         } @else if (state.canUseInternalExposure()) {
                           <label
                             class="flex items-start gap-3 p-3 rounded-md border cursor-pointer transition-colors"
-                            [class]="state.exposureMode() === 'internal' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40'"
+                            [class]="
+                              state.exposureMode() === 'internal'
+                                ? 'border-primary bg-primary/5'
+                                : 'border-border hover:border-primary/40'
+                            "
                           >
                             <input
                               type="radio"
@@ -1498,22 +2036,32 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                             <div class="flex-1">
                               <div class="text-sm font-medium text-foreground">Internal</div>
                               <div class="text-xs text-muted-foreground">
-                                Gets a private URL on your cluster's internal domain (e.g. app.internal.zone), protected by Flui authentication. Accessible from the internet — Flui login required.
+                                Gets a private URL on your cluster's internal domain (e.g.
+                                app.internal.zone), protected by Flui authentication. Accessible
+                                from the internet — Flui login required.
                               </div>
                             </div>
                           </label>
                         } @else {
-                          <div class="flex items-start gap-3 p-3 rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 text-sm text-amber-800 dark:text-amber-300">
+                          <div
+                            class="flex items-start gap-3 p-3 rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 text-sm text-amber-800 dark:text-amber-300"
+                          >
                             <ng-icon name="lucideTriangleAlert" class="h-4 w-4 shrink-0 mt-0.5" />
                             <div class="flex-1 space-y-2">
-                              <div class="font-medium">Internal apps not available on this cluster</div>
-                              <div class="text-xs">Missing: {{ internalHostingMissingLabel() }}.</div>
+                              <div class="font-medium">
+                                Internal apps not available on this cluster
+                              </div>
+                              <div class="text-xs">
+                                Missing: {{ internalHostingMissingLabel() }}.
+                              </div>
                               <div class="pt-1">
                                 <button
                                   type="button"
                                   (click)="navigateToClusterDns()"
                                   class="text-xs underline hover:no-underline font-medium"
-                                >Configure now →</button>
+                                >
+                                  Configure now →
+                                </button>
                               </div>
                             </div>
                           </div>
@@ -1527,12 +2075,15 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                     <div>
                       <h3 class="text-base font-semibold mb-1">Install overrides</h3>
                       <p class="text-xs text-muted-foreground mb-3">
-                        Leave untouched to use <span class="font-mono">flui.yaml</span> as-is. Anything you change here is
-                        remembered for this install and keeps winning over the manifest on later deploys.
+                        Leave untouched to use <span class="font-mono">flui.yaml</span> as-is.
+                        Anything you change here is remembered for this install and keeps winning
+                        over the manifest on later deploys.
                       </p>
                       <div class="grid gap-3 md:grid-cols-2">
                         <div>
-                          <label class="block text-xs font-medium text-muted-foreground mb-1">Release name</label>
+                          <label class="block text-xs font-medium text-muted-foreground mb-1"
+                            >Release name</label
+                          >
                           <input
                             type="text"
                             [value]="state.overrideName()"
@@ -1542,12 +2093,16 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                           @if (installNameChanged()) {
                             <p class="text-xs text-blue-600 dark:text-blue-400 mt-1">
                               A different name installs this repository a second time, next to
-                              <span class="font-mono">{{ state.manifestResult()!.manifest!.metadata.name }}</span>.
+                              <span class="font-mono">{{
+                                state.manifestResult()!.manifest!.metadata.name
+                              }}</span>.
                             </p>
                           }
                         </div>
                         <div>
-                          <label class="block text-xs font-medium text-muted-foreground mb-1">Custom domain</label>
+                          <label class="block text-xs font-medium text-muted-foreground mb-1"
+                            >Custom domain</label
+                          >
                           <input
                             type="text"
                             [value]="state.overrideFqdn()"
@@ -1556,7 +2111,8 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                             class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm font-mono"
                           />
                           <p class="text-xs text-muted-foreground mt-1">
-                            Empty = the cluster's DNS zone assigns one. The TLS certificate follows this hostname.
+                            Empty = the cluster's DNS zone assigns one. The TLS certificate follows
+                            this hostname.
                           </p>
                         </div>
                       </div>
@@ -1606,7 +2162,9 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
           @case ('review') {
             <div class="space-y-6">
               @if (canDeployReason(); as reason) {
-                <div class="flex items-start gap-3 p-3 rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10 text-sm text-red-800 dark:text-red-300">
+                <div
+                  class="flex items-start gap-3 p-3 rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10 text-sm text-red-800 dark:text-red-300"
+                >
                   <ng-icon name="lucideTriangleAlert" class="h-4 w-4 shrink-0 mt-0.5" />
                   <div class="flex-1 space-y-2">
                     <div class="font-medium">Install blocked</div>
@@ -1616,17 +2174,25 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                         type="button"
                         (click)="navigateToClusterDns()"
                         class="text-xs underline hover:no-underline font-medium"
-                      >Configure now →</button>
+                      >
+                        Configure now →
+                      </button>
                     </div>
                   </div>
                 </div>
               }
               @if (authzNotReady()) {
-                <div class="flex items-start gap-3 p-3 rounded-md border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/10 text-sm text-amber-800 dark:text-amber-300">
+                <div
+                  class="flex items-start gap-3 p-3 rounded-md border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/10 text-sm text-amber-800 dark:text-amber-300"
+                >
                   <ng-icon name="lucideTriangleAlert" class="h-4 w-4 shrink-0 mt-0.5" />
                   <div class="flex-1 space-y-2">
                     <div class="font-medium">Auth Proxy not installed</div>
-                    <div class="text-xs">This is a private app. Without Auth Proxy, access control falls back to a less reliable external mechanism. Install it on this cluster for faster, more resilient protection.</div>
+                    <div class="text-xs">
+                      This is a private app. Without Auth Proxy, access control falls back to a less
+                      reliable external mechanism. Install it on this cluster for faster, more
+                      resilient protection.
+                    </div>
                     <div class="pt-1 flex items-center gap-3">
                       @if (authzInstall.installing()) {
                         <span class="text-xs flex items-center gap-1">
@@ -1634,22 +2200,34 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                           Installing...
                         </span>
                       } @else {
-                        <button type="button" (click)="installAuthProxy()" class="text-xs underline hover:no-underline font-medium">
+                        <button
+                          type="button"
+                          (click)="installAuthProxy()"
+                          class="text-xs underline hover:no-underline font-medium"
+                        >
                           Install now
                         </button>
                       }
-                      <button type="button" (click)="navigateToAuthProxy()" class="text-xs text-amber-700 dark:text-amber-400 hover:underline">
+                      <button
+                        type="button"
+                        (click)="navigateToAuthProxy()"
+                        class="text-xs text-amber-700 dark:text-amber-400 hover:underline"
+                      >
                         Auth Proxy settings →
                       </button>
                     </div>
                     @if (authzInstall.error()) {
-                      <div class="text-xs text-red-600 dark:text-red-400">{{ authzInstall.error() }}</div>
+                      <div class="text-xs text-red-600 dark:text-red-400">
+                        {{ authzInstall.error() }}
+                      </div>
                     }
                   </div>
                 </div>
               }
-              @if ((deployError() || state.orchestrationError()); as err) {
-                <div class="flex items-start gap-3 p-3 rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10 text-sm text-red-800 dark:text-red-300">
+              @if (deployError() || state.orchestrationError(); as err) {
+                <div
+                  class="flex items-start gap-3 p-3 rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10 text-sm text-red-800 dark:text-red-300"
+                >
                   <ng-icon name="lucideTriangleAlert" class="h-4 w-4 shrink-0 mt-0.5" />
                   <div class="flex-1">{{ err }}</div>
                 </div>
@@ -1681,24 +2259,38 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                     @if (selectedProfileInfo()) {
                       <div class="flex justify-between">
                         <span class="text-muted-foreground">Profile:</span>
-                        <span class="font-medium">{{ getProfileLabel(selectedProfile()) }} — {{ getProfileCpu(selectedProfileInfo()!) }} CPU · {{ getProfileMemory(selectedProfileInfo()!) }} RAM</span>
+                        <span class="font-medium"
+                          >{{ getProfileLabel(selectedProfile()) }} —
+                          {{ getProfileCpu(selectedProfileInfo()!) }} CPU ·
+                          {{ getProfileMemory(selectedProfileInfo()!) }} RAM</span
+                        >
                       </div>
                     }
                     <div class="flex justify-between">
                       <span class="text-muted-foreground">Health check:</span>
                       <span class="font-medium">
-                        @if (probeType() === 'http') { HTTP GET {{ probeHttpPath() }} :{{ appPort() }} }
-                        @if (probeType() === 'tcp') { TCP :{{ appPort() }} }
-                        @if (probeType() === 'none') { Disabled }
+                        @if (probeType() === 'http') {
+                          HTTP GET {{ probeHttpPath() }} :{{ appPort() }}
+                        }
+                        @if (probeType() === 'tcp') {
+                          TCP :{{ appPort() }}
+                        }
+                        @if (probeType() === 'none') {
+                          Disabled
+                        }
                       </span>
                     </div>
                     @if (state.exposureMode() === 'internal') {
-                      <div class="mt-2 rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground space-y-1">
+                      <div
+                        class="mt-2 rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground space-y-1"
+                      >
                         <span class="font-medium text-foreground">Internal app.</span>
-                        Gets a private URL on your cluster's internal domain, protected by Flui authentication.
-                        Accessible from the internet — Flui login required to open.
+                        Gets a private URL on your cluster's internal domain, protected by Flui
+                        authentication. Accessible from the internet — Flui login required to open.
                         @if (internalUrlPreview(); as url) {
-                          <div class="mt-1 font-mono text-xs text-foreground/80 truncate">{{ url }}</div>
+                          <div class="mt-1 font-mono text-xs text-foreground/80 truncate">
+                            {{ url }}
+                          </div>
                         }
                       </div>
                     }
@@ -1721,7 +2313,9 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                     </div>
                     <div class="flex justify-between">
                       <span class="text-muted-foreground">Category:</span>
-                      <span class="font-medium capitalize">{{ state.catalogDetail()?.category }}</span>
+                      <span class="font-medium capitalize">{{
+                        state.catalogDetail()?.category
+                      }}</span>
                     </div>
                     @if (state.catalogHasAuthChoice() && catalogAuthModeLabel(); as authLabel) {
                       <div class="flex justify-between">
@@ -1742,10 +2336,13 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                       </div>
                     }
                     @if (state.linkedBbRefs().length > 0) {
-                      <div class="mt-2 rounded-md border border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-900/10 p-3 text-xs text-sky-900 dark:text-sky-200">
+                      <div
+                        class="mt-2 rounded-md border border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-900/10 p-3 text-xs text-sky-900 dark:text-sky-200"
+                      >
                         <div class="font-medium">
                           @if (state.selectedReusableInstance(); as sel) {
-                            Linked to <span class="font-mono">{{ sel.catalogSlug || sel.displayName }}</span>:
+                            Linked to
+                            <span class="font-mono">{{ sel.catalogSlug || sel.displayName }}</span>:
                             <span class="font-mono">{{ sel.displayName }}</span>
                             <span class="ml-1 text-[10px] uppercase tracking-wide opacity-70">
                               ({{ sel.status }})
@@ -1755,26 +2352,35 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                           }
                         </div>
                         <div class="mt-1 opacity-80">
-                          Credentials flow from the building block's internal Secret —
-                          no password required from you.
+                          Credentials flow from the building block's internal Secret — no password
+                          required from you.
                         </div>
                       </div>
                     }
-                    @if (state.catalogDetail()?.exposesPublicEndpoint === false || isInternalDeploy()) {
+                    @if (
+                      state.catalogDetail()?.exposesPublicEndpoint === false || isInternalDeploy()
+                    ) {
                       @if (isInternalDeploy()) {
-                        <div class="mt-2 rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground space-y-1">
+                        <div
+                          class="mt-2 rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground space-y-1"
+                        >
                           <span class="font-medium text-foreground">Internal app.</span>
-                          Gets a private URL on your cluster's internal domain, protected by Flui authentication.
-                          Accessible from the internet — Flui login required to open.
+                          Gets a private URL on your cluster's internal domain, protected by Flui
+                          authentication. Accessible from the internet — Flui login required to
+                          open.
                           @if (internalUrlPreview(); as url) {
-                            <div class="mt-1 font-mono text-xs text-foreground/80 truncate">{{ url }}</div>
+                            <div class="mt-1 font-mono text-xs text-foreground/80 truncate">
+                              {{ url }}
+                            </div>
                           }
                         </div>
                       } @else {
-                        <div class="mt-2 rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+                        <div
+                          class="mt-2 rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground"
+                        >
                           <span class="font-medium text-foreground">Internal service.</span>
-                          This app runs cluster-internal and will not get a public URL.
-                          Other apps in the same cluster reach it via its internal service DNS.
+                          This app runs cluster-internal and will not get a public URL. Other apps
+                          in the same cluster reach it via its internal service DNS.
                         </div>
                       }
                     } @else {
@@ -1782,9 +2388,15 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                         <span class="text-muted-foreground">Domain:</span>
                         <span class="font-medium">
                           @switch (state.domainMode()) {
-                            @case ('auto') { Auto-assigned ({{ autoFqdnPreview() }}) }
-                            @case ('custom') { {{ state.requestedDomain() }} }
-                            @case ('skip') { Configure after install }
+                            @case ('auto') {
+                              Auto-assigned ({{ autoFqdnPreview() }})
+                            }
+                            @case ('custom') {
+                              {{ state.requestedDomain() }}
+                            }
+                            @case ('skip') {
+                              Configure after install
+                            }
                           }
                         </span>
                       </div>
@@ -1792,21 +2404,31 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                         <div class="flex justify-between">
                           <span class="text-muted-foreground">TLS:</span>
                           <span class="font-medium">
-                            {{ state.enableTls() ? 'HTTPS certificate' : 'HTTP only (no certificate)' }}
+                            {{
+                              state.enableTls() ? 'HTTPS certificate' : 'HTTP only (no certificate)'
+                            }}
                           </span>
                         </div>
                       }
                     }
                   </div>
                   @if (state.allowMasterPlacementRelevant()) {
-                    <div class="mt-3 rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 p-3 text-xs space-y-2">
+                    <div
+                      class="mt-3 rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 p-3 text-xs space-y-2"
+                    >
                       <div class="flex items-start gap-2">
-                        <ng-icon name="lucideTriangleAlert" class="h-4 w-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+                        <ng-icon
+                          name="lucideTriangleAlert"
+                          class="h-4 w-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400"
+                        />
                         <div class="space-y-1">
-                          <p class="font-medium text-amber-900 dark:text-amber-200">This cluster has no worker node</p>
+                          <p class="font-medium text-amber-900 dark:text-amber-200">
+                            This cluster has no worker node
+                          </p>
                           <p class="text-amber-800/90 dark:text-amber-300/90">
-                            {{ state.catalogDetail()?.name }} uses dedicated (node-local) storage, which normally runs on a worker node.
-                            Allow it to run on the control-plane node instead, or add a worker with
+                            {{ state.catalogDetail()?.name }} uses dedicated (node-local) storage,
+                            which normally runs on a worker node. Allow it to run on the
+                            control-plane node instead, or add a worker with
                             <span class="font-mono">flui node add</span> and come back.
                           </p>
                         </div>
@@ -1817,11 +2439,14 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                           [checked]="state.allowMasterPlacement()"
                           (change)="state.allowMasterPlacement.set($any($event.target).checked)"
                         />
-                        <span class="font-medium text-amber-900 dark:text-amber-200">Run on the control-plane node</span>
+                        <span class="font-medium text-amber-900 dark:text-amber-200"
+                          >Run on the control-plane node</span
+                        >
                       </label>
                       @if (!state.allowMasterPlacement()) {
                         <p class="pl-6 text-amber-700 dark:text-amber-300/90">
-                          Required to continue — without a worker node the install would fail. Untick only if you plan to add a worker first.
+                          Required to continue — without a worker node the install would fail.
+                          Untick only if you plan to add a worker first.
                         </p>
                       }
                     </div>
@@ -1834,35 +2459,57 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                   <div class="space-y-2 text-sm">
                     <div class="flex justify-between">
                       <span class="text-muted-foreground">Template:</span>
-                      <span class="font-medium">{{ state.selectedTemplate()?.displayName }} {{ state.selectedTemplate()?.version }}</span>
+                      <span class="font-medium"
+                        >{{ state.selectedTemplate()?.displayName }}
+                        {{ state.selectedTemplate()?.version }}</span
+                      >
                     </div>
                     <div class="flex justify-between">
                       <span class="text-muted-foreground">New repository:</span>
-                      <span class="font-medium font-mono text-xs">{{ state.newRepoOwner() || '(your account)' }}/{{ state.newRepoName() }}</span>
+                      <span class="font-medium font-mono text-xs"
+                        >{{ state.newRepoOwner() || '(your account)' }}/{{
+                          state.newRepoName()
+                        }}</span
+                      >
                     </div>
                     <div class="flex justify-between">
                       <span class="text-muted-foreground">Visibility:</span>
-                      <span class="font-medium">{{ state.newRepoPrivate() ? 'Private' : 'Public' }}</span>
+                      <span class="font-medium">{{
+                        state.newRepoPrivate() ? 'Private' : 'Public'
+                      }}</span>
                     </div>
                     <div class="flex justify-between">
                       <span class="text-muted-foreground">Port:</span>
-                      <span class="font-medium">{{ state.deployConfig().port }} <span class="ml-1 text-[10px] px-1 rounded bg-muted text-muted-foreground">from template</span></span>
+                      <span class="font-medium"
+                        >{{ state.deployConfig().port }}
+                        <span class="ml-1 text-[10px] px-1 rounded bg-muted text-muted-foreground"
+                          >from template</span
+                        ></span
+                      >
                     </div>
                     <div class="flex justify-between">
                       <span class="text-muted-foreground">Healthcheck:</span>
-                      <span class="font-medium font-mono text-xs">{{ state.deployConfig().healthcheckPath }}</span>
+                      <span class="font-medium font-mono text-xs">{{
+                        state.deployConfig().healthcheckPath
+                      }}</span>
                     </div>
                     <div class="flex justify-between">
                       <span class="text-muted-foreground">Resource profile:</span>
-                      <span class="font-medium capitalize">{{ state.deployConfig().resourceProfile }}</span>
+                      <span class="font-medium capitalize">{{
+                        state.deployConfig().resourceProfile
+                      }}</span>
                     </div>
                     @if (state.exposureMode() === 'internal') {
-                      <div class="mt-2 rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground space-y-1">
+                      <div
+                        class="mt-2 rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground space-y-1"
+                      >
                         <span class="font-medium text-foreground">Internal app.</span>
-                        Gets a private URL on your cluster's internal domain, protected by Flui authentication.
-                        Accessible from the internet — Flui login required to open.
+                        Gets a private URL on your cluster's internal domain, protected by Flui
+                        authentication. Accessible from the internet — Flui login required to open.
                         @if (internalUrlPreview(); as url) {
-                          <div class="mt-1 font-mono text-xs text-foreground/80 truncate">{{ url }}</div>
+                          <div class="mt-1 font-mono text-xs text-foreground/80 truncate">
+                            {{ url }}
+                          </div>
                         }
                       </div>
                     }
@@ -1875,7 +2522,9 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                   <div class="space-y-2 text-sm">
                     <div class="flex justify-between">
                       <span class="text-muted-foreground">Repository:</span>
-                      <span class="font-medium">{{ selectedRepo()?.name ?? selectedPublicRepo()?.full_name }}</span>
+                      <span class="font-medium">{{
+                        selectedRepo()?.name ?? selectedPublicRepo()?.full_name
+                      }}</span>
                     </div>
                     <div class="flex justify-between">
                       <span class="text-muted-foreground">Branch:</span>
@@ -1886,19 +2535,27 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                       <span class="font-medium">
                         {{ state.deployConfig().port || '—' }}
                         @if (state.defaultsSource() === 'manifest') {
-                          <span class="ml-1 text-[10px] px-1 rounded bg-muted text-muted-foreground">from flui.yaml</span>
+                          <span class="ml-1 text-[10px] px-1 rounded bg-muted text-muted-foreground"
+                            >from flui.yaml</span
+                          >
                         } @else if (state.defaultsSource() === 'manual') {
-                          <span class="ml-1 text-[10px] px-1 rounded bg-muted text-muted-foreground">manual</span>
+                          <span class="ml-1 text-[10px] px-1 rounded bg-muted text-muted-foreground"
+                            >manual</span
+                          >
                         }
                       </span>
                     </div>
                     <div class="flex justify-between">
                       <span class="text-muted-foreground">Healthcheck:</span>
-                      <span class="font-medium font-mono text-xs">{{ state.deployConfig().healthcheckPath }}</span>
+                      <span class="font-medium font-mono text-xs">{{
+                        state.deployConfig().healthcheckPath
+                      }}</span>
                     </div>
                     <div class="flex justify-between">
                       <span class="text-muted-foreground">Resource profile:</span>
-                      <span class="font-medium capitalize">{{ state.deployConfig().resourceProfile }}</span>
+                      <span class="font-medium capitalize">{{
+                        state.deployConfig().resourceProfile
+                      }}</span>
                     </div>
                     <div class="flex justify-between">
                       <span class="text-muted-foreground">Replicas:</span>
@@ -1907,7 +2564,9 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                     @if (state.manifestResult()?.valid) {
                       <div class="flex justify-between">
                         <span class="text-muted-foreground">App name:</span>
-                        <span class="font-medium font-mono text-xs">{{ state.manifestResult()!.manifest!.metadata.name }}</span>
+                        <span class="font-medium font-mono text-xs">{{
+                          state.manifestResult()!.manifest!.metadata.name
+                        }}</span>
                       </div>
                     } @else if (state.confirmedFramework()) {
                       <div class="flex justify-between">
@@ -1916,12 +2575,16 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                       </div>
                     }
                     @if (state.exposureMode() === 'internal') {
-                      <div class="mt-2 rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground space-y-1">
+                      <div
+                        class="mt-2 rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground space-y-1"
+                      >
                         <span class="font-medium text-foreground">Internal app.</span>
-                        Gets a private URL on your cluster's internal domain, protected by Flui authentication.
-                        Accessible from the internet — Flui login required to open.
+                        Gets a private URL on your cluster's internal domain, protected by Flui
+                        authentication. Accessible from the internet — Flui login required to open.
                         @if (internalUrlPreview(); as url) {
-                          <div class="mt-1 font-mono text-xs text-foreground/80 truncate">{{ url }}</div>
+                          <div class="mt-1 font-mono text-xs text-foreground/80 truncate">
+                            {{ url }}
+                          </div>
                         }
                       </div>
                     }
@@ -1937,7 +2600,10 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                     Installation checks
                   </h4>
                   <p class="text-xs text-muted-foreground mb-3">
-                    What only this installation can say about this manifest — target cluster, connected repository, build credentials, live capacity. A check marked <span class="font-medium text-foreground">unknown</span> means Flui could not answer here, not that the manifest is wrong.
+                    What only this installation can say about this manifest — target cluster,
+                    connected repository, build credentials, live capacity. A check marked
+                    <span class="font-medium text-foreground">unknown</span> means Flui could not
+                    answer here, not that the manifest is wrong.
                   </p>
                   @if (manifestChecksLoading()) {
                     <div class="flex items-center gap-2 text-xs text-muted-foreground">
@@ -1945,7 +2611,9 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                       Running checks...
                     </div>
                   } @else if (manifestChecksError()) {
-                    <p class="text-xs text-amber-700 dark:text-amber-400">{{ manifestChecksError() }}</p>
+                    <p class="text-xs text-amber-700 dark:text-amber-400">
+                      {{ manifestChecksError() }}
+                    </p>
                   } @else if (manifestChecks(); as checks) {
                     @if (checks.length === 0) {
                       <p class="text-xs text-muted-foreground">No checks reported.</p>
@@ -1953,11 +2621,20 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                       <ul class="space-y-2.5">
                         @for (check of checks; track check.id) {
                           <li class="flex items-start gap-2 text-xs">
-                            <ng-icon [name]="checkStatusIcon(check.status)" class="h-4 w-4 shrink-0 mt-0.5" [class]="checkStatusClass(check.status)" />
+                            <ng-icon
+                              [name]="checkStatusIcon(check.status)"
+                              class="h-4 w-4 shrink-0 mt-0.5"
+                              [class]="checkStatusClass(check.status)"
+                            />
                             <div>
-                              <span class="font-medium" [class]="checkStatusClass(check.status)">{{ check.title }}</span>
+                              <span class="font-medium" [class]="checkStatusClass(check.status)">{{
+                                check.title
+                              }}</span>
                               @if (check.status === 'unknown') {
-                                <span class="ml-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">not answered here — not a failure</span>
+                                <span
+                                  class="ml-1.5 text-[10px] uppercase tracking-wide text-muted-foreground"
+                                  >not answered here — not a failure</span
+                                >
                               }
                               <p class="text-muted-foreground mt-0.5">{{ check.detail }}</p>
                             </div>
@@ -2042,53 +2719,120 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
 
               <!-- Runtime resource availability summary (all flows) -->
               @if (checkingAvailability()) {
-                <div class="flex items-center gap-2 p-3 text-sm text-muted-foreground border border-border rounded-lg">
+                <div
+                  class="flex items-center gap-2 p-3 text-sm text-muted-foreground border border-border rounded-lg"
+                >
                   <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin shrink-0" />
                   Checking cluster resource availability...
                 </div>
               } @else if (resourceAvailability()) {
                 @let av = resourceAvailability()!;
                 @if (!av.canDeploy) {
-                  <div class="flex items-start gap-3 p-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10">
-                    <ng-icon name="lucideCircleX" class="h-5 w-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+                  <div
+                    class="flex items-start gap-3 p-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10"
+                  >
+                    <ng-icon
+                      name="lucideCircleX"
+                      class="h-5 w-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5"
+                    />
                     <div class="text-sm flex-1">
-                      <p class="font-semibold text-red-700 dark:text-red-300">Deploy blocked — insufficient resources</p>
-                      <p class="text-red-600 dark:text-red-400 mt-1">{{ getAvailabilityMessage() }}</p>
-                      <div class="mt-2 text-[11px] text-muted-foreground grid grid-cols-2 gap-x-4 gap-y-0.5">
-                        <span>Required:</span><span class="text-right">{{ av.required.cpu }} CPU · {{ av.required.memory }} RAM</span>
-                        <span>Available (after 10% reserve):</span><span class="text-right">{{ av.available.cpu }} CPU · {{ av.available.memory }} RAM</span>
-                        <span>Currently used:</span><span class="text-right">{{ av.used.cpu }} CPU · {{ av.used.memory }} RAM</span>
-                        <span>Cluster total:</span><span class="text-right">{{ av.total.cpu }} CPU · {{ av.total.memory }} RAM</span>
+                      <p class="font-semibold text-red-700 dark:text-red-300">
+                        Deploy blocked — insufficient resources
+                      </p>
+                      <p class="text-red-600 dark:text-red-400 mt-1">
+                        {{ getAvailabilityMessage() }}
+                      </p>
+                      <div
+                        class="mt-2 text-[11px] text-muted-foreground grid grid-cols-2 gap-x-4 gap-y-0.5"
+                      >
+                        <span>Required:</span
+                        ><span class="text-right"
+                          >{{ av.required.cpu }} CPU · {{ av.required.memory }} RAM</span
+                        >
+                        <span>Available (after 10% reserve):</span
+                        ><span class="text-right"
+                          >{{ av.available.cpu }} CPU · {{ av.available.memory }} RAM</span
+                        >
+                        <span>Currently used:</span
+                        ><span class="text-right"
+                          >{{ av.used.cpu }} CPU · {{ av.used.memory }} RAM</span
+                        >
+                        <span>Cluster total:</span
+                        ><span class="text-right"
+                          >{{ av.total.cpu }} CPU · {{ av.total.memory }} RAM</span
+                        >
                       </div>
-                      <button type="button" class="mt-2 text-xs text-primary hover:underline" (click)="goToConfigStep()">
+                      <button
+                        type="button"
+                        class="mt-2 text-xs text-primary hover:underline"
+                        (click)="goToConfigStep()"
+                      >
                         Go back and choose a smaller profile →
                       </button>
                     </div>
                   </div>
                 } @else if (av.reason) {
-                  <div class="flex items-start gap-3 p-4 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10">
-                    <ng-icon name="lucideTriangleAlert" class="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                  <div
+                    class="flex items-start gap-3 p-4 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10"
+                  >
+                    <ng-icon
+                      name="lucideTriangleAlert"
+                      class="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5"
+                    />
                     <div class="text-sm flex-1">
-                      <p class="font-semibold text-amber-700 dark:text-amber-300">Resource notice</p>
-                      <p class="text-amber-600 dark:text-amber-400 mt-1">{{ getAvailabilityMessage() }}</p>
-                      <div class="mt-2 text-[11px] text-muted-foreground grid grid-cols-2 gap-x-4 gap-y-0.5">
-                        <span>Required:</span><span class="text-right">{{ av.required.cpu }} CPU · {{ av.required.memory }} RAM</span>
-                        <span>Available (after 10% reserve):</span><span class="text-right">{{ av.available.cpu }} CPU · {{ av.available.memory }} RAM</span>
+                      <p class="font-semibold text-amber-700 dark:text-amber-300">
+                        Resource notice
+                      </p>
+                      <p class="text-amber-600 dark:text-amber-400 mt-1">
+                        {{ getAvailabilityMessage() }}
+                      </p>
+                      <div
+                        class="mt-2 text-[11px] text-muted-foreground grid grid-cols-2 gap-x-4 gap-y-0.5"
+                      >
+                        <span>Required:</span
+                        ><span class="text-right"
+                          >{{ av.required.cpu }} CPU · {{ av.required.memory }} RAM</span
+                        >
+                        <span>Available (after 10% reserve):</span
+                        ><span class="text-right"
+                          >{{ av.available.cpu }} CPU · {{ av.available.memory }} RAM</span
+                        >
                       </div>
                     </div>
                   </div>
                 } @else {
-                  <div class="flex items-start gap-3 p-4 rounded-lg border border-border bg-muted/30 text-sm">
-                    <ng-icon name="lucideCheck" class="h-4 w-4 text-[hsl(var(--ok))] shrink-0 mt-0.5" />
+                  <div
+                    class="flex items-start gap-3 p-4 rounded-lg border border-border bg-muted/30 text-sm"
+                  >
+                    <ng-icon
+                      name="lucideCheck"
+                      class="h-4 w-4 text-[hsl(var(--ok))] shrink-0 mt-0.5"
+                    />
                     <div class="flex-1">
                       <p class="font-medium text-foreground">Sufficient resources</p>
-                      <div class="mt-1 text-[11px] text-muted-foreground grid grid-cols-2 gap-x-4 gap-y-0.5">
-                        <span>Required:</span><span class="text-right">{{ av.required.cpu }} CPU · {{ av.required.memory }} RAM</span>
-                        <span>Available (after 10% reserve):</span><span class="text-right">{{ av.available.cpu }} CPU · {{ av.available.memory }} RAM</span>
-                        <span>Currently used:</span><span class="text-right">{{ av.used.cpu }} CPU · {{ av.used.memory }} RAM</span>
-                        <span>Cluster total:</span><span class="text-right">{{ av.total.cpu }} CPU · {{ av.total.memory }} RAM</span>
+                      <div
+                        class="mt-1 text-[11px] text-muted-foreground grid grid-cols-2 gap-x-4 gap-y-0.5"
+                      >
+                        <span>Required:</span
+                        ><span class="text-right"
+                          >{{ av.required.cpu }} CPU · {{ av.required.memory }} RAM</span
+                        >
+                        <span>Available (after 10% reserve):</span
+                        ><span class="text-right"
+                          >{{ av.available.cpu }} CPU · {{ av.available.memory }} RAM</span
+                        >
+                        <span>Currently used:</span
+                        ><span class="text-right"
+                          >{{ av.used.cpu }} CPU · {{ av.used.memory }} RAM</span
+                        >
+                        <span>Cluster total:</span
+                        ><span class="text-right"
+                          >{{ av.total.cpu }} CPU · {{ av.total.memory }} RAM</span
+                        >
                       </div>
-                      <p class="text-[11px] text-muted-foreground mt-1.5 italic">Flui keeps 10% of cluster capacity reserved as headroom.</p>
+                      <p class="text-[11px] text-muted-foreground mt-1.5 italic">
+                        Flui keeps 10% of cluster capacity reserved as headroom.
+                      </p>
                     </div>
                   </div>
                 }
@@ -2105,13 +2849,17 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
                   <div class="flex justify-between">
                     <span>Estimated time:</span>
                     @if (roomWaitAhead()) {
-                      <span class="font-medium text-amber-700 dark:text-amber-400">starts when a node with room joins</span>
+                      <span class="font-medium text-amber-700 dark:text-amber-400"
+                        >starts when a node with room joins</span
+                      >
                     } @else {
                       <span class="font-medium">2-5 minutes</span>
                     }
                   </div>
                 </div>
-                <p class="text-xs text-blue-600 dark:text-blue-400 mt-3 pt-3 border-t border-blue-200 dark:border-blue-800">
+                <p
+                  class="text-xs text-blue-600 dark:text-blue-400 mt-3 pt-3 border-t border-blue-200 dark:border-blue-800"
+                >
                   💡 Deployment will start immediately and can be monitored in real-time
                 </p>
               </div>
@@ -2160,10 +2908,18 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
               >
                 @if (isDeploying()) {
                   <ng-icon name="lucideLoader" class="h-4 w-4 mr-2 animate-spin" />
-                  @if (flowSubtype() === 'marketplace') { Installing... } @else { Deploying... }
+                  @if (flowSubtype() === 'marketplace') {
+                    Installing...
+                  } @else {
+                    Deploying...
+                  }
                 } @else {
                   <ng-icon name="lucidePlay" class="h-4 w-4 mr-2" />
-                  @if (flowSubtype() === 'marketplace') { Install } @else { Deploy Application }
+                  @if (flowSubtype() === 'marketplace') {
+                    Install
+                  } @else {
+                    Deploy Application
+                  }
                 }
               </button>
             }
@@ -2310,8 +3066,8 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
 
   // Port discovery
   portDiscovering = signal<boolean>(false);
-  portDiscoveredFrom = signal<string>('');   // imageRef that was inspected
-  exposedPorts = signal<number[]>([]);       // all ports found
+  portDiscoveredFrom = signal<string>(''); // imageRef that was inspected
+  exposedPorts = signal<number[]>([]); // all ports found
   portAutoDetected = signal<boolean>(false); // true if current appPort was set by discovery
 
   // Health probe (docker_image)
@@ -2339,7 +3095,10 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
     if (this.flowSubtype() === 'marketplace') {
       const d = this.state.catalogDetail();
       if (!d || d.appType === 'building-block') return false;
-      return d.exposure === 'internal' || this.state.exposureMode() === CreateApplicationDto.ExposureEnum.Internal;
+      return (
+        d.exposure === 'internal' ||
+        this.state.exposureMode() === CreateApplicationDto.ExposureEnum.Internal
+      );
     }
     return this.state.exposureMode() === CreateApplicationDto.ExposureEnum.Internal;
   });
@@ -2391,12 +3150,16 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
   readonly canDeployReason = computed<string | null>(() => {
     const detail = this.state.catalogDetail();
     if (this.flowSubtype() === 'marketplace' && detail?.installable === false) {
-      const details = (detail.notInstallableDetails ?? []).map(d => {
+      const details = (detail.notInstallableDetails ?? []).map((d) => {
         switch (d) {
-          case 'dns_zone': return 'DNS zone';
-          case 'wildcard_issuer': return 'wildcard TLS issuer';
-          case 'internal_wildcard_dns': return 'internal wildcard DNS';
-          default: return d;
+          case 'dns_zone':
+            return 'DNS zone';
+          case 'wildcard_issuer':
+            return 'wildcard TLS issuer';
+          case 'internal_wildcard_dns':
+            return 'internal wildcard DNS';
+          default:
+            return d;
         }
       });
       const missing = details.length ? ` Missing: ${details.join(', ')}.` : '';
@@ -2409,19 +3172,23 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
     const missing = this.state.internalHostingMissing();
     if (missing.length === 0) return 'DNS configuration';
     return missing
-      .map(k => {
+      .map((k) => {
         switch (k) {
-          case 'dns_zone': return 'DNS zone';
-          case 'wildcard_issuer': return 'wildcard TLS issuer';
-          case 'internal_wildcard_dns': return 'internal wildcard DNS';
-          default: return k;
+          case 'dns_zone':
+            return 'DNS zone';
+          case 'wildcard_issuer':
+            return 'wildcard TLS issuer';
+          case 'internal_wildcard_dns':
+            return 'internal wildcard DNS';
+          default:
+            return k;
         }
       })
       .join(', ');
   });
 
-  readonly selectedProfileInfo = computed(() =>
-    this.availableProfiles().find(p => p.name === this.selectedProfile()) ?? null
+  readonly selectedProfileInfo = computed(
+    () => this.availableProfiles().find((p) => p.name === this.selectedProfile()) ?? null,
   );
 
   // Manifest check (Flow C — manifest-first, mirror of `flui deploy`)
@@ -2441,12 +3208,12 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
 
   /** Valid (kind: Application) manifests — the deployables of this repo. */
   readonly validManifests = computed<RepositoryManifestEntry[]>(() =>
-    (this.manifestsForSelector() ?? []).filter((e) => e.valid)
+    (this.manifestsForSelector() ?? []).filter((e) => e.valid),
   );
 
   /** Manifests that exist but failed validation — surfaced in the invalid branch. */
   readonly invalidManifests = computed<RepositoryManifestEntry[]>(() =>
-    (this.manifestsForSelector() ?? []).filter((e) => !e.valid)
+    (this.manifestsForSelector() ?? []).filter((e) => !e.valid),
   );
 
   /**
@@ -2480,7 +3247,9 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
    * only accepted source of truth: without a valid manifest the wizard blocks
    * and points the user to `flui app init` — no Dockerfile fallback.
    */
-  readonly analysisBranch = computed<'loading' | 'flui-ready' | 'manifest-invalid' | 'no-manifest' | 'check-failed'>(() => {
+  readonly analysisBranch = computed<
+    'loading' | 'flui-ready' | 'manifest-invalid' | 'no-manifest' | 'check-failed'
+  >(() => {
     if (this.isCheckingManifest()) return 'loading';
     if (this.manifestFetchError()) return 'check-failed';
     const entries = this.manifestsForSelector();
@@ -2493,9 +3262,7 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
   isLoadingClusters = signal<boolean>(false);
   selectedCluster = signal<ClusterInfo | null>(null);
   allClusters = this.clusterService.clusters;
-  activeClusters = computed(() =>
-    this.allClusters().filter((c) => c.status === 'active')
-  );
+  activeClusters = computed(() => this.allClusters().filter((c) => c.status === 'active'));
 
   // Wizard steps definition — three flows share the same component, dispatched on flowSubtype.
   readonly steps = computed<WizardStepperStep[]>(() => {
@@ -2562,7 +3329,11 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
     };
   }
 
-  private buildImageFlowSteps(sourceStep: WizardStepperStep, clusterStep: WizardStepperStep, reviewStep: WizardStepperStep): WizardStepperStep[] {
+  private buildImageFlowSteps(
+    sourceStep: WizardStepperStep,
+    clusterStep: WizardStepperStep,
+    reviewStep: WizardStepperStep,
+  ): WizardStepperStep[] {
     return [
       sourceStep,
       {
@@ -2584,7 +3355,11 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
     ];
   }
 
-  private buildTemplateFlowSteps(sourceStep: WizardStepperStep, clusterStep: WizardStepperStep, reviewStep: WizardStepperStep): WizardStepperStep[] {
+  private buildTemplateFlowSteps(
+    sourceStep: WizardStepperStep,
+    clusterStep: WizardStepperStep,
+    reviewStep: WizardStepperStep,
+  ): WizardStepperStep[] {
     return [
       sourceStep,
       {
@@ -2620,7 +3395,11 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
     ];
   }
 
-  private buildExistingRepoFlowSteps(sourceStep: WizardStepperStep, clusterStep: WizardStepperStep, reviewStep: WizardStepperStep): WizardStepperStep[] {
+  private buildExistingRepoFlowSteps(
+    sourceStep: WizardStepperStep,
+    clusterStep: WizardStepperStep,
+    reviewStep: WizardStepperStep,
+  ): WizardStepperStep[] {
     const hasRepo = !!(this.selectedRepo() || this.selectedPublicRepo());
     const analysisValid = this.analysisBranch() === 'flui-ready';
 
@@ -2659,7 +3438,11 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
     ];
   }
 
-  private buildMarketplaceFlowSteps(sourceStep: WizardStepperStep, clusterStep: WizardStepperStep, reviewStep: WizardStepperStep): WizardStepperStep[] {
+  private buildMarketplaceFlowSteps(
+    sourceStep: WizardStepperStep,
+    clusterStep: WizardStepperStep,
+    reviewStep: WizardStepperStep,
+  ): WizardStepperStep[] {
     const detail = this.state.catalogDetail();
     const hasPrompts = (detail?.userInputPrompts?.length ?? 0) > 0;
     const hasDefaultCredentials = !!detail?.defaultCredentials;
@@ -2726,7 +3509,10 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
         isCompleted: false,
       });
     }
-    if (detail?.exposesPublicEndpoint !== false && this.state.exposureMode() !== CreateApplicationDto.ExposureEnum.Internal) {
+    if (
+      detail?.exposesPublicEndpoint !== false &&
+      this.state.exposureMode() !== CreateApplicationDto.ExposureEnum.Internal
+    ) {
       marketplaceSteps.push({
         id: 'catalog-domain',
         title: 'Domain',
@@ -2752,7 +3538,8 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
     const value = this.state.newRepoName();
     if (!value) return null;
     if (value.length > 100) return 'Maximum 100 characters.';
-    if (!DeployWizardComponent.REPO_NAME_PATTERN.test(value)) return 'Only letters, numbers, dots, dashes, and underscores.';
+    if (!DeployWizardComponent.REPO_NAME_PATTERN.test(value))
+      return 'Only letters, numbers, dots, dashes, and underscores.';
     return null;
   });
 
@@ -2771,7 +3558,9 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
       flowSubtype: this.flowSubtype(),
       selectedCluster: cluster?.id && cluster?.name ? { id: cluster.id, name: cluster.name } : null,
       selectedRepositoryFullName: repo?.fullName ?? null,
-      selectedTemplate: template ? { framework: template.framework, displayName: template.displayName } : null,
+      selectedTemplate: template
+        ? { framework: template.framework, displayName: template.displayName }
+        : null,
     };
     const content = presentedContent(input);
     if (!content) return null;
@@ -2790,18 +3579,22 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
       this.loadClusters();
       this.loadProfiles();
       this.loadRepositories();
-  
+
       // Kick off template loading if we're about to show the template picker
       this.loadTemplates();
-  
+
       // Refresh OAuth status so hasRepoScope is accurate for the template flow
-      try { await this.repoService.checkOAuthStatus(); } catch { /* non-fatal */ }
-  
+      try {
+        await this.repoService.checkOAuthStatus();
+      } catch {
+        /* non-fatal */
+      }
+
       const templateFw = this.route.snapshot.queryParamMap.get('template');
       const repoId = this.route.snapshot.queryParamMap.get('repoId');
       const catalogSlug = this.route.snapshot.queryParamMap.get('catalogSlug');
       const autoConnectTo = this.route.snapshot.queryParamMap.get('autoConnectTo');
-  
+
       if (catalogSlug) {
         // Deep-link from the App Catalog → pre-select marketplace flow
         this.selectFlow('marketplace');
@@ -2819,7 +3612,7 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
         this.selectFlow('template');
         // Wait for templates to finish loading before we can match the framework
         await this.loadTemplates();
-        const tpl = this.templates().find(t => t.framework === templateFw);
+        const tpl = this.templates().find((t) => t.framework === templateFw);
         if (tpl) {
           this.state.selectedTemplate.set(tpl);
           this.advanceToTemplateSettings();
@@ -2831,7 +3624,7 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
         // Deep-link from the repositories page → pre-select Flow C existing-repo
         this.selectFlow('existing-repo');
         await this.loadRepositories();
-        const repo = this.connectedRepos().find(r => r.id === repoId);
+        const repo = this.connectedRepos().find((r) => r.id === repoId);
         if (repo) {
           this.selectRepository(repo);
           this.currentStepIndex.set(1);
@@ -2905,14 +3698,24 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
     const repo = this.selectedRepo();
     const manifest = this.manifestForSelector();
     if (repo && manifest?.valid) {
-      this.state.initializeFromManifest(repo.id, repo.fullName, this.selectedBranch(), manifest, this.selectedCluster()?.id ?? '');
+      this.state.initializeFromManifest(
+        repo.id,
+        repo.fullName,
+        this.selectedBranch(),
+        manifest,
+        this.selectedCluster()?.id ?? '',
+      );
     }
   }
 
   private handleEnvironmentStepEntry(nextStepId: string | undefined, sub: FlowSubtype): void {
     // Flow C — env vars step: the manifest's deploy.env is the source of truth.
     // Source-code detection only runs when the manifest declares no env at all.
-    if (nextStepId === 'environment' && sub === 'existing-repo' && (this.selectedRepo() || this.selectedPublicRepo())) {
+    if (
+      nextStepId === 'environment' &&
+      sub === 'existing-repo' &&
+      (this.selectedRepo() || this.selectedPublicRepo())
+    ) {
       const manifestHasEnv = this.prefillEnvVarsFromManifest();
       if (!manifestHasEnv) {
         this.loadBranches().then(() => this.analyzeAndSuggestEnvVars());
@@ -2970,7 +3773,7 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
     // and `notInstallableReason` reflect this cluster's readiness.
     const slug = this.state.catalogSlug();
     if (slug) {
-      this.catalog.loadDetail(slug, clusterId).then(detail => {
+      this.catalog.loadDetail(slug, clusterId).then((detail) => {
         if (detail) this.state.catalogDetail.set(detail);
       });
     }
@@ -3053,7 +3856,8 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
 
   /** UI card class for the four flow options in the Source step. */
   getFlowCardClass(sub: 'image' | 'template' | 'existing-repo' | 'marketplace'): string {
-    const base = 'relative flex flex-col items-start text-left p-5 rounded-lg border border-border cursor-pointer transition-colors hover:bg-accent/50 w-full';
+    const base =
+      'relative flex flex-col items-start text-left p-5 rounded-lg border border-border cursor-pointer transition-colors hover:bg-accent/50 w-full';
     return this.flowSubtype() === sub ? `${base} bg-primary/10 border-primary` : base;
   }
 
@@ -3079,7 +3883,8 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
   }
 
   getVisibilityButtonClass(privateBtn: boolean): string {
-    const base = 'inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md border transition-colors';
+    const base =
+      'inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md border transition-colors';
     return this.state.newRepoPrivate() === privateBtn
       ? `${base} border-primary bg-primary/10 text-foreground`
       : `${base} border-border text-muted-foreground hover:bg-accent`;
@@ -3087,7 +3892,10 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
 
   /** Jump forward past the picker when a template is pre-selected via query param. */
   private advanceToTemplateSettings(): void {
-    this.state.initializeFromTemplate(this.state.selectedTemplate()!, this.selectedCluster()?.id ?? '');
+    this.state.initializeFromTemplate(
+      this.state.selectedTemplate()!,
+      this.selectedCluster()?.id ?? '',
+    );
     this.currentStepIndex.set(2); // source=0, template-picker=1, template-settings=2
   }
 
@@ -3106,9 +3914,9 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
   readonly orchestrationSteps = computed(() => {
     if (this.flowSubtype() === 'template') {
       return [
-        { id: 'creating-repo',       label: 'Creating GitHub repository from template' },
-        { id: 'registering-repo',    label: 'Registering repository with Flui' },
-        { id: 'creating-app',        label: 'Creating Flui application' },
+        { id: 'creating-repo', label: 'Creating GitHub repository from template' },
+        { id: 'registering-repo', label: 'Registering repository with Flui' },
+        { id: 'creating-app', label: 'Creating Flui application' },
         { id: 'generating-workflow', label: 'Committing build workflow to repository' },
       ] as const;
     }
@@ -3118,7 +3926,7 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
   });
 
   private orchestrationOrder(): string[] {
-    return this.orchestrationSteps().map(s => s.id);
+    return this.orchestrationSteps().map((s) => s.id);
   }
 
   isOrchestrationStepDone(id: string): boolean {
@@ -3173,7 +3981,8 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
   }
 
   getSourceTypeCardClass(type: string): string {
-    const base = 'relative flex flex-col items-center text-center p-6 rounded-lg border border-border cursor-pointer transition-colors hover:bg-accent/50';
+    const base =
+      'relative flex flex-col items-center text-center p-6 rounded-lg border border-border cursor-pointer transition-colors hover:bg-accent/50';
     return this.sourceType() === type ? `${base} bg-primary/10 border-primary` : base;
   }
 
@@ -3227,7 +4036,9 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
       if (branchNames.length > 0 && !branchNames.includes(currentBranch)) {
         const declaredDefault = publicRepo?.default_branch ?? connectedRepo?.branch;
         this.selectedBranch.set(
-          declaredDefault && branchNames.includes(declaredDefault) ? declaredDefault : branchNames[0],
+          declaredDefault && branchNames.includes(declaredDefault)
+            ? declaredDefault
+            : branchNames[0],
         );
       }
     } catch (error) {
@@ -3253,7 +4064,13 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
         const repo = this.selectedRepo();
         const manifest = this.manifestForSelector();
         if (repo && manifest?.valid) {
-          this.state.initializeFromManifest(repo.id, repo.fullName, branch, manifest, this.selectedCluster()?.id ?? '');
+          this.state.initializeFromManifest(
+            repo.id,
+            repo.fullName,
+            branch,
+            manifest,
+            this.selectedCluster()?.id ?? '',
+          );
           if (this.currentStepId() === 'environment') {
             this.envVars.set([]);
             if (!this.prefillEnvVarsFromManifest()) {
@@ -3320,12 +4137,12 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
           clusterId,
           repoFullName: repo.fullName,
           branch: this.selectedBranch() || undefined,
-        })
+        }),
       );
       this.manifestChecks.set(response.checks ?? null);
     } catch (error: any) {
       this.manifestChecksError.set(
-        error?.error?.message || error?.message || 'Could not run installation checks.'
+        error?.error?.message || error?.message || 'Could not run installation checks.',
       );
       this.manifestChecks.set(null);
     } finally {
@@ -3335,19 +4152,27 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
 
   checkStatusIcon(status: ManifestCheckDto.StatusEnum): string {
     switch (status) {
-      case ManifestCheckDto.StatusEnum.Pass: return 'lucideCircleCheck';
-      case ManifestCheckDto.StatusEnum.Warn: return 'lucideTriangleAlert';
-      case ManifestCheckDto.StatusEnum.Fail: return 'lucideCircleX';
-      default: return 'lucideCircleHelp';
+      case ManifestCheckDto.StatusEnum.Pass:
+        return 'lucideCircleCheck';
+      case ManifestCheckDto.StatusEnum.Warn:
+        return 'lucideTriangleAlert';
+      case ManifestCheckDto.StatusEnum.Fail:
+        return 'lucideCircleX';
+      default:
+        return 'lucideCircleHelp';
     }
   }
 
   checkStatusClass(status: ManifestCheckDto.StatusEnum): string {
     switch (status) {
-      case ManifestCheckDto.StatusEnum.Pass: return 'text-[hsl(var(--ok))]';
-      case ManifestCheckDto.StatusEnum.Warn: return 'text-amber-600 dark:text-amber-400';
-      case ManifestCheckDto.StatusEnum.Fail: return 'text-red-600 dark:text-red-400';
-      default: return 'text-muted-foreground';
+      case ManifestCheckDto.StatusEnum.Pass:
+        return 'text-[hsl(var(--ok))]';
+      case ManifestCheckDto.StatusEnum.Warn:
+        return 'text-amber-600 dark:text-amber-400';
+      case ManifestCheckDto.StatusEnum.Fail:
+        return 'text-red-600 dark:text-red-400';
+      default:
+        return 'text-muted-foreground';
     }
   }
 
@@ -3365,9 +4190,7 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
   protected downloadManifest(): void {
     const manifest = this.manifestForSelector();
     if (!manifest?.content) return;
-    const url = URL.createObjectURL(
-      new Blob([manifest.content], { type: 'application/yaml' })
-    );
+    const url = URL.createObjectURL(new Blob([manifest.content], { type: 'application/yaml' }));
     const link = document.createElement('a');
     link.href = url;
     link.download = manifest.manifest?.metadata.name
@@ -3389,8 +4212,8 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
 
     if (this.envVars().length === 0) {
       const entries = env
-        .filter(e => e.value !== undefined || e.valueFrom?.userInput)
-        .map(e => ({
+        .filter((e) => e.value !== undefined || e.valueFrom?.userInput)
+        .map((e) => ({
           key: e.name,
           value: e.value ?? e.valueFrom?.userInput?.default ?? '',
           isSecret: e.valueFrom?.userInput?.sensitive ?? false,
@@ -3416,7 +4239,10 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
     try {
       const analysis = repo
         ? await this.repoService.analyzeRepository(repo.id, this.selectedBranch())
-        : await this.repoService.analyzePublicRepository(publicRepo!.clone_url, this.selectedBranch());
+        : await this.repoService.analyzePublicRepository(
+            publicRepo!.clone_url,
+            this.selectedBranch(),
+          );
       if (this.currentAnalysisToken !== token) return; // cancelled
 
       // Note: we deliberately ignore `analysis.detection` here — the old
@@ -3424,7 +4250,8 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
       // "fastapi 50%" on a Flui template repo) and showing its confidence
       // in the UI was misleading. We only consume envVarSuggestions which
       // comes from parsing .env.example.
-      const suggestions = analysis?.buildPlan?.envVarSuggestions as EnvVarDetectionResultDto | undefined;
+      const suggestions = analysis?.buildPlan?.envVarSuggestions as
+        EnvVarDetectionResultDto | undefined;
       this.envDetectionResult.set(suggestions ?? null);
 
       if (suggestions?.candidates.length) {
@@ -3455,17 +4282,18 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
     this.selectedCandidateIndex.set(candidateIndex);
 
     const preservedValue = preserveKey
-      ? this.envVars().find(v => v.key === preserveKey)?.value
+      ? this.envVars().find((v) => v.key === preserveKey)?.value
       : undefined;
 
     const meta = new Map<string, DetectedEnvVarDto>();
     const vars: EnvironmentVariable[] = candidate.vars
-      .filter(v => !v.readOnly)
-      .map(v => {
+      .filter((v) => !v.readOnly)
+      .map((v) => {
         meta.set(v.name, v);
-        const value = (preservedValue !== undefined && v.name === preserveKey)
-          ? preservedValue
-          : (v.defaultValue ?? '');
+        const value =
+          preservedValue !== undefined && v.name === preserveKey
+            ? preservedValue
+            : (v.defaultValue ?? '');
         return { key: v.name, value, isSecret: v.sensitive };
       });
 
@@ -3486,7 +4314,7 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
   readonly hasUnreviewedDefaults = computed(() => {
     const meta = this.detectedVarMeta();
     if (meta.size === 0) return false;
-    return this.envVars().some(v => {
+    return this.envVars().some((v) => {
       const m = meta.get(v.key);
       return m?.defaultValue !== undefined && v.value === m.defaultValue;
     });
@@ -3506,13 +4334,11 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
       // Convert JSON to key-value
       try {
         const json = JSON.parse(this.rawEnvJson());
-        const vars: EnvironmentVariable[] = Object.entries(json).map(
-          ([key, value]) => ({
-            key,
-            value: String(value),
-            isSecret: false,
-          })
-        );
+        const vars: EnvironmentVariable[] = Object.entries(json).map(([key, value]) => ({
+          key,
+          value: String(value),
+          isSecret: false,
+        }));
         this.envVars.set(vars);
         this.jsonError.set(null);
       } catch {
@@ -3524,10 +4350,7 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
   }
 
   addEnvVar(): void {
-    this.envVars.update((vars) => [
-      ...vars,
-      { key: '', value: '', isSecret: false },
-    ]);
+    this.envVars.update((vars) => [...vars, { key: '', value: '', isSecret: false }]);
   }
 
   removeEnvVar(index: number): void {
@@ -3535,20 +4358,16 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
   }
 
   updateEnvKey(index: number, key: string): void {
-    this.envVars.update((vars) =>
-      vars.map((v, i) => (i === index ? { ...v, key } : v))
-    );
+    this.envVars.update((vars) => vars.map((v, i) => (i === index ? { ...v, key } : v)));
   }
 
   updateEnvValue(index: number, value: string): void {
-    this.envVars.update((vars) =>
-      vars.map((v, i) => (i === index ? { ...v, value } : v))
-    );
+    this.envVars.update((vars) => vars.map((v, i) => (i === index ? { ...v, value } : v)));
   }
 
   toggleEnvSecret(index: number): void {
     this.envVars.update((vars) =>
-      vars.map((v, i) => (i === index ? { ...v, isSecret: !v.isSecret } : v))
+      vars.map((v, i) => (i === index ? { ...v, isSecret: !v.isSecret } : v)),
     );
   }
 
@@ -3603,12 +4422,9 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
    */
   private async checkResourceAvailabilityForCluster(clusterId: string): Promise<void> {
     const sub = this.flowSubtype();
-    const profile = sub === 'image'
-      ? this.selectedProfile()
-      : this.state.deployConfig().resourceProfile;
-    const replicas = sub === 'image'
-      ? this.appReplicas()
-      : this.state.deployConfig().minReplicas;
+    const profile =
+      sub === 'image' ? this.selectedProfile() : this.state.deployConfig().resourceProfile;
+    const replicas = sub === 'image' ? this.appReplicas() : this.state.deployConfig().minReplicas;
 
     this.checkingAvailability.set(true);
     try {
@@ -3618,8 +4434,8 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
           profile,
           undefined,
           undefined,
-          replicas
-        )
+          replicas,
+        ),
       );
       this.resourceAvailability.set(res);
     } catch {
@@ -3643,10 +4459,13 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
   }
 
   private readonly profileMeta: Record<string, { label: string; description: string }> = {
-    nano:   { label: 'Nano',   description: 'Lightweight proxies and static sites (nginx, caddy, haproxy)' },
-    small:  { label: 'Small',  description: 'Simple apps, REST microservices, lightweight tools' },
+    nano: {
+      label: 'Nano',
+      description: 'Lightweight proxies and static sites (nginx, caddy, haproxy)',
+    },
+    small: { label: 'Small', description: 'Simple apps, REST microservices, lightweight tools' },
     medium: { label: 'Medium', description: 'WordPress, Node.js, PHP apps, CMS' },
-    large:  { label: 'Large',  description: 'Databases (Postgres, MySQL, Redis), Java apps' },
+    large: { label: 'Large', description: 'Databases (Postgres, MySQL, Redis), Java apps' },
     xlarge: { label: 'XLarge', description: 'Elasticsearch, Kafka, MongoDB, heavy workloads' },
   };
 
@@ -3675,9 +4494,8 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
     if (!av?.reason) return '';
     // Replicas are read from the same source used by the resource check:
     // local signal for docker_image, deployConfig for template / existing-repo.
-    const replicas = this.flowSubtype() === 'image'
-      ? this.appReplicas()
-      : this.state.deployConfig().minReplicas;
+    const replicas =
+      this.flowSubtype() === 'image' ? this.appReplicas() : this.state.deployConfig().minReplicas;
     switch (av.reason) {
       case ResourceAvailabilityResponseDto.ReasonEnum.InsufficientResources:
         return `The cluster does not have enough resources for the selected profile with ${replicas} replica(s). Reduce replicas or choose a smaller profile.`;
@@ -3689,12 +4507,13 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
   }
 
   goToConfigStep(): void {
-    const configIdx = this.steps().findIndex(s => s.id === 'environment');
+    const configIdx = this.steps().findIndex((s) => s.id === 'environment');
     if (configIdx >= 0) this.currentStepIndex.set(configIdx);
   }
 
   getProfileCardClass(profileName: string): string {
-    const base = 'flex flex-col items-center text-center p-3 rounded-lg border cursor-pointer transition-colors hover:bg-accent/50';
+    const base =
+      'flex flex-col items-center text-center p-3 rounded-lg border cursor-pointer transition-colors hover:bg-accent/50';
     return this.selectedProfile() === profileName
       ? `${base} border-primary bg-primary/10`
       : `${base} border-border`;
@@ -3778,9 +4597,8 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
     const detail = this.state.catalogDetail();
     if (!detail) return 0;
     const inputs = this.state.userInputs();
-    return detail.userInputPrompts.filter(
-      (p) => p.sensitive && (inputs[p.name] ?? '').length > 0,
-    ).length;
+    return detail.userInputPrompts.filter((p) => p.sensitive && (inputs[p.name] ?? '').length > 0)
+      .length;
   }
 
   readonly autoFqdnPreview = computed(() => {
@@ -3871,10 +4689,10 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
             : {}),
           resourceProfile: this.selectedProfile() as CreateApplicationDto.ResourceProfileEnum,
           exposure: this.state.exposureMode(),
-          env: envVars.map(v => ({ name: v.key, value: v.value, secret: v.isSecret })),
+          env: envVars.map((v) => ({ name: v.key, value: v.value, secret: v.isSecret })),
           autoDeploy: true,
           healthProbe: this.buildHealthProbe(),
-        } as any)
+        } as any),
       );
 
       if (response.operation?.id) {
@@ -3900,7 +4718,9 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
     try {
       // Sync cluster + env vars from local state into the service
       this.state.clusterId.set(clusterId);
-      this.state.envVars.set(this.envVars().map(v => ({ key: v.key, value: v.value, isSecret: v.isSecret })));
+      this.state.envVars.set(
+        this.envVars().map((v) => ({ key: v.key, value: v.value, isSecret: v.isSecret })),
+      );
 
       const appId = await this.state.orchestrateTemplateFlow();
       if (appId && !this.state.workflowPullRequestUrl()) {
@@ -3923,7 +4743,9 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
     this.deployError.set(null);
     try {
       this.state.clusterId.set(clusterId);
-      this.state.envVars.set(this.envVars().map(v => ({ key: v.key, value: v.value, isSecret: v.isSecret })));
+      this.state.envVars.set(
+        this.envVars().map((v) => ({ key: v.key, value: v.value, isSecret: v.isSecret })),
+      );
 
       const appId = await this.state.orchestrateExistingRepoFlow();
       if (appId) {
@@ -3985,19 +4807,21 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
   private buildHealthProbe(): object | null {
     const type = this.probeType();
     if (type === 'none') return { type: 'none' };
-    if (type === 'http') return {
-      type: 'http',
-      httpPath: this.probeHttpPath(),
-      httpPort: this.appPort() ?? undefined,
-      initialDelaySeconds: this.probeInitialDelay(),
-      periodSeconds: this.probePeriod(),
-      failureThreshold: this.probeFailureThreshold(),
-    };
-    if (type === 'tcp') return {
-      type: 'tcp',
-      tcpPort: this.appPort() ?? undefined,
-      initialDelaySeconds: this.probeInitialDelay(),
-    };
+    if (type === 'http')
+      return {
+        type: 'http',
+        httpPath: this.probeHttpPath(),
+        httpPort: this.appPort() ?? undefined,
+        initialDelaySeconds: this.probeInitialDelay(),
+        periodSeconds: this.probePeriod(),
+        failureThreshold: this.probeFailureThreshold(),
+      };
+    if (type === 'tcp')
+      return {
+        type: 'tcp',
+        tcpPort: this.appPort() ?? undefined,
+        initialDelaySeconds: this.probeInitialDelay(),
+      };
     return null;
   }
 
@@ -4007,10 +4831,13 @@ export class DeployWizardComponent implements OnInit, OnDestroy {
     }
     try {
       const json = JSON.parse(this.rawEnvJson());
-      return Object.entries(json).map(([key, value]) => ({ key, value: String(value), isSecret: false }));
+      return Object.entries(json).map(([key, value]) => ({
+        key,
+        value: String(value),
+        isSecret: false,
+      }));
     } catch {
       return null;
     }
   }
-
 }

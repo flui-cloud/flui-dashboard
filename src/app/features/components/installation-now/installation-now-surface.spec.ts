@@ -42,7 +42,15 @@ function now(over: Partial<InstallationNow> = {}): InstallationNow {
       },
     ],
     edges: [
-      { clusterId: 'c-1', clusterName: 'control', rpsNow: 40, rpsBefore: 4, rateLimited10m: 120, requests10m: 1000, serverErrors10m: 80 },
+      {
+        clusterId: 'c-1',
+        clusterName: 'control',
+        rpsNow: 40,
+        rpsBefore: 4,
+        rateLimited10m: 120,
+        requests10m: 1000,
+        serverErrors10m: 80,
+      },
     ],
     platform: [{ name: 'API', cpuPercent: 40, memoryPercent: 85, restartsLastHour: 1 }],
     registry: {
@@ -92,7 +100,11 @@ describe('installation now surface producer', () => {
     expectValidSurface(snapshotOf({ now: null, loading: true }));
     expectValidSurface(snapshotOf({ now: null, refused: true }));
     expectValidSurface(snapshotOf({ hasError: true, paused: true }));
-    expectValidSurface(snapshotOf({ now: now({ sandbox: null, registry: null, edges: [], nodes: [], platform: [] }) }));
+    expectValidSurface(
+      snapshotOf({
+        now: now({ sandbox: null, registry: null, edges: [], nodes: [], platform: [] }),
+      }),
+    );
   });
 
   it('invents nothing before the first reading', () => {
@@ -110,9 +122,15 @@ describe('installation now surface producer', () => {
   it('carries the alerts and the demo figures', () => {
     const snapshot = snapshotOf();
     expect(obs(snapshot, 'installation-now', 'flui.now.alerts_firing')!.presentedAs.value).toBe(2);
-    expect(obs(snapshot, 'installation-now', 'flui.now.alerts_critical')!.presentedAs.value).toBe(1);
-    expect(obs(snapshot, 'installation-now:demo', 'flui.now.demo.live')!.presentedAs.value).toBe(18);
-    expect(obs(snapshot, 'installation-now:demo', 'flui.now.demo.waiting')!.presentedAs.value).toBe(3);
+    expect(obs(snapshot, 'installation-now', 'flui.now.alerts_critical')!.presentedAs.value).toBe(
+      1,
+    );
+    expect(obs(snapshot, 'installation-now:demo', 'flui.now.demo.live')!.presentedAs.value).toBe(
+      18,
+    );
+    expect(obs(snapshot, 'installation-now:demo', 'flui.now.demo.waiting')!.presentedAs.value).toBe(
+      3,
+    );
   });
 
   it('marks surge, rate limit and server errors at the door against the thresholds', () => {
@@ -139,15 +157,28 @@ describe('installation now surface producer', () => {
 
   it('carries platform components and the registry hour', () => {
     const snapshot = snapshotOf();
-    expect(obs(snapshot, 'installation-now:platform:API', 'flui.now.platform.memory_percent')!.presentedAs.value).toBe(85);
-    expect(obs(snapshot, 'installation-now:registry', 'flui.now.registry.pulls')!.presentedAs.value).toBe(30);
-    expect(scope(snapshotOf({ now: now({ registry: null, sandbox: null }) }), 'installation-now:registry')).toBeUndefined();
+    expect(
+      obs(snapshot, 'installation-now:platform:API', 'flui.now.platform.memory_percent')!
+        .presentedAs.value,
+    ).toBe(85);
+    expect(
+      obs(snapshot, 'installation-now:registry', 'flui.now.registry.pulls')!.presentedAs.value,
+    ).toBe(30);
+    expect(
+      scope(
+        snapshotOf({ now: now({ registry: null, sandbox: null }) }),
+        'installation-now:registry',
+      ),
+    ).toBeUndefined();
   });
 
   it('bumps the revision on real change and accepts it against the previous snapshot', () => {
     const tracker = new InstallationNowSurfaceRevision();
     const before = input();
-    const first = buildInstallationNowSurface(before, { revision: tracker.next(presentedContent(before)), generatedAt: GENERATED_AT });
+    const first = buildInstallationNowSurface(before, {
+      revision: tracker.next(presentedContent(before)),
+      generatedAt: GENERATED_AT,
+    });
     const after = input({ paused: true });
     const second = buildInstallationNowSurface(after, {
       revision: tracker.next(presentedContent(after)),

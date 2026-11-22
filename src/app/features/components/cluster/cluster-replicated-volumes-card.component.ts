@@ -16,9 +16,7 @@ import {
 } from '../../service/replicated-volumes.service';
 
 const and = (names: string[]) =>
-  names.length < 2
-    ? names.join('')
-    : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`;
+  names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`;
 
 @Component({
   selector: 'app-cluster-replicated-volumes-card',
@@ -31,19 +29,12 @@ const and = (names: string[]) =>
       <div class="card-inner p-4" data-testid="replicated-volumes-card">
         <div class="flex items-center justify-between gap-4">
           <span class="flex items-center gap-2">
-            <ng-icon
-              name="lucideCopy"
-              class="h-4 w-4 text-sky-600 dark:text-sky-400"
-            />
+            <ng-icon name="lucideCopy" class="h-4 w-4 text-sky-600 dark:text-sky-400" />
             <span class="text-label">Replicated volumes</span>
           </span>
           <span
             class="text-xs font-medium"
-            [class]="
-              v.enabled
-                ? 'text-emerald-600 dark:text-emerald-400'
-                : 'text-muted-foreground'
-            "
+            [class]="v.enabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'"
           >
             {{ v.operation ? 'Being enabled' : v.enabled ? 'On' : 'Off' }}
           </span>
@@ -73,11 +64,7 @@ const and = (names: string[]) =>
               [disabled]="busy()"
               (click)="enable()"
             >
-              {{
-                confirming()
-                  ? 'Confirm: set aside 20 GiB on each node'
-                  : 'Enable'
-              }}
+              {{ confirming() ? 'Confirm: set aside 20 GiB on each node' : 'Enable' }}
             </button>
           }
         </div>
@@ -88,9 +75,8 @@ const and = (names: string[]) =>
           >
             <li>
               An application asks for it with
-              <span class="font-mono">replicated: true</span> on a volume in
-              flui.yaml, and moves to another copy only if every volume it
-              mounts is replicated.
+              <span class="font-mono">replicated: true</span> on a volume in flui.yaml, and moves to
+              another copy only if every volume it mounts is replicated.
             </li>
             @if (voteLine()) {
               <li>{{ voteLine() }}</li>
@@ -123,8 +109,7 @@ export class ClusterReplicatedVolumesCardComponent {
   readonly headline = computed(() => {
     const v = this.view();
     if (!v) return '';
-    if (v.operation)
-      return `Preparing the nodes and the volume engine (${v.operation.status}).`;
+    if (v.operation) return `Preparing the nodes and the volume engine (${v.operation.status}).`;
     if (v.enabled) {
       return `Copies on ${and(v.storageNodes)}, one in each location.`;
     }
@@ -178,9 +163,7 @@ export class ClusterReplicatedVolumesCardComponent {
       error: (e: HttpErrorResponse) => {
         this.busy.set(false);
         this.confirming.set(false);
-        this.error.set(
-          e.error?.message ?? 'Replicated volumes could not be enabled.',
-        );
+        this.error.set(e.error?.message ?? 'Replicated volumes could not be enabled.');
       },
     });
   }

@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideLoader, lucideServer } from '@ng-icons/lucide';
 
@@ -46,13 +54,21 @@ const STATE_TONE: Record<HostFirewallLayerState, string> = {
           role="switch"
           data-testid="host-layer-toggle"
           [attr.aria-checked]="layer().enabled"
-          [attr.aria-label]="layer().enabled ? 'Turn off the firewall on each node' : 'Turn on the firewall on each node'"
+          [attr.aria-label]="
+            layer().enabled
+              ? 'Turn off the firewall on each node'
+              : 'Turn on the firewall on each node'
+          "
           [disabled]="saving() || !canManage()"
           (click)="toggle()"
-          class="ml-auto relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 {{ layer().enabled ? 'bg-blue-600' : 'bg-muted-foreground/30' }}"
+          class="ml-auto relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 {{
+            layer().enabled ? 'bg-blue-600' : 'bg-muted-foreground/30'
+          }}"
         >
           <span
-            class="inline-block h-4 w-4 rounded-full bg-background shadow transition-transform {{ layer().enabled ? 'translate-x-4' : 'translate-x-0.5' }}"
+            class="inline-block h-4 w-4 rounded-full bg-background shadow transition-transform {{
+              layer().enabled ? 'translate-x-4' : 'translate-x-0.5'
+            }}"
           ></span>
         </button>
         @if (saving()) {
@@ -68,7 +84,11 @@ const STATE_TONE: Record<HostFirewallLayerState, string> = {
 
       @if (showReason()) {
         <p
-          class="text-sm {{ layer().state === 'failed' ? 'text-red-600 dark:text-red-400' : 'text-amber-700 dark:text-amber-300' }}"
+          class="text-sm {{
+            layer().state === 'failed'
+              ? 'text-red-600 dark:text-red-400'
+              : 'text-amber-700 dark:text-amber-300'
+          }}"
           data-testid="host-layer-reason"
         >
           {{ reasonText() }}
@@ -76,7 +96,9 @@ const STATE_TONE: Record<HostFirewallLayerState, string> = {
       }
 
       @if (error()) {
-        <p class="text-sm text-red-600 dark:text-red-400" data-testid="host-layer-error">{{ error() }}</p>
+        <p class="text-sm text-red-600 dark:text-red-400" data-testid="host-layer-error">
+          {{ error() }}
+        </p>
       }
 
       <p class="text-xs text-sub" data-testid="host-layer-independent">
@@ -96,9 +118,9 @@ const STATE_TONE: Record<HostFirewallLayerState, string> = {
           The cluster firewall is kept by your provider and covers the servers it is attached to.
           When this is on, each node also applies the same rules itself, so a node that ends up
           outside the provider firewall still refuses what the cluster does not open, including
-          shared storage and traffic between nodes that does not come over the private network.
-          Flui waits instead of applying when it cannot do so safely, for example while it does
-          not know the cluster's private network, and tells you why here.
+          shared storage and traffic between nodes that does not come over the private network. Flui
+          waits instead of applying when it cannot do so safely, for example while it does not know
+          the cluster's private network, and tells you why here.
         </p>
       }
     </div>
@@ -139,7 +161,9 @@ export class ClusterHostLayerComponent {
       const firewall = await this.firewalls.setHostLayer(this.clusterId(), !this.layer().enabled);
       this.changed.emit(firewall);
     } catch (err: any) {
-      this.error.set(err?.error?.message || err?.message || 'Could not change the firewall on each node.');
+      this.error.set(
+        err?.error?.message || err?.message || 'Could not change the firewall on each node.',
+      );
     } finally {
       this.saving.set(false);
     }

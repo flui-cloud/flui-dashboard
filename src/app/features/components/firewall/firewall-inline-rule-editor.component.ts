@@ -1,10 +1,15 @@
-import { Component, Input, signal, computed, input, output, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  Input,
+  signal,
+  computed,
+  input,
+  output,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
-import {
-  FirewallRuleFormData,
-  validateFirewallRule
-} from '../../model/firewall-v2.models';
+import { FirewallRuleFormData, validateFirewallRule } from '../../model/firewall-v2.models';
 
 @Component({
   selector: 'app-firewall-inline-rule-editor',
@@ -12,7 +17,7 @@ import {
   imports: [FormsModule],
   templateUrl: './firewall-inline-rule-editor.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  styleUrls: ['./firewall-inline-rule-editor.component.scss']
+  styleUrls: ['./firewall-inline-rule-editor.component.scss'],
 })
 export class FirewallInlineRuleEditorComponent {
   @Input() set initialRules(rules: FirewallRuleFormData[] | null) {
@@ -39,7 +44,7 @@ export class FirewallInlineRuleEditorComponent {
     protocol: 'tcp',
     port: '',
     sourceIps: [],
-    destinationIps: []
+    destinationIps: [],
   });
 
   ruleErrors = signal<Map<number, string[]>>(new Map());
@@ -90,7 +95,7 @@ export class FirewallInlineRuleEditorComponent {
       protocol: 'tcp',
       port: '',
       sourceIps: [],
-      destinationIps: []
+      destinationIps: [],
     });
     this.sourceIpsText.set('');
     this.destinationIpsText.set('');
@@ -121,7 +126,7 @@ export class FirewallInlineRuleEditorComponent {
       return;
     }
 
-    this.workingRules.update(rules => [{ ...form }, ...rules]);
+    this.workingRules.update((rules) => [{ ...form }, ...rules]);
     this.isAddingNew.set(false);
   }
 
@@ -149,7 +154,7 @@ export class FirewallInlineRuleEditorComponent {
   collapseRule(index: number) {
     const original = this.originalRules()[index];
     if (original) {
-      this.workingRules.update(rules => {
+      this.workingRules.update((rules) => {
         const newRules = [...rules];
         newRules[index] = { ...original };
         return newRules;
@@ -157,7 +162,7 @@ export class FirewallInlineRuleEditorComponent {
     }
 
     this.expandedIndex.set(null);
-    this.ruleErrors.update(map => {
+    this.ruleErrors.update((map) => {
       map.delete(index);
       return new Map(map);
     });
@@ -180,20 +185,20 @@ export class FirewallInlineRuleEditorComponent {
 
     const errors = validateFirewallRule(rule);
     if (errors.length > 0) {
-      this.ruleErrors.update(map => {
+      this.ruleErrors.update((map) => {
         map.set(index, errors);
         return new Map(map);
       });
       return;
     }
 
-    this.workingRules.update(rules => {
+    this.workingRules.update((rules) => {
       const newRules = [...rules];
       newRules[index] = rule;
       return newRules;
     });
 
-    this.ruleErrors.update(map => {
+    this.ruleErrors.update((map) => {
       map.delete(index);
       return new Map(map);
     });
@@ -206,9 +211,7 @@ export class FirewallInlineRuleEditorComponent {
     return (
       rule.direction === 'in' &&
       rule.protocol === 'tcp' &&
-      FirewallInlineRuleEditorComponent.REQUIRED_INGRESS_PORTS.includes(
-        rule.port ?? '',
-      )
+      FirewallInlineRuleEditorComponent.REQUIRED_INGRESS_PORTS.includes(rule.port ?? '')
     );
   }
 
@@ -250,7 +253,7 @@ export class FirewallInlineRuleEditorComponent {
     if (rule && this.isRequiredIngress(rule)) {
       const why =
         rule.port === '443'
-          ? "the dashboard, API and apps over HTTPS (Traefik)"
+          ? 'the dashboard, API and apps over HTTPS (Traefik)'
           : 'ACME HTTP-01 cert renewal and the HTTP→HTTPS redirect';
       alert(
         `Port ${rule.port} can't be removed — it serves ${why}. ` +
@@ -260,7 +263,7 @@ export class FirewallInlineRuleEditorComponent {
       return;
     }
     if (confirm('Delete this firewall rule?')) {
-      this.workingRules.update(rules => rules.filter((_, i) => i !== index));
+      this.workingRules.update((rules) => rules.filter((_, i) => i !== index));
 
       if (this.expandedIndex() === index) {
         this.expandedIndex.set(null);
@@ -271,9 +274,9 @@ export class FirewallInlineRuleEditorComponent {
   updateRuleField<K extends keyof FirewallRuleFormData>(
     index: number,
     field: K,
-    value: FirewallRuleFormData[K]
+    value: FirewallRuleFormData[K],
   ) {
-    this.workingRules.update(rules => {
+    this.workingRules.update((rules) => {
       const newRules = [...rules];
       newRules[index] = { ...newRules[index], [field]: value };
       return newRules;
@@ -282,20 +285,16 @@ export class FirewallInlineRuleEditorComponent {
 
   updateNewRuleField<K extends keyof FirewallRuleFormData>(
     field: K,
-    value: FirewallRuleFormData[K]
+    value: FirewallRuleFormData[K],
   ) {
-    this.newRuleForm.update(form => ({ ...form, [field]: value }));
+    this.newRuleForm.update((form) => ({ ...form, [field]: value }));
     this.newRuleErrors.set([]);
   }
 
   saveAllChanges() {
     const rules = this.workingRules();
     const missing = FirewallInlineRuleEditorComponent.REQUIRED_INGRESS_PORTS.filter(
-      (port) =>
-        !rules.some(
-          (r) =>
-            r.direction === 'in' && r.protocol === 'tcp' && r.port === port,
-        ),
+      (port) => !rules.some((r) => r.direction === 'in' && r.protocol === 'tcp' && r.port === port),
     );
     if (missing.length > 0) {
       alert(
@@ -343,8 +342,9 @@ export class FirewallInlineRuleEditorComponent {
   }
 
   setIpPreset(preset: string, isForNewRule: boolean = false) {
-    const direction = isForNewRule ? this.newRuleForm().direction :
-                      this.workingRules()[this.expandedIndex()!]?.direction;
+    const direction = isForNewRule
+      ? this.newRuleForm().direction
+      : this.workingRules()[this.expandedIndex()!]?.direction;
 
     if (direction === 'in') {
       const current = this.sourceIpsText();
@@ -356,8 +356,9 @@ export class FirewallInlineRuleEditorComponent {
   }
 
   clearIpField(isForNewRule: boolean = false) {
-    const direction = isForNewRule ? this.newRuleForm().direction :
-                      this.workingRules()[this.expandedIndex()!]?.direction;
+    const direction = isForNewRule
+      ? this.newRuleForm().direction
+      : this.workingRules()[this.expandedIndex()!]?.direction;
 
     if (direction === 'in') {
       this.sourceIpsText.set('');
@@ -367,7 +368,10 @@ export class FirewallInlineRuleEditorComponent {
   }
 
   private parseIps(text: string): string[] {
-    return text.split(',').map(ip => ip.trim()).filter(ip => ip.length > 0);
+    return text
+      .split(',')
+      .map((ip) => ip.trim())
+      .filter((ip) => ip.length > 0);
   }
 
   getRuleSummary(rule: FirewallRuleFormData): string {

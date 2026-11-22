@@ -59,9 +59,13 @@ interface SparkGeometry {
       ></div>
     }
   `,
-  styles: [`
-    :host { display: inline-flex; }
-  `],
+  styles: [
+    `
+      :host {
+        display: inline-flex;
+      }
+    `,
+  ],
 })
 export class SparkLineComponent {
   readonly values = input<number[]>([]);

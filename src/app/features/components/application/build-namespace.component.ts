@@ -1,4 +1,13 @@
-import { Component, OnDestroy, OnInit, computed, effect, signal, inject, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnDestroy,
+  OnInit,
+  computed,
+  effect,
+  signal,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -36,45 +45,62 @@ function formatAge(minutes: number): string {
 function getJobStatusClass(status: BuildJobInfoDto['status']): string {
   const base = 'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium';
   switch (status) {
-    case 'Running':   return `${base} bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300`;
-    case 'Pending':   return `${base} bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300`;
-    case 'Succeeded': return `${base} bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300`;
+    case 'Running':
+      return `${base} bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300`;
+    case 'Pending':
+      return `${base} bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300`;
+    case 'Succeeded':
+      return `${base} bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300`;
     case 'Failed':
     case 'Unknown':
-    default:          return `${base} bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300`;
+    default:
+      return `${base} bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300`;
   }
 }
 
 function getQueuedStatusClass(status: QueuedBuildInfoDto['status']): string {
   const base = 'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium';
   switch (status) {
-    case 'PENDING':   return `${base} bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300`;
+    case 'PENDING':
+      return `${base} bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300`;
     case 'CLONING':
     case 'ANALYZING':
     case 'BUILDING':
-    case 'PUSHING':   return `${base} bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300`;
-    default:          return `${base} bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400`;
+    case 'PUSHING':
+      return `${base} bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300`;
+    default:
+      return `${base} bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400`;
   }
 }
 
 function getQueuedStatusLabel(status: QueuedBuildInfoDto['status']): string {
   switch (status) {
-    case 'PENDING':   return 'Queued';
-    case 'CLONING':   return 'Cloning';
-    case 'ANALYZING': return 'Analyzing';
-    case 'BUILDING':  return 'Building';
-    case 'PUSHING':   return 'Pushing';
-    default:          return status;
+    case 'PENDING':
+      return 'Queued';
+    case 'CLONING':
+      return 'Cloning';
+    case 'ANALYZING':
+      return 'Analyzing';
+    case 'BUILDING':
+      return 'Building';
+    case 'PUSHING':
+      return 'Pushing';
+    default:
+      return status;
   }
 }
 
 function getPodPhaseClass(phase: string): string {
   const base = 'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium';
   switch (phase) {
-    case 'Running':   return `${base} bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300`;
-    case 'Pending':   return `${base} bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300`;
-    case 'Succeeded': return `${base} bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300`;
-    default:          return `${base} bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300`;
+    case 'Running':
+      return `${base} bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300`;
+    case 'Pending':
+      return `${base} bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300`;
+    case 'Succeeded':
+      return `${base} bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300`;
+    default:
+      return `${base} bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300`;
   }
 }
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
@@ -91,15 +117,22 @@ import {
   imports: [FormsModule, NgIcon, BuildCachePanelComponent],
   providers: [
     provideIcons({
-      lucideHammer, lucideLoader, lucideRefreshCw, lucideTriangleAlert,
-      lucideCheck, lucideTrash2, lucideX, lucidePackage, lucideCpu, lucideServer,
+      lucideHammer,
+      lucideLoader,
+      lucideRefreshCw,
+      lucideTriangleAlert,
+      lucideCheck,
+      lucideTrash2,
+      lucideX,
+      lucidePackage,
+      lucideCpu,
+      lucideServer,
       lucideInfo,
     }),
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="p-6 space-y-6 max-w-6xl mx-auto">
-
       <!-- Header -->
       <div>
         <h1 class="text-2xl font-bold flex items-center gap-2">
@@ -121,7 +154,8 @@ import {
             <select
               [ngModel]="selectedClusterId()"
               (ngModelChange)="onClusterChange($event)"
-              class="h-8 rounded-md border border-input bg-background px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring">
+              class="h-8 rounded-md border border-input bg-background px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            >
               <option [value]="null" disabled>Select a cluster...</option>
               @for (c of clusters(); track c.id) {
                 <option [value]="c.id">{{ c.name }}</option>
@@ -131,15 +165,24 @@ import {
         </div>
 
         @if (selectedClusterId()) {
-          <button (click)="loadResources()" [disabled]="isLoadingResources()"
-            class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors">
-            <ng-icon name="lucideRefreshCw" [class]="isLoadingResources() ? 'animate-spin' : ''" class="h-4 w-4 mr-1.5" />
+          <button
+            (click)="loadResources()"
+            [disabled]="isLoadingResources()"
+            class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ng-icon
+              name="lucideRefreshCw"
+              [class]="isLoadingResources() ? 'animate-spin' : ''"
+              class="h-4 w-4 mr-1.5"
+            />
             Refresh
           </button>
 
           @if (!showCleanupPanel()) {
-            <button (click)="showCleanupPanel.set(true)"
-              class="inline-flex items-center px-3 py-1.5 rounded-md border border-input bg-background text-sm hover:bg-accent transition-colors">
+            <button
+              (click)="showCleanupPanel.set(true)"
+              class="inline-flex items-center px-3 py-1.5 rounded-md border border-input bg-background text-sm hover:bg-accent transition-colors"
+            >
               <ng-icon name="lucideTrash2" class="h-4 w-4 mr-1.5 text-red-500" />
               Cleanup...
             </button>
@@ -149,9 +192,9 @@ import {
         <!-- Resource totals -->
         @if (resources()) {
           <span class="text-xs text-muted-foreground ml-auto">
-            {{ resources()!.queuedBuilds.length }} queued ·
-            {{ resources()!.jobs.length }} running ·
-            {{ resources()!.totalCpuRequestMillicores }}m CPU · {{ resources()!.totalMemoryRequestMiB }} MiB RAM
+            {{ resources()!.queuedBuilds.length }} queued · {{ resources()!.jobs.length }} running ·
+            {{ resources()!.totalCpuRequestMillicores }}m CPU ·
+            {{ resources()!.totalMemoryRequestMiB }} MiB RAM
           </span>
         }
       </div>
@@ -169,7 +212,10 @@ import {
 
       <!-- Error -->
       @if (error()) {
-        <div data-testid="build-namespace-error" class="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300">
+        <div
+          data-testid="build-namespace-error"
+          class="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300"
+        >
           <ng-icon name="lucideTriangleAlert" class="h-4 w-4 flex-shrink-0" />
           {{ error() }}
         </div>
@@ -187,13 +233,19 @@ import {
 
           <div class="flex items-center gap-3">
             <label class="text-sm text-muted-foreground whitespace-nowrap">Older than</label>
-            <input type="number" min="0"
+            <input
+              type="number"
+              min="0"
               [ngModel]="olderThanMinutes()"
               (ngModelChange)="olderThanMinutes.set($event)"
-              class="w-20 h-8 rounded-md border border-input bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring" />
+              class="w-20 h-8 rounded-md border border-input bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            />
             <span class="text-sm text-muted-foreground">minutes (0 = all stale)</span>
-            <button (click)="previewCleanup()" [disabled]="isRunningCleanup()"
-              class="inline-flex items-center px-3 py-1.5 rounded-md bg-muted text-sm font-medium hover:bg-accent disabled:opacity-60 transition-colors">
+            <button
+              (click)="previewCleanup()"
+              [disabled]="isRunningCleanup()"
+              class="inline-flex items-center px-3 py-1.5 rounded-md bg-muted text-sm font-medium hover:bg-accent disabled:opacity-60 transition-colors"
+            >
               @if (isRunningCleanup() && !cleanupPreview()) {
                 <ng-icon name="lucideLoader" class="h-3.5 w-3.5 mr-1.5 animate-spin" />
               }
@@ -203,12 +255,17 @@ import {
 
           @if (cleanupPreview()) {
             <div class="p-3 bg-muted/50 rounded-lg text-sm space-y-2">
-              @if (cleanupPreview()!.deletedJobs.length === 0 && cleanupPreview()!.deletedPods.length === 0) {
+              @if (
+                cleanupPreview()!.deletedJobs.length === 0 &&
+                cleanupPreview()!.deletedPods.length === 0
+              ) {
                 <p class="text-muted-foreground">Nothing stale to clean up.</p>
               } @else {
                 @if (cleanupPreview()!.deletedJobs.length > 0) {
                   <div>
-                    <span class="font-medium">Tasks to remove ({{ cleanupPreview()!.deletedJobs.length }}):</span>
+                    <span class="font-medium"
+                      >Tasks to remove ({{ cleanupPreview()!.deletedJobs.length }}):</span
+                    >
                     <div class="mt-1 space-y-0.5">
                       @for (j of cleanupPreview()!.deletedJobs; track j) {
                         <div class="font-mono text-xs text-muted-foreground">{{ j }}</div>
@@ -218,7 +275,9 @@ import {
                 }
                 @if (cleanupPreview()!.deletedPods.length > 0) {
                   <div>
-                    <span class="font-medium">Workers to remove ({{ cleanupPreview()!.deletedPods.length }}):</span>
+                    <span class="font-medium"
+                      >Workers to remove ({{ cleanupPreview()!.deletedPods.length }}):</span
+                    >
                     <div class="mt-1 space-y-0.5">
                       @for (p of cleanupPreview()!.deletedPods; track p) {
                         <div class="font-mono text-xs text-muted-foreground">{{ p }}</div>
@@ -226,8 +285,11 @@ import {
                     </div>
                   </div>
                 }
-                <button (click)="confirmCleanup()" [disabled]="isRunningCleanup()"
-                  class="inline-flex items-center px-4 py-1.5 rounded-md bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-60 transition-colors mt-2">
+                <button
+                  (click)="confirmCleanup()"
+                  [disabled]="isRunningCleanup()"
+                  class="inline-flex items-center px-4 py-1.5 rounded-md bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-60 transition-colors mt-2"
+                >
                   @if (isRunningCleanup()) {
                     <ng-icon name="lucideLoader" class="h-3.5 w-3.5 mr-1.5 animate-spin" />
                   } @else {
@@ -248,7 +310,9 @@ import {
 
       <!-- No cluster selected -->
       @if (!selectedClusterId() && !isLoadingClusters()) {
-        <div class="flex flex-col items-center justify-center py-16 text-center text-muted-foreground">
+        <div
+          class="flex flex-col items-center justify-center py-16 text-center text-muted-foreground"
+        >
           <ng-icon name="lucideServer" class="h-10 w-10 mb-3" />
           <p class="text-sm">Select a cluster to view active builds.</p>
         </div>
@@ -263,41 +327,62 @@ import {
       }
 
       @if (resources()) {
-
         <!-- Queued Builds table -->
         <div class="bg-card border border-border rounded-lg overflow-hidden">
           <div class="px-4 py-3 border-b border-border flex items-center gap-2">
             <ng-icon name="lucideLoader" class="h-4 w-4 text-muted-foreground" />
             <h2 class="font-semibold text-sm">Queue</h2>
-            <span class="text-xs text-muted-foreground">({{ resources()!.queuedBuilds.length }})</span>
-            <span class="text-xs text-muted-foreground ml-auto">Waiting to start — no worker allocated yet</span>
+            <span class="text-xs text-muted-foreground"
+              >({{ resources()!.queuedBuilds.length }})</span
+            >
+            <span class="text-xs text-muted-foreground ml-auto"
+              >Waiting to start — no worker allocated yet</span
+            >
           </div>
 
           @if (resources()!.queuedBuilds.length > 0) {
             <table class="w-full text-sm">
               <thead>
                 <tr class="border-b border-border bg-muted/40">
-                  <th class="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">App</th>
-                  <th class="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">Branch</th>
-                  <th class="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">Commit</th>
-                  <th class="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">Status</th>
-                  <th class="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">Waiting for</th>
+                  <th class="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">
+                    App
+                  </th>
+                  <th class="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">
+                    Branch
+                  </th>
+                  <th class="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">
+                    Commit
+                  </th>
+                  <th class="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">
+                    Status
+                  </th>
+                  <th class="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">
+                    Waiting for
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 @for (q of resources()!.queuedBuilds; track q.buildId) {
-                  <tr class="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
+                  <tr
+                    class="border-b border-border last:border-0 hover:bg-muted/20 transition-colors"
+                  >
                     <td class="px-4 py-2.5">
                       <span class="font-medium text-sm">{{ q.appSlug ?? '—' }}</span>
                     </td>
-                    <td class="px-4 py-2.5 text-xs text-muted-foreground font-mono">{{ q.branch }}</td>
+                    <td class="px-4 py-2.5 text-xs text-muted-foreground font-mono">
+                      {{ q.branch }}
+                    </td>
                     <td class="px-4 py-2.5 text-xs text-muted-foreground font-mono">
                       {{ q.commitSha ? q.commitSha.substring(0, 7) : '—' }}
                     </td>
                     <td class="px-4 py-2.5">
-                      <span [class]="getQueuedStatusClass(q.status)">{{ getQueuedStatusLabel(q.status) }}</span>
+                      <span [class]="getQueuedStatusClass(q.status)">{{
+                        getQueuedStatusLabel(q.status)
+                      }}</span>
                     </td>
-                    <td class="px-4 py-2.5 text-xs text-muted-foreground">{{ formatAge(q.ageMinutes) }}</td>
+                    <td class="px-4 py-2.5 text-xs text-muted-foreground">
+                      {{ formatAge(q.ageMinutes) }}
+                    </td>
                   </tr>
                 }
               </tbody>
@@ -319,19 +404,35 @@ import {
             <table class="w-full text-sm">
               <thead>
                 <tr class="border-b border-border bg-muted/40">
-                  <th class="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">ID</th>
-                  <th class="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">App / Type</th>
-                  <th class="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">Status</th>
-                  <th class="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">Running for</th>
-                  <th class="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">CPU</th>
-                  <th class="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">Memory</th>
+                  <th class="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">
+                    ID
+                  </th>
+                  <th class="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">
+                    App / Type
+                  </th>
+                  <th class="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">
+                    Status
+                  </th>
+                  <th class="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">
+                    Running for
+                  </th>
+                  <th class="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">
+                    CPU
+                  </th>
+                  <th class="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">
+                    Memory
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 @for (job of resources()!.jobs; track job.name) {
-                  <tr class="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
+                  <tr
+                    class="border-b border-border last:border-0 hover:bg-muted/20 transition-colors"
+                  >
                     <td class="px-4 py-2.5">
-                      <code class="text-xs font-mono text-muted-foreground">{{ job.buildId ?? job.name }}</code>
+                      <code class="text-xs font-mono text-muted-foreground">{{
+                        job.buildId ?? job.name
+                      }}</code>
                     </td>
                     <td class="px-4 py-2.5 text-xs text-muted-foreground">
                       @if (job.appSlug) {
@@ -345,9 +446,15 @@ import {
                     <td class="px-4 py-2.5">
                       <span [class]="getJobStatusClass(job.status)">{{ job.status }}</span>
                     </td>
-                    <td class="px-4 py-2.5 text-xs text-muted-foreground">{{ formatAge(job.ageMinutes) }}</td>
-                    <td class="px-4 py-2.5 text-xs font-mono text-muted-foreground">{{ job.cpuRequest }}</td>
-                    <td class="px-4 py-2.5 text-xs font-mono text-muted-foreground">{{ job.memoryRequest }}</td>
+                    <td class="px-4 py-2.5 text-xs text-muted-foreground">
+                      {{ formatAge(job.ageMinutes) }}
+                    </td>
+                    <td class="px-4 py-2.5 text-xs font-mono text-muted-foreground">
+                      {{ job.cpuRequest }}
+                    </td>
+                    <td class="px-4 py-2.5 text-xs font-mono text-muted-foreground">
+                      {{ job.memoryRequest }}
+                    </td>
                   </tr>
                 }
               </tbody>
@@ -369,18 +476,32 @@ import {
             <table class="w-full text-sm">
               <thead>
                 <tr class="border-b border-border bg-muted/40">
-                  <th class="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">ID</th>
-                  <th class="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">App</th>
-                  <th class="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">Status</th>
-                  <th class="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">Running for</th>
-                  <th class="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">Processes</th>
+                  <th class="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">
+                    ID
+                  </th>
+                  <th class="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">
+                    App
+                  </th>
+                  <th class="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">
+                    Status
+                  </th>
+                  <th class="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">
+                    Running for
+                  </th>
+                  <th class="text-left px-4 py-2.5 font-medium text-muted-foreground text-xs">
+                    Processes
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 @for (pod of resources()!.pods; track pod.name) {
-                  <tr class="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
+                  <tr
+                    class="border-b border-border last:border-0 hover:bg-muted/20 transition-colors"
+                  >
                     <td class="px-4 py-2.5">
-                      <code class="text-xs font-mono text-muted-foreground">{{ pod.buildId ?? pod.name }}</code>
+                      <code class="text-xs font-mono text-muted-foreground">{{
+                        pod.buildId ?? pod.name
+                      }}</code>
                     </td>
                     <td class="px-4 py-2.5 text-xs text-muted-foreground">
                       {{ pod.appSlug ?? '—' }}
@@ -388,11 +509,15 @@ import {
                     <td class="px-4 py-2.5">
                       <span [class]="getPodPhaseClass(pod.phase)">{{ pod.phase }}</span>
                     </td>
-                    <td class="px-4 py-2.5 text-xs text-muted-foreground">{{ formatAge(pod.ageMinutes) }}</td>
+                    <td class="px-4 py-2.5 text-xs text-muted-foreground">
+                      {{ formatAge(pod.ageMinutes) }}
+                    </td>
                     <td class="px-4 py-2.5 text-xs text-muted-foreground">
                       @for (c of pod.containers; track c.name) {
                         <span class="inline-flex items-center mr-2">
-                          <span [class]="c.ready ? 'text-green-500' : 'text-red-500'" class="mr-1">●</span>
+                          <span [class]="c.ready ? 'text-green-500' : 'text-red-500'" class="mr-1"
+                            >●</span
+                          >
                           {{ c.name }}
                         </span>
                       }
@@ -405,9 +530,7 @@ import {
             <p class="text-sm text-muted-foreground text-center py-8">No active workers.</p>
           }
         </div>
-
       }
-
     </div>
   `,
 })
@@ -549,7 +672,7 @@ export class BuildNamespaceComponent implements OnInit, OnDestroy {
     this.error.set(null);
     try {
       const data = await firstValueFrom(
-        this.buildNamespaceApi.buildNamespaceControllerGetNamespaceResources(id)
+        this.buildNamespaceApi.buildNamespaceControllerGetNamespaceResources(id),
       );
       this.resources.set(data);
     } catch (e: any) {
@@ -569,7 +692,7 @@ export class BuildNamespaceComponent implements OnInit, OnDestroy {
         this.buildNamespaceApi.buildNamespaceControllerCleanupNamespace(id, {
           olderThanMinutes: this.olderThanMinutes(),
           dryRun: true,
-        })
+        }),
       );
       this.cleanupPreview.set(result);
     } catch (e: any) {
@@ -588,7 +711,7 @@ export class BuildNamespaceComponent implements OnInit, OnDestroy {
         this.buildNamespaceApi.buildNamespaceControllerCleanupNamespace(id, {
           olderThanMinutes: this.olderThanMinutes(),
           dryRun: false,
-        })
+        }),
       );
       this.cleanupPreview.set(null);
       this.showCleanupPanel.set(false);

@@ -128,13 +128,20 @@ const LIFETIMES: { id: string; label: string; days: number | null }[] = [
 
         <div class="space-y-2">
           @for (area of areas(); track area.key) {
-            <div class="rounded-lg border border-border p-3" [attr.data-testid]="'area-' + area.key">
+            <div
+              class="rounded-lg border border-border p-3"
+              [attr.data-testid]="'area-' + area.key"
+            >
               <div class="flex flex-wrap items-center justify-between gap-3">
                 <div class="min-w-0">
                   <p class="text-sm font-medium text-foreground">{{ area.label }}</p>
                   <p class="text-xs text-muted-foreground">{{ chosenLabel(area.groups) }}</p>
                 </div>
-                <div class="inline-flex rounded-md border border-border bg-muted/40 p-0.5" role="radiogroup" [attr.aria-label]="area.label">
+                <div
+                  class="inline-flex rounded-md border border-border bg-muted/40 p-0.5"
+                  role="radiogroup"
+                  [attr.aria-label]="area.label"
+                >
                   <button
                     type="button"
                     role="radio"
@@ -142,8 +149,14 @@ const LIFETIMES: { id: string; label: string; days: number | null }[] = [
                     [disabled]="disabled()"
                     (click)="choose(area.groups, null)"
                     class="rounded px-3 py-1 text-xs font-medium transition-colors"
-                    [class]="!chosen(area.groups) ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
-                  >None</button>
+                    [class]="
+                      !chosen(area.groups)
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    "
+                  >
+                    None
+                  </button>
                   @for (g of area.groups; track g.key) {
                     <button
                       type="button"
@@ -154,7 +167,11 @@ const LIFETIMES: { id: string; label: string; days: number | null }[] = [
                       [title]="g.grantable ? g.label : 'Not yours to grant'"
                       (click)="choose(area.groups, g.key)"
                       class="inline-flex items-center gap-1 rounded px-3 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-                      [class]="picked().has(g.key) ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+                      [class]="
+                        picked().has(g.key)
+                          ? 'bg-primary text-primary-foreground shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground'
+                      "
                     >
                       @if (!g.grantable) {
                         <ng-icon name="lucideLock" class="h-3 w-3" />
@@ -170,14 +187,25 @@ const LIFETIMES: { id: string; label: string; days: number | null }[] = [
                 [attr.aria-expanded]="isOpen(area.key)"
                 (click)="toggleDetails(area.key)"
               >
-                <ng-icon [name]="isOpen(area.key) ? 'lucideChevronDown' : 'lucideChevronRight'" class="h-3 w-3" />
+                <ng-icon
+                  [name]="isOpen(area.key) ? 'lucideChevronDown' : 'lucideChevronRight'"
+                  class="h-3 w-3"
+                />
                 Details
               </button>
               <div class="mt-2 space-y-3 border-t border-border pt-3" [hidden]="!isOpen(area.key)">
                 @for (g of area.groups; track g.key) {
-                  <div [attr.data-testid]="'group-' + g.key" [attr.data-grantable]="g.grantable" class="space-y-1">
+                  <div
+                    [attr.data-testid]="'group-' + g.key"
+                    [attr.data-grantable]="g.grantable"
+                    class="space-y-1"
+                  >
                     <div class="flex flex-wrap items-center gap-2">
-                      <span class="text-sm font-medium" [class]="g.grantable ? 'text-foreground' : 'text-muted-foreground'">{{ g.label }}</span>
+                      <span
+                        class="text-sm font-medium"
+                        [class]="g.grantable ? 'text-foreground' : 'text-muted-foreground'"
+                        >{{ g.label }}</span
+                      >
                       @if (!g.grantable) {
                         <span hlmBadge variant="secondary" class="gap-1 text-xs">
                           <ng-icon name="lucideLock" class="h-3 w-3" />
@@ -187,11 +215,13 @@ const LIFETIMES: { id: string; label: string; days: number | null }[] = [
                     </div>
                     <p class="text-sm text-muted-foreground">{{ g.summary }}</p>
                     @if (!g.grantable) {
-                      <p class="text-xs text-muted-foreground" [attr.data-testid]="'blocked-' + g.key">
-                        A key is never worth more than the person who issued it, and this one
-                        would be: your own permissions do not cover
-                        <span class="font-mono">{{ g.blockedScopes.join(' · ') }}</span
-                        >.
+                      <p
+                        class="text-xs text-muted-foreground"
+                        [attr.data-testid]="'blocked-' + g.key"
+                      >
+                        A key is never worth more than the person who issued it, and this one would
+                        be: your own permissions do not cover
+                        <span class="font-mono">{{ g.blockedScopes.join(' · ') }}</span>.
                       </p>
                     }
                     <p class="font-mono text-[11px] text-muted-foreground/80 break-all">
@@ -215,7 +245,9 @@ const LIFETIMES: { id: string; label: string; days: number | null }[] = [
               (click)="limitToApps.set(!limitToApps())"
               class="text-xs font-medium text-primary underline underline-offset-2"
             >
-              {{ limitToApps() ? 'Reach every application instead' : 'Limit to specific applications' }}
+              {{
+                limitToApps() ? 'Reach every application instead' : 'Limit to specific applications'
+              }}
             </button>
           </div>
           @if (limitToApps()) {
@@ -226,8 +258,8 @@ const LIFETIMES: { id: string; label: string; days: number | null }[] = [
             />
           } @else {
             <p class="text-sm text-muted-foreground">
-              Every application you can already reach — the default. Narrow it above if this
-              agent is only meant to work on some of them.
+              Every application you can already reach — the default. Narrow it above if this agent
+              is only meant to work on some of them.
             </p>
           }
         </div>
@@ -252,8 +284,8 @@ const LIFETIMES: { id: string; label: string; days: number | null }[] = [
               (selectionChange)="pickedProjects.set($event)"
             />
             <p class="text-xs text-muted-foreground">
-              An app added to a granted project later is reached too — nothing to reissue.
-              Combines with the applications above rather than replacing them.
+              An app added to a granted project later is reached too — nothing to reissue. Combines
+              with the applications above rather than replacing them.
             </p>
           } @else {
             <p class="text-sm text-muted-foreground">
@@ -264,7 +296,9 @@ const LIFETIMES: { id: string; label: string; days: number | null }[] = [
         </div>
 
         @if (error(); as e) {
-          <div class="flex items-start gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          <div
+            class="flex items-start gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+          >
             <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-4 w-4 shrink-0" />
             <span data-testid="mint-error">{{ e }}</span>
           </div>
@@ -367,10 +401,7 @@ export class AgentKeyMintComponent {
 
   protected readonly canSubmit = computed(
     () =>
-      !this.busy() &&
-      !this.disabled() &&
-      this.picked().size > 0 &&
-      this.name().trim().length > 0,
+      !this.busy() && !this.disabled() && this.picked().size > 0 && this.name().trim().length > 0,
   );
 
   private readonly openAreas = signal<ReadonlySet<string>>(new Set());
@@ -418,10 +449,7 @@ export class AgentKeyMintComponent {
     this.create.emit({
       name: this.name().trim(),
       groups: [...this.picked()],
-      expiresAt:
-        days === null
-          ? undefined
-          : new Date(Date.now() + days * 86_400_000).toISOString(),
+      expiresAt: days === null ? undefined : new Date(Date.now() + days * 86_400_000).toISOString(),
       applicationIds: this.limitToApps() ? this.pickedApps() : undefined,
       projectIds: this.limitToProjects() ? this.pickedProjects() : undefined,
     });

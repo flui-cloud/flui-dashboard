@@ -1,4 +1,13 @@
-import { Component, OnInit, input, output, computed, inject, effect, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  input,
+  output,
+  computed,
+  inject,
+  effect,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -60,7 +69,9 @@ const DEFAULT_LABELS: OperationLabels = {
         <div class="rounded-lg border border-destructive/40 bg-card p-5">
           <p class="text-sm text-muted-foreground">{{ mergedLabels().failureMessage }}</p>
           @if (trackerService.operation()?.errorMessage) {
-            <pre class="mt-3 whitespace-pre-wrap break-words rounded-md bg-muted px-3 py-2 font-mono text-xs text-destructive">{{ trackerService.operation()?.errorMessage }}</pre>
+            <pre
+              class="mt-3 whitespace-pre-wrap break-words rounded-md bg-muted px-3 py-2 font-mono text-xs text-destructive"
+              >{{ trackerService.operation()?.errorMessage }}</pre>
           }
           @if (retryRoute() || failureRoute()) {
             <div class="mt-4 flex items-center gap-2">
@@ -137,7 +148,7 @@ export class OperationProgressTrackerComponent implements OnInit {
   });
 
   readonly subheading = computed(() =>
-    this.isOperationCompleted() ? this.mergedLabels().successMessage : this.mergedLabels().subtitle
+    this.isOperationCompleted() ? this.mergedLabels().successMessage : this.mergedLabels().subtitle,
   );
 
   private completionEmitted = false;
@@ -149,7 +160,9 @@ export class OperationProgressTrackerComponent implements OnInit {
     }
     if (this.isOperationFailed() && !this.failureEmitted) {
       this.failureEmitted = true;
-      this.operationFailed.emit(this.trackerService.operation()?.errorMessage || 'Operation failed');
+      this.operationFailed.emit(
+        this.trackerService.operation()?.errorMessage || 'Operation failed',
+      );
     }
   });
 

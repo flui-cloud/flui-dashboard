@@ -48,8 +48,7 @@ import {
   presentedContent,
 } from './registry-storage-surface';
 
-const INPUT_CLASS =
-  'mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm';
+const INPUT_CLASS = 'mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm';
 
 @Component({
   selector: 'app-registry-storage',
@@ -125,7 +124,8 @@ const INPUT_CLASS =
             class="flex flex-wrap items-start justify-between gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300"
           >
             <span>
-              The Flui registry is still not ready after five minutes. New builds push to it and fail until it is.
+              The Flui registry is still not ready after five minutes. New builds push to it and
+              fail until it is.
               @if (m.detail) {
                 <span class="block text-xs">{{ m.detail }}</span>
               }
@@ -172,7 +172,10 @@ const INPUT_CLASS =
                 </div>
               </div>
               @if (u.alerting) {
-                <span class="badge bg-amber-500/10 text-amber-600 dark:text-amber-400" data-testid="registry-alerting">
+                <span
+                  class="badge bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                  data-testid="registry-alerting"
+                >
                   Space alert
                 </span>
               }
@@ -181,10 +184,14 @@ const INPUT_CLASS =
             <div class="space-y-2">
               <div class="flex flex-wrap items-baseline justify-between gap-2">
                 <p>
-                  <span class="text-2xl font-semibold" data-testid="registry-used">{{ size(u.totalBytes) }}</span>
+                  <span class="text-2xl font-semibold" data-testid="registry-used">{{
+                    size(u.totalBytes)
+                  }}</span>
                   <span class="ml-1 text-sm text-muted-foreground">in use</span>
                 </p>
-                <p class="text-xs text-muted-foreground" data-testid="registry-limit">{{ limitLine() }}</p>
+                <p class="text-xs text-muted-foreground" data-testid="registry-limit">
+                  {{ limitLine() }}
+                </p>
               </div>
               @if (gauge(); as g) {
                 @if (g.kind !== 'none') {
@@ -214,7 +221,8 @@ const INPUT_CLASS =
               }
               @if (u.unreadable > 0) {
                 <p class="text-xs text-muted-foreground">
-                  {{ u.unreadable }} {{ u.unreadable === 1 ? 'application' : 'applications' }} could not be read on this pass.
+                  {{ u.unreadable }} {{ u.unreadable === 1 ? 'application' : 'applications' }} could
+                  not be read on this pass.
                 </p>
               }
             </div>
@@ -224,7 +232,10 @@ const INPUT_CLASS =
             <section class="card-surface p-5 space-y-4" data-testid="registry-traffic">
               <div class="flex flex-wrap items-center justify-between gap-3">
                 <h2 class="text-sm font-semibold">Traffic</h2>
-                <div class="inline-flex rounded-md border border-border p-0.5 text-xs" role="tablist">
+                <div
+                  class="inline-flex rounded-md border border-border p-0.5 text-xs"
+                  role="tablist"
+                >
                   @for (w of trafficWindows; track w) {
                     <button
                       type="button"
@@ -243,28 +254,43 @@ const INPUT_CLASS =
               </div>
 
               @if (registry.traffic(); as t) {
-                <div class="grid grid-cols-2 gap-3 sm:grid-cols-4" [class.opacity-60]="registry.trafficLoading()">
+                <div
+                  class="grid grid-cols-2 gap-3 sm:grid-cols-4"
+                  [class.opacity-60]="registry.trafficLoading()"
+                >
                   <div class="card-inner p-3">
                     <p class="text-label">Pulls</p>
-                    <p class="text-lg font-semibold" data-testid="registry-traffic-pulls">{{ t.requests.pulls }}</p>
+                    <p class="text-lg font-semibold" data-testid="registry-traffic-pulls">
+                      {{ t.requests.pulls }}
+                    </p>
                   </div>
                   <div class="card-inner p-3">
                     <p class="text-label">Pushes</p>
-                    <p class="text-lg font-semibold" data-testid="registry-traffic-pushes">{{ t.requests.pushes }}</p>
+                    <p class="text-lg font-semibold" data-testid="registry-traffic-pushes">
+                      {{ t.requests.pushes }}
+                    </p>
                   </div>
                   <div class="card-inner p-3">
                     <p class="text-label">Pulled out</p>
-                    <p class="text-lg font-semibold" data-testid="registry-traffic-out">{{ size(t.bytesOut) }}</p>
+                    <p class="text-lg font-semibold" data-testid="registry-traffic-out">
+                      {{ size(t.bytesOut) }}
+                    </p>
                   </div>
                   <div class="card-inner p-3">
                     <p class="text-label">Pushed in</p>
-                    <p class="text-lg font-semibold" data-testid="registry-traffic-in">{{ size(t.bytesIn) }}</p>
+                    <p class="text-lg font-semibold" data-testid="registry-traffic-in">
+                      {{ size(t.bytesIn) }}
+                    </p>
                   </div>
                 </div>
                 <p class="text-xs text-muted-foreground" data-testid="registry-traffic-peak">
-                  Busiest 5 minutes: {{ mbit(t.peakBytesPerSecondOut) }} out · {{ mbit(t.peakBytesPerSecondIn) }} in
+                  Busiest 5 minutes: {{ mbit(t.peakBytesPerSecondOut) }} out ·
+                  {{ mbit(t.peakBytesPerSecondIn) }} in
                 </p>
-                <p class="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground" data-testid="registry-traffic-outcomes">
+                <p
+                  class="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground"
+                  data-testid="registry-traffic-outcomes"
+                >
                   <span
                     data-testid="registry-traffic-refused"
                     title="over an application quota, an upload too large, or over the rate limit"
@@ -283,7 +309,8 @@ const INPUT_CLASS =
                 </p>
                 @if (t.readFromBucketBytes !== null) {
                   <p class="text-xs text-muted-foreground" data-testid="registry-traffic-bucket">
-                    {{ size(t.readFromBucketBytes) }} read from the bucket to serve pulls; the provider may bill it as outgoing traffic.
+                    {{ size(t.readFromBucketBytes) }} read from the bucket to serve pulls; the
+                    provider may bill it as outgoing traffic.
                   </p>
                 }
               } @else if (registry.trafficFailed()) {
@@ -317,7 +344,9 @@ const INPUT_CLASS =
                   @for (app of u.applications; track app.applicationId) {
                     <tr>
                       <td class="px-5 py-2.5">{{ app.name }}</td>
-                      <td class="px-5 py-2.5 text-right font-mono text-xs">{{ size(app.bytes) }}</td>
+                      <td class="px-5 py-2.5 text-right font-mono text-xs">
+                        {{ size(app.bytes) }}
+                      </td>
                     </tr>
                   }
                 </tbody>
@@ -333,11 +362,15 @@ const INPUT_CLASS =
               <div>
                 <h2 class="text-sm font-semibold">New builds push to GitHub Container Registry</h2>
                 <p class="text-xs text-muted-foreground">
-                  Flui can keep them in its own registry instead. Running applications keep their images.
+                  Flui can keep them in its own registry instead. Running applications keep their
+                  images.
                 </p>
               </div>
             </div>
-            <div class="inline-flex rounded-md border border-border p-0.5 text-sm" role="radiogroup">
+            <div
+              class="inline-flex rounded-md border border-border p-0.5 text-sm"
+              role="radiogroup"
+            >
               <button
                 type="button"
                 role="radio"
@@ -387,9 +420,9 @@ const INPUT_CLASS =
               </button>
               <app-explain label="How this works" labelClass="text-xs text-muted-foreground">
                 The registry runs on the control cluster. On a volume it is one copy with a fixed
-                size; a bucket never fills and you pay for the space used. New builds push to it,
-                so connecting GitHub needs no container token. Applications already running keep
-                their images until their build is set up again.
+                size; a bucket never fills and you pay for the space used. New builds push to it, so
+                connecting GitHub needs no container token. Applications already running keep their
+                images until their build is set up again.
               </app-explain>
             </div>
             @if (registry.switchError(); as message) {
@@ -407,7 +440,10 @@ const INPUT_CLASS =
             class="flex items-start gap-2 rounded-md border border-border bg-muted/40 p-4 text-sm text-muted-foreground"
           >
             <ng-icon name="lucideInfo" class="mt-0.5 h-4 w-4 flex-shrink-0" />
-            <span>This installation keeps images on GitHub's registry. There is nothing to show here.</span>
+            <span
+              >This installation keeps images on GitHub's registry. There is nothing to show
+              here.</span
+            >
           </div>
         }
 
@@ -419,11 +455,14 @@ const INPUT_CLASS =
                 @if (!status.connected) {
                   <p class="text-xs text-muted-foreground">
                     @if (onGhcr()) {
-                      Connect a bucket, then use the Flui registry with it. A bucket never fills up; you pay for the space used.
+                      Connect a bucket, then use the Flui registry with it. A bucket never fills up;
+                      you pay for the space used.
                     } @else if (status.backend === 's3') {
-                      The registry waits for a bucket. A bucket never fills up; you pay for the space used.
+                      The registry waits for a bucket. A bucket never fills up; you pay for the
+                      space used.
                     } @else {
-                      This installation keeps images on a volume. A bucket connected here is used once the installation is set to object storage.
+                      This installation keeps images on a volume. A bucket connected here is used
+                      once the installation is set to object storage.
                     }
                   </p>
                 }
@@ -456,7 +495,9 @@ const INPUT_CLASS =
                 </div>
               </dl>
               @if (status.connectedAt) {
-                <p class="text-xs text-muted-foreground">Connected {{ status.connectedAt | date: 'd MMM y, HH:mm' }}</p>
+                <p class="text-xs text-muted-foreground">
+                  Connected {{ status.connectedAt | date: 'd MMM y, HH:mm' }}
+                </p>
               }
               @if (status.backend === 'filesystem' && !onGhcr()) {
                 <p
@@ -465,16 +506,24 @@ const INPUT_CLASS =
                 >
                   <ng-icon name="lucideInfo" class="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
                   <span>
-                    This bucket is connected but not in use yet. The registry moves to it once
-                    the installation is set to object storage.
+                    This bucket is connected but not in use yet. The registry moves to it once the
+                    installation is set to object storage.
                   </span>
                 </p>
               }
             }
 
             @if (!status.connected || connectOpen()) {
-              <div class="space-y-4" [class.border-t]="status.connected" [class.pt-4]="status.connected" data-testid="registry-connect">
-                <div class="inline-flex rounded-md border border-border p-0.5 text-sm" role="tablist">
+              <div
+                class="space-y-4"
+                [class.border-t]="status.connected"
+                [class.pt-4]="status.connected"
+                data-testid="registry-connect"
+              >
+                <div
+                  class="inline-flex rounded-md border border-border p-0.5 text-sm"
+                  role="tablist"
+                >
                   <button
                     type="button"
                     role="tab"
@@ -539,17 +588,31 @@ const INPUT_CLASS =
                     </app-explain>
                   </div>
                   @if (registry.connecting() === 'scaleway') {
-                    <p class="flex items-center gap-2 text-sm text-muted-foreground" data-testid="registry-scaleway-busy">
+                    <p
+                      class="flex items-center gap-2 text-sm text-muted-foreground"
+                      data-testid="registry-scaleway-busy"
+                    >
                       <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
                       Creating the bucket. This can take up to five minutes; keep this page open.
                     </p>
                   }
                 } @else {
-                  <form #ownBucket="ngForm" (ngSubmit)="request('own')" class="space-y-4" data-testid="registry-own-form">
+                  <form
+                    #ownBucket="ngForm"
+                    (ngSubmit)="request('own')"
+                    class="space-y-4"
+                    data-testid="registry-own-form"
+                  >
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <label class="block">
                         <span class="text-sm font-medium">Provider</span>
-                        <select name="provider" required [(ngModel)]="own.provider" [disabled]="busy()" [class]="inputClass">
+                        <select
+                          name="provider"
+                          required
+                          [(ngModel)]="own.provider"
+                          [disabled]="busy()"
+                          [class]="inputClass"
+                        >
                           @for (p of ownProviders; track p) {
                             <option [value]="p">{{ providerLabel(p) }}</option>
                           }
@@ -557,21 +620,51 @@ const INPUT_CLASS =
                       </label>
                       <label class="block">
                         <span class="text-sm font-medium">Region</span>
-                        <input name="region" required maxlength="64" [(ngModel)]="own.region" [disabled]="busy()" [class]="inputClass" placeholder="e.g. gra" />
+                        <input
+                          name="region"
+                          required
+                          maxlength="64"
+                          [(ngModel)]="own.region"
+                          [disabled]="busy()"
+                          [class]="inputClass"
+                          placeholder="e.g. gra"
+                        />
                       </label>
                     </div>
                     <label class="block">
                       <span class="text-sm font-medium">Endpoint</span>
-                      <input name="endpoint" type="url" required [(ngModel)]="own.endpoint" [disabled]="busy()" [class]="inputClass" placeholder="https://s3.example.com" />
+                      <input
+                        name="endpoint"
+                        type="url"
+                        required
+                        [(ngModel)]="own.endpoint"
+                        [disabled]="busy()"
+                        [class]="inputClass"
+                        placeholder="https://s3.example.com"
+                      />
                     </label>
                     <label class="block">
                       <span class="text-sm font-medium">Bucket</span>
-                      <input name="bucket" required pattern="[a-z0-9][a-z0-9.&#92;-]{1,61}[a-z0-9]" [(ngModel)]="own.bucket" [disabled]="busy()" [class]="inputClass + ' font-mono'" />
+                      <input
+                        name="bucket"
+                        required
+                        pattern="[a-z0-9][a-z0-9.&#92;-]{1,61}[a-z0-9]"
+                        [(ngModel)]="own.bucket"
+                        [disabled]="busy()"
+                        [class]="inputClass + ' font-mono'"
+                      />
                     </label>
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <label class="block">
                         <span class="text-sm font-medium">Access key</span>
-                        <input name="accessKey" required autocomplete="off" [(ngModel)]="own.accessKey" [disabled]="busy()" [class]="inputClass + ' font-mono'" />
+                        <input
+                          name="accessKey"
+                          required
+                          autocomplete="off"
+                          [(ngModel)]="own.accessKey"
+                          [disabled]="busy()"
+                          [class]="inputClass + ' font-mono'"
+                        />
                       </label>
                       <label class="block">
                         <span class="text-sm font-medium">Secret key</span>
@@ -602,10 +695,22 @@ const INPUT_CLASS =
                       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <label class="block">
                           <span class="text-sm font-medium">Folder in the bucket</span>
-                          <input name="prefix" pattern="[A-Za-z0-9._/&#92;-]{1,200}" [(ngModel)]="own.prefix" [disabled]="busy()" [class]="inputClass" placeholder="Default" />
+                          <input
+                            name="prefix"
+                            pattern="[A-Za-z0-9._/&#92;-]{1,200}"
+                            [(ngModel)]="own.prefix"
+                            [disabled]="busy()"
+                            [class]="inputClass"
+                            placeholder="Default"
+                          />
                         </label>
                         <label class="flex items-center gap-2 self-end pb-2 text-sm">
-                          <input name="forcePathStyle" type="checkbox" [(ngModel)]="own.forcePathStyle" [disabled]="busy()" />
+                          <input
+                            name="forcePathStyle"
+                            type="checkbox"
+                            [(ngModel)]="own.forcePathStyle"
+                            [disabled]="busy()"
+                          />
                           Path-style addresses
                         </label>
                       </div>
@@ -656,7 +761,8 @@ const INPUT_CLASS =
                       <div class="min-w-0">
                         <span class="font-mono break-all">{{ b.bucket }}</span>
                         <span class="block text-xs text-muted-foreground">
-                          {{ providerLabel(b.provider) }} · {{ b.region }} · connected {{ b.connectedAt | date: 'd MMM y' }} ·
+                          {{ providerLabel(b.provider) }} · {{ b.region }} · connected
+                          {{ b.connectedAt | date: 'd MMM y' }} ·
                           {{ b.createdByFlui ? 'created by Flui' : 'your own' }}
                         </span>
                       </div>
@@ -691,7 +797,9 @@ const INPUT_CLASS =
         @if (canDisable()) {
           <div class="flex flex-wrap items-center justify-end gap-3">
             @if (registry.switchError(); as message) {
-              <span class="text-xs text-destructive" data-testid="registry-disable-error">{{ message }}</span>
+              <span class="text-xs text-destructive" data-testid="registry-disable-error">{{
+                message
+              }}</span>
             }
             <button
               type="button"
@@ -714,10 +822,20 @@ const INPUT_CLASS =
     </div>
 
     @if (confirmReplace(); as kind) {
-      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" data-testid="registry-confirm">
-        <div class="w-full max-w-sm space-y-4 rounded-lg border border-border bg-card p-6" role="dialog" aria-modal="true">
+      <div
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        data-testid="registry-confirm"
+      >
+        <div
+          class="w-full max-w-sm space-y-4 rounded-lg border border-border bg-card p-6"
+          role="dialog"
+          aria-modal="true"
+        >
           <div class="flex items-start gap-3">
-            <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-500" />
+            <ng-icon
+              name="lucideTriangleAlert"
+              class="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-500"
+            />
             <div class="space-y-1">
               <h3 class="font-semibold">Replace the bucket?</h3>
               <p class="text-sm text-muted-foreground">
@@ -752,12 +870,23 @@ const INPUT_CLASS =
     }
 
     @if (confirmDisable()) {
-      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" data-testid="registry-disable-confirm">
-        <div class="w-full max-w-sm space-y-4 rounded-lg border border-border bg-card p-6" role="dialog" aria-modal="true">
+      <div
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        data-testid="registry-disable-confirm"
+      >
+        <div
+          class="w-full max-w-sm space-y-4 rounded-lg border border-border bg-card p-6"
+          role="dialog"
+          aria-modal="true"
+        >
           <div class="flex items-start gap-3">
-            <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-500" />
+            <ng-icon
+              name="lucideTriangleAlert"
+              class="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-500"
+            />
             <p class="text-sm">
-              Send new builds back to GitHub Container Registry and stop the Flui registry? Its volume or bucket is kept.
+              Send new builds back to GitHub Container Registry and stop the Flui registry? Its
+              volume or bucket is kept.
             </p>
           </div>
           <div class="flex justify-end gap-2">
@@ -782,13 +911,24 @@ const INPUT_CLASS =
     }
 
     @if (confirmRemove(); as b) {
-      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" data-testid="registry-remove-confirm">
-        <div class="w-full max-w-sm space-y-4 rounded-lg border border-border bg-card p-6" role="dialog" aria-modal="true">
+      <div
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        data-testid="registry-remove-confirm"
+      >
+        <div
+          class="w-full max-w-sm space-y-4 rounded-lg border border-border bg-card p-6"
+          role="dialog"
+          aria-modal="true"
+        >
           <div class="flex items-start gap-3">
-            <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-500" />
+            <ng-icon
+              name="lucideTriangleAlert"
+              class="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-500"
+            />
             <p class="text-sm" data-testid="registry-remove-message">
               @if (b.createdByFlui) {
-                Delete {{ b.bucket }} with every image in it, and the project and key Flui made for it?
+                Delete {{ b.bucket }} with every image in it, and the project and key Flui made for
+                it?
               } @else {
                 Forget {{ b.bucket }}? What it holds stays in your account.
               }
@@ -843,7 +983,9 @@ export class RegistryStorageComponent implements OnInit, OnDestroy {
   protected readonly bucketReady = computed(
     () => !!this.registry.status()?.connected || !!this.registry.mode()?.bucketConnected,
   );
-  protected readonly bucketForEnable = computed(() => this.onGhcr() && this.enableStorage() === 's3');
+  protected readonly bucketForEnable = computed(
+    () => this.onGhcr() && this.enableStorage() === 's3',
+  );
   protected readonly switchBusy = computed(() => this.registry.switching() !== null);
   protected readonly canDisable = computed(() => {
     const mode = this.registry.mode();
@@ -875,7 +1017,8 @@ export class RegistryStorageComponent implements OnInit, OnDestroy {
     const gauge = this.gauge();
     if (!usage || !gauge) return '';
     if (gauge.kind === 'capacity') {
-      const alert = usage.alertBytes != null ? ` · alert at ${formatRegistrySize(usage.alertBytes)}` : '';
+      const alert =
+        usage.alertBytes != null ? ` · alert at ${formatRegistrySize(usage.alertBytes)}` : '';
       return `of ${formatRegistrySize(gauge.limitBytes)} volume${alert}`;
     }
     if (gauge.kind === 'alert') return `alert at ${formatRegistrySize(gauge.limitBytes)}`;
@@ -893,13 +1036,16 @@ export class RegistryStorageComponent implements OnInit, OnDestroy {
       measuring: this.registry.measuring(),
       connecting: this.registry.connecting(),
       hasConnectError: !!this.registry.connectError(),
-      connectOpen: !!this.registry.status() && (!this.registry.status()!.connected || this.connectOpen()),
+      connectOpen:
+        !!this.registry.status() && (!this.registry.status()!.connected || this.connectOpen()),
       confirmReplace: this.confirmReplace(),
       replacedBuckets: this.replacedBuckets().length,
       replacedCreatedByFlui: this.replacedBuckets().filter((b) => b.createdByFlui).length,
       removing: this.registry.removing() !== null,
       hasRemoveError: !!this.registry.removeError(),
-      confirmRemove: this.confirmRemove() ? { createdByFlui: this.confirmRemove()!.createdByFlui } : null,
+      confirmRemove: this.confirmRemove()
+        ? { createdByFlui: this.confirmRemove()!.createdByFlui }
+        : null,
       traffic: this.registry.trafficHidden() ? null : this.registry.traffic(),
       trafficWindow: this.registry.trafficWindow(),
       trafficLoading: this.registry.trafficLoading(),

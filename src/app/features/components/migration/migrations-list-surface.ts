@@ -34,7 +34,11 @@ export interface MigrationsListSurfaceContext {
   appVersion?: string;
 }
 
-function textObservation(key: string, value: string | undefined | null, source: ObservationSource): Observation | null {
+function textObservation(
+  key: string,
+  value: string | undefined | null,
+  source: ObservationSource,
+): Observation | null {
   return value ? { key, presentedAs: { text: value }, source } : null;
 }
 
@@ -44,10 +48,16 @@ function rowObservations(row: MigrationRow): Observation[] {
     textObservation('flui.migration.status', row.status, 'api'),
     textObservation('flui.migration.cutover_mode', row.cutoverMode, 'api'),
     textObservation('flui.migration.target_cluster_id', row.targetClusterId, 'api'),
-    textObservation('flui.migration.bridge_state', row.type === 'db' ? null : (row.bridge?.state ?? null), 'api'),
+    textObservation(
+      'flui.migration.bridge_state',
+      row.type === 'db' ? null : (row.bridge?.state ?? null),
+      'api',
+    ),
     // `errorMessage` is shown on screen but is raw orchestration free text — same
     // exclusion as the backup producers; only its presence is safe.
-    row.errorMessage ? { key: 'flui.migration.has_error', presentedAs: { value: true }, source: 'api' as const } : null,
+    row.errorMessage
+      ? { key: 'flui.migration.has_error', presentedAs: { value: true }, source: 'api' as const }
+      : null,
   ].filter((observation): observation is Observation => observation !== null);
 }
 

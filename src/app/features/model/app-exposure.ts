@@ -1,8 +1,6 @@
 import { ApplicationResponseDto } from '../../core/api';
 
-export function hasPublicEndpoint(
-  app: ApplicationResponseDto | null | undefined,
-): boolean {
+export function hasPublicEndpoint(app: ApplicationResponseDto | null | undefined): boolean {
   if (!app) return false;
   if (app.exposure === ApplicationResponseDto.ExposureEnum.Internal) return false;
   const labels = (app.labels ?? {}) as Record<string, string>;
@@ -10,17 +8,13 @@ export function hasPublicEndpoint(
   return true;
 }
 
-export function isBuildingBlock(
-  app: ApplicationResponseDto | null | undefined,
-): boolean {
+export function isBuildingBlock(app: ApplicationResponseDto | null | undefined): boolean {
   const labels = (app?.labels ?? {}) as Record<string, string>;
   return labels['flui.cloud/app-type'] === 'building-block';
 }
 
 /** A sub-component of a composed catalog install (e.g. immich's bundled postgres/valkey). */
-export function isComposedComponent(
-  app: ApplicationResponseDto | null | undefined,
-): boolean {
+export function isComposedComponent(app: ApplicationResponseDto | null | undefined): boolean {
   const labels = (app?.labels ?? {}) as Record<string, string>;
   return !!labels['flui.cloud/composed-component'];
 }
@@ -41,12 +35,16 @@ export function internalHostingErrorMessage(err: unknown): string | null {
   const body = e?.error;
   if (body?.code !== 'INTERNAL_HOSTING_NOT_AVAILABLE') return null;
   const missing = body.missingRequirements ?? [];
-  const labels = missing.map(k => {
+  const labels = missing.map((k) => {
     switch (k) {
-      case 'dns_zone': return 'DNS zone';
-      case 'wildcard_issuer': return 'wildcard TLS issuer';
-      case 'internal_wildcard_dns': return 'internal wildcard DNS';
-      default: return k;
+      case 'dns_zone':
+        return 'DNS zone';
+      case 'wildcard_issuer':
+        return 'wildcard TLS issuer';
+      case 'internal_wildcard_dns':
+        return 'internal wildcard DNS';
+      default:
+        return k;
     }
   });
   const detail = labels.length ? ` Missing: ${labels.join(', ')}.` : '';

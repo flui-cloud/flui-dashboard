@@ -20,8 +20,7 @@ export const authGuard: CanActivateFn = (_route, state) => {
   }
 
   // Preserve the attempted URL so the user lands back here after login.
-  const loginUrl = () =>
-    router.createUrlTree(['/login'], { queryParams: { redirect: state.url } });
+  const loginUrl = () => router.createUrlTree(['/login'], { queryParams: { redirect: state.url } });
 
   // No silent refresh with OIDC: redirect to login, unless the page load found
   // the visit already over, which starts a new one.
@@ -44,8 +43,7 @@ export const authGuard: CanActivateFn = (_route, state) => {
       // Only logout if the refresh token is explicitly rejected (401/403).
       // Network errors or 5xx should redirect to login without clearing session.
       const isAuthError =
-        err instanceof HttpErrorResponse &&
-        (err.status === 401 || err.status === 403);
+        err instanceof HttpErrorResponse && (err.status === 401 || err.status === 403);
       if (isAuthError) {
         auth.logout().subscribe();
       }

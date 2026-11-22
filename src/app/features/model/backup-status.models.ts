@@ -112,23 +112,17 @@ export function centsToEur(cents: number | null | undefined): string {
  * English copy for alert codes — backend may return localized strings,
  * but we keep the UI consistent in English by mapping on alert.code.
  */
-const ALERT_COPY: Record<
-  string,
-  { message: (a: BackupStatusAlert) => string; cta?: string }
-> = {
+const ALERT_COPY: Record<string, { message: (a: BackupStatusAlert) => string; cta?: string }> = {
   NO_CLUSTERS: {
-    message: () =>
-      'No clusters yet. Create your first cluster to enable backups.',
+    message: () => 'No clusters yet. Create your first cluster to enable backups.',
     cta: 'Create cluster',
   },
   CLUSTERS_WITHOUT_BACKUPS: {
-    message: () =>
-      "Some clusters don't have active backups. Configure them in 1 click.",
+    message: () => "Some clusters don't have active backups. Configure them in 1 click.",
     cta: 'Enable backups',
   },
   DEGRADED_POLICIES: {
-    message: () =>
-      'One or more policies are degraded — replica destinations are failing.',
+    message: () => 'One or more policies are degraded — replica destinations are failing.',
     cta: 'Check destinations',
   },
   FAILED_DESTINATIONS: {
@@ -170,10 +164,7 @@ const ALERT_CTA_PATH: Record<string, string> = {
   VOLUMES_NEED_DECISION: '/management/backup/overview',
 };
 
-export function alertCtaPath(
-  alert: BackupStatusAlert,
-  fallback = '/management/backup',
-): string {
+export function alertCtaPath(alert: BackupStatusAlert, fallback = '/management/backup'): string {
   if (alert.resourceType === 'cluster' && alert.resourceId) {
     return `/cluster/${alert.resourceId}/overview`;
   }
@@ -192,12 +183,8 @@ const PROVIDER_READINESS_COPY: Record<string, string> = {
     'Flui backups run on Scaleway Object Storage. Enable Scaleway as a provider to use the service.',
 };
 
-export function providerReadinessMessage(
-  reason?: string,
-  fallbackMessage?: string,
-): string {
-  if (reason && PROVIDER_READINESS_COPY[reason])
-    return PROVIDER_READINESS_COPY[reason];
+export function providerReadinessMessage(reason?: string, fallbackMessage?: string): string {
+  if (reason && PROVIDER_READINESS_COPY[reason]) return PROVIDER_READINESS_COPY[reason];
   return (
     fallbackMessage ||
     'Flui backups run on Scaleway Object Storage. Enable Scaleway as a provider to use the service.'

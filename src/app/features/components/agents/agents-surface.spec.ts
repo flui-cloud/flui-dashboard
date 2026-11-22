@@ -45,7 +45,8 @@ const GRANT_ROW: AgentGrantRow = { concession: CONCESSION, agentName: 'ci-deploy
 
 function input(over: Partial<AgentsSurfaceInput> = {}): AgentsSurfaceInput {
   return {
-    ceiling: 'You hold 4 permissions on this instance — the grants below choose how much of that you lend out, and they cannot reach past it.',
+    ceiling:
+      'You hold 4 permissions on this instance — the grants below choose how much of that you lend out, and they cannot reach past it.',
     waitingRows: [REQUEST_ROW],
     loadingWaiting: false,
     followedProposalId: null,
@@ -66,8 +67,10 @@ function snapshotOf(over: Partial<AgentsSurfaceInput> = {}): SurfaceSnapshot {
 }
 
 const pageScope = (s: SurfaceSnapshot) => s.scopes.find((x) => x.id === 'agents')!;
-const observation = (s: SurfaceSnapshot, key: string) => pageScope(s).observations?.find((o) => o.key === key);
-const requestRow = (s: SurfaceSnapshot, id: string) => s.scopes.find((x) => x.id === `agents:requests:${id}`)!;
+const observation = (s: SurfaceSnapshot, key: string) =>
+  pageScope(s).observations?.find((o) => o.key === key);
+const requestRow = (s: SurfaceSnapshot, id: string) =>
+  s.scopes.find((x) => x.id === `agents:requests:${id}`)!;
 
 describe('agents surface producer', () => {
   it('emits a snapshot that validates against the real schema and passes semantic checks', () => {
@@ -95,9 +98,14 @@ describe('agents surface producer', () => {
 
   it('flags a snapshot whose revision does not advance on the previous one', () => {
     const first = snapshotOf();
-    const stale = { ...snapshotOf(), surface: { ...snapshotOf().surface, revision: first.surface.revision } };
+    const stale = {
+      ...snapshotOf(),
+      surface: { ...snapshotOf().surface, revision: first.surface.revision },
+    };
     const issues = validateSurfaceSemantics(stale, { previousSnapshot: first });
-    expect(issues).toEqual([jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' })]);
+    expect(issues).toEqual([
+      jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' }),
+    ]);
   });
 
   it('is list-shaped with no selection by default: attention names only the page', () => {
@@ -110,24 +118,40 @@ describe('agents surface producer', () => {
   it('names the route-followed proposal as primary attention, reason route', () => {
     const snapshot = snapshotOf({ followedProposalId: 'prop-1' });
     expect(snapshot.attention).toEqual([
-      { scopeId: 'agents:requests:prop-1', entityRef: agentProposalEntityRef('prop-1'), reason: 'route' },
+      {
+        scopeId: 'agents:requests:prop-1',
+        entityRef: agentProposalEntityRef('prop-1'),
+        reason: 'route',
+      },
     ]);
     expect(requestRow(snapshot, 'prop-1').entities?.[0].role).toBe('primary');
   });
 
   it('does not invent a resolved selection: a followed id already answered names only the page', () => {
-    const snapshot = snapshotOf({ followedProposalId: 'prop-1', waitingRows: [], followedAnsweredStatus: 'APPROVED' });
+    const snapshot = snapshotOf({
+      followedProposalId: 'prop-1',
+      waitingRows: [],
+      followedAnsweredStatus: 'APPROVED',
+    });
     expect(snapshot.attention).toEqual([{ scopeId: 'agents', reason: 'route' }]);
-    expect(observation(snapshot, 'flui.agents.followed_request_status')?.presentedAs.text).toBe('APPROVED');
+    expect(observation(snapshot, 'flui.agents.followed_request_status')?.presentedAs.text).toBe(
+      'APPROVED',
+    );
   });
 
   it('ranks the revoke overlay above a followed route selection — exercises real attention arbitration (§4.1)', () => {
     const snapshot = snapshotOf({ followedProposalId: 'prop-1', revokeTarget: CONCESSION });
     expect(snapshot.attention).toEqual([
-      { scopeId: 'agents:revoke-dialog', entityRef: agentConcessionEntityRef('conc-1'), reason: 'overlay' },
+      {
+        scopeId: 'agents:revoke-dialog',
+        entityRef: agentConcessionEntityRef('conc-1'),
+        reason: 'overlay',
+      },
     ]);
     const overlay = snapshot.scopes.find((s) => s.kind === 'overlay')!;
-    expect(overlay.entities).toEqual([{ ref: agentConcessionEntityRef('conc-1'), label: CONCESSION.sentence, role: 'selected' }]);
+    expect(overlay.entities).toEqual([
+      { ref: agentConcessionEntityRef('conc-1'), label: CONCESSION.sentence, role: 'selected' },
+    ]);
   });
 
   it('presents action, binding target and agent name for a waiting request', () => {

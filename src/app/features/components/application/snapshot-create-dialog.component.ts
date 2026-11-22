@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  effect,
-  input,
-  output,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideLoader, lucideX } from '@ng-icons/lucide';
@@ -34,19 +27,14 @@ import { CreateSnapshotRequest } from '../../model/volume-management.models';
                 Captures the current data of this application's volume.
               </p>
             </div>
-            <button
-              (click)="cancelled.emit()"
-              class="p-1 hover:bg-muted rounded"
-            >
+            <button (click)="cancelled.emit()" class="p-1 hover:bg-muted rounded">
               <ng-icon name="lucideX" class="h-4 w-4" />
             </button>
           </div>
 
           <div class="space-y-4">
             <div>
-              <label
-                class="text-sm font-medium mb-1 block"
-                for="snapshot-description"
+              <label class="text-sm font-medium mb-1 block" for="snapshot-description"
                 >Description (optional)</label
               >
               <input
@@ -69,8 +57,7 @@ import { CreateSnapshotRequest } from '../../model/volume-management.models';
               <span>
                 Stop the application during the copy
                 <span class="block text-xs text-muted-foreground">
-                  A short interruption; it starts again as soon as the copy is
-                  taken.
+                  A short interruption; it starts again as soon as the copy is taken.
                   @if (suggestPause()) {
                     A database copied while it runs may not restore.
                   }
@@ -79,11 +66,7 @@ import { CreateSnapshotRequest } from '../../model/volume-management.models';
             </label>
             @if (showVolume()) {
               <div>
-                <label
-                  class="text-sm font-medium mb-1 block"
-                  for="snapshot-volume"
-                  >Volume</label
-                >
+                <label class="text-sm font-medium mb-1 block" for="snapshot-volume">Volume</label>
                 <input
                   id="snapshot-volume"
                   type="text"

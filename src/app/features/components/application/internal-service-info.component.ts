@@ -47,7 +47,9 @@ export type InternalServiceMode = 'building-block' | 'internal-app';
       </dl>
 
       @if (lastCopied()) {
-        <p class="mt-3 inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
+        <p
+          class="mt-3 inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400"
+        >
           <ng-icon name="lucideCircleCheck" class="h-3.5 w-3.5" />
           Copied to clipboard
         </p>
@@ -75,7 +77,7 @@ export class InternalServiceInfoComponent {
 
   protected readonly description = computed(() =>
     this.mode() === 'internal-app'
-      ? 'Gets a private URL on your cluster\'s internal domain, protected by Flui authentication. Accessible from the internet — Flui login required to open.'
+      ? "Gets a private URL on your cluster's internal domain, protected by Flui authentication. Accessible from the internet — Flui login required to open."
       : 'This service is reachable only from other apps on the same cluster. Credentials are managed inside the cluster — Flui never exposes them via the API.',
   );
 

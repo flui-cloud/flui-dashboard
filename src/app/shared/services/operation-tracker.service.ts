@@ -20,7 +20,7 @@ export interface OperationTrackingState {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class OperationTrackerService {
   private readonly operationsApi = inject(InfrastructureOperationsService);
@@ -65,7 +65,7 @@ export class OperationTrackerService {
   readonly getCompletedStepsCount = computed(() => {
     // Count only steps with status 'completed', capped at the backend total so
     // reconstructed steps can never push it past totalSteps.
-    const completed = this.creationSteps().filter(step => step.status === 'completed').length;
+    const completed = this.creationSteps().filter((step) => step.status === 'completed').length;
     const total = this.totalSteps();
     return total > 0 ? Math.min(completed, total) : completed;
   });
@@ -97,7 +97,9 @@ export class OperationTrackerService {
       return; // No metadata available
     }
 
-    console.log(`🔍 Syncing steps: currentIndex=${currentStepIndex}, totalSteps=${status.totalSteps}, existing=${this.creationSteps().length}`);
+    console.log(
+      `🔍 Syncing steps: currentIndex=${currentStepIndex}, totalSteps=${status.totalSteps}, existing=${this.creationSteps().length}`,
+    );
 
     // Every step BEFORE the current one must be completed: reconstruct missing ones,
     // and complete any that already exist but are still running/pending (e.g. a step
@@ -106,7 +108,7 @@ export class OperationTrackerService {
       const stepDef = operationSteps[i];
       const stepId = stepDef.step;
 
-      const existing = this.creationSteps().find(s => s.id === stepId);
+      const existing = this.creationSteps().find((s) => s.id === stepId);
       if (existing) {
         if (existing.status !== 'completed') {
           this.updateCreationStep(stepId, {
@@ -115,7 +117,9 @@ export class OperationTrackerService {
           });
         }
       } else {
-        console.log(`🔧 Reconstructing completed step ${i + 1}/${status.totalSteps}: ${stepDef.description}`);
+        console.log(
+          `🔧 Reconstructing completed step ${i + 1}/${status.totalSteps}: ${stepDef.description}`,
+        );
 
         // Mark as seen to prevent duplicate creation
         this.stepMessages.add(stepId);
@@ -138,7 +142,7 @@ export class OperationTrackerService {
           // Find correct insertion point based on step order in operationSteps
           let insertIndex = 0;
           for (let j = 0; j < newSteps.length; j++) {
-            const existingIdx = operationSteps.findIndex(s => s.step === newSteps[j].id);
+            const existingIdx = operationSteps.findIndex((s) => s.step === newSteps[j].id);
             if (existingIdx !== -1 && existingIdx > i) {
               break;
             }
@@ -171,7 +175,7 @@ export class OperationTrackerService {
 
       try {
         const statusResponse = await firstValueFrom(
-          this.operationsApi.infrastructureOperationsControllerGetOperationStatus(operationId)
+          this.operationsApi.infrastructureOperationsControllerGetOperationStatus(operationId),
         );
 
         const status = statusResponse as OperationStatus;
@@ -189,7 +193,7 @@ export class OperationTrackerService {
         const stepDescription = status.metadata?.stepDescription || 'Processing...';
         if (status.totalSteps > 0) {
           this.creationMessage.set(
-            `Step ${status.currentStepIndex + 1}/${status.totalSteps}: ${stepDescription}`
+            `Step ${status.currentStepIndex + 1}/${status.totalSteps}: ${stepDescription}`,
           );
         } else {
           this.creationMessage.set(stepDescription);
@@ -205,7 +209,7 @@ export class OperationTrackerService {
           status.currentStepIndex,
           status.totalSteps,
           status.currentStepProgress,
-          status.progress
+          status.progress,
         );
 
         // Check completion
@@ -219,8 +223,8 @@ export class OperationTrackerService {
             steps.map((step) =>
               step.status === 'completed'
                 ? step
-                : { ...step, status: 'completed', completedAt: step.completedAt ?? new Date() }
-            )
+                : { ...step, status: 'completed', completedAt: step.completedAt ?? new Date() },
+            ),
           );
 
           return;
@@ -267,13 +271,13 @@ export class OperationTrackerService {
     currentStepIndex: number,
     totalSteps: number,
     currentStepProgress: number,
-    overallProgress: number
+    overallProgress: number,
   ): void {
     if (!currentStepId || currentStepId.trim() === '') return;
 
     // Check if step already exists (might be created by syncStepsFromMetadata)
     const existingSteps = this.creationSteps();
-    const existingStep = existingSteps.find(s => s.id === currentStepId);
+    const existingStep = existingSteps.find((s) => s.id === currentStepId);
 
     if (existingStep) {
       // Step exists, just update if running
@@ -312,7 +316,7 @@ export class OperationTrackerService {
 
       this.creationSteps.update((currentSteps) => [...currentSteps, newStep]);
       console.log(
-        `📝 Created step [${currentStepIndex + 1}/${totalSteps}]: ${stepDescription} (${currentStepProgress}%)`
+        `📝 Created step [${currentStepIndex + 1}/${totalSteps}]: ${stepDescription} (${currentStepProgress}%)`,
       );
     }
   }
@@ -320,12 +324,9 @@ export class OperationTrackerService {
   /**
    * Update a specific creation step
    */
-  private updateCreationStep(
-    stepId: string,
-    updates: Partial<ClusterCreationStep>
-  ): void {
+  private updateCreationStep(stepId: string, updates: Partial<ClusterCreationStep>): void {
     this.creationSteps.update((steps) =>
-      steps.map((step) => (step.id === stepId ? { ...step, ...updates } : step))
+      steps.map((step) => (step.id === stepId ? { ...step, ...updates } : step)),
     );
   }
 
@@ -397,7 +398,8 @@ export class OperationTrackerService {
     if (!op?.startedAt) return 0;
 
     // Get estimated total duration from metadata or root level
-    const estimatedTotal = op.metadata?.estimatedDurationInSeconds || op.estimatedDurationInSeconds || 0;
+    const estimatedTotal =
+      op.metadata?.estimatedDurationInSeconds || op.estimatedDurationInSeconds || 0;
     if (estimatedTotal === 0) return 0;
 
     const currentStepIndex = op.currentStepIndex || 0;

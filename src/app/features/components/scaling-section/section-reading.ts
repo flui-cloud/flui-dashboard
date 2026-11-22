@@ -9,10 +9,7 @@ export interface Loaded<T> {
   absent: boolean;
 }
 
-export function loadedOf<T>(
-  resource: Resource<T | undefined>,
-  what: string,
-): Signal<Loaded<T>> {
+export function loadedOf<T>(resource: Resource<T | undefined>, what: string): Signal<Loaded<T>> {
   return computed(() => {
     const error = resource.error();
     const absent = error instanceof HttpErrorResponse && error.status === 404;

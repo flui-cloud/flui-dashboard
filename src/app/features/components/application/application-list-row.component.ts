@@ -41,15 +41,25 @@ const TEXT: Record<Tone, string> = {
       [attr.data-testid]="'app-row-' + r.id"
     >
       <div class="flex items-start gap-3 min-w-0 w-full md:w-auto">
-        <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full" [class]="dot(r.tone)" [title]="r.statusLabel"></span>
+        <span
+          class="mt-1.5 h-2 w-2 shrink-0 rounded-full"
+          [class]="dot(r.tone)"
+          [title]="r.statusLabel"
+        ></span>
         <div class="flex min-w-0 flex-col gap-0.5">
           <div class="flex min-w-0 flex-wrap items-center gap-1.5">
             <span class="truncate text-sm font-semibold text-foreground">{{ r.name }}</span>
             @if (r.bundle) {
-              <span class="rounded px-1.5 py-0.5 text-[11px] font-medium chip-purple">{{ r.bundle }}</span>
+              <span class="rounded px-1.5 py-0.5 text-[11px] font-medium chip-purple">{{
+                r.bundle
+              }}</span>
             }
             @if (r.tool) {
-              <span class="rounded border border-border px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground" data-testid="app-row-tool">Tool</span>
+              <span
+                class="rounded border border-border px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground"
+                data-testid="app-row-tool"
+                >Tool</span
+              >
             }
             @if (r.partOf; as bundle) {
               <span class="text-xs text-muted-foreground" data-testid="app-row-part-of">
@@ -59,7 +69,9 @@ const TEXT: Record<Tone, string> = {
                   (click)="$event.stopPropagation(); open.emit(bundle.id)"
                   (keydown.enter)="$event.stopPropagation()"
                   class="font-medium text-primary hover:underline"
-                >{{ bundle.name }}</button>
+                >
+                  {{ bundle.name }}
+                </button>
               </span>
             }
             @if (r.project) {
@@ -74,38 +86,73 @@ const TEXT: Record<Tone, string> = {
               (click)="$event.stopPropagation()"
               class="truncate font-mono text-xs text-primary hover:underline"
               data-testid="app-row-endpoint"
-            >{{ r.subtitle.text }}</a>
+              >{{ r.subtitle.text }}</a
+            >
           } @else {
-            <span class="truncate font-mono text-xs" [class]="text(r.subtitle.tone)" [title]="r.subtitle.text" data-testid="app-row-subtitle">{{ r.subtitle.text }}</span>
+            <span
+              class="truncate font-mono text-xs"
+              [class]="text(r.subtitle.tone)"
+              [title]="r.subtitle.text"
+              data-testid="app-row-subtitle"
+              >{{ r.subtitle.text }}</span
+            >
           }
         </div>
       </div>
 
       <div class="flex min-w-0 items-center gap-2" [title]="r.cluster.provider">
-        <span class="icon-chip icon-chip-sm chip-brand text-[10px] font-bold">{{ r.cluster.chip }}</span>
+        <span class="icon-chip icon-chip-sm chip-brand text-[10px] font-bold">{{
+          r.cluster.chip
+        }}</span>
         <span class="truncate text-sm text-foreground">{{ r.cluster.name }}</span>
       </div>
 
-      <span class="text-sm font-semibold tabular-nums" [class]="text(r.ready.tone)" [title]="r.ready.title" data-testid="app-row-ready">{{ r.ready.text }}</span>
+      <span
+        class="text-sm font-semibold tabular-nums"
+        [class]="text(r.ready.tone)"
+        [title]="r.ready.title"
+        data-testid="app-row-ready"
+        >{{ r.ready.text }}</span
+      >
 
       <span class="text-xs text-muted-foreground" data-testid="app-row-origin">{{ r.origin }}</span>
 
-      <div class="flex min-w-[6rem] flex-col gap-1.5" [title]="r.usageTitle" data-testid="app-row-usage">
+      <div
+        class="flex min-w-[6rem] flex-col gap-1.5"
+        [title]="r.usageTitle"
+        data-testid="app-row-usage"
+      >
         @if (r.cpu === null && r.memory === null) {
           <span class="text-xs text-muted-foreground">—</span>
         } @else {
           <div class="h-1.5 overflow-hidden rounded-full bg-muted">
-            <div class="h-full rounded-full" [style.background]="cpuColor" [style.width.%]="bar(r.cpu)"></div>
+            <div
+              class="h-full rounded-full"
+              [style.background]="cpuColor"
+              [style.width.%]="bar(r.cpu)"
+            ></div>
           </div>
           <div class="h-1.5 overflow-hidden rounded-full bg-muted">
-            <div class="h-full rounded-full" [style.background]="memoryColor" [style.width.%]="bar(r.memory)"></div>
+            <div
+              class="h-full rounded-full"
+              [style.background]="memoryColor"
+              [style.width.%]="bar(r.memory)"
+            ></div>
           </div>
         }
       </div>
 
-      <span class="text-xs font-semibold" [class]="text(r.backup.tone)" [title]="r.backup.title" data-testid="app-row-backup">{{ r.backup.label }}</span>
+      <span
+        class="text-xs font-semibold"
+        [class]="text(r.backup.tone)"
+        [title]="r.backup.title"
+        data-testid="app-row-backup"
+        >{{ r.backup.label }}</span
+      >
 
-      <span class="text-xs text-muted-foreground md:text-right" [title]="r.released.title">{{ r.released.text }}</span>
+      <span class="text-xs text-muted-foreground md:text-right" [title]="r.released.title">{{
+        r.released.text
+      }}</span>
     </div>
   `,
 })

@@ -58,19 +58,25 @@ import { DbDiskInfo, DbDiskService } from '../../service/db-disk.service';
           <div class="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-xs text-muted-foreground">
             <span>{{ human(d.used_bytes) }} used / {{ human(d.size_bytes) }}</span>
             <span>{{ human(d.available_bytes) }} free</span>
-            @if (d.mountPath) { <span class="font-mono">{{ d.mountPath }}</span> }
+            @if (d.mountPath) {
+              <span class="font-mono">{{ d.mountPath }}</span>
+            }
           </div>
 
           @if (d.alert_level !== 'none') {
             <div
               class="mt-3 flex items-start gap-2 text-sm"
-              [class]="d.alert_level === 'critical' ? 'text-red-700 dark:text-red-300' : 'text-amber-700 dark:text-amber-300'"
+              [class]="
+                d.alert_level === 'critical'
+                  ? 'text-red-700 dark:text-red-300'
+                  : 'text-amber-700 dark:text-amber-300'
+              "
             >
               <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-4 w-4 shrink-0" />
               <span>
                 The disk hosting this database is
-                {{ d.alert_level === 'critical' ? 'almost full' : 'getting full' }} — free space
-                or grow the node disk soon. (Per-volume quota/metrics: see roadmap.)
+                {{ d.alert_level === 'critical' ? 'almost full' : 'getting full' }} — free space or
+                grow the node disk soon. (Per-volume quota/metrics: see roadmap.)
               </span>
             </div>
           }

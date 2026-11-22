@@ -8,7 +8,7 @@ import {
   inject,
   signal,
   untracked,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -32,10 +32,7 @@ import {
   buildSettingsSurface,
   presentedContent,
 } from './settings-surface';
-import {
-  HlmCardDirective,
-  HlmCardContentDirective,
-} from '@spartan-ng/ui-card-helm';
+import { HlmCardDirective, HlmCardContentDirective } from '@spartan-ng/ui-card-helm';
 import { HlmBadgeDirective } from '@spartan-ng/ui-badge-helm';
 import { ProfileTabComponent } from './profile-tab.component';
 import { SecurityTabComponent } from './security-tab.component';
@@ -49,12 +46,7 @@ import { PermissionService } from '../../../core/services/permission.service';
 import { SandboxSignInService } from '../../service/sandbox-sign-in.service';
 
 type SectionId =
-  | 'profile'
-  | 'security'
-  | 'agent-keys'
-  | 'auth-proxy'
-  | 'inference-connections'
-  | 'demo-sign-in';
+  'profile' | 'security' | 'agent-keys' | 'auth-proxy' | 'inference-connections' | 'demo-sign-in';
 
 interface SectionDef {
   id: SectionId;
@@ -93,12 +85,13 @@ interface SectionDef {
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="p-6 max-w-6xl mx-auto space-y-6">
-
       <!-- User header card -->
       <div hlmCard>
         <div hlmCardContent class="pt-6">
           <div class="flex items-center gap-4">
-            <div class="flex h-16 w-16 items-center justify-center rounded-xl bg-muted border border-border text-xl font-bold text-muted-foreground select-none shrink-0">
+            <div
+              class="flex h-16 w-16 items-center justify-center rounded-xl bg-muted border border-border text-xl font-bold text-muted-foreground select-none shrink-0"
+            >
               {{ _initials() }}
             </div>
             <div class="min-w-0">
@@ -126,16 +119,20 @@ interface SectionDef {
               (click)="select(s.id)"
               [title]="s.label"
               class="inline-flex items-center gap-1.5 px-3 md:px-5 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0"
-              [class]="activeSection() === s.id
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'"
+              [class]="
+                activeSection() === s.id
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+              "
             >
               <ng-icon [name]="s.icon" class="h-4 w-4 flex-shrink-0" />
               <span>{{ s.label }}</span>
             </button>
           }
         </nav>
-        <div class="pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-background to-transparent"></div>
+        <div
+          class="pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-background to-transparent"
+        ></div>
       </div>
 
       <!-- Active section -->
@@ -154,7 +151,9 @@ interface SectionDef {
             <section class="space-y-3">
               <header>
                 <h3 class="text-lg font-semibold text-foreground">Security</h3>
-                <p class="text-sm text-muted-foreground">Manage your password and account security.</p>
+                <p class="text-sm text-muted-foreground">
+                  Manage your password and account security.
+                </p>
               </header>
               <app-security-tab />
             </section>
@@ -174,7 +173,9 @@ interface SectionDef {
             <section class="space-y-3">
               <header>
                 <h3 class="text-lg font-semibold text-foreground">Auth Proxy</h3>
-                <p class="text-sm text-muted-foreground">Protect internal apps with OIDC-based access per cluster.</p>
+                <p class="text-sm text-muted-foreground">
+                  Protect internal apps with OIDC-based access per cluster.
+                </p>
               </header>
               <app-infrastructure-auth-proxy />
             </section>
@@ -183,7 +184,9 @@ interface SectionDef {
             <section class="space-y-3">
               <header>
                 <h3 class="text-lg font-semibold text-foreground">LLM Connections</h3>
-                <p class="text-sm text-muted-foreground">Bring your own API key to connect any OpenAI-compatible language model.</p>
+                <p class="text-sm text-muted-foreground">
+                  Bring your own API key to connect any OpenAI-compatible language model.
+                </p>
               </header>
               <app-inference-connections />
               <app-inference-usage />
@@ -193,7 +196,9 @@ interface SectionDef {
             <section class="space-y-3">
               <header>
                 <h3 class="text-lg font-semibold text-foreground">Demo sign-in</h3>
-                <p class="text-sm text-muted-foreground">Let the demo's guests sign in with GitHub or Google.</p>
+                <p class="text-sm text-muted-foreground">
+                  Let the demo's guests sign in with GitHub or Google.
+                </p>
               </header>
               <app-demo-sign-in />
               <app-demo-visitors />
@@ -222,9 +227,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
   readonly activeSection = signal<SectionId>('profile');
 
   protected readonly _authMode = computed(() => this.cfg.authMode);
-  protected readonly _isAdmin = computed(
-    () => this.authService.currentUser()?.isAdmin ?? false,
-  );
+  protected readonly _isAdmin = computed(() => this.authService.currentUser()?.isAdmin ?? false);
 
   private readonly sections: SectionDef[] = [
     { id: 'profile', label: 'Profile', icon: 'lucideUser', visible: () => true },
@@ -260,9 +263,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     },
   ];
 
-  readonly visibleSections = computed(() =>
-    this.sections.filter((s) => s.visible()),
-  );
+  readonly visibleSections = computed(() => this.sections.filter((s) => s.visible()));
 
   private readonly surfaceRevision = new SettingsSurfaceRevision();
 
@@ -337,9 +338,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     return u?.name || u?.email || 'User';
   });
 
-  protected readonly _email = computed(
-    () => this.authService.currentUser()?.email ?? '',
-  );
+  protected readonly _email = computed(() => this.authService.currentUser()?.email ?? '');
 
   protected readonly _initials = computed(() => {
     const u = this.authService.currentUser();
@@ -353,11 +352,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
-    this.route.fragment
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((fragment) => {
-        this.requestedSection.set(fragment);
-      });
+    this.route.fragment.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((fragment) => {
+      this.requestedSection.set(fragment);
+    });
   }
 
   select(id: SectionId): void {

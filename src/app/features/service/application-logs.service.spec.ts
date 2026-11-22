@@ -1,9 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient, withXhr } from '@angular/common/http';
-import {
-  HttpTestingController,
-  provideHttpClientTesting,
-} from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { AppConfigService } from '../../core/services/app-config.service';
 import { ApplicationLogsService } from './application-logs.service';
 
@@ -42,8 +39,7 @@ describe('ApplicationLogsService', () => {
 
     const logs = http.expectOne(
       (req) =>
-        req.url ===
-        'https://runtime.example/api/v1/observability/applications/app%2Fone/logs',
+        req.url === 'https://runtime.example/api/v1/observability/applications/app%2Fone/logs',
     );
     expect(logs.request.params.has('namespace')).toBeFalse();
     expect(logs.request.params.has('app')).toBeFalse();

@@ -91,19 +91,14 @@ export interface ClusterBilling {
 }
 
 /** Which of the two figures a person reads first: with VAT where the provider states it, else without. */
-export function shown(
-  billing: ClusterBilling,
-  pair: { gross: string; net: string },
-): string {
+export function shown(billing: ClusterBilling, pair: { gross: string; net: string }): string {
   return billing.vat?.included ? pair.gross : pair.net;
 }
 
 export function vatLabel(billing: ClusterBilling): string {
   if (!billing.vat) return '';
   if (!billing.vat.included) return 'excl. VAT';
-  return billing.vat.ratePercent !== null
-    ? `incl. ${billing.vat.ratePercent}% VAT`
-    : 'incl. VAT';
+  return billing.vat.ratePercent !== null ? `incl. ${billing.vat.ratePercent}% VAT` : 'incl. VAT';
 }
 
 export interface NodeGroups {

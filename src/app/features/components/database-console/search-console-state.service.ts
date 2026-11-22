@@ -2,11 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { map } from 'rxjs';
 import { SearchConsoleService } from '../../service/search-console.service';
-import {
-  SearchClusterInfo,
-  SearchIndex,
-  SearchResponse,
-} from '../../model/search-console.models';
+import { SearchClusterInfo, SearchIndex, SearchResponse } from '../../model/search-console.models';
 import { AssistFn } from './db-assistant-chat.component';
 import { RawConsoleExample, RawConsoleSubmit } from './rest-console.component';
 import { consoleError, formatRaw } from './search-format';
@@ -39,8 +35,7 @@ export class SearchConsoleStateService {
 
   readonly hasIndex = computed(() => !!this.selectedIndex());
 
-  readonly rawSubmit: RawConsoleSubmit = (req) =>
-    this.api.runRaw(this.appId() ?? '', req);
+  readonly rawSubmit: RawConsoleSubmit = (req) => this.api.runRaw(this.appId() ?? '', req);
 
   readonly consoleExamples: RawConsoleExample[] = [
     { label: 'List indices', text: 'GET /_cat/indices?v' },
@@ -155,9 +150,7 @@ export class SearchConsoleStateService {
       try {
         body = JSON.parse(this.dslText) as Record<string, unknown>;
       } catch (e) {
-        this.queryError.set(
-          `Invalid JSON: ${e instanceof Error ? e.message : 'parse error'}`,
-        );
+        this.queryError.set(`Invalid JSON: ${e instanceof Error ? e.message : 'parse error'}`);
         return;
       }
     } else {

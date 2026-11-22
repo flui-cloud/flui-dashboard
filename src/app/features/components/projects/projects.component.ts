@@ -7,18 +7,11 @@ import {
   inject,
   signal,
   viewChild,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideFolders,
-  lucidePlus,
-  lucideTrash2,
-} from '@ng-icons/lucide';
-import {
-  HlmCardDirective,
-  HlmCardContentDirective,
-} from '@spartan-ng/ui-card-helm';
+import { lucideFolders, lucidePlus, lucideTrash2 } from '@ng-icons/lucide';
+import { HlmCardDirective, HlmCardContentDirective } from '@spartan-ng/ui-card-helm';
 import { HlmBadgeDirective } from '@spartan-ng/ui-badge-helm';
 import { ProjectsService } from '../../service/projects.service';
 import { PermissionService } from '../../../core/services/permission.service';
@@ -26,7 +19,12 @@ import { Project } from '../../model/project.model';
 import { AppAttributes } from '../../model/iam.model';
 import { DeleteConfirmationDialogComponent } from '../../../shared/components/delete-confirmation-dialog.component';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
-import { ProjectsSurfaceInput, ProjectsSurfaceRevision, buildProjectsSurface, presentedContent } from './projects-surface';
+import {
+  ProjectsSurfaceInput,
+  ProjectsSurfaceRevision,
+  buildProjectsSurface,
+  presentedContent,
+} from './projects-surface';
 
 const FIELD =
   'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2';
@@ -47,17 +45,25 @@ const FIELD =
     <div class="p-6 max-w-6xl mx-auto space-y-6">
       <div class="flex items-start justify-between gap-4">
         <div class="flex items-center gap-3">
-          <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-muted border border-border text-muted-foreground shrink-0">
+          <div
+            class="flex h-11 w-11 items-center justify-center rounded-xl bg-muted border border-border text-muted-foreground shrink-0"
+          >
             <ng-icon name="lucideFolders" class="h-5 w-5" />
           </div>
           <div>
             <h2 class="text-xl font-semibold text-foreground">Projects</h2>
-            <p class="text-sm text-muted-foreground">Where applications live. Apps of one project share their building blocks; an app stays in the project it was created in.</p>
+            <p class="text-sm text-muted-foreground">
+              Where applications live. Apps of one project share their building blocks; an app stays
+              in the project it was created in.
+            </p>
           </div>
         </div>
         @if (canManage()) {
-          <button type="button" (click)="showCreate.set(!showCreate())"
-            class="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 whitespace-nowrap">
+          <button
+            type="button"
+            (click)="showCreate.set(!showCreate())"
+            class="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 whitespace-nowrap"
+          >
             <ng-icon name="lucidePlus" class="h-4 w-4" /> New project
           </button>
         }
@@ -69,40 +75,85 @@ const FIELD =
             <div class="grid gap-3 sm:grid-cols-2">
               <div>
                 <label class="block text-xs font-medium text-muted-foreground mb-1">Name</label>
-                <input [class]="fieldClass" placeholder="my-project"
-                  [value]="newName()" (input)="newName.set(value($event))" />
+                <input
+                  [class]="fieldClass"
+                  placeholder="my-project"
+                  [value]="newName()"
+                  (input)="newName.set(value($event))"
+                />
               </div>
               <div>
-                <label class="block text-xs font-medium text-muted-foreground mb-1">Description</label>
-                <input [class]="fieldClass" [value]="newDesc()" (input)="newDesc.set(value($event))" />
+                <label class="block text-xs font-medium text-muted-foreground mb-1"
+                  >Description</label
+                >
+                <input
+                  [class]="fieldClass"
+                  [value]="newDesc()"
+                  (input)="newDesc.set(value($event))"
+                />
               </div>
             </div>
             <div>
-              <label class="block text-xs font-medium text-muted-foreground mb-1">Color (optional)</label>
+              <label class="block text-xs font-medium text-muted-foreground mb-1"
+                >Color (optional)</label
+              >
               <div class="flex flex-wrap items-center gap-2">
                 @for (c of presetColors; track c) {
-                  <button type="button" (click)="newColor.set(c)" [title]="c"
+                  <button
+                    type="button"
+                    (click)="newColor.set(c)"
+                    [title]="c"
                     class="h-7 w-7 rounded-full border-2 transition"
                     [style.background]="c"
-                    [class]="newColor() === c
-                      ? 'border-foreground ring-2 ring-ring ring-offset-1 ring-offset-background'
-                      : 'border-border hover:border-foreground/40'"></button>
+                    [class]="
+                      newColor() === c
+                        ? 'border-foreground ring-2 ring-ring ring-offset-1 ring-offset-background'
+                        : 'border-border hover:border-foreground/40'
+                    "
+                  ></button>
                 }
-                <input type="color" [value]="colorOrDefault()" (input)="newColor.set(value($event))"
-                  class="h-7 w-9 rounded border border-border bg-background p-0.5 cursor-pointer" title="Custom color" />
-                <input [class]="hexFieldClass" type="text" placeholder="#22aa88" maxlength="7"
-                  [value]="newColor()" (input)="newColor.set(value($event))" />
+                <input
+                  type="color"
+                  [value]="colorOrDefault()"
+                  (input)="newColor.set(value($event))"
+                  class="h-7 w-9 rounded border border-border bg-background p-0.5 cursor-pointer"
+                  title="Custom color"
+                />
+                <input
+                  [class]="hexFieldClass"
+                  type="text"
+                  placeholder="#22aa88"
+                  maxlength="7"
+                  [value]="newColor()"
+                  (input)="newColor.set(value($event))"
+                />
                 @if (newColor()) {
-                  <button type="button" (click)="newColor.set('')"
-                    class="text-xs text-muted-foreground hover:text-foreground underline">clear</button>
+                  <button
+                    type="button"
+                    (click)="newColor.set('')"
+                    class="text-xs text-muted-foreground hover:text-foreground underline"
+                  >
+                    clear
+                  </button>
                 }
               </div>
             </div>
             <div class="flex justify-end gap-2">
-              <button type="button" (click)="showCreate.set(false)"
-                class="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground">Cancel</button>
-              <button type="button" (click)="submitCreate()" [disabled]="!canCreate()"
-                class="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed">Create project</button>
+              <button
+                type="button"
+                (click)="showCreate.set(false)"
+                class="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                (click)="submitCreate()"
+                [disabled]="!canCreate()"
+                class="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Create project
+              </button>
             </div>
           </div>
         </div>
@@ -115,11 +166,17 @@ const FIELD =
               <div class="flex items-start justify-between gap-2">
                 <div class="min-w-0">
                   <div class="flex items-center gap-2">
-                    <span class="h-3 w-3 rounded-full shrink-0 border border-border"
-                      [style.background]="p.color || 'transparent'"></span>
+                    <span
+                      class="h-3 w-3 rounded-full shrink-0 border border-border"
+                      [style.background]="p.color || 'transparent'"
+                    ></span>
                     <h3 class="text-base font-semibold text-foreground truncate">{{ p.name }}</h3>
-                    <span hlmBadge variant="outline" class="text-[11px] font-mono">{{ p.slug }}</span>
-                    <span hlmBadge variant="outline" class="text-[11px]">{{ appsInProject(p).length }}</span>
+                    <span hlmBadge variant="outline" class="text-[11px] font-mono">{{
+                      p.slug
+                    }}</span>
+                    <span hlmBadge variant="outline" class="text-[11px]">{{
+                      appsInProject(p).length
+                    }}</span>
                     @if (p.ownerUserId) {
                       <span hlmBadge variant="secondary" class="text-[11px]">personal</span>
                     }
@@ -129,8 +186,12 @@ const FIELD =
                   }
                 </div>
                 @if (canManage() && appsInProject(p).length === 0) {
-                  <button type="button" (click)="askDelete(p)"
-                    class="text-muted-foreground hover:text-destructive shrink-0" title="Delete project">
+                  <button
+                    type="button"
+                    (click)="askDelete(p)"
+                    class="text-muted-foreground hover:text-destructive shrink-0"
+                    title="Delete project"
+                  >
                     <ng-icon name="lucideTrash2" class="h-4 w-4" />
                   </button>
                 }
@@ -138,20 +199,23 @@ const FIELD =
 
               <div class="flex flex-wrap gap-1.5">
                 @for (a of appsInProject(p); track a.id) {
-                  <span class="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs text-foreground">
+                  <span
+                    class="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs text-foreground"
+                  >
                     {{ a.slug }}
                   </span>
                 } @empty {
                   <span class="text-xs text-muted-foreground">No apps yet.</span>
                 }
               </div>
-
             </div>
           </div>
         } @empty {
           <div hlmCard class="md:col-span-2">
             <div hlmCardContent class="pt-6">
-              <p class="text-sm text-muted-foreground">No projects yet. Your first application creates your personal one.</p>
+              <p class="text-sm text-muted-foreground">
+                No projects yet. Your first application creates your personal one.
+              </p>
             </div>
           </div>
         }
@@ -175,8 +239,18 @@ export class ProjectsComponent implements OnInit, OnDestroy {
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
 
   readonly presetColors = [
-    '#ef4444', '#f97316', '#f59e0b', '#eab308', '#22c55e', '#10b981',
-    '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6', '#ec4899', '#64748b',
+    '#ef4444',
+    '#f97316',
+    '#f59e0b',
+    '#eab308',
+    '#22c55e',
+    '#10b981',
+    '#06b6d4',
+    '#3b82f6',
+    '#6366f1',
+    '#8b5cf6',
+    '#ec4899',
+    '#64748b',
   ];
 
   readonly canManage = computed(() => this.perms.hasSection('projects'));

@@ -1,8 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import {
-  AgentActivityEntry,
-  AgentIdentityActivity,
-} from '../../model/agent-activity.models';
+import { AgentActivityEntry, AgentIdentityActivity } from '../../model/agent-activity.models';
 import { AgentActivityLogComponent } from './agent-activity-log.component';
 
 const entry = (over: Partial<AgentActivityEntry> = {}): AgentActivityEntry => ({
@@ -39,9 +36,7 @@ const entry = (over: Partial<AgentActivityEntry> = {}): AgentActivityEntry => ({
   ...over,
 });
 
-const actor = (
-  over: Partial<AgentIdentityActivity> = {},
-): AgentIdentityActivity => ({
+const actor = (over: Partial<AgentIdentityActivity> = {}): AgentIdentityActivity => ({
   actorKind: 'agent',
   actorKeyId: 'k-1',
   actorKeyName: 'release-bot',
@@ -60,23 +55,22 @@ const actor = (
 describe('the register of what an agent did', () => {
   let fixture: ComponentFixture<AgentActivityLogComponent>;
 
-  const build = async (opts: {
-    entries?: AgentActivityEntry[];
-    identities?: AgentIdentityActivity[];
-    total?: number;
-    keyNames?: Record<string, string>;
-    identityNames?: Record<string, string>;
-  } = {}): Promise<void> => {
+  const build = async (
+    opts: {
+      entries?: AgentActivityEntry[];
+      identities?: AgentIdentityActivity[];
+      total?: number;
+      keyNames?: Record<string, string>;
+      identityNames?: Record<string, string>;
+    } = {},
+  ): Promise<void> => {
     await TestBed.configureTestingModule({
       imports: [AgentActivityLogComponent],
     }).compileComponents();
     fixture = TestBed.createComponent(AgentActivityLogComponent);
     fixture.componentRef.setInput('entries', opts.entries ?? []);
     fixture.componentRef.setInput('identities', opts.identities ?? []);
-    fixture.componentRef.setInput(
-      'total',
-      opts.total ?? (opts.entries?.length ?? 0),
-    );
+    fixture.componentRef.setInput('total', opts.total ?? opts.entries?.length ?? 0);
     fixture.componentRef.setInput('keyNames', opts.keyNames ?? {});
     fixture.componentRef.setInput('identityNames', opts.identityNames ?? {});
     fixture.detectChanges();
@@ -86,9 +80,7 @@ describe('the register of what an agent did', () => {
     fixture.nativeElement.querySelector(`[data-testid="${testid}"]`);
 
   const findAll = (testid: string): HTMLElement[] =>
-    Array.from(
-      fixture.nativeElement.querySelectorAll(`[data-testid="${testid}"]`),
-    );
+    Array.from(fixture.nativeElement.querySelectorAll(`[data-testid="${testid}"]`));
 
   afterEach(() => TestBed.resetTestingModule());
 
@@ -117,9 +109,7 @@ describe('the register of what an agent did', () => {
 
     it('says the trace is missing, not that the permission was', async () => {
       await build({
-        entries: [
-          entry({ under: null, underSentence: null, operationId: null, operation: null }),
-        ],
+        entries: [entry({ under: null, underSentence: null, operationId: null, operation: null })],
       });
       const cell = find('activity-under');
       expect(cell?.textContent?.trim()).toBe('not traced');
@@ -129,9 +119,7 @@ describe('the register of what an agent did', () => {
 
     it('carries the words that were read at the moment of the yes', async () => {
       await build({ entries: [entry()] });
-      expect(find('activity-under')?.getAttribute('title')).toBe(
-        'add nodes to cluster c-1',
-      );
+      expect(find('activity-under')?.getAttribute('title')).toBe('add nodes to cluster c-1');
     });
   });
 
@@ -153,9 +141,7 @@ describe('the register of what an agent did', () => {
       });
       const notes = findAll('activity-operation').map((n) => n.textContent?.trim());
       expect(notes).toEqual(['started something you cannot read']);
-      expect(fixture.nativeElement.textContent).toContain(
-        'started something you cannot read',
-      );
+      expect(fixture.nativeElement.textContent).toContain('started something you cannot read');
     });
   });
 

@@ -73,7 +73,9 @@ const STEP_LABELS: Record<string, string> = {
   catalog_uninstall_finalize: 'Finalization',
 };
 
-function deriveStepPosition(stepId: string | undefined | null): { index: number; total: number } | null {
+function deriveStepPosition(
+  stepId: string | undefined | null,
+): { index: number; total: number } | null {
   if (!stepId) return null;
   const installIdx = (CATALOG_INSTALL_STEPS as readonly string[]).indexOf(stepId);
   if (installIdx >= 0) return { index: installIdx, total: CATALOG_INSTALL_STEPS.length };
@@ -122,9 +124,7 @@ export class CatalogService {
   hasUpdateAvailable(slug: string, catalogVersion: string | undefined | null): boolean {
     if (!slug || !catalogVersion) return false;
     const installed = this.getInstalledFor(slug);
-    return installed.some(
-      (app) => app.catalogVersion && app.catalogVersion !== catalogVersion,
-    );
+    return installed.some((app) => app.catalogVersion && app.catalogVersion !== catalogVersion);
   }
 
   private readonly _catalog = signal<CatalogResponseDto[]>([]);
@@ -262,7 +262,10 @@ export class CatalogService {
   async pollInstall(
     installId: string,
     operationId: string | undefined,
-    onUpdate?: (install: CatalogInstallResponseDto, progress: CatalogInstallStepProgress | null) => void,
+    onUpdate?: (
+      install: CatalogInstallResponseDto,
+      progress: CatalogInstallStepProgress | null,
+    ) => void,
   ): Promise<CatalogInstallResponseDto> {
     const POLL_INTERVAL = 3000;
     const MAX_POLLS = 600;
@@ -322,9 +325,7 @@ export class CatalogService {
       this._capabilities.set(response);
       return response;
     } catch (err) {
-      this._capabilitiesError.set(
-        this.extractError(err, 'Failed to load cluster capabilities.'),
-      );
+      this._capabilitiesError.set(this.extractError(err, 'Failed to load cluster capabilities.'));
       this._capabilities.set(null);
       return null;
     } finally {
@@ -429,9 +430,7 @@ export class CatalogService {
   async disconnect(installId: string): Promise<CatalogInstallResponseDto | null> {
     this._installError.set(null);
     try {
-      const response = await firstValueFrom(
-        this.api.catalogControllerDisconnect(installId),
-      );
+      const response = await firstValueFrom(this.api.catalogControllerDisconnect(installId));
       this._currentInstall.set(response);
       return response;
     } catch (err) {
@@ -440,14 +439,9 @@ export class CatalogService {
     }
   }
 
-  async fetchDetail(
-    slug: string,
-    clusterId?: string,
-  ): Promise<CatalogDetailResponseDto | null> {
+  async fetchDetail(slug: string, clusterId?: string): Promise<CatalogDetailResponseDto | null> {
     try {
-      const response = await firstValueFrom(
-        this.api.catalogControllerGetDetail(slug, clusterId),
-      );
+      const response = await firstValueFrom(this.api.catalogControllerGetDetail(slug, clusterId));
       return response ?? null;
     } catch {
       return null;

@@ -23,7 +23,8 @@ function rememberedVisitorClient(): string | null {
 
 function rememberVisitorClient(clientId: string | null): void {
   try {
-    if (clientId) sessionStorage.setItem(OIDC_CLIENT_KEY, JSON.stringify({ visitorClientId: clientId }));
+    if (clientId)
+      sessionStorage.setItem(OIDC_CLIENT_KEY, JSON.stringify({ visitorClientId: clientId }));
     else sessionStorage.removeItem(OIDC_CLIENT_KEY);
   } catch {
     // Without storage the callback falls back to the normal client.
@@ -74,7 +75,10 @@ export class OidcAuthService {
     await this.startFlow(visitorClientId, { login_hint: nonce });
   }
 
-  private async startFlow(visitorClientId: string | null, params?: Record<string, string>): Promise<void> {
+  private async startFlow(
+    visitorClientId: string | null,
+    params?: Record<string, string>,
+  ): Promise<void> {
     const switching = visitorClientId !== rememberedVisitorClient();
     rememberVisitorClient(visitorClientId);
     if (switching) {

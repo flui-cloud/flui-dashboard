@@ -4,7 +4,7 @@ import {
   OnInit,
   inject,
   signal,
-  viewChild
+  viewChild,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -25,15 +25,9 @@ import {
 } from '../../model/document-console.models';
 import { DocumentCollectionTreeComponent } from './document-collection-tree.component';
 import { DocumentListComponent } from './document-list.component';
-import {
-  DocQuery,
-  DocumentQueryBarComponent,
-} from './document-query-bar.component';
+import { DocQuery, DocumentQueryBarComponent } from './document-query-bar.component';
 import { DocumentShellComponent } from './document-shell.component';
-import {
-  AssistFn,
-  DbAssistantChatComponent,
-} from './db-assistant-chat.component';
+import { AssistFn, DbAssistantChatComponent } from './db-assistant-chat.component';
 import { parsePlainFind } from './parse-plain-find';
 
 type ConnState = 'connecting' | 'connected' | 'error';
@@ -97,7 +91,9 @@ const EMPTY_QUERY: DocQuery = {
               </span>
             }
             @case ('connected') {
-              <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300">
+              <span
+                class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300"
+              >
                 Connected
               </span>
             }
@@ -162,7 +158,9 @@ const EMPTY_QUERY: DocQuery = {
           <div class="min-h-0 flex-1 overflow-y-auto">
             @if (selectedCollection()) {
               <div class="mb-2 flex flex-wrap items-center gap-2">
-                <span class="break-all font-mono text-sm font-medium">{{ selectedDb() }} / {{ selectedCollection() }}</span>
+                <span class="break-all font-mono text-sm font-medium"
+                  >{{ selectedDb() }} / {{ selectedCollection() }}</span
+                >
                 @if (durationMs() !== null) {
                   <span class="ml-auto text-xs text-muted-foreground">{{ durationMs() }}ms</span>
                 }
@@ -214,10 +212,9 @@ export class DocumentConsolePageComponent implements OnInit {
   private readonly shell = viewChild(DocumentShellComponent);
   private readonly queryBar = viewChild(DocumentQueryBarComponent);
 
-  readonly applicationId = toSignal(
-    this.route.paramMap.pipe(map((p) => p.get('applicationId'))),
-    { initialValue: this.route.snapshot.paramMap.get('applicationId') },
-  );
+  readonly applicationId = toSignal(this.route.paramMap.pipe(map((p) => p.get('applicationId'))), {
+    initialValue: this.route.snapshot.paramMap.get('applicationId'),
+  });
 
   readonly conn = signal<ConnState>('connecting');
   readonly connError = signal<string | null>(null);

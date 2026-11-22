@@ -13,7 +13,9 @@ import { consumeLoginRedirect } from '../../../../core/utils/safe-redirect';
     <div class="min-h-screen flex items-center justify-center bg-background">
       @if (apiError()) {
         <div class="text-center space-y-3 px-4">
-          <p class="text-sm text-destructive">Authentication service unavailable. Please try again later.</p>
+          <p class="text-sm text-destructive">
+            Authentication service unavailable. Please try again later.
+          </p>
           <a href="/" class="text-xs underline text-muted-foreground">← Back to dashboard</a>
         </div>
       } @else {
@@ -48,7 +50,11 @@ export class CallbackComponent implements OnInit {
             sessionStorage.removeItem('flui_login_redirect');
             if (key) sessionStorage.removeItem(key);
           } else {
-            if (key) sessionStorage.setItem(key, JSON.stringify({ count: attempts + 1, firstAttemptAt: Date.now() }));
+            if (key)
+              sessionStorage.setItem(
+                key,
+                JSON.stringify({ count: attempts + 1, firstAttemptAt: Date.now() }),
+              );
             this.navigateAfterLogin();
           }
         },

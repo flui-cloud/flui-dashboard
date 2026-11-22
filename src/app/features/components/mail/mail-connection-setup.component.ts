@@ -35,15 +35,15 @@ import { consoleError } from './mail-format';
         <p class="mt-1.5 flex items-center gap-1.5 text-xs text-emerald-700 dark:text-emerald-400">
           <ng-icon name="lucideCircleCheck" class="h-3.5 w-3.5" />
           {{ providerName() }} authenticates mail from
-          <span class="font-mono">{{ s.domain }}</span
-          >.
+          <span class="font-mono">{{ s.domain }}</span>.
         </p>
       } @else {
-        <div class="mt-2 rounded-md border border-amber-200 bg-amber-50 p-2.5 dark:border-amber-500/30 dark:bg-amber-500/10">
+        <div
+          class="mt-2 rounded-md border border-amber-200 bg-amber-50 p-2.5 dark:border-amber-500/30 dark:bg-amber-500/10"
+        >
           <p class="text-xs font-medium text-amber-900 dark:text-amber-300">
             {{ providerName() }} is refusing mail from this sender until it verifies
-            <span class="font-mono">{{ s.domain ?? 'the domain' }}</span
-            >.
+            <span class="font-mono">{{ s.domain ?? 'the domain' }}</span>.
           </p>
 
           @if (steps().length) {
@@ -54,7 +54,8 @@ import { consoleError } from './mail-format';
                     {{ glyph(step) }}
                   </span>
                   <span class="text-amber-900 dark:text-amber-300">
-                    {{ label(step) }}<span class="text-amber-800/70 dark:text-amber-400/70">
+                    {{ label(step)
+                    }}<span class="text-amber-800/70 dark:text-amber-400/70">
                       — {{ detail(step) }}</span
                     >
                   </span>
@@ -89,7 +90,9 @@ import { consoleError } from './mail-format';
           }
 
           @if (s.published) {
-            <p class="mt-1.5 flex items-start gap-1.5 text-[11px] text-emerald-700 dark:text-emerald-400">
+            <p
+              class="mt-1.5 flex items-start gap-1.5 text-[11px] text-emerald-700 dark:text-emerald-400"
+            >
               <ng-icon name="lucideCircleCheck" class="mt-0.5 h-3 w-3 shrink-0" />
               <span>
                 Every record it asked for is published and resolving. Nothing left on our side —
@@ -98,8 +101,8 @@ import { consoleError } from './mail-format';
             </p>
           } @else if (s.canWrite) {
             <p class="mt-1.5 text-[11px] text-amber-800 dark:text-amber-400">
-              Flui manages <span class="font-mono">{{ zoneNote(s) }}</span
-              >, so the records go in for you. Nothing to copy anywhere.
+              Flui manages <span class="font-mono">{{ zoneNote(s) }}</span>, so the records go in
+              for you. Nothing to copy anywhere.
             </p>
             @if (published(); as done) {
               <p class="mt-1 text-[11px] text-emerald-700 dark:text-emerald-400">{{ done }}</p>
@@ -116,7 +119,14 @@ import { consoleError } from './mail-format';
           }
 
           @if (asked(); as answer) {
-            <p class="mt-2 text-[11px]" [class]="answer.ok ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'">
+            <p
+              class="mt-2 text-[11px]"
+              [class]="
+                answer.ok
+                  ? 'text-emerald-700 dark:text-emerald-400'
+                  : 'text-red-700 dark:text-red-400'
+              "
+            >
               {{ answer.text }}
             </p>
           }
@@ -137,7 +147,9 @@ import { consoleError } from './mail-format';
                 @if (busy()) {
                   <ng-icon name="lucideRotateCcw" class="h-3 w-3 animate-spin" />
                 }
-                {{ s.published ? 'Ask ' + providerName() + ' to check now' : 'Publish the records' }}
+                {{
+                  s.published ? 'Ask ' + providerName() + ' to check now' : 'Publish the records'
+                }}
               </button>
             }
             <button
@@ -146,11 +158,7 @@ import { consoleError } from './mail-format';
               [disabled]="loading()"
               class="inline-flex h-7 items-center gap-1.5 rounded-md border border-amber-300 px-2 text-[11px] font-medium text-amber-900 hover:bg-amber-100 disabled:opacity-60 dark:border-amber-500/40 dark:text-amber-300 dark:hover:bg-amber-500/20"
             >
-              <ng-icon
-                name="lucideRotateCcw"
-                class="h-3 w-3"
-                [class.animate-spin]="loading()"
-              />
+              <ng-icon name="lucideRotateCcw" class="h-3 w-3" [class.animate-spin]="loading()" />
               Check again
             </button>
           </div>

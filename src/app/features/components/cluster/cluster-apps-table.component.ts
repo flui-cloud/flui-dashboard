@@ -17,7 +17,10 @@ import { formatBytes } from '../../../shared/utils/metric-format';
     <div class="card-surface">
       <div class="flex items-center justify-between gap-4 px-5 pt-4 pb-3">
         <h3 class="text-sm font-semibold text-foreground">What is using the cluster</h3>
-        <a routerLink="/apps/applications" class="text-[11px] font-semibold text-primary hover:underline">
+        <a
+          routerLink="/apps/applications"
+          class="text-[11px] font-semibold text-primary hover:underline"
+        >
           All applications →
         </a>
       </div>
@@ -43,7 +46,9 @@ import { formatBytes } from '../../../shared/utils/metric-format';
                 <tr class="border-t border-border align-middle">
                   <td class="px-5 py-3">
                     <div class="flex flex-col min-w-0">
-                      <span class="text-sm font-medium text-foreground truncate">{{ app.name }}</span>
+                      <span class="text-sm font-medium text-foreground truncate">{{
+                        app.name
+                      }}</span>
                       <span class="text-[10px] text-sub truncate">{{ app.namespace }}</span>
                     </div>
                   </td>
@@ -63,10 +68,24 @@ import { formatBytes } from '../../../shared/utils/metric-format';
                       [color]="meterColor"
                     />
                   </td>
-                  <td class="px-3 py-3 font-mono text-xs" [class]="app.replicasDegraded ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'">
+                  <td
+                    class="px-3 py-3 font-mono text-xs"
+                    [class]="
+                      app.replicasDegraded
+                        ? 'text-amber-600 dark:text-amber-400'
+                        : 'text-muted-foreground'
+                    "
+                  >
                     {{ app.replicas }}
                   </td>
-                  <td class="px-5 py-3 font-mono text-xs" [class]="app.restarts > 2 ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'">
+                  <td
+                    class="px-5 py-3 font-mono text-xs"
+                    [class]="
+                      app.restarts > 2
+                        ? 'text-amber-600 dark:text-amber-400'
+                        : 'text-muted-foreground'
+                    "
+                  >
                     {{ app.restarts }}
                   </td>
                 </tr>
@@ -77,9 +96,13 @@ import { formatBytes } from '../../../shared/utils/metric-format';
       }
     </div>
   `,
-  styles: [`
-    :host { display: block; }
-  `],
+  styles: [
+    `
+      :host {
+        display: block;
+      }
+    `,
+  ],
 })
 export class ClusterAppsTableComponent {
   readonly service = inject(ClusterAppsMetricsService);

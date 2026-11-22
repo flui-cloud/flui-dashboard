@@ -68,9 +68,17 @@ function pageObservations(input: ProviderSurfaceInput): Observation[] {
     textObservation('flui.provider.credentials_expires_at', config?.credentialsExpiresAt, 'api'),
     textObservation('flui.provider.updated_at', config?.updatedAt, 'api'),
     textObservation('flui.provider.last_health_check', config?.lastHealthCheck, 'api'),
-    config ? valueObservation('flui.provider.enabled_regions_count', config.enabledRegions.length, 'derived') : null,
+    config
+      ? valueObservation(
+          'flui.provider.enabled_regions_count',
+          config.enabledRegions.length,
+          'derived',
+        )
+      : null,
     textObservation('flui.provider.health_status', health?.status, 'api'),
-    health ? valueObservation('flui.provider.health_response_time_ms', health.responseTime, 'api') : null,
+    health
+      ? valueObservation('flui.provider.health_response_time_ms', health.responseTime, 'api')
+      : null,
   ].filter((observation): observation is Observation => observation !== null);
 }
 

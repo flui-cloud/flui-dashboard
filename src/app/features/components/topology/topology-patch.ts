@@ -52,7 +52,9 @@ function withDeployed(topology: TopologyResponseDto, app: TopologyAppDto): Topol
   const known = topology.stacks.some((s) => s.id === app.stackId);
   const stacks = known
     ? topology.stacks.map((s) =>
-        s.id === app.stackId && !s.appIds.includes(app.id) ? { ...s, appIds: [...s.appIds, app.id] } : s,
+        s.id === app.stackId && !s.appIds.includes(app.id)
+          ? { ...s, appIds: [...s.appIds, app.id] }
+          : s,
       )
     : [
         ...topology.stacks,
@@ -90,7 +92,10 @@ export function applyTopologyEvent(
       return data.app ? withDeployed(topology, data.app) : topology;
     case 'app.removed':
       return data.appId
-        ? withApps(topology, topology.apps.filter((a) => a.id !== data.appId))
+        ? withApps(
+            topology,
+            topology.apps.filter((a) => a.id !== data.appId),
+          )
         : topology;
     case 'server.added':
       return data.server

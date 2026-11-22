@@ -6,18 +6,16 @@ import { HlmIconDirective } from '@spartan-ng/ui-icon-helm';
 import type { ClassValue } from 'clsx';
 
 @Component({
-	selector: 'hlm-menu-item-sub-indicator',
-	providers: [provideIcons({ lucideChevronRight })],
-	imports: [NgIcon, HlmIconDirective],
-	template: `
-		<ng-icon hlm size="none" class="h-full w-full" name="lucideChevronRight" />
-	`,
-	host: {
-		'[class]': '_computedClass()',
-	},
-	changeDetection: ChangeDetectionStrategy.OnPush,
+  selector: 'hlm-menu-item-sub-indicator',
+  providers: [provideIcons({ lucideChevronRight })],
+  imports: [NgIcon, HlmIconDirective],
+  template: ` <ng-icon hlm size="none" class="h-full w-full" name="lucideChevronRight" /> `,
+  host: {
+    '[class]': '_computedClass()',
+  },
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HlmMenuItemSubIndicatorComponent {
-	public readonly userClass = input<ClassValue>('', { alias: 'class' });
-	protected _computedClass = computed(() => hlm('inline-block ml-auto h-4 w-4', this.userClass()));
+  public readonly userClass = input<ClassValue>('', { alias: 'class' });
+  protected _computedClass = computed(() => hlm('inline-block ml-auto h-4 w-4', this.userClass()));
 }

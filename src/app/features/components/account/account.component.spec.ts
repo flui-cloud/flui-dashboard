@@ -70,6 +70,8 @@ describe('AccountComponent', () => {
         .createSpy('overview')
         .and.returnValue(throwError(() => ({ error: { message: 'Provider down.' } }))),
     });
-    expect(el.querySelector('[data-testid="account-error"]')?.textContent).toContain('Provider down.');
+    expect(el.querySelector('[data-testid="account-error"]')?.textContent).toContain(
+      'Provider down.',
+    );
   });
 });

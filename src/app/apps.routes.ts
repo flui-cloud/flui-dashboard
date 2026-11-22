@@ -9,17 +9,17 @@ export const appsRoutes: Routes = [
   {
     path: 'projects',
     loadComponent: () =>
-      import(
-        './features/components/projects/project-workloads.component'
-      ).then((m) => m.ProjectWorkloadsComponent),
+      import('./features/components/projects/project-workloads.component').then(
+        (m) => m.ProjectWorkloadsComponent,
+      ),
     title: 'Projects - flui.cloud',
   },
   {
     path: 'data',
     loadComponent: () =>
-      import(
-        './features/components/application/applications-list.component'
-      ).then((m) => m.ApplicationsListComponent),
+      import('./features/components/application/applications-list.component').then(
+        (m) => m.ApplicationsListComponent,
+      ),
     data: { list: 'data' },
     title: 'Data - flui.cloud',
   },
@@ -28,9 +28,9 @@ export const appsRoutes: Routes = [
   {
     path: 'system',
     loadComponent: () =>
-      import(
-        './features/components/application/applications-list.component'
-      ).then((m) => m.ApplicationsListComponent),
+      import('./features/components/application/applications-list.component').then(
+        (m) => m.ApplicationsListComponent,
+      ),
     data: { list: 'system' },
     title: 'System Apps - flui.cloud',
   },
@@ -40,18 +40,18 @@ export const appsRoutes: Routes = [
       {
         path: '',
         loadComponent: () =>
-          import(
-            './features/components/application/applications-list.component'
-          ).then((m) => m.ApplicationsListComponent),
+          import('./features/components/application/applications-list.component').then(
+            (m) => m.ApplicationsListComponent,
+          ),
         data: { list: 'applications' },
         title: 'Applications - flui.cloud',
       },
       {
         path: ':id',
         loadComponent: () =>
-          import(
-            './features/components/application/application-detail.component'
-          ).then((m) => m.ApplicationDetailComponent),
+          import('./features/components/application/application-detail.component').then(
+            (m) => m.ApplicationDetailComponent,
+          ),
         title: 'Application Details - flui.cloud',
         children: [
           { path: '', redirectTo: 'overview', pathMatch: 'full' },
@@ -59,28 +59,28 @@ export const appsRoutes: Routes = [
             path: 'overview',
             loadComponent: () =>
               import('./features/components/application/app-overview-tab.component').then(
-                (m) => m.AppOverviewTabComponent
+                (m) => m.AppOverviewTabComponent,
               ),
           },
           {
             path: 'clients',
             loadComponent: () =>
               import('./features/components/application/app-clients-tab.component').then(
-                (m) => m.AppClientsTabComponent
+                (m) => m.AppClientsTabComponent,
               ),
           },
           {
             path: 'monitoring',
             loadComponent: () =>
               import('./features/components/application/app-monitoring-tab.component').then(
-                (m) => m.AppMonitoringTabComponent
+                (m) => m.AppMonitoringTabComponent,
               ),
           },
           {
             path: 'logs',
             loadComponent: () =>
               import('./features/components/application/app-logs-tab.component').then(
-                (m) => m.AppLogsTabComponent
+                (m) => m.AppLogsTabComponent,
               ),
             // Marker only, no consumer yet: mask mode makes no substitution
             // promise over raw log content, so automated screenshot capture
@@ -91,42 +91,42 @@ export const appsRoutes: Routes = [
             path: 'revisions',
             loadComponent: () =>
               import('./features/components/application/app-revisions-tab.component').then(
-                (m) => m.AppRevisionsTabComponent
+                (m) => m.AppRevisionsTabComponent,
               ),
           },
           {
             path: 'configuration',
             loadComponent: () =>
               import('./features/components/application/app-configuration-tab.component').then(
-                (m) => m.AppConfigurationTabComponent
+                (m) => m.AppConfigurationTabComponent,
               ),
           },
           {
             path: 'resources',
             loadComponent: () =>
               import('./features/components/application/app-resources-tab.component').then(
-                (m) => m.AppResourcesTabComponent
+                (m) => m.AppResourcesTabComponent,
               ),
           },
           {
             path: 'dns',
             loadComponent: () =>
               import('./features/components/application/app-dns-tab.component').then(
-                (m) => m.AppDnsTabComponent
+                (m) => m.AppDnsTabComponent,
               ),
           },
           {
             path: 'builds',
             loadComponent: () =>
               import('./features/components/application/builds/app-builds-list.component').then(
-                (m) => m.AppBuildsListComponent
+                (m) => m.AppBuildsListComponent,
               ),
           },
           {
             path: 'releases',
             loadComponent: () =>
               import('./features/components/application/app-images-tab.component').then(
-                (m) => m.AppImagesTabComponent
+                (m) => m.AppImagesTabComponent,
               ),
           },
           { path: 'images', redirectTo: 'releases', pathMatch: 'full' },
@@ -134,57 +134,57 @@ export const appsRoutes: Routes = [
             path: 'snapshots',
             loadComponent: () =>
               import('./features/components/application/app-snapshots-tab.component').then(
-                (m) => m.AppSnapshotsTabComponent
+                (m) => m.AppSnapshotsTabComponent,
               ),
           },
           {
             path: 'schedules',
             loadComponent: () =>
               import('./features/components/application/app-schedules-tab.component').then(
-                (m) => m.AppSchedulesTabComponent
+                (m) => m.AppSchedulesTabComponent,
               ),
           },
           {
             path: 'sessions',
             loadComponent: () =>
               import('./features/components/application/app-sessions-tab.component').then(
-                (m) => m.AppSessionsTabComponent
+                (m) => m.AppSessionsTabComponent,
               ),
           },
           {
             path: 'identity',
             loadComponent: () =>
               import('./features/components/application/app-identity-tab.component').then(
-                (m) => m.AppIdentityTabComponent
+                (m) => m.AppIdentityTabComponent,
               ),
           },
           {
             path: 'messaging',
             loadComponent: () =>
               import('./features/components/application/app-messaging-tab.component').then(
-                (m) => m.AppMessagingTabComponent
+                (m) => m.AppMessagingTabComponent,
               ),
           },
           {
             path: 'gateway',
             loadComponent: () =>
               import('./features/components/application/app-gateway-tab.component').then(
-                (m) => m.AppGatewayTabComponent
+                (m) => m.AppGatewayTabComponent,
               ),
           },
           {
             path: 'diagnoses',
             loadComponent: () =>
-              import(
-                './features/components/application/crash-diagnoses/app-diagnoses-tab.component'
-              ).then((m) => m.AppDiagnosesTabComponent),
+              import('./features/components/application/crash-diagnoses/app-diagnoses-tab.component').then(
+                (m) => m.AppDiagnosesTabComponent,
+              ),
           },
           {
             path: 'debug-pods',
             loadComponent: () =>
-              import(
-                './features/components/application/pod-debug/app-pod-debug-tab.component'
-              ).then((m) => m.AppPodDebugTabComponent),
+              import('./features/components/application/pod-debug/app-pod-debug-tab.component').then(
+                (m) => m.AppPodDebugTabComponent,
+              ),
           },
         ],
       },
@@ -194,7 +194,7 @@ export const appsRoutes: Routes = [
     path: 'recap/:id',
     loadComponent: () =>
       import('./features/components/application/app-recap.component').then(
-        (m) => m.AppRecapComponent
+        (m) => m.AppRecapComponent,
       ),
     title: 'App Recap - flui.cloud',
   },
@@ -204,25 +204,25 @@ export const appsRoutes: Routes = [
       {
         path: '',
         loadComponent: () =>
-          import(
-            './features/components/application/repositories-list.component'
-          ).then((m) => m.RepositoriesListComponent),
+          import('./features/components/application/repositories-list.component').then(
+            (m) => m.RepositoriesListComponent,
+          ),
         title: 'Repositories - flui.cloud',
       },
       {
         path: 'github-setup',
         loadComponent: () =>
-          import(
-            './features/components/application/github-setup-wizard.component'
-          ).then((m) => m.GithubSetupWizardComponent),
+          import('./features/components/application/github-setup-wizard.component').then(
+            (m) => m.GithubSetupWizardComponent,
+          ),
         title: 'Setup GitHub Integration - flui.cloud',
       },
       {
         path: ':id/map',
         loadComponent: () =>
-          import(
-            './features/components/repo-map/repo-map.component'
-          ).then((m) => m.RepoMapComponent),
+          import('./features/components/repo-map/repo-map.component').then(
+            (m) => m.RepoMapComponent,
+          ),
         title: 'Deployment Readiness - flui.cloud',
       },
     ],
@@ -230,9 +230,9 @@ export const appsRoutes: Routes = [
   {
     path: 'templates',
     loadComponent: () =>
-      import(
-        './features/components/application/templates-catalog.component'
-      ).then((m) => m.TemplatesCatalogComponent),
+      import('./features/components/application/templates-catalog.component').then(
+        (m) => m.TemplatesCatalogComponent,
+      ),
     title: 'Templates - flui.cloud',
   },
   {
@@ -241,25 +241,25 @@ export const appsRoutes: Routes = [
       {
         path: '',
         loadComponent: () =>
-          import(
-            './features/components/catalog/catalog-list.component'
-          ).then((m) => m.CatalogListComponent),
+          import('./features/components/catalog/catalog-list.component').then(
+            (m) => m.CatalogListComponent,
+          ),
         title: 'App Catalog - flui.cloud',
       },
       {
         path: 'installs/:id',
         loadComponent: () =>
-          import(
-            './features/components/catalog/catalog-install-detail.component'
-          ).then((m) => m.CatalogInstallDetailComponent),
+          import('./features/components/catalog/catalog-install-detail.component').then(
+            (m) => m.CatalogInstallDetailComponent,
+          ),
         title: 'Install Details - flui.cloud',
       },
       {
         path: ':slug',
         loadComponent: () =>
-          import(
-            './features/components/catalog/catalog-detail.component'
-          ).then((m) => m.CatalogDetailComponent),
+          import('./features/components/catalog/catalog-detail.component').then(
+            (m) => m.CatalogDetailComponent,
+          ),
         title: 'App Details - flui.cloud',
       },
     ],
@@ -267,17 +267,17 @@ export const appsRoutes: Routes = [
   {
     path: 'image-registry',
     loadComponent: () =>
-      import(
-        './features/components/image-registry/image-registry-list.component'
-      ).then((m) => m.ImageRegistryListComponent),
+      import('./features/components/image-registry/image-registry-list.component').then(
+        (m) => m.ImageRegistryListComponent,
+      ),
     title: 'Image Registry - flui.cloud',
   },
   {
     path: 'build-namespace',
     loadComponent: () =>
-      import(
-        './features/components/application/build-namespace.component'
-      ).then((m) => m.BuildNamespaceComponent),
+      import('./features/components/application/build-namespace.component').then(
+        (m) => m.BuildNamespaceComponent,
+      ),
     title: 'Build Queue - flui.cloud',
   },
   {
@@ -291,41 +291,41 @@ export const appsRoutes: Routes = [
       {
         path: 'new',
         loadComponent: () =>
-          import(
-            './features/components/application/deploy-wizard.component'
-          ).then((m) => m.DeployWizardComponent),
+          import('./features/components/application/deploy-wizard.component').then(
+            (m) => m.DeployWizardComponent,
+          ),
         title: 'Deploy Application - flui.cloud',
       },
       {
         path: 'standalone/:buildId',
         loadComponent: () =>
-          import(
-            './features/components/application/standalone-build-progress.component'
-          ).then((m) => m.StandaloneBuildProgressComponent),
+          import('./features/components/application/standalone-build-progress.component').then(
+            (m) => m.StandaloneBuildProgressComponent,
+          ),
         title: 'Building Application - flui.cloud',
       },
       {
         path: 'build/:applicationId/:buildId',
         loadComponent: () =>
-          import(
-            './features/components/application/app-build-progress.component'
-          ).then((m) => m.AppBuildProgressComponent),
+          import('./features/components/application/app-build-progress.component').then(
+            (m) => m.AppBuildProgressComponent,
+          ),
         title: 'Building Application - flui.cloud',
       },
       {
         path: 'gha-build/:applicationId',
         loadComponent: () =>
-          import(
-            './features/components/application/github-actions-monitor.component'
-          ).then((m) => m.GithubActionsMonitorComponent),
+          import('./features/components/application/github-actions-monitor.component').then(
+            (m) => m.GithubActionsMonitorComponent,
+          ),
         title: 'GitHub Actions Build - flui.cloud',
       },
       {
         path: ':operationId',
         loadComponent: () =>
-          import(
-            './features/components/application/deploy-progress.component'
-          ).then((m) => m.DeployProgressComponent),
+          import('./features/components/application/deploy-progress.component').then(
+            (m) => m.DeployProgressComponent,
+          ),
         title: 'Deploying Application - flui.cloud',
       },
     ],

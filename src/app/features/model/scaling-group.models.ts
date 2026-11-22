@@ -208,12 +208,7 @@ export interface LadderRung {
   region: string | null;
   hourlyEur: number | null;
   outcome:
-    | 'would-buy'
-    | 'unavailable'
-    | 'does-not-fit'
-    | 'over-budget'
-    | 'refused-by-limit'
-    | 'alert';
+    'would-buy' | 'unavailable' | 'does-not-fit' | 'over-budget' | 'refused-by-limit' | 'alert';
   note?: string;
 }
 

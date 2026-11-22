@@ -7,16 +7,11 @@ import {
   effect,
   inject,
   signal,
-  viewChild
+  viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideRotateCcw,
-  lucideSearch,
-  lucideTriangleAlert,
-  lucideUndo2,
-} from '@ng-icons/lucide';
+import { lucideRotateCcw, lucideSearch, lucideTriangleAlert, lucideUndo2 } from '@ng-icons/lucide';
 import { MailSectionNavComponent } from './mail-section-nav.component';
 import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog.component';
 import { MailConsoleService } from '../../service/mail-console.service';
@@ -60,11 +55,7 @@ const REASON_LABEL: Record<string, string> = {
           [disabled]="loading()"
           class="inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-2.5 text-xs text-muted-foreground hover:bg-muted disabled:opacity-60"
         >
-          <ng-icon
-            name="lucideRotateCcw"
-            class="h-3.5 w-3.5"
-            [class.animate-spin]="loading()"
-          />
+          <ng-icon name="lucideRotateCcw" class="h-3.5 w-3.5" [class.animate-spin]="loading()" />
           Refresh
         </button>
       </app-mail-section-nav>
@@ -145,7 +136,10 @@ const REASON_LABEL: Record<string, string> = {
                   <td class="px-4 py-2">
                     <div class="text-foreground">{{ reason(s) }}</div>
                     @if (s.detail) {
-                      <div class="truncate font-mono text-[11px] text-muted-foreground" [title]="s.detail">
+                      <div
+                        class="truncate font-mono text-[11px] text-muted-foreground"
+                        [title]="s.detail"
+                      >
                         {{ s.detail }}
                       </div>
                     }
@@ -212,7 +206,9 @@ export class MailSuppressionsComponent implements OnInit, OnDestroy {
     return q ? this.entries().filter((e) => e.address.includes(q)) : this.entries();
   });
 
-  protected readonly removeTitle = computed(() => `Allow ${this.pending() ?? 'this address'} again`);
+  protected readonly removeTitle = computed(
+    () => `Allow ${this.pending() ?? 'this address'} again`,
+  );
 
   protected readonly removeMessage = 'Flui will start writing to this address again.';
 

@@ -169,9 +169,9 @@ describe('ActivityTabComponent', () => {
 
   it('keeps the explanation behind a button', () => {
     expect(text()).not.toContain('Every change, every refused request');
-    const info = (Array.from(fixture.nativeElement.querySelectorAll('button')) as HTMLButtonElement[]).find(
-      (b) => b.textContent?.includes('What is recorded'),
-    )!;
+    const info = (
+      Array.from(fixture.nativeElement.querySelectorAll('button')) as HTMLButtonElement[]
+    ).find((b) => b.textContent?.includes('What is recorded'))!;
     info.click();
     fixture.detectChanges();
     expect(text()).toContain('Every change, every refused request');

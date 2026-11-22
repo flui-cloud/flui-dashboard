@@ -38,7 +38,10 @@ export function policyDtoOf(draft: PolicyWizardDraft): CreateBackupPolicyDto {
     if (Object.keys(metadata).length) dto.metadata = metadata;
   }
   if (form.scope === 'namespaces') {
-    const namespaces = draft.namespacesText.split(',').map((s) => s.trim()).filter(Boolean);
+    const namespaces = draft.namespacesText
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
     dto.scopeSelector = { namespaces };
   } else if (form.scope === 'label_selector') {
     dto.scopeSelector = { labelSelector: draft.labelSelector };

@@ -1,7 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { AppDnsInfo, DashboardDnsService, DashboardDnsStatus } from '../../service/dashboard-dns.service';
+import {
+  AppDnsInfo,
+  DashboardDnsService,
+  DashboardDnsStatus,
+} from '../../service/dashboard-dns.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { DashboardCertsComponent } from './dashboard-certs.component';
 
@@ -24,7 +28,8 @@ describe('DashboardCertsComponent', () => {
   let fixture: ComponentFixture<DashboardCertsComponent>;
   const status = signal<DashboardDnsStatus | null>(null);
 
-  const q = (id: string): HTMLElement | null => fixture.nativeElement.querySelector(`[data-testid="${id}"]`);
+  const q = (id: string): HTMLElement | null =>
+    fixture.nativeElement.querySelector(`[data-testid="${id}"]`);
 
   const build = async (firstStep: boolean) => {
     await TestBed.configureTestingModule({

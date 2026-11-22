@@ -41,9 +41,7 @@ describe('volume backup models', () => {
 
   it('names a retention backup scheduled and a kept one manual', () => {
     expect(backupTriggerLabel(backup({ kept: 'retention' }))).toBe('Scheduled');
-    expect(backupTriggerLabel(backup({ kept: 'until-deleted' }))).toBe(
-      'Manual · kept',
-    );
+    expect(backupTriggerLabel(backup({ kept: 'until-deleted' }))).toBe('Manual · kept');
   });
 
   it('walks paths relative to the volume root', () => {
@@ -59,8 +57,10 @@ describe('volume backup models', () => {
   });
 
   it('drops a selected path already inside a selected folder', () => {
-    expect(
-      collapseSelection(['uploads/a.png', 'uploads', 'db/app.sqlite', 'uploadsX']),
-    ).toEqual(['db/app.sqlite', 'uploads', 'uploadsX']);
+    expect(collapseSelection(['uploads/a.png', 'uploads', 'db/app.sqlite', 'uploadsX'])).toEqual([
+      'db/app.sqlite',
+      'uploads',
+      'uploadsX',
+    ]);
   });
 });

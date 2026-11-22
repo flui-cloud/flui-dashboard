@@ -34,7 +34,9 @@ describe('SandboxBannerComponent', () => {
     expect(el.textContent).toContain('Demo guest');
     expect(el.textContent).toContain('read-only demo');
     expect(el.querySelector('button')).toBeNull();
-    expect(el.querySelector('[data-testid="install-flui"]')?.getAttribute('href')).toBe(INSTALL_FLUI_URL);
+    expect(el.querySelector('[data-testid="install-flui"]')?.getAttribute('href')).toBe(
+      INSTALL_FLUI_URL,
+    );
   });
 
   it('lets a guest with a space keep their apps', () => {
@@ -59,7 +61,8 @@ describe('SandboxBannerComponent', () => {
     expect(link.target).toBe('_blank');
   });
 
-  const star = (el: HTMLElement) => el.querySelector('[data-testid="star-on-github"]') as HTMLAnchorElement | null;
+  const star = (el: HTMLElement) =>
+    el.querySelector('[data-testid="star-on-github"]') as HTMLAnchorElement | null;
 
   it('invites a visitor to star flui-core, in a new tab, without asking GitHub for a count', () => {
     const { el } = build(false, true);

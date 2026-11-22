@@ -18,7 +18,10 @@ import {
 
 const NOW = Date.parse('2026-09-27T12:00:00Z');
 
-const protection = (over: Partial<NonNullable<AppProtection['coverage']>> = {}, size: number | null = null): AppProtection => ({
+const protection = (
+  over: Partial<NonNullable<AppProtection['coverage']>> = {},
+  size: number | null = null,
+): AppProtection => ({
   applicationId: 'a1',
   protectedOffCluster: true,
   policies: [],
@@ -76,11 +79,24 @@ describe('app recap view', () => {
 
   it('says not backed up with the reason and offers Protect when nothing covers the data', () => {
     const band = backupBand(
-      protection({ coverage: 'unprotected', reason: 'no_policy', alarm: true, policy: null, lastSuccessAt: null, protectPath: '/x?y=1' }),
+      protection({
+        coverage: 'unprotected',
+        reason: 'no_policy',
+        alarm: true,
+        policy: null,
+        lastSuccessAt: null,
+        protectPath: '/x?y=1',
+      }),
       NOW,
     )!;
     expect(band).toEqual(
-      jasmine.objectContaining({ label: 'Not backed up', tone: 'warn', detail: 'No policy covers it.', protectPath: '/x?y=1', last: null }),
+      jasmine.objectContaining({
+        label: 'Not backed up',
+        tone: 'warn',
+        detail: 'No policy covers it.',
+        protectPath: '/x?y=1',
+        last: null,
+      }),
     );
   });
 
@@ -90,25 +106,43 @@ describe('app recap view', () => {
         coverage: 'not_backed_up_by_choice',
         reason: 'not_backed_up_by_choice',
         protectPath: null,
-        decision: { notBackedUp: true, note: 'scratch copy', decidedBy: 'u1', decidedAt: '2026-10-01T09:00:00Z' },
+        decision: {
+          notBackedUp: true,
+          note: 'scratch copy',
+          decidedBy: 'u1',
+          decidedAt: '2026-10-01T09:00:00Z',
+        },
       }),
       NOW,
     )!;
     expect(band).toEqual(
-      jasmine.objectContaining({ label: 'Not backed up by choice', tone: 'muted', detail: 'scratch copy', protectPath: null }),
+      jasmine.objectContaining({
+        label: 'Not backed up by choice',
+        tone: 'muted',
+        detail: 'scratch copy',
+        protectPath: null,
+      }),
     );
   });
 
   it('says there is nothing to back up for an app that keeps no data, and nothing when the rule did not answer', () => {
-    expect(backupBand(protection({ holdsData: false, coverage: 'unprotected' }), NOW)!.label).toBe('Nothing to back up');
+    expect(backupBand(protection({ holdsData: false, coverage: 'unprotected' }), NOW)!.label).toBe(
+      'Nothing to back up',
+    );
     expect(backupBand(null)).toBeNull();
   });
 
   it('reads the endpoint health from the recorded states', () => {
     const app = (over: Partial<Application>) => ({ ...over }) as Application;
-    expect(endpointHealth(app({ endpointStatus: 'IN_SYNC', endpointCertificateStatus: 'valid' }), true).label).toBe('DNS and certificate ok');
+    expect(
+      endpointHealth(app({ endpointStatus: 'IN_SYNC', endpointCertificateStatus: 'valid' }), true)
+        .label,
+    ).toBe('DNS and certificate ok');
     expect(endpointHealth(app({ endpointStatus: 'ERROR' }), true).tone).toBe('danger');
-    expect(endpointHealth(app({ endpointStatus: 'IN_SYNC', endpointCertificateStatus: 'issuing' }), true).label).toContain('being issued');
+    expect(
+      endpointHealth(app({ endpointStatus: 'IN_SYNC', endpointCertificateStatus: 'issuing' }), true)
+        .label,
+    ).toContain('being issued');
     expect(endpointHealth(app({ endpointStatus: 'IN_SYNC' }), false).label).toBe('DNS ok · no TLS');
   });
 
@@ -157,6 +191,8 @@ describe('app recap view', () => {
   it('shortens the backup detail on a component card to last and next', () => {
     const band = backupBand(protection({}, null), NOW)!;
     expect(componentBackupDetail(band)).toBe('last 9h ago · next in 15h');
-    expect(componentBackupDetail({ ...band, protectPath: '/x', detail: 'No policy covers it.' })).toBe('No policy covers it.');
+    expect(
+      componentBackupDetail({ ...band, protectPath: '/x', detail: 'No policy covers it.' }),
+    ).toBe('No policy covers it.');
   });
 });

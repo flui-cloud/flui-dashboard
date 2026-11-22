@@ -15,7 +15,8 @@ describe('DashboardComponent', () => {
   const userApps = signal(0);
   let fleet: { loadAll: jasmine.Spy; loadMetrics: jasmine.Spy; loadNeedsYou: jasmine.Spy };
 
-  const q = (id: string): HTMLElement | null => fixture.nativeElement.querySelector(`[data-testid="${id}"]`);
+  const q = (id: string): HTMLElement | null =>
+    fixture.nativeElement.querySelector(`[data-testid="${id}"]`);
   const order = (): string[] =>
     Array.from((q('home-fresh') ?? q('home-control-room'))!.querySelectorAll('*'))
       .map((e) => e.tagName.toLowerCase())
@@ -109,7 +110,11 @@ describe('DashboardComponent', () => {
     const [left, right] = Array.from(q('home-columns')!.children).map((column) =>
       Array.from(column.children).map((card) => card.tagName.toLowerCase()),
     );
-    expect(left).toEqual(['app-dashboard-clusters-table', 'app-dashboard-certs', 'app-dashboard-activity']);
+    expect(left).toEqual([
+      'app-dashboard-clusters-table',
+      'app-dashboard-certs',
+      'app-dashboard-activity',
+    ]);
     expect(right).toEqual([
       'app-dashboard-needs-you',
       'app-dashboard-agent-status',
@@ -118,7 +123,10 @@ describe('DashboardComponent', () => {
     ]);
     const cards = Array.from(q('home-columns')!.querySelectorAll('[class*="order-"]'));
     const readingOrder = cards
-      .map((card) => ({ tag: card.tagName.toLowerCase(), order: Number(/order-(\d+)/.exec(card.className)![1]) }))
+      .map((card) => ({
+        tag: card.tagName.toLowerCase(),
+        order: Number(/order-(\d+)/.exec(card.className)![1]),
+      }))
       .sort((a, b) => a.order - b.order)
       .map((card) => card.tag);
     expect(readingOrder).toEqual([

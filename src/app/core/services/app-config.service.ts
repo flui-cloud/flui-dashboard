@@ -29,7 +29,11 @@ export interface VisitorEntry {
   turnstileSiteKey: string | null;
 }
 
-const VALID_CERT_MODES: ReadonlySet<CertificateMode> = new Set(['staging', 'preflight', 'production']);
+const VALID_CERT_MODES: ReadonlySet<CertificateMode> = new Set([
+  'staging',
+  'preflight',
+  'production',
+]);
 
 @Injectable({
   providedIn: 'root',
@@ -84,18 +88,17 @@ export class AppConfigService {
     if (this.config.authMode !== 'oidc' || this.config.oidcClientId) {
       return of(void 0);
     }
-    return this.fetchApiAuthConfig()
-      .pipe(
-        tap((api) => {
-          if (api?.clientId) {
-            this.config.oidcClientId = api.clientId;
-          }
-          if (!this.config.oidcIssuer && api?.issuer) {
-            this.config.oidcIssuer = api.issuer;
-          }
-        }),
-        map(() => void 0),
-      );
+    return this.fetchApiAuthConfig().pipe(
+      tap((api) => {
+        if (api?.clientId) {
+          this.config.oidcClientId = api.clientId;
+        }
+        if (!this.config.oidcIssuer && api?.issuer) {
+          this.config.oidcIssuer = api.issuer;
+        }
+      }),
+      map(() => void 0),
+    );
   }
 
   visitorEntry(): Observable<VisitorEntry> {
@@ -111,13 +114,11 @@ export class AppConfigService {
   }
 
   private fetchApiAuthConfig(): Observable<ApiAuthConfig> {
-    return this.http
-      .get<ApiAuthConfig>(`${this.config.apiBaseUrl}/api/v1/auth/config`)
-      .pipe(
-        timeout(5000),
-        map((api) => api ?? {}),
-        catchError(() => of({} as ApiAuthConfig)),
-      );
+    return this.http.get<ApiAuthConfig>(`${this.config.apiBaseUrl}/api/v1/auth/config`).pipe(
+      timeout(5000),
+      map((api) => api ?? {}),
+      catchError(() => of({} as ApiAuthConfig)),
+    );
   }
 
   get(): AppConfig {

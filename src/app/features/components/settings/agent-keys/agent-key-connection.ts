@@ -18,8 +18,7 @@ export function readKeyConnection(
   now: number = Date.now(),
 ): KeyConnection {
   const declared = key.skillVersion?.trim() || null;
-  const outOfDate =
-    !!declared && !!currentSkillVersion && declared !== currentSkillVersion;
+  const outOfDate = !!declared && !!currentSkillVersion && declared !== currentSkillVersion;
   return {
     everUsed: !!key.lastUsedAt,
     everCheckedIn: !!declared,
@@ -40,11 +39,7 @@ function lastSeen(lastUsedAt: string | undefined, now: number): string {
   return `last used ${days} day${days === 1 ? '' : 's'} ago`;
 }
 
-function skillPhrase(
-  declared: string | null,
-  current: string | null,
-  outOfDate: boolean,
-): string {
+function skillPhrase(declared: string | null, current: string | null, outOfDate: boolean): string {
   if (!declared) return 'never said which instructions it is working from';
   if (!current) return `working from skill ${declared}`;
   if (outOfDate) return `working from skill ${declared} — this instance publishes ${current}`;

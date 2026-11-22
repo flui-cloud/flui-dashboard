@@ -76,9 +76,8 @@ export class AppOverviewTabComponent implements OnInit {
   readonly deleteGroup = computed(() => {
     const id = this.app()?.id;
     return id
-      ? (this.appService
-          .applicationGroups()
-          .find((g) => g.components.some((c) => c.id === id)) ?? null)
+      ? (this.appService.applicationGroups().find((g) => g.components.some((c) => c.id === id)) ??
+          null)
       : null;
   });
 
@@ -86,8 +85,7 @@ export class AppOverviewTabComponent implements OnInit {
     () => availabilityOf(this.app(), 'rollback').state === 'available',
   );
 
-  readonly deleteDialog =
-    viewChild.required<ConfirmationDialogComponent>('deleteDialog');
+  readonly deleteDialog = viewChild.required<ConfirmationDialogComponent>('deleteDialog');
 
   readonly isDeleting = signal(false);
   readonly deleteStepMessage = signal<string | null>(null);

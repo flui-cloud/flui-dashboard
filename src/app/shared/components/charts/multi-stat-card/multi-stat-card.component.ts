@@ -4,7 +4,7 @@ import {
   MultiStatCardConfig,
   MultiStatCardData,
   DEFAULT_MULTISTAT_CONFIG,
-  StatItem
+  StatItem,
 } from '../chart.models';
 
 /**
@@ -53,7 +53,11 @@ import {
             <!-- Value -->
             <div class="flex items-baseline gap-2">
               @if (statusDot(stat); as dot) {
-                <span class="h-2 w-2 shrink-0 self-center rounded-full" [class]="dot" data-testid="multi-stat-dot"></span>
+                <span
+                  class="h-2 w-2 shrink-0 self-center rounded-full"
+                  [class]="dot"
+                  data-testid="multi-stat-dot"
+                ></span>
               }
               <span class="text-2xl font-bold text-foreground">
                 {{ formatValue(stat.value) }}{{ stat.unit || '' }}
@@ -75,44 +79,46 @@ import {
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.Eager,
-  styles: [`
-    .multi-stat-card {
-      min-height: fit-content;
-    }
+  styles: [
+    `
+      .multi-stat-card {
+        min-height: fit-content;
+      }
 
-    .stat-item {
-      display: flex;
-      flex-direction: column;
-    }
+      .stat-item {
+        display: flex;
+        flex-direction: column;
+      }
 
-    .stats-horizontal {
-      display: flex;
-      gap: 1.5rem;
-      flex-wrap: wrap;
-    }
+      .stats-horizontal {
+        display: flex;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+      }
 
-    .stats-vertical {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
+      .stats-vertical {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
 
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-      gap: 1.5rem;
-    }
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 1.5rem;
+      }
 
-    .stat-horizontal {
-      flex: 1;
-      min-width: 100px;
-    }
+      .stat-horizontal {
+        flex: 1;
+        min-width: 100px;
+      }
 
-    .stat-vertical,
-    .stat-grid {
-      width: 100%;
-    }
-  `]
+      .stat-vertical,
+      .stat-grid {
+        width: 100%;
+      }
+    `,
+  ],
 })
 export class MultiStatCardComponent {
   // Inputs
@@ -122,7 +128,7 @@ export class MultiStatCardComponent {
   // Computed configurations
   private readonly mergedConfig = computed(() => ({
     ...DEFAULT_MULTISTAT_CONFIG,
-    ...this.config()
+    ...this.config(),
   }));
 
   // Grid class based on layout

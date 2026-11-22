@@ -17,10 +17,7 @@ import {
   lucideCirclePlus,
   lucideTrash2,
 } from '@ng-icons/lucide';
-import {
-  HlmCardDirective,
-  HlmCardContentDirective,
-} from '@spartan-ng/ui-card-helm';
+import { HlmCardDirective, HlmCardContentDirective } from '@spartan-ng/ui-card-helm';
 import { HlmBadgeDirective } from '@spartan-ng/ui-badge-helm';
 import { IamService } from '../../service/iam.service';
 import { AuditService } from '../../service/audit.service';
@@ -70,16 +67,26 @@ interface ActivityState {
   template: `
     <div class="space-y-5">
       @if (showBuilder()) {
-        <app-grant-builder *fluiCan="'iam:assign-role'" [presetRole]="platformOperator" presetDuration="1d" />
+        <app-grant-builder
+          *fluiCan="'iam:assign-role'"
+          [presetRole]="platformOperator"
+          presetDuration="1d"
+        />
       }
 
       <div hlmCard>
         <div hlmCardContent class="pt-6 space-y-3">
           <div class="flex items-center justify-between gap-3">
-            <h3 class="text-sm font-semibold text-foreground">Active ({{ split().active.length }})</h3>
+            <h3 class="text-sm font-semibold text-foreground">
+              Active ({{ split().active.length }})
+            </h3>
             @if (split().active.length && !showBuilder()) {
-              <button type="button" *fluiCan="'iam:assign-role'" (click)="showBuilder.set(true)"
-                class="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground">
+              <button
+                type="button"
+                *fluiCan="'iam:assign-role'"
+                (click)="showBuilder.set(true)"
+                class="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+              >
                 <ng-icon name="lucideCirclePlus" class="h-3.5 w-3.5" />
                 Give temporary access
               </button>
@@ -92,8 +99,12 @@ interface ActivityState {
             <div class="py-6 text-center space-y-3" data-testid="temporary-empty">
               <p class="text-sm text-muted-foreground">Nobody has temporary access right now.</p>
               @if (!showBuilder()) {
-                <button type="button" *fluiCan="'iam:assign-role'" (click)="showBuilder.set(true)"
-                  class="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+                <button
+                  type="button"
+                  *fluiCan="'iam:assign-role'"
+                  (click)="showBuilder.set(true)"
+                  class="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                >
                   <ng-icon name="lucideCirclePlus" class="h-4 w-4" />
                   Give temporary access
                 </button>
@@ -106,9 +117,15 @@ interface ActivityState {
       @if (split().ended.length) {
         <div hlmCard>
           <div hlmCardContent class="pt-6 space-y-3">
-            <button type="button" (click)="showEnded.set(!showEnded())"
-              class="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground">
-              <ng-icon [name]="showEnded() ? 'lucideChevronDown' : 'lucideChevronRight'" class="h-4 w-4" />
+            <button
+              type="button"
+              (click)="showEnded.set(!showEnded())"
+              class="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground"
+            >
+              <ng-icon
+                [name]="showEnded() ? 'lucideChevronDown' : 'lucideChevronRight'"
+                class="h-4 w-4"
+              />
               Ended ({{ split().ended.length }})
             </button>
             @if (showEnded()) {
@@ -122,17 +139,30 @@ interface ActivityState {
     </div>
 
     <ng-template #row let-g let-ended="ended">
-      <div class="rounded-md border border-border/60" [class.opacity-60]="ended" data-testid="temporary-row">
+      <div
+        class="rounded-md border border-border/60"
+        [class.opacity-60]="ended"
+        data-testid="temporary-row"
+      >
         <div class="flex flex-wrap items-center gap-x-4 gap-y-1 px-3 py-2.5 text-sm">
           @if (g.binding.principal.type === 'user') {
-            <button type="button" (click)="toggle(g)" class="text-muted-foreground hover:text-foreground"
-              [attr.aria-label]="'Recent activity of ' + iam.principalDisplay(g.binding.principal)">
-              <ng-icon [name]="expanded().has(g.id) ? 'lucideChevronDown' : 'lucideChevronRight'" class="h-4 w-4" />
+            <button
+              type="button"
+              (click)="toggle(g)"
+              class="text-muted-foreground hover:text-foreground"
+              [attr.aria-label]="'Recent activity of ' + iam.principalDisplay(g.binding.principal)"
+            >
+              <ng-icon
+                [name]="expanded().has(g.id) ? 'lucideChevronDown' : 'lucideChevronRight'"
+                class="h-4 w-4"
+              />
             </button>
           } @else {
             <span class="w-4"></span>
           }
-          <span class="font-medium text-foreground">{{ iam.principalDisplay(g.binding.principal) }}</span>
+          <span class="font-medium text-foreground">{{
+            iam.principalDisplay(g.binding.principal)
+          }}</span>
           <span hlmBadge variant="outline" class="text-xs">{{ iam.roleName(g.binding.role) }}</span>
           <span class="text-muted-foreground">{{ scopeText()(g.binding) }}</span>
           <span class="text-muted-foreground inline-flex items-center gap-1">
@@ -148,8 +178,12 @@ interface ActivityState {
           }
           <span class="flex-1"></span>
           @if (!ended && iam.isRevocable(g.binding.role)) {
-            <button type="button" *fluiCan="'iam:assign-role'" (click)="revoke.emit(g)"
-              class="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1 text-xs text-muted-foreground hover:text-destructive">
+            <button
+              type="button"
+              *fluiCan="'iam:assign-role'"
+              (click)="revoke.emit(g)"
+              class="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1 text-xs text-muted-foreground hover:text-destructive"
+            >
               <ng-icon name="lucideTrash2" class="h-3.5 w-3.5" />
               Revoke
             </button>
@@ -163,7 +197,11 @@ interface ActivityState {
             } @else if (state.error) {
               <p class="text-xs text-muted-foreground py-2">Activity could not be read.</p>
             } @else {
-              <app-audit-event-list [events]="state.events" [showWho]="false" emptyText="No recorded activity." />
+              <app-audit-event-list
+                [events]="state.events"
+                [showWho]="false"
+                emptyText="No recorded activity."
+              />
             }
           </div>
         }

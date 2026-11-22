@@ -23,7 +23,9 @@ describe('a new network from the cluster wizard', () => {
     vnets: unknown[] = [],
     provider = 'ovh',
   ): Promise<void> => {
-    createVNet = jasmine.createSpy('createVNet').and.resolveTo({ id: 'v1', name: 'n', subnets: [] });
+    createVNet = jasmine
+      .createSpy('createVNet')
+      .and.resolveTo({ id: 'v1', name: 'n', subnets: [] });
     await TestBed.configureTestingModule({
       imports: [VNetSelectorComponent],
       providers: [
@@ -88,7 +90,15 @@ describe('a new network from the cluster wizard', () => {
     provider: 'scaleway',
     ipRange: '10.2.0.0/24',
     status: 'ACTIVE',
-    subnets: [{ id: 's1', ipRange: '10.2.0.0/24', networkZone: 'fr-par', servedRegions: ['fr-par'], attachedServerIds: [] }],
+    subnets: [
+      {
+        id: 's1',
+        ipRange: '10.2.0.0/24',
+        networkZone: 'fr-par',
+        servedRegions: ['fr-par'],
+        attachedServerIds: [],
+      },
+    ],
   };
 
   it('puts a new network in the zone that covers the cluster’s region, and says so to the API', async () => {
@@ -105,19 +115,25 @@ describe('a new network from the cluster wizard', () => {
   it('shows a network from another region but does not let it be picked', async () => {
     await build(scaleway, 'nl-ams', [parisNetwork], 'scaleway');
     const selector = fixture.componentInstance;
-    const card: HTMLElement = fixture.nativeElement.querySelector('[data-testid="vnet-card-scaleway-fr-par"]');
+    const card: HTMLElement = fixture.nativeElement.querySelector(
+      '[data-testid="vnet-card-scaleway-fr-par"]',
+    );
 
     card.click();
     fixture.detectChanges();
 
     expect(card.getAttribute('aria-disabled')).toBe('true');
     expect(selector.selectedVNet()).toBeNull();
-    expect(fixture.nativeElement.querySelector('[data-testid="vnet-other-region"]').textContent).toContain('fr-par');
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="vnet-other-region"]').textContent,
+    ).toContain('fr-par');
   });
 
   it('lets the same network be picked in its own region', async () => {
     await build(scaleway, 'fr-par', [parisNetwork], 'scaleway');
-    const card: HTMLElement = fixture.nativeElement.querySelector('[data-testid="vnet-card-scaleway-fr-par"]');
+    const card: HTMLElement = fixture.nativeElement.querySelector(
+      '[data-testid="vnet-card-scaleway-fr-par"]',
+    );
 
     card.click();
 

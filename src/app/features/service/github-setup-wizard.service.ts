@@ -112,9 +112,7 @@ export class GithubSetupWizardService {
         }),
       );
     } catch (err: any) {
-      this.error.set(
-        err?.error?.message ?? 'Failed to start manifest flow.',
-      );
+      this.error.set(err?.error?.message ?? 'Failed to start manifest flow.');
       return null;
     } finally {
       this.isConfiguring.set(false);
@@ -136,9 +134,7 @@ export class GithubSetupWizardService {
       this.patValidation.set(result);
       return result;
     } catch (err: any) {
-      this.error.set(
-        err?.error?.message ?? 'Failed to validate token against GitHub.',
-      );
+      this.error.set(err?.error?.message ?? 'Failed to validate token against GitHub.');
       return null;
     } finally {
       this.isConfiguring.set(false);
@@ -152,9 +148,7 @@ export class GithubSetupWizardService {
     this.isConfiguring.set(true);
     this.error.set(null);
     try {
-      const status = await firstValueFrom(
-        this.gitHubSetupApi.gitHubSetupControllerConfigurePat(),
-      );
+      const status = await firstValueFrom(this.gitHubSetupApi.gitHubSetupControllerConfigurePat());
       await firstValueFrom(
         this.gitHubOAuthApi.gitHubOAuthControllerConnectPat({
           personalAccessToken: token,
@@ -172,12 +166,7 @@ export class GithubSetupWizardService {
 
   async configureGitHubApp(): Promise<boolean> {
     const form = this.githubAppForm();
-    if (
-      !form.appId ||
-      !form.privateKey ||
-      !form.webhookSecret ||
-      !form.appSlug
-    ) {
+    if (!form.appId || !form.privateKey || !form.webhookSecret || !form.appSlug) {
       return false;
     }
 
@@ -196,8 +185,7 @@ export class GithubSetupWizardService {
       return true;
     } catch (err: any) {
       this.error.set(
-        err?.error?.message ??
-          'Failed to configure GitHub App. Verify your credentials.',
+        err?.error?.message ?? 'Failed to configure GitHub App. Verify your credentials.',
       );
       return false;
     } finally {
@@ -207,9 +195,7 @@ export class GithubSetupWizardService {
 
   async loadStatus(): Promise<GitHubSetupStatusResponseDto | null> {
     try {
-      const status = await firstValueFrom(
-        this.gitHubSetupApi.gitHubSetupControllerGetStatus(),
-      );
+      const status = await firstValueFrom(this.gitHubSetupApi.gitHubSetupControllerGetStatus());
       this.configuredStatus.set(status);
       return status;
     } catch {
@@ -222,16 +208,12 @@ export class GithubSetupWizardService {
     this.isConfiguring.set(true);
     this.error.set(null);
     try {
-      await firstValueFrom(
-        this.gitHubSetupApi.gitHubSetupControllerResetConfig(),
-      );
+      await firstValueFrom(this.gitHubSetupApi.gitHubSetupControllerResetConfig());
       this.configuredStatus.set({ configured: false, authMethod: null, imageRegistry: 'ghcr' });
       this.patValidation.set(null);
       return true;
     } catch (err: any) {
-      this.error.set(
-        err?.error?.message ?? 'Failed to reset GitHub integration.',
-      );
+      this.error.set(err?.error?.message ?? 'Failed to reset GitHub integration.');
       return false;
     } finally {
       this.isConfiguring.set(false);
@@ -246,7 +228,13 @@ export class GithubSetupWizardService {
       webhookSecret: '',
       appSlug: '',
     });
-    this.manifestForm.set({ name: '', webhooksEnabled: false, publicApp: false, publicApiUrl: '', organization: '' });
+    this.manifestForm.set({
+      name: '',
+      webhooksEnabled: false,
+      publicApp: false,
+      publicApiUrl: '',
+      organization: '',
+    });
     this.patForm.set({ token: '' });
     this.patValidation.set(null);
     this.isConfiguring.set(false);

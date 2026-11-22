@@ -152,9 +152,8 @@ describe('TemporaryAccessTabComponent', () => {
     button('Give temporary access')!.click();
     fixture.detectChanges();
     expect(fixture.componentInstance.showBuilder()).toBeTrue();
-    const builder = fixture.debugElement.query(
-      (d) => d.name === 'app-grant-builder',
-    ).componentInstance as GrantBuilderComponent;
+    const builder = fixture.debugElement.query((d) => d.name === 'app-grant-builder')
+      .componentInstance as GrantBuilderComponent;
     expect(builder.role()).toBe('platform_operator');
     expect(builder.duration()).toBe('1d');
   });

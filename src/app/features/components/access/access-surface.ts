@@ -24,13 +24,7 @@ const PAGE_ID = 'access';
 // when the cap actually bit.
 const MAX_ROWS = 50;
 
-export type AccessTabId =
-  | 'grants'
-  | 'people'
-  | 'groups'
-  | 'roles'
-  | 'temporary'
-  | 'activity';
+export type AccessTabId = 'grants' | 'people' | 'groups' | 'roles' | 'temporary' | 'activity';
 
 export interface AccessSurfaceInput {
   activeTab: AccessTabId;
@@ -72,7 +66,11 @@ function textObservation(
   return value ? { key, presentedAs: { text: value }, source } : null;
 }
 
-function valueObservation(key: string, value: number | boolean, source: ObservationSource): Observation {
+function valueObservation(
+  key: string,
+  value: number | boolean,
+  source: ObservationSource,
+): Observation {
   return { key, presentedAs: { value }, source };
 }
 
@@ -94,7 +92,11 @@ interface RowSpec {
  * exactly the field the task's redaction note authorises — the same one the People
  * rows below present — nothing wider.
  */
-function grantRow(grant: GrantRecord, roleName: AccessSurfaceInput['roleName'], scopeText: AccessSurfaceInput['scopeText']): RowSpec {
+function grantRow(
+  grant: GrantRecord,
+  roleName: AccessSurfaceInput['roleName'],
+  scopeText: AccessSurfaceInput['scopeText'],
+): RowSpec {
   return {
     key: grant.id,
     ref: grantEntityRef(grant.id),

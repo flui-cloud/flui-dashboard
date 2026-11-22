@@ -1,12 +1,18 @@
-import { Component, OnDestroy, computed, effect, inject, signal, viewChild, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnDestroy,
+  computed,
+  effect,
+  inject,
+  signal,
+  viewChild,
+  OnInit,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideArrowLeft,
-  lucideSettings,
-  lucideCheck
-} from '@ng-icons/lucide';
+import { lucideArrowLeft, lucideSettings, lucideCheck } from '@ng-icons/lucide';
 import { ProvidersOverviewComponent } from './providers-overview.component';
 import { ProviderConfigurationWizardComponent } from './provider-configuration-wizard.component';
 import { ProvidersService } from '../../service/providers.service';
@@ -25,26 +31,20 @@ type ViewMode = 'overview' | 'configure';
 @Component({
   selector: 'providers-management',
   standalone: true,
-  imports: [
-    NgIcon,
-    ProvidersOverviewComponent,
-    ProviderConfigurationWizardComponent
-],
+  imports: [NgIcon, ProvidersOverviewComponent, ProviderConfigurationWizardComponent],
   providers: [
     provideIcons({
       lucideArrowLeft,
       lucideSettings,
-      lucideCheck
-    })
+      lucideCheck,
+    }),
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="container mx-auto px-4 py-8">
       @switch (currentView()) {
         @case ('overview') {
-          <providers-overview
-            (startConfiguration)="startConfiguration($event)"
-          />
+          <providers-overview (startConfiguration)="startConfiguration($event)" />
         }
 
         @case ('configure') {
@@ -69,7 +69,9 @@ type ViewMode = 'overview' | 'configure';
       }
 
       @if (showSuccessMessage()) {
-        <div class="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transition-all">
+        <div
+          class="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transition-all"
+        >
           <div class="flex items-center space-x-2">
             <ng-icon name="lucideCheck" class="h-5 w-5" />
             <span>{{ successMessage() }}</span>
@@ -77,7 +79,7 @@ type ViewMode = 'overview' | 'configure';
         </div>
       }
     </div>
-  `
+  `,
 })
 export class ProvidersManagementComponent implements OnInit, OnDestroy {
   private readonly providersService = inject(ProvidersService);
@@ -101,12 +103,14 @@ export class ProvidersManagementComponent implements OnInit, OnDestroy {
     const providerId = this.selectedProviderId();
     if (!providerId) return null;
 
-    const availableProvider = this.providersService.availableProviders()
-      .find(p => p.id === providerId);
+    const availableProvider = this.providersService
+      .availableProviders()
+      .find((p) => p.id === providerId);
     if (availableProvider) return availableProvider;
 
-    const configuredProvider = this.providersService.configuredProviders()
-      .find(c => c.provider === providerId);
+    const configuredProvider = this.providersService
+      .configuredProviders()
+      .find((c) => c.provider === providerId);
     if (configuredProvider) {
       return this.providersService.getProviderById(configuredProvider.provider) || null;
     }
@@ -165,7 +169,7 @@ export class ProvidersManagementComponent implements OnInit, OnDestroy {
     this.currentView.set('configure');
   }
 
-backToOverview(): void {
+  backToOverview(): void {
     this.currentView.set('overview');
     this.selectedProviderId.set('');
     if (this.route.snapshot.queryParamMap.has('configure')) {

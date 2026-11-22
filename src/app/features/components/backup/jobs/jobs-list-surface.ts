@@ -33,7 +33,11 @@ export interface JobsListSurfaceContext {
   appVersion?: string;
 }
 
-function textObservation(key: string, value: string | undefined | null, source: ObservationSource): Observation | null {
+function textObservation(
+  key: string,
+  value: string | undefined | null,
+  source: ObservationSource,
+): Observation | null {
   return value ? { key, presentedAs: { text: value }, source } : null;
 }
 
@@ -47,7 +51,11 @@ function rowObservations(j: BackupJob): Observation[] {
 }
 
 function rowScope(j: BackupJob): SemanticScopeSnapshot {
-  const entity: EntityReference = { ref: jobEntityRef(j.id), label: j.startedAt ?? j.createdAt, role: 'related' };
+  const entity: EntityReference = {
+    ref: jobEntityRef(j.id),
+    label: j.startedAt ?? j.createdAt,
+    role: 'related',
+  };
   return {
     id: `${LIST_ID}:${j.id}`,
     parentId: LIST_ID,
@@ -72,7 +80,11 @@ export function presentedContent(input: JobsListSurfaceInput): PresentedContent 
     label: 'Backup jobs',
   };
 
-  const filterObservation = textObservation('flui.backup.jobs.cluster_filter', input.clusterFilterName, 'ui');
+  const filterObservation = textObservation(
+    'flui.backup.jobs.cluster_filter',
+    input.clusterFilterName,
+    'ui',
+  );
 
   const listScope: SemanticScopeSnapshot = {
     id: LIST_ID,
@@ -93,7 +105,10 @@ export function presentedContent(input: JobsListSurfaceInput): PresentedContent 
   };
 }
 
-export function buildJobsListSurface(input: JobsListSurfaceInput, context: JobsListSurfaceContext): SurfaceSnapshot {
+export function buildJobsListSurface(
+  input: JobsListSurfaceInput,
+  context: JobsListSurfaceContext,
+): SurfaceSnapshot {
   const content = presentedContent(input);
   return {
     schemaVersion: '0.2',

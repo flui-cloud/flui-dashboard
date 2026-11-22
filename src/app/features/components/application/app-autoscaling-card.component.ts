@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+  untracked,
+} from '@angular/core';
 import { ToastService } from '../../../shared/services/toast.service';
 import { AppAutoscaling, AppRuntimeService } from '../../service/app-runtime.service';
 
@@ -14,10 +23,18 @@ import { AppAutoscaling, AppRuntimeService } from '../../service/app-runtime.ser
   template: `
     <div class="card-surface p-4 space-y-3" data-testid="autoscaling-card">
       <div class="flex flex-wrap items-center justify-between gap-2">
-        <span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Autoscaling</span>
+        <span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+          >Autoscaling</span
+        >
         @if (current(); as c) {
           <span class="text-xs text-sub" data-testid="autoscaling-state">
-            {{ c.enabled ? (c.running === false ? 'On — not running on the cluster yet' : 'On') : 'Off — fixed count' }}
+            {{
+              c.enabled
+                ? c.running === false
+                  ? 'On — not running on the cluster yet'
+                  : 'On'
+                : 'Off — fixed count'
+            }}
           </span>
         }
       </div>
@@ -26,7 +43,13 @@ import { AppAutoscaling, AppRuntimeService } from '../../service/app-runtime.ser
         <p class="m-0 text-sm text-sub">{{ failed() }}</p>
       } @else if (current()) {
         <label class="flex items-center gap-2 text-sm">
-          <input type="checkbox" [checked]="enabled()" (change)="enabled.set($any($event.target).checked)" data-testid="autoscaling-enabled" [disabled]="fromManifest()" />
+          <input
+            type="checkbox"
+            [checked]="enabled()"
+            (change)="enabled.set($any($event.target).checked)"
+            data-testid="autoscaling-enabled"
+            [disabled]="fromManifest()"
+          />
           Follow the load
         </label>
 
@@ -34,15 +57,41 @@ import { AppAutoscaling, AppRuntimeService } from '../../service/app-runtime.ser
           <div class="flex flex-wrap items-end gap-3 text-sm">
             <label class="flex flex-col gap-1">
               <span class="text-xs text-sub">Min</span>
-              <input type="number" min="1" max="20" class="w-20 rounded-md border border-border bg-background px-2 py-1" [value]="min()" (input)="min.set(+$any($event.target).value)" [disabled]="fromManifest()" data-testid="autoscaling-min" />
+              <input
+                type="number"
+                min="1"
+                max="20"
+                class="w-20 rounded-md border border-border bg-background px-2 py-1"
+                [value]="min()"
+                (input)="min.set(+$any($event.target).value)"
+                [disabled]="fromManifest()"
+                data-testid="autoscaling-min"
+              />
             </label>
             <label class="flex flex-col gap-1">
               <span class="text-xs text-sub">Max</span>
-              <input type="number" min="1" max="20" class="w-20 rounded-md border border-border bg-background px-2 py-1" [value]="max()" (input)="max.set(+$any($event.target).value)" [disabled]="fromManifest()" data-testid="autoscaling-max" />
+              <input
+                type="number"
+                min="1"
+                max="20"
+                class="w-20 rounded-md border border-border bg-background px-2 py-1"
+                [value]="max()"
+                (input)="max.set(+$any($event.target).value)"
+                [disabled]="fromManifest()"
+                data-testid="autoscaling-max"
+              />
             </label>
             <label class="flex flex-col gap-1">
               <span class="text-xs text-sub">Add one above CPU %</span>
-              <input type="number" min="10" max="95" class="w-20 rounded-md border border-border bg-background px-2 py-1" [value]="cpu()" (input)="cpu.set(+$any($event.target).value)" data-testid="autoscaling-cpu" />
+              <input
+                type="number"
+                min="10"
+                max="95"
+                class="w-20 rounded-md border border-border bg-background px-2 py-1"
+                [value]="cpu()"
+                (input)="cpu.set(+$any($event.target).value)"
+                data-testid="autoscaling-cpu"
+              />
             </label>
           </div>
         }
@@ -55,10 +104,19 @@ import { AppAutoscaling, AppRuntimeService } from '../../service/app-runtime.ser
 
         <div class="flex items-center gap-3">
           @if (problem(); as p) {
-            <span class="text-xs text-red-600 dark:text-red-400" data-testid="autoscaling-problem">{{ p }}</span>
+            <span
+              class="text-xs text-red-600 dark:text-red-400"
+              data-testid="autoscaling-problem"
+              >{{ p }}</span
+            >
           }
-          <button type="button" class="ml-auto rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-40"
-            [disabled]="!!problem() || !dirty() || saving()" (click)="save()" data-testid="autoscaling-save">
+          <button
+            type="button"
+            class="ml-auto rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-40"
+            [disabled]="!!problem() || !dirty() || saving()"
+            (click)="save()"
+            data-testid="autoscaling-save"
+          >
             {{ saving() ? 'Saving…' : 'Save' }}
           </button>
         </div>
@@ -94,7 +152,9 @@ export class AppAutoscalingCardComponent {
     const c = this.current();
     if (!c) return false;
     if (this.enabled() !== c.enabled) return true;
-    return this.enabled() && (this.min() !== c.min || this.max() !== c.max || this.cpu() !== c.targetCPU);
+    return (
+      this.enabled() && (this.min() !== c.min || this.max() !== c.max || this.cpu() !== c.targetCPU)
+    );
   });
 
   constructor() {
@@ -142,7 +202,10 @@ export class AppAutoscalingCardComponent {
     } catch (err: unknown) {
       const e = err as { error?: { message?: string | string[] }; message?: string };
       const raw = e?.error?.message ?? e?.message ?? '';
-      this.toast.showError({ title: 'Autoscaling not saved', message: Array.isArray(raw) ? raw.join(' ') : raw });
+      this.toast.showError({
+        title: 'Autoscaling not saved',
+        message: Array.isArray(raw) ? raw.join(' ') : raw,
+      });
     } finally {
       this.saving.set(false);
     }

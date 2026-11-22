@@ -15,8 +15,12 @@ describe('surface-kit', () => {
   });
 
   it('composes a two-part id into one percent-encoded segment', () => {
-    expect(compositeEntityRef('instance', 'hetzner', 'srv-1')).toBe('flui://instance/hetzner%3Asrv-1');
-    expect(instanceEntityRef('hetzner', 'srv-1')).toBe(compositeEntityRef('instance', 'hetzner', 'srv-1'));
+    expect(compositeEntityRef('instance', 'hetzner', 'srv-1')).toBe(
+      'flui://instance/hetzner%3Asrv-1',
+    );
+    expect(instanceEntityRef('hetzner', 'srv-1')).toBe(
+      compositeEntityRef('instance', 'hetzner', 'srv-1'),
+    );
   });
 
   it('text/value observation helpers drop empty text but keep zero/false values', () => {
@@ -41,7 +45,12 @@ describe('surface-kit', () => {
       label: 'Things',
       totalCount: 2,
       rows: [
-        { id: 'thing-list:a', ref: 'flui://thing/a', label: 'A', observations: [valueObservation('flui.thing.n', 1, 'api')] },
+        {
+          id: 'thing-list:a',
+          ref: 'flui://thing/a',
+          label: 'A',
+          observations: [valueObservation('flui.thing.n', 1, 'api')],
+        },
         { id: 'thing-list:b', ref: 'flui://thing/b', label: 'B' },
       ],
     });
@@ -87,7 +96,11 @@ describe('surface-kit', () => {
       rows,
     });
     expect(truncated).toBe(true);
-    expect(scopes[0].completeness).toEqual({ shown: SURFACE_MAX_ROWS, total: rows.length, truncated: true });
+    expect(scopes[0].completeness).toEqual({
+      shown: SURFACE_MAX_ROWS,
+      total: rows.length,
+      truncated: true,
+    });
     expect(scopes.length).toBe(SURFACE_MAX_ROWS + 1);
   });
 

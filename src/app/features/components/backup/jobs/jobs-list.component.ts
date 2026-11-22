@@ -1,4 +1,12 @@
-import { Component, OnDestroy, OnInit, computed, effect, inject, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnDestroy,
+  OnInit,
+  computed,
+  effect,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -37,46 +45,48 @@ import {
         >
           <option value="">— Select a cluster —</option>
           @for (c of clusters(); track c.id) {
-          <option [value]="c.id">{{ c.name }}</option>
+            <option [value]="c.id">{{ c.name }}</option>
           }
         </select>
       </div>
 
       @if (!clusterFilter) {
-      <p class="text-sm text-muted-foreground">Pick a cluster to load its backup history.</p>
+        <p class="text-sm text-muted-foreground">Pick a cluster to load its backup history.</p>
       } @else if (jobs().length === 0) {
-      <div class="rounded-lg border border-dashed border-border p-8 text-center">
-        <p class="text-sm text-muted-foreground">No jobs yet for this cluster.</p>
-      </div>
+        <div class="rounded-lg border border-dashed border-border p-8 text-center">
+          <p class="text-sm text-muted-foreground">No jobs yet for this cluster.</p>
+        </div>
       } @else {
-      <div class="overflow-hidden rounded-lg border border-border bg-card">
-        <table class="w-full text-sm">
-          <thead class="bg-muted/40 text-xs uppercase text-muted-foreground">
-            <tr>
-              <th class="text-left px-4 py-2">Started</th>
-              <th class="text-left px-4 py-2">Trigger</th>
-              <th class="text-left px-4 py-2">Status</th>
-              <th class="text-left px-4 py-2">Finished</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (j of jobs(); track j.id) {
-            <tr class="border-t border-border hover:bg-muted/20">
-              <td class="px-4 py-2">
-                <a [routerLink]="['/management/backup/jobs', j.id]" class="hover:underline">
-                  {{ j.startedAt || j.createdAt }}
-                </a>
-              </td>
-              <td class="px-4 py-2 capitalize text-muted-foreground">{{ j.triggerType.replace('_',' ') }}</td>
-              <td class="px-4 py-2">
-                <app-backup-status-badge kind="job" [value]="j.status" />
-              </td>
-              <td class="px-4 py-2 text-muted-foreground">{{ j.finishedAt || '—' }}</td>
-            </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+        <div class="overflow-hidden rounded-lg border border-border bg-card">
+          <table class="w-full text-sm">
+            <thead class="bg-muted/40 text-xs uppercase text-muted-foreground">
+              <tr>
+                <th class="text-left px-4 py-2">Started</th>
+                <th class="text-left px-4 py-2">Trigger</th>
+                <th class="text-left px-4 py-2">Status</th>
+                <th class="text-left px-4 py-2">Finished</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (j of jobs(); track j.id) {
+                <tr class="border-t border-border hover:bg-muted/20">
+                  <td class="px-4 py-2">
+                    <a [routerLink]="['/management/backup/jobs', j.id]" class="hover:underline">
+                      {{ j.startedAt || j.createdAt }}
+                    </a>
+                  </td>
+                  <td class="px-4 py-2 capitalize text-muted-foreground">
+                    {{ j.triggerType.replace('_', ' ') }}
+                  </td>
+                  <td class="px-4 py-2">
+                    <app-backup-status-badge kind="job" [value]="j.status" />
+                  </td>
+                  <td class="px-4 py-2 text-muted-foreground">{{ j.finishedAt || '—' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
       }
     </div>
   `,

@@ -1,4 +1,13 @@
-import { Component, OnInit, OnDestroy, signal, computed, effect, inject, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  signal,
+  computed,
+  effect,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -22,7 +31,7 @@ import {
   lucideCircle,
   lucidePause,
   lucidePlay,
-  lucideInfo
+  lucideInfo,
 } from '@ng-icons/lucide';
 
 import { ClusterService } from '../../service/cluster.service';
@@ -48,12 +57,7 @@ interface FilterState {
 @Component({
   selector: 'cluster-list',
   standalone: true,
-  imports: [
-    ReadOnlySectionDirective,
-    CanDirective,
-    FormsModule,
-    NgIconComponent
-],
+  imports: [ReadOnlySectionDirective, CanDirective, FormsModule, NgIconComponent],
   providers: [
     provideIcons({
       lucideRefreshCw,
@@ -74,7 +78,7 @@ interface FilterState {
       lucideCircle,
       lucidePause,
       lucidePlay,
-      lucideInfo
+      lucideInfo,
     }),
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -82,12 +86,8 @@ interface FilterState {
     <div class="space-y-6 p-6">
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-3xl font-bold text-foreground">
-            Clusters
-          </h1>
-          <p class="mt-2 text-sm text-sub">
-            Manage your clusters across multiple providers
-          </p>
+          <h1 class="text-3xl font-bold text-foreground">Clusters</h1>
+          <p class="mt-2 text-sm text-sub">Manage your clusters across multiple providers</p>
         </div>
         <div class="flex items-center gap-3">
           <button
@@ -110,7 +110,7 @@ interface FilterState {
         </div>
       </div>
 
-<div class="card-inner border border-border rounded-lg p-4">
+      <div class="card-inner border border-border rounded-lg p-4">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
           <div class="relative">
             <ng-icon
@@ -161,9 +161,7 @@ interface FilterState {
 
         @if (activeFiltersCount() > 0) {
           <div class="mt-3 flex items-center justify-between">
-            <span class="text-sm text-sub">
-              {{ activeFiltersCount() }} filter(s) active
-            </span>
+            <span class="text-sm text-sub"> {{ activeFiltersCount() }} filter(s) active </span>
             <button
               (click)="clearFilters()"
               class="text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -176,7 +174,7 @@ interface FilterState {
 
       @if (isLoading()) {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          @for (i of [1,2,3]; track i) {
+          @for (i of [1, 2, 3]; track i) {
             <div class="animate-pulse card-surface overflow-hidden border-l-4 border-l-border">
               <div class="p-6 space-y-4">
                 <div class="flex items-start justify-between">
@@ -207,11 +205,15 @@ interface FilterState {
       }
 
       @if (errorMessage() && !isLoading()) {
-        <div class="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-4">
+        <div
+          class="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-4"
+        >
           <div class="flex items-center gap-3">
             <ng-icon name="lucideCircleAlert" class="h-5 w-5 text-red-600 dark:text-red-400" />
             <div class="flex-1">
-              <p class="text-sm font-medium text-red-900 dark:text-red-200">Failed to load clusters</p>
+              <p class="text-sm font-medium text-red-900 dark:text-red-200">
+                Failed to load clusters
+              </p>
               <p class="text-sm text-red-700 dark:text-red-300 mt-1">{{ errorMessage() }}</p>
             </div>
           </div>
@@ -221,11 +223,14 @@ interface FilterState {
       @if (!isLoading() && !errorMessage()) {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           @for (cluster of filteredClusters(); track cluster.id) {
-            <div class="relative card-surface overflow-hidden hover:shadow-lg dark:hover:shadow-black/40 transition-all duration-300 border-l-4"
-                 [class]="getStatusBorderClass(cluster.status)">
-
+            <div
+              class="relative card-surface overflow-hidden hover:shadow-lg dark:hover:shadow-black/40 transition-all duration-300 border-l-4"
+              [class]="getStatusBorderClass(cluster.status)"
+            >
               @if (cluster.status === ClusterStatus.DELETING) {
-                <div class="absolute inset-0 bg-background/70 dark:bg-background/80 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center gap-2 rounded-lg">
+                <div
+                  class="absolute inset-0 bg-background/70 dark:bg-background/80 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center gap-2 rounded-lg"
+                >
                   <ng-icon name="lucideLoader" class="h-8 w-8 text-muted-foreground animate-spin" />
                   <span class="text-sm font-medium text-muted-foreground">
                     Deleting
@@ -242,14 +247,25 @@ interface FilterState {
                   <h3 class="text-xl font-bold text-foreground truncate flex-1">
                     {{ cluster.name }}
                   </h3>
-                  <span [class]="getStatusBadgeClass(cluster.status)" class="flex items-center gap-1 ml-2 flex-shrink-0">
+                  <span
+                    [class]="getStatusBadgeClass(cluster.status)"
+                    class="flex items-center gap-1 ml-2 flex-shrink-0"
+                  >
                     <ng-icon
                       [name]="getStatusIcon(cluster.status)"
                       class="h-3 w-3"
-                      [class.animate-spin]="cluster.status === ClusterStatus.CREATING || cluster.status === ClusterStatus.SCALING || cluster.status === ClusterStatus.UPDATING || cluster.status === ClusterStatus.DELETING"
+                      [class.animate-spin]="
+                        cluster.status === ClusterStatus.CREATING ||
+                        cluster.status === ClusterStatus.SCALING ||
+                        cluster.status === ClusterStatus.UPDATING ||
+                        cluster.status === ClusterStatus.DELETING
+                      "
                     />
                     {{ getStatusLabel(cluster.status) }}
-                    @if (cluster.status === ClusterStatus.DELETING && deletionProgress()[cluster.id!] !== undefined) {
+                    @if (
+                      cluster.status === ClusterStatus.DELETING &&
+                      deletionProgress()[cluster.id!] !== undefined
+                    ) {
                       <span class="opacity-75 text-xs">{{ deletionProgress()[cluster.id!] }}%</span>
                     }
                   </span>
@@ -307,9 +323,18 @@ interface FilterState {
                   *fluiCan="'cluster:destroy'"
                   [appReadOnlySection]="CLUSTER_SECTION_KEYS"
                   (click)="confirmDelete(cluster)"
-                  [disabled]="cluster.status === ClusterStatus.DELETING || (cluster.clusterType === ClusterType.CONTROL || cluster.clusterType === ClusterType.OBSERVABILITY)"
+                  [disabled]="
+                    cluster.status === ClusterStatus.DELETING ||
+                    cluster.clusterType === ClusterType.CONTROL ||
+                    cluster.clusterType === ClusterType.OBSERVABILITY
+                  "
                   class="h-10 w-10 inline-flex items-center justify-center border border-red-300 dark:border-red-600 text-red-600 dark:text-red-400 rounded-md hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  [title]="(cluster.clusterType === ClusterType.CONTROL || cluster.clusterType === ClusterType.OBSERVABILITY) ? 'Control cluster can only be managed via CLI' : 'Delete Cluster'"
+                  [title]="
+                    cluster.clusterType === ClusterType.CONTROL ||
+                    cluster.clusterType === ClusterType.OBSERVABILITY
+                      ? 'Control cluster can only be managed via CLI'
+                      : 'Delete Cluster'
+                  "
                 >
                   <ng-icon name="lucideTrash2" class="h-4 w-4" />
                 </button>
@@ -323,11 +348,18 @@ interface FilterState {
               (click)="createNewCluster()"
               class="card-surface border-2 border-dashed rounded-lg hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-lg transition-all duration-300 cursor-pointer group flex flex-col items-center justify-center p-8 min-h-full"
             >
-              <div class="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 transition-colors">
-                <ng-icon name="lucidePlus" class="h-10 w-10 text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
+              <div
+                class="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 transition-colors"
+              >
+                <ng-icon
+                  name="lucidePlus"
+                  class="h-10 w-10 text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors"
+                />
               </div>
 
-              <h3 class="text-lg font-semibold text-foreground mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+              <h3
+                class="text-lg font-semibold text-foreground mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors"
+              >
                 Create New Cluster
               </h3>
 
@@ -340,9 +372,7 @@ interface FilterState {
           @if (filteredClusters().length === 0) {
             <div class="col-span-full flex flex-col items-center justify-center py-12">
               <ng-icon name="lucideServer" class="h-16 w-16 text-muted-foreground mb-4" />
-              <h3 class="text-lg font-semibold text-foreground mb-2">
-                No clusters found
-              </h3>
+              <h3 class="text-lg font-semibold text-foreground mb-2">No clusters found</h3>
               <p class="text-sm text-sub mb-6">
                 @if (activeFiltersCount() > 0) {
                   Try adjusting your filters or clear them to see all clusters
@@ -383,17 +413,17 @@ interface FilterState {
         <div class="card-surface rounded-lg max-w-md w-full p-6 shadow-xl">
           <div class="flex items-start gap-4">
             <div class="flex-shrink-0">
-              <div class="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
+              <div
+                class="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center"
+              >
                 <ng-icon name="lucideCircleAlert" class="h-6 w-6 text-red-600 dark:text-red-400" />
               </div>
             </div>
             <div class="flex-1">
-              <h3 class="text-lg font-semibold text-foreground mb-2">
-                Delete Cluster
-              </h3>
+              <h3 class="text-lg font-semibold text-foreground mb-2">Delete Cluster</h3>
               <p class="text-sm text-sub mb-4">
-                Are you sure you want to delete <strong>{{ clusterToDelete()?.name }}</strong>?
-                This action cannot be undone and will permanently remove all cluster resources.
+                Are you sure you want to delete <strong>{{ clusterToDelete()?.name }}</strong>? This
+                action cannot be undone and will permanently remove all cluster resources.
               </p>
 
               <label class="flex items-center gap-2 mb-4 cursor-pointer">
@@ -402,9 +432,7 @@ interface FilterState {
                   [(ngModel)]="forceDelete"
                   class="rounded border-border text-blue-600 focus:ring-blue-500"
                 />
-                <span class="text-sm text-foreground">
-                  Force delete (skip cleanup)
-                </span>
+                <span class="text-sm text-foreground"> Force delete (skip cleanup) </span>
               </label>
 
               <div class="flex items-center gap-3">
@@ -470,10 +498,7 @@ export class ClusterListComponent implements OnInit, OnDestroy {
     const filters = this.filtersState();
 
     return clusters.filter((cluster) => {
-      if (
-        filters.search &&
-        !cluster.name?.toLowerCase().includes(filters.search.toLowerCase())
-      ) {
+      if (filters.search && !cluster.name?.toLowerCase().includes(filters.search.toLowerCase())) {
         return false;
       }
 
@@ -485,10 +510,7 @@ export class ClusterListComponent implements OnInit, OnDestroy {
         return false;
       }
 
-      if (
-        filters.region &&
-        !cluster.region?.toLowerCase().includes(filters.region.toLowerCase())
-      ) {
+      if (filters.region && !cluster.region?.toLowerCase().includes(filters.region.toLowerCase())) {
         return false;
       }
 
@@ -555,9 +577,9 @@ export class ClusterListComponent implements OnInit, OnDestroy {
   }
 
   updateFilter(field: keyof FilterState, value: string) {
-    this.filtersState.update(current => ({
+    this.filtersState.update((current) => ({
       ...current,
-      [field]: value
+      [field]: value,
     }));
   }
 

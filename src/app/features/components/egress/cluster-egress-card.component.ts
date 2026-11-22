@@ -1,7 +1,13 @@
 import { ChangeDetectionStrategy, Component, effect, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CanDirective } from '../../../core/directives/can.directive';
-import { EgressChange, EgressService, EgressView, formatEgressPorts, parseEgressPorts } from '../../service/egress.service';
+import {
+  EgressChange,
+  EgressService,
+  EgressView,
+  formatEgressPorts,
+  parseEgressPorts,
+} from '../../service/egress.service';
 
 /** Which ports applications on a cluster may reach outside it — not the machines, which the firewall above covers. */
 @Component({
@@ -15,17 +21,32 @@ import { EgressChange, EgressService, EgressView, formatEgressPorts, parseEgress
         <div class="min-w-0">
           <h3 class="m-0 text-sm font-semibold text-foreground">Applications' outbound traffic</h3>
           <p class="m-0 mt-0.5 text-[13px] text-muted-foreground">
-            Which ports your applications can reach outside the cluster. The platform's own services are not affected.
+            Which ports your applications can reach outside the cluster. The platform's own services
+            are not affected.
           </p>
-          <p class="m-0 mt-1.5 text-[13px] text-foreground" data-testid="egress-summary">{{ reading()?.summary ?? 'Reading…' }}</p>
+          <p class="m-0 mt-1.5 text-[13px] text-foreground" data-testid="egress-summary">
+            {{ reading()?.summary ?? 'Reading…' }}
+          </p>
         </div>
         @if (!editing() && reading()) {
           <div class="flex gap-2" *fluiCan="'egress:manage'">
-            <button type="button" class="text-[13px] text-primary hover:underline" (click)="edit()" data-testid="egress-edit">
+            <button
+              type="button"
+              class="text-[13px] text-primary hover:underline"
+              (click)="edit()"
+              data-testid="egress-edit"
+            >
               {{ reading()?.open ? 'Limit' : 'Change' }}
             </button>
             @if (!reading()?.open) {
-              <button type="button" class="text-[13px] text-muted-foreground hover:text-destructive" (click)="open()" data-testid="egress-open">Open all</button>
+              <button
+                type="button"
+                class="text-[13px] text-muted-foreground hover:text-destructive"
+                (click)="open()"
+                data-testid="egress-open"
+              >
+                Open all
+              </button>
             }
           </div>
         }
@@ -40,13 +61,29 @@ import { EgressChange, EgressService, EgressView, formatEgressPorts, parseEgress
             [(ngModel)]="draft"
             data-testid="egress-input"
           />
-          <p class="m-0 text-[12px] text-muted-foreground">Comma separated, TCP unless written as 123/udp. Applies to every application that is not part of the platform.</p>
+          <p class="m-0 text-[12px] text-muted-foreground">
+            Comma separated, TCP unless written as 123/udp. Applies to every application that is not
+            part of the platform.
+          </p>
           @if (problem(); as p) {
             <p class="m-0 text-[12px] text-destructive" data-testid="egress-problem">{{ p }}</p>
           }
           <div class="flex gap-2">
-            <button type="submit" class="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50" [disabled]="saving()" data-testid="egress-save">Save</button>
-            <button type="button" class="rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted" (click)="editing.set(false)">Cancel</button>
+            <button
+              type="submit"
+              class="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              [disabled]="saving()"
+              data-testid="egress-save"
+            >
+              Save
+            </button>
+            <button
+              type="button"
+              class="rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted"
+              (click)="editing.set(false)"
+            >
+              Cancel
+            </button>
           </div>
         </form>
       }
@@ -54,7 +91,9 @@ import { EgressChange, EgressService, EgressView, formatEgressPorts, parseEgress
         <p class="m-0 text-[12px] text-muted-foreground" data-testid="egress-outcome">
           Written into {{ o.applied }} application {{ o.applied === 1 ? 'space' : 'spaces' }}.
           @if (o.failed.length) {
-            <span class="text-destructive">Not written in {{ o.failed.length }}; the next deploy there writes it.</span>
+            <span class="text-destructive"
+              >Not written in {{ o.failed.length }}; the next deploy there writes it.</span
+            >
           }
         </p>
       }

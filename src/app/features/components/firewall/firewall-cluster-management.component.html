@@ -1,12 +1,8 @@
 <div class="p-6 space-y-6">
   <div class="flex items-center justify-between gap-4">
     <div>
-      <h1 class="m-0 text-2xl font-semibold text-foreground">
-        Cluster Firewalls
-      </h1>
-      <p class="m-0 mt-1 text-sm text-muted-foreground">
-        Firewall rules for your clusters
-      </p>
+      <h1 class="m-0 text-2xl font-semibold text-foreground">Cluster Firewalls</h1>
+      <p class="m-0 mt-1 text-sm text-muted-foreground">Firewall rules for your clusters</p>
     </div>
     <div class="flex items-center gap-3">
       <a
@@ -84,11 +80,15 @@
       <p class="m-0 px-5 py-12 text-center text-sm text-muted-foreground">No firewalls found</p>
     } @else {
       @for (firewall of firewalls(); track firewall.id) {
-        <div class="relative px-5 py-4 border-t border-border first:border-t-0 hover:bg-muted/40 transition-colors cursor-pointer">
+        <div
+          class="relative px-5 py-4 border-t border-border first:border-t-0 hover:bg-muted/40 transition-colors cursor-pointer"
+        >
           <a
             [routerLink]="['/infrastructure/firewall', firewall.id]"
             class="absolute inset-0"
-            [attr.aria-label]="'View firewall for ' + (firewall.clusterInfo?.clusterName || firewall.clusterId)"
+            [attr.aria-label]="
+              'View firewall for ' + (firewall.clusterInfo?.clusterName || firewall.clusterId)
+            "
           ></a>
           <div class="flex items-start justify-between gap-4">
             <div class="flex-1 min-w-0 space-y-1.5">
@@ -96,11 +96,19 @@
                 <h3 class="m-0 text-sm font-semibold text-foreground">
                   {{ firewall.clusterInfo?.clusterName || firewall.clusterId }}
                 </h3>
-                <span class="inline-flex items-center gap-1.5 text-xs font-medium" [class]="statusTextClass(firewall.reconciliationStatus)">
-                  <span class="h-1.5 w-1.5 rounded-full" [class]="statusDotClass(firewall.reconciliationStatus)"></span>
+                <span
+                  class="inline-flex items-center gap-1.5 text-xs font-medium"
+                  [class]="statusTextClass(firewall.reconciliationStatus)"
+                >
+                  <span
+                    class="h-1.5 w-1.5 rounded-full"
+                    [class]="statusDotClass(firewall.reconciliationStatus)"
+                  ></span>
                   {{ statusLabel(firewall.reconciliationStatus) }}
                 </span>
-                <span class="inline-flex items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                <span
+                  class="inline-flex items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+                >
                   @if (coverageDotClass(firewall.coverageStatus); as dot) {
                     <span class="h-1.5 w-1.5 rounded-full" [class]="dot"></span>
                   }
@@ -108,7 +116,9 @@
                 </span>
               </div>
 
-              <div class="flex items-center gap-x-3 gap-y-1 flex-wrap text-xs text-muted-foreground">
+              <div
+                class="flex items-center gap-x-3 gap-y-1 flex-wrap text-xs text-muted-foreground"
+              >
                 <span class="font-mono">{{ firewall.id }}</span>
                 <span>{{ driftMessage(firewall.hasDrift, firewall.reconciliationStatus) }}</span>
               </div>
@@ -126,11 +136,19 @@
                       }
                     </div>
                     <span class="text-foreground tabular-nums">
-                      {{ firewall.clusterInfo.readyNodes }}/{{ firewall.clusterInfo.totalNodes }} ready
+                      {{ firewall.clusterInfo.readyNodes }}/{{
+                        firewall.clusterInfo.totalNodes
+                      }}
+                      ready
                     </span>
                   </div>
                   <span>
-                    Cluster <span class="font-medium" [class]="getClusterStatusClass(firewall.clusterInfo.clusterStatus)">{{ firewall.clusterInfo.clusterStatus }}</span>
+                    Cluster
+                    <span
+                      class="font-medium"
+                      [class]="getClusterStatusClass(firewall.clusterInfo.clusterStatus)"
+                      >{{ firewall.clusterInfo.clusterStatus }}</span
+                    >
                   </span>
                 </div>
               }
@@ -138,7 +156,8 @@
               @if (firewall.coverageStatus === 'ORPHANED') {
                 <p class="m-0 flex items-start gap-1.5 text-xs text-muted-foreground">
                   <span class="mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full bg-destructive"></span>
-                  This firewall is no longer protecting any active cluster nodes. Consider deleting it.
+                  This firewall is no longer protecting any active cluster nodes. Consider deleting
+                  it.
                 </p>
               }
 
@@ -146,7 +165,10 @@
                 <p class="m-0 flex items-start gap-1.5 text-xs text-muted-foreground">
                   <span class="mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500"></span>
                   Some nodes are not ready —
-                  {{ firewall.clusterInfo?.totalNodes! - firewall.clusterInfo?.readyNodes! }} node(s) need attention.
+                  {{
+                    firewall.clusterInfo?.totalNodes! - firewall.clusterInfo?.readyNodes!
+                  }}
+                  node(s) need attention.
                 </p>
               }
 
@@ -159,7 +181,9 @@
               </div>
 
               @if (firewall.errorMessage) {
-                <p class="m-0 mt-1 rounded-md bg-destructive/10 px-2 py-1.5 text-xs text-destructive">
+                <p
+                  class="m-0 mt-1 rounded-md bg-destructive/10 px-2 py-1.5 text-xs text-destructive"
+                >
                   {{ firewall.errorMessage }}
                 </p>
               }

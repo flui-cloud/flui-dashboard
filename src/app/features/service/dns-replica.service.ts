@@ -6,12 +6,7 @@ import { AppConfigService } from '../../core/services/app-config.service';
 export type ReplicaProvider = 'hetzner' | 'scaleway';
 export type ReplicaProviderOrNone = ReplicaProvider | 'none';
 
-export type ReplicaStatus =
-  | 'pending'
-  | 'populating'
-  | 'active'
-  | 'degraded'
-  | 'disabled';
+export type ReplicaStatus = 'pending' | 'populating' | 'active' | 'degraded' | 'disabled';
 
 export interface DnsReplica {
   id: string;
@@ -85,9 +80,7 @@ export class DnsReplicaService {
   }
 
   registerReplica(zoneId: string, input: RegisterReplicaInput): Promise<DnsReplica> {
-    return firstValueFrom(
-      this.http.post<DnsReplica>(this.url(`zones/${zoneId}/replicas`), input),
-    );
+    return firstValueFrom(this.http.post<DnsReplica>(this.url(`zones/${zoneId}/replicas`), input));
   }
 
   populateReplica(zoneId: string, replicaId: string): Promise<ReplicaDiffReport> {
@@ -110,19 +103,13 @@ export class DnsReplicaService {
 
   disableReplica(zoneId: string, replicaId: string): Promise<DnsReplica> {
     return firstValueFrom(
-      this.http.post<DnsReplica>(
-        this.url(`zones/${zoneId}/replicas/${replicaId}/disable`),
-        {},
-      ),
+      this.http.post<DnsReplica>(this.url(`zones/${zoneId}/replicas/${replicaId}/disable`), {}),
     );
   }
 
   enableReplica(zoneId: string, replicaId: string): Promise<DnsReplica> {
     return firstValueFrom(
-      this.http.post<DnsReplica>(
-        this.url(`zones/${zoneId}/replicas/${replicaId}/enable`),
-        {},
-      ),
+      this.http.post<DnsReplica>(this.url(`zones/${zoneId}/replicas/${replicaId}/enable`), {}),
     );
   }
 

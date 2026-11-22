@@ -1,5 +1,11 @@
 import type { AppGroupView } from '../../model/application.models';
-import { EMPTY_FILTERS, activeFilterCount, listCopy, listSummary, providerName } from './applications-list-kind';
+import {
+  EMPTY_FILTERS,
+  activeFilterCount,
+  listCopy,
+  listSummary,
+  providerName,
+} from './applications-list-kind';
 
 describe('applications list kind', () => {
   it('words the title and the empty state per list', () => {
@@ -25,6 +31,14 @@ describe('applications list kind', () => {
 
   it('counts each active filter once', () => {
     expect(activeFilterCount(EMPTY_FILTERS)).toBe(0);
-    expect(activeFilterCount({ search: 'x', view: 'running', type: 'tool', cluster: 'c1', project: 'p' })).toBe(5);
+    expect(
+      activeFilterCount({
+        search: 'x',
+        view: 'running',
+        type: 'tool',
+        cluster: 'c1',
+        project: 'p',
+      }),
+    ).toBe(5);
   });
 });

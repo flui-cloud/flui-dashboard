@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnDestroy,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -13,10 +20,7 @@ import {
   lucideTriangleAlert,
 } from '@ng-icons/lucide';
 import { DeployWizardStateService } from '../../../service/deploy-wizard-state.service';
-import {
-  isValidCpuString,
-  isValidMemoryString,
-} from '../../../model/k8s-quantities';
+import { isValidCpuString, isValidMemoryString } from '../../../model/k8s-quantities';
 
 @Component({
   selector: 'app-catalog-resources-review',
@@ -56,13 +60,17 @@ import {
             <div class="mt-0.5 font-mono">
               {{ effectiveCpuRequest() }} CPU · {{ effectiveMemoryRequest() }} RAM
               @if (state.catalogResourcesCustomized()) {
-                <span class="ml-1 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                <span
+                  class="ml-1 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary"
+                >
                   Customized
                 </span>
               }
             </div>
             <div class="mt-0.5 text-[11px] text-muted-foreground">
-              × {{ state.effectiveCatalogResources().replicas }} replica{{ state.effectiveCatalogResources().replicas === 1 ? '' : 's' }}
+              × {{ state.effectiveCatalogResources().replicas }} replica{{
+                state.effectiveCatalogResources().replicas === 1 ? '' : 's'
+              }}
             </div>
           </div>
           <div>
@@ -75,34 +83,55 @@ import {
       }
 
       @if (loading) {
-        <div class="flex items-center gap-2 p-3 rounded-md border border-border text-sm text-muted-foreground">
+        <div
+          class="flex items-center gap-2 p-3 rounded-md border border-border text-sm text-muted-foreground"
+        >
           <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin shrink-0" />
           Checking cluster capacity…
         </div>
       } @else if (err) {
-        <div class="flex items-start gap-2 p-3 rounded-md border border-destructive/40 bg-destructive/5 text-sm text-destructive">
+        <div
+          class="flex items-start gap-2 p-3 rounded-md border border-destructive/40 bg-destructive/5 text-sm text-destructive"
+        >
           <ng-icon name="lucideCircleAlert" class="h-4 w-4 mt-0.5" />
           <span>{{ err }}</span>
         </div>
       } @else if (av) {
         @if (canDeploy && !av.reason) {
-          <div class="flex items-start gap-2 p-3 rounded-md border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/10 text-sm">
-            <ng-icon name="lucideCircleCheck" class="h-4 w-4 mt-0.5 text-green-600 dark:text-green-400" />
+          <div
+            class="flex items-start gap-2 p-3 rounded-md border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/10 text-sm"
+          >
+            <ng-icon
+              name="lucideCircleCheck"
+              class="h-4 w-4 mt-0.5 text-green-600 dark:text-green-400"
+            />
             <div class="flex-1 text-green-700 dark:text-green-300">
               Cluster has enough free capacity.
               <div class="mt-1 text-[11px] text-muted-foreground grid grid-cols-2 gap-x-4">
-                <span>Required:</span><span class="text-right font-mono">{{ av.required.cpu }} · {{ av.required.memory }}</span>
-                <span>Available:</span><span class="text-right font-mono">{{ av.available.cpu }} · {{ av.available.memory }}</span>
+                <span>Required:</span
+                ><span class="text-right font-mono"
+                  >{{ av.required.cpu }} · {{ av.required.memory }}</span
+                >
+                <span>Available:</span
+                ><span class="text-right font-mono"
+                  >{{ av.available.cpu }} · {{ av.available.memory }}</span
+                >
               </div>
             </div>
           </div>
         } @else if (av.reason === 'autoscaling_pending') {
-          <div class="flex items-start gap-2 p-3 rounded-md border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/10 text-sm">
-            <ng-icon name="lucideCircleAlert" class="h-4 w-4 mt-0.5 text-blue-600 dark:text-blue-400" />
+          <div
+            class="flex items-start gap-2 p-3 rounded-md border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/10 text-sm"
+          >
+            <ng-icon
+              name="lucideCircleAlert"
+              class="h-4 w-4 mt-0.5 text-blue-600 dark:text-blue-400"
+            />
             <div class="flex-1">
               <p class="font-medium text-blue-800 dark:text-blue-200">
                 @if (av.placement?.verdict === 'buys') {
-                  Flui will add a {{ av.placement?.shape }} in {{ av.placement?.region }} to fit this
+                  Flui will add a {{ av.placement?.shape }} in {{ av.placement?.region }} to fit
+                  this
                 } @else {
                   A node will be added to fit this
                 }
@@ -111,40 +140,74 @@ import {
                 {{ av.reasonMessage }} The app waits for room until the new node joins.
               </p>
               @if (av.placement?.groupId; as groupId) {
-                <a [routerLink]="['/scaling', groupId]" class="inline-block mt-1 text-xs font-medium text-blue-700 dark:text-blue-300 underline underline-offset-2">Open scaling</a>
+                <a
+                  [routerLink]="['/scaling', groupId]"
+                  class="inline-block mt-1 text-xs font-medium text-blue-700 dark:text-blue-300 underline underline-offset-2"
+                  >Open scaling</a
+                >
               }
             </div>
           </div>
         } @else {
-          <div class="flex items-start gap-2 p-3 rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10 text-sm">
+          <div
+            class="flex items-start gap-2 p-3 rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10 text-sm"
+          >
             <ng-icon name="lucideCircleX" class="h-4 w-4 mt-0.5 text-red-600 dark:text-red-400" />
             <div class="flex-1">
               <p class="font-medium text-red-700 dark:text-red-300">
                 @switch (av.placement?.verdict) {
-                  @case ('nothing-hosts') { No machine can take this yet — it would wait for room }
-                  @case ('proposes') { The scaling group is manual: it would only propose a {{ av.placement?.shape }} }
-                  @default { Insufficient cluster capacity }
+                  @case ('nothing-hosts') {
+                    No machine can take this yet — it would wait for room
+                  }
+                  @case ('proposes') {
+                    The scaling group is manual: it would only propose a {{ av.placement?.shape }}
+                  }
+                  @default {
+                    Insufficient cluster capacity
+                  }
                 }
               </p>
               @if (av.reasonMessage) {
                 <p class="text-xs text-red-700 dark:text-red-300 mt-0.5">
                   {{ av.reasonMessage }}
                   @if (av.placement?.why) {
-                    <button type="button" (click)="whyOpen.set(!whyOpen())" class="ml-1 underline underline-offset-2 font-medium">{{ whyOpen() ? 'Hide' : 'Why' }}</button>
+                    <button
+                      type="button"
+                      (click)="whyOpen.set(!whyOpen())"
+                      class="ml-1 underline underline-offset-2 font-medium"
+                    >
+                      {{ whyOpen() ? 'Hide' : 'Why' }}
+                    </button>
                   }
                 </p>
                 @if (whyOpen() && av.placement?.why) {
-                  <p class="text-xs text-red-700/80 dark:text-red-300/80 mt-1">{{ av.placement?.why }}</p>
+                  <p class="text-xs text-red-700/80 dark:text-red-300/80 mt-1">
+                    {{ av.placement?.why }}
+                  </p>
                 }
               }
               @if (av.placement?.groupId; as groupId) {
-                <a [routerLink]="['/scaling', groupId]" class="inline-block mt-1 text-xs font-medium text-red-700 dark:text-red-300 underline underline-offset-2">Open scaling</a>
+                <a
+                  [routerLink]="['/scaling', groupId]"
+                  class="inline-block mt-1 text-xs font-medium text-red-700 dark:text-red-300 underline underline-offset-2"
+                  >Open scaling</a
+                >
               }
               <div class="mt-1 text-[11px] text-muted-foreground grid grid-cols-2 gap-x-4">
-                <span>Required:</span><span class="text-right font-mono">{{ av.required.cpu }} · {{ av.required.memory }}</span>
-                <span>Available (after 10% reserve):</span><span class="text-right font-mono">{{ av.available.cpu }} · {{ av.available.memory }}</span>
-                <span>Currently used:</span><span class="text-right font-mono">{{ av.used.cpu }} · {{ av.used.memory }}</span>
-                <span>Cluster total:</span><span class="text-right font-mono">{{ av.total.cpu }} · {{ av.total.memory }}</span>
+                <span>Required:</span
+                ><span class="text-right font-mono"
+                  >{{ av.required.cpu }} · {{ av.required.memory }}</span
+                >
+                <span>Available (after 10% reserve):</span
+                ><span class="text-right font-mono"
+                  >{{ av.available.cpu }} · {{ av.available.memory }}</span
+                >
+                <span>Currently used:</span
+                ><span class="text-right font-mono">{{ av.used.cpu }} · {{ av.used.memory }}</span>
+                <span>Cluster total:</span
+                ><span class="text-right font-mono"
+                  >{{ av.total.cpu }} · {{ av.total.memory }}</span
+                >
               </div>
               <p class="text-xs text-red-700 dark:text-red-300 mt-2">
                 @if (detail?.resourceOverridesSupported) {
@@ -159,124 +222,142 @@ import {
       }
 
       @if (detail?.resourceOverridesSupported) {
-      <!-- Advanced override panel -->
-      <div class="pt-2 border-t border-border">
-        <button
-          type="button"
-          (click)="toggleAdvanced()"
-          class="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
-        >
-          <ng-icon [name]="advancedOpen() ? 'lucideChevronUp' : 'lucideChevronDown'" class="h-3.5 w-3.5" />
-          Advanced — override resources
-        </button>
+        <!-- Advanced override panel -->
+        <div class="pt-2 border-t border-border">
+          <button
+            type="button"
+            (click)="toggleAdvanced()"
+            class="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+          >
+            <ng-icon
+              [name]="advancedOpen() ? 'lucideChevronUp' : 'lucideChevronDown'"
+              class="h-3.5 w-3.5"
+            />
+            Advanced — override resources
+          </button>
 
-        @if (advancedOpen()) {
-          <div class="mt-3 space-y-3">
-            <div class="flex items-start gap-2 p-3 rounded-md border border-border bg-muted/40 text-xs">
-              <ng-icon name="lucideCircleAlert" class="h-4 w-4 mt-0.5 shrink-0 text-muted-foreground" />
-              <div class="space-y-1 text-muted-foreground">
-                <p>
-                  The capacity check above follows what you write here: whether it fits, which machine scaling would add, or that it would wait.
-                  Leave a field empty to keep the manifest value.
-                  <button type="button" (click)="overrideWhyOpen.set(!overrideWhyOpen())" class="ml-1 underline underline-offset-2 font-medium text-foreground">{{ overrideWhyOpen() ? 'Hide' : 'Why' }}</button>
-                </p>
-                @if (overrideWhyOpen()) {
-                  <p>
-                    A request reserves room on a node. One larger than any node has free does not overload anything: the app waits, and the scaling group adds a node inside its spending ceiling or raises an alarm.
-                    A limit is what the app may really use. A memory limit far above the request is what can crowd a node; a limit below the app's real use gets it stopped (memory) or slowed down (CPU).
-                  </p>
-                }
-              </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div>
-                <label class="block text-xs font-medium mb-1">CPU request</label>
-                <input
-                  type="text"
-                  [ngModel]="overrides.cpuRequest"
-                  (ngModelChange)="onOverrideChange('cpuRequest', $event)"
-                  [placeholder]="detail?.resources?.requests?.cpu ?? '250m'"
-                  [class]="inputClass(overrides.cpuRequest && !cpuReqValid())"
-                />
-                @if (overrides.cpuRequest && !cpuReqValid()) {
-                  <p class="mt-1 text-[11px] text-destructive">Format: "250m" or "1" or "2.5"</p>
-                }
-              </div>
-              <div>
-                <label class="block text-xs font-medium mb-1">CPU limit</label>
-                <input
-                  type="text"
-                  [ngModel]="overrides.cpuLimit"
-                  (ngModelChange)="onOverrideChange('cpuLimit', $event)"
-                  [placeholder]="detail?.resources?.limits?.cpu ?? '500m'"
-                  [class]="inputClass(overrides.cpuLimit && !cpuLimitValid())"
-                />
-                @if (overrides.cpuLimit && !cpuLimitValid()) {
-                  <p class="mt-1 text-[11px] text-destructive">Format: "250m" or "1" or "2.5"</p>
-                }
-              </div>
-              <div>
-                <label class="block text-xs font-medium mb-1">Memory request</label>
-                <input
-                  type="text"
-                  [ngModel]="overrides.memoryRequest"
-                  (ngModelChange)="onOverrideChange('memoryRequest', $event)"
-                  [placeholder]="detail?.resources?.requests?.memory ?? '512Mi'"
-                  [class]="inputClass(overrides.memoryRequest && !memReqValid())"
-                />
-                @if (overrides.memoryRequest && !memReqValid()) {
-                  <p class="mt-1 text-[11px] text-destructive">Format: "512Mi", "2Gi", "1.5Gi"</p>
-                }
-              </div>
-              <div>
-                <label class="block text-xs font-medium mb-1">Memory limit</label>
-                <input
-                  type="text"
-                  [ngModel]="overrides.memoryLimit"
-                  (ngModelChange)="onOverrideChange('memoryLimit', $event)"
-                  [placeholder]="detail?.resources?.limits?.memory ?? '1Gi'"
-                  [class]="inputClass(overrides.memoryLimit && !memLimitValid())"
-                />
-                @if (overrides.memoryLimit && !memLimitValid()) {
-                  <p class="mt-1 text-[11px] text-destructive">Format: "512Mi", "2Gi", "1.5Gi"</p>
-                }
-              </div>
-              <div>
-                <label class="block text-xs font-medium mb-1">Replicas</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="20"
-                  [ngModel]="overrides.replicas"
-                  (ngModelChange)="onOverrideChange('replicas', $event)"
-                  [placeholder]="(detail?.replicas ?? 1).toString()"
-                  [class]="inputClass(overrides.replicas && !replicasValid())"
-                />
-                @if (overrides.replicas && !replicasValid()) {
-                  <p class="mt-1 text-[11px] text-destructive">Must be between 1 and 20</p>
-                }
-              </div>
-            </div>
-
-            @if (state.catalogResourcesCustomized()) {
-              <button
-                type="button"
-                (click)="resetToManifest()"
-                class="text-xs text-muted-foreground hover:text-foreground underline"
+          @if (advancedOpen()) {
+            <div class="mt-3 space-y-3">
+              <div
+                class="flex items-start gap-2 p-3 rounded-md border border-border bg-muted/40 text-xs"
               >
-                Reset to manifest defaults
-              </button>
-            }
-          </div>
-        }
-      </div>
+                <ng-icon
+                  name="lucideCircleAlert"
+                  class="h-4 w-4 mt-0.5 shrink-0 text-muted-foreground"
+                />
+                <div class="space-y-1 text-muted-foreground">
+                  <p>
+                    The capacity check above follows what you write here: whether it fits, which
+                    machine scaling would add, or that it would wait. Leave a field empty to keep
+                    the manifest value.
+                    <button
+                      type="button"
+                      (click)="overrideWhyOpen.set(!overrideWhyOpen())"
+                      class="ml-1 underline underline-offset-2 font-medium text-foreground"
+                    >
+                      {{ overrideWhyOpen() ? 'Hide' : 'Why' }}
+                    </button>
+                  </p>
+                  @if (overrideWhyOpen()) {
+                    <p>
+                      A request reserves room on a node. One larger than any node has free does not
+                      overload anything: the app waits, and the scaling group adds a node inside its
+                      spending ceiling or raises an alarm. A limit is what the app may really use. A
+                      memory limit far above the request is what can crowd a node; a limit below the
+                      app's real use gets it stopped (memory) or slowed down (CPU).
+                    </p>
+                  }
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-medium mb-1">CPU request</label>
+                  <input
+                    type="text"
+                    [ngModel]="overrides.cpuRequest"
+                    (ngModelChange)="onOverrideChange('cpuRequest', $event)"
+                    [placeholder]="detail?.resources?.requests?.cpu ?? '250m'"
+                    [class]="inputClass(overrides.cpuRequest && !cpuReqValid())"
+                  />
+                  @if (overrides.cpuRequest && !cpuReqValid()) {
+                    <p class="mt-1 text-[11px] text-destructive">Format: "250m" or "1" or "2.5"</p>
+                  }
+                </div>
+                <div>
+                  <label class="block text-xs font-medium mb-1">CPU limit</label>
+                  <input
+                    type="text"
+                    [ngModel]="overrides.cpuLimit"
+                    (ngModelChange)="onOverrideChange('cpuLimit', $event)"
+                    [placeholder]="detail?.resources?.limits?.cpu ?? '500m'"
+                    [class]="inputClass(overrides.cpuLimit && !cpuLimitValid())"
+                  />
+                  @if (overrides.cpuLimit && !cpuLimitValid()) {
+                    <p class="mt-1 text-[11px] text-destructive">Format: "250m" or "1" or "2.5"</p>
+                  }
+                </div>
+                <div>
+                  <label class="block text-xs font-medium mb-1">Memory request</label>
+                  <input
+                    type="text"
+                    [ngModel]="overrides.memoryRequest"
+                    (ngModelChange)="onOverrideChange('memoryRequest', $event)"
+                    [placeholder]="detail?.resources?.requests?.memory ?? '512Mi'"
+                    [class]="inputClass(overrides.memoryRequest && !memReqValid())"
+                  />
+                  @if (overrides.memoryRequest && !memReqValid()) {
+                    <p class="mt-1 text-[11px] text-destructive">Format: "512Mi", "2Gi", "1.5Gi"</p>
+                  }
+                </div>
+                <div>
+                  <label class="block text-xs font-medium mb-1">Memory limit</label>
+                  <input
+                    type="text"
+                    [ngModel]="overrides.memoryLimit"
+                    (ngModelChange)="onOverrideChange('memoryLimit', $event)"
+                    [placeholder]="detail?.resources?.limits?.memory ?? '1Gi'"
+                    [class]="inputClass(overrides.memoryLimit && !memLimitValid())"
+                  />
+                  @if (overrides.memoryLimit && !memLimitValid()) {
+                    <p class="mt-1 text-[11px] text-destructive">Format: "512Mi", "2Gi", "1.5Gi"</p>
+                  }
+                </div>
+                <div>
+                  <label class="block text-xs font-medium mb-1">Replicas</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="20"
+                    [ngModel]="overrides.replicas"
+                    (ngModelChange)="onOverrideChange('replicas', $event)"
+                    [placeholder]="(detail?.replicas ?? 1).toString()"
+                    [class]="inputClass(overrides.replicas && !replicasValid())"
+                  />
+                  @if (overrides.replicas && !replicasValid()) {
+                    <p class="mt-1 text-[11px] text-destructive">Must be between 1 and 20</p>
+                  }
+                </div>
+              </div>
+
+              @if (state.catalogResourcesCustomized()) {
+                <button
+                  type="button"
+                  (click)="resetToManifest()"
+                  class="text-xs text-muted-foreground hover:text-foreground underline"
+                >
+                  Reset to manifest defaults
+                </button>
+              }
+            </div>
+          }
+        </div>
       } @else {
         <div class="pt-2 border-t border-border">
           <p class="text-xs text-muted-foreground">
-            Resources for this app are fixed by its manifest and can't be overridden here —
-            its components always deploy at their defined sizes. To change the footprint,
-            pick a cluster with more capacity or free up resources.
+            Resources for this app are fixed by its manifest and can't be overridden here — its
+            components always deploy at their defined sizes. To change the footprint, pick a cluster
+            with more capacity or free up resources.
           </p>
         </div>
       }
@@ -292,7 +373,8 @@ import {
             class="mt-0.5"
           />
           <span class="text-xs text-amber-800 dark:text-amber-200">
-            <strong>Install anyway</strong> — if what it reserves does not fit, it waits for room; if only its limit does not, it runs and the node can run short of memory at peak.
+            <strong>Install anyway</strong> — if what it reserves does not fit, it waits for room;
+            if only its limit does not, it runs and the node can run short of memory at peak.
           </span>
         </label>
       }
@@ -359,8 +441,14 @@ export class CatalogResourcesReviewComponent implements OnDestroy {
     this.advancedOpen.update((v) => !v);
   }
 
-  onOverrideChange(field: keyof ReturnType<DeployWizardStateService['catalogResourceOverrides']>, value: string): void {
-    this.state.catalogResourceOverrides.update((o) => ({ ...o, [field]: (value ?? '').toString() }));
+  onOverrideChange(
+    field: keyof ReturnType<DeployWizardStateService['catalogResourceOverrides']>,
+    value: string,
+  ): void {
+    this.state.catalogResourceOverrides.update((o) => ({
+      ...o,
+      [field]: (value ?? '').toString(),
+    }));
     this.scheduleRecheck();
   }
 

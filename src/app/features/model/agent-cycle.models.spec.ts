@@ -77,9 +77,7 @@ describe('whether a request is still answerable', () => {
   });
 
   it('is not live once the estimate on it has gone stale', () => {
-    expect(
-      isProposalLive(proposal({ expiresAt: '2026-08-24T11:59:00.000Z' }), NOW),
-    ).toBe(false);
+    expect(isProposalLive(proposal({ expiresAt: '2026-08-24T11:59:00.000Z' }), NOW)).toBe(false);
   });
 
   it('is not live once it has been answered', () => {

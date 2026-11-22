@@ -1,14 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient, withXhr } from '@angular/common/http';
-import {
-  HttpTestingController,
-  provideHttpClientTesting,
-} from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { AppConfigService } from '../../core/services/app-config.service';
-import {
-  PlatformUpdateService,
-  WITHOUT_BACKUP_ACKNOWLEDGEMENT,
-} from './platform-update.service';
+import { PlatformUpdateService, WITHOUT_BACKUP_ACKNOWLEDGEMENT } from './platform-update.service';
 
 describe('PlatformUpdateService — planned updates', () => {
   let service: PlatformUpdateService;

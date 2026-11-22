@@ -11,17 +11,13 @@ export interface SituationAction {
   selector: 'app-situation',
   standalone: true,
   imports: [NgIcon],
-  providers: [
-    provideIcons({ lucideArrowRight, lucideCircleAlert, lucideCircleCheck }),
-  ],
+  providers: [provideIcons({ lucideArrowRight, lucideCircleAlert, lucideCircleCheck })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section
       class="rounded-lg border px-4 py-3.5"
       [class]="
-        tone() === 'attention'
-          ? 'border-amber-500/40 bg-amber-500/[0.05]'
-          : 'border-border bg-card'
+        tone() === 'attention' ? 'border-amber-500/40 bg-amber-500/[0.05]' : 'border-border bg-card'
       "
       [attr.data-testid]="testid()"
     >
@@ -46,7 +42,8 @@ export interface SituationAction {
                     class="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground"
                   />
                   <span class="text-[13px] text-foreground">
-                    {{ a.does }}@if (a.why) {
+                    {{ a.does }}
+                    @if (a.why) {
                       <span class="text-muted-foreground"> — {{ a.why }}</span>
                     }
                   </span>

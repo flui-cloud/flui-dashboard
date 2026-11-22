@@ -8,7 +8,15 @@ describe('AppHealthChecksService', () => {
   let service: AppHealthChecksService;
   let http: HttpTestingController;
   const url = 'http://api/api/v1/observability/applications/app-1/health-checks';
-  const body = { app_id: 'app-1', readiness: 2, liveness: 0, startup: 0, restarts_by_liveness: 0, last_failure_at: null, read: true };
+  const body = {
+    app_id: 'app-1',
+    readiness: 2,
+    liveness: 0,
+    startup: 0,
+    restarts_by_liveness: 0,
+    last_failure_at: null,
+    read: true,
+  };
 
   beforeEach(() => {
     jasmine.clock().install();

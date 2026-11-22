@@ -1,8 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  inject,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -34,9 +30,7 @@ import { pretty } from './search-format';
   ],
   template: `
     <!-- Index list -->
-    <aside
-      class="flex w-56 shrink-0 flex-col overflow-hidden rounded-md border border-border"
-    >
+    <aside class="flex w-56 shrink-0 flex-col overflow-hidden rounded-md border border-border">
       <div
         class="flex items-center gap-2 border-b border-border px-3 py-2 text-xs font-medium text-muted-foreground"
       >
@@ -59,9 +53,7 @@ import { pretty } from './search-format';
           </li>
         }
         @if (state.indices().length === 0) {
-          <li class="px-3 py-4 text-center text-xs text-muted-foreground">
-            No indices yet.
-          </li>
+          <li class="px-3 py-4 text-center text-xs text-muted-foreground">No indices yet.</li>
         }
       </ul>
     </aside>
@@ -77,9 +69,7 @@ import { pretty } from './search-format';
       } @else {
         <!-- Mode toggle -->
         <div class="mb-2 flex items-center gap-2">
-          <div
-            class="inline-flex overflow-hidden rounded-md border border-border"
-          >
+          <div class="inline-flex overflow-hidden rounded-md border border-border">
             <button
               type="button"
               (click)="state.mode.set('simple')"
@@ -103,9 +93,7 @@ import { pretty } from './search-format';
               Query DSL
             </button>
           </div>
-          <span class="font-mono text-xs text-muted-foreground">{{
-            state.selectedIndex()
-          }}</span>
+          <span class="font-mono text-xs text-muted-foreground">{{ state.selectedIndex() }}</span>
         </div>
 
         @if (state.mode() === 'simple') {
@@ -156,9 +144,7 @@ import { pretty } from './search-format';
 
         <!-- Results -->
         @if (state.result(); as r) {
-          <div
-            class="mt-3 flex items-center gap-3 text-xs text-muted-foreground"
-          >
+          <div class="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
             <span>
               <strong class="text-foreground">{{ r.total }}</strong>
               {{ r.totalRelation === 'gte' ? '+ ' : ' ' }}hits
@@ -182,10 +168,9 @@ import { pretty } from './search-format';
                     </span>
                   }
                 </div>
-                <pre
-                  class="overflow-auto px-3 py-2 font-mono text-xs text-foreground"
-                  >{{ format(h.source) }}</pre
-                >
+                <pre class="overflow-auto px-3 py-2 font-mono text-xs text-foreground">{{
+                  format(h.source)
+                }}</pre>
               </div>
             }
             @if (r.hits.length === 0) {
@@ -197,9 +182,7 @@ import { pretty } from './search-format';
             }
           </div>
         } @else if (state.loading()) {
-          <div
-            class="mt-4 flex items-center gap-2 text-sm text-muted-foreground"
-          >
+          <div class="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
             <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
             Searching…
           </div>

@@ -71,7 +71,9 @@ function rowOf(firewall: FirewallExtended): SurfaceListRow {
       textObservation('flui.firewall.last_reconciliation_at', firewall.lastReconciliationAt, 'api'),
       cluster ? valueObservation('flui.firewall.ready_nodes', cluster.readyNodes, 'api') : null,
       cluster ? valueObservation('flui.firewall.total_nodes', cluster.totalNodes, 'api') : null,
-      cluster ? textObservation('flui.firewall.cluster_status', cluster.clusterStatus, 'api') : null,
+      cluster
+        ? textObservation('flui.firewall.cluster_status', cluster.clusterStatus, 'api')
+        : null,
     ].filter((o): o is Observation => o !== null),
   };
 }

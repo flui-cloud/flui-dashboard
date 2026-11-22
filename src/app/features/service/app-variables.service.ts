@@ -24,18 +24,14 @@ export class AppVariablesService {
     const vars = this.combinedData();
     if (!vars) return {};
     const sensitive = new Set(vars.sensitiveKeys);
-    return Object.fromEntries(
-      Object.entries(vars.data).filter(([key]) => !sensitive.has(key))
-    );
+    return Object.fromEntries(Object.entries(vars.data).filter(([key]) => !sensitive.has(key)));
   });
 
   readonly sensitiveData = computed(() => {
     const vars = this.combinedData();
     if (!vars) return {};
     const sensitive = new Set(vars.sensitiveKeys);
-    return Object.fromEntries(
-      Object.entries(vars.data).filter(([key]) => sensitive.has(key))
-    );
+    return Object.fromEntries(Object.entries(vars.data).filter(([key]) => sensitive.has(key)));
   });
 
   async loadVariables(appId: string): Promise<void> {
@@ -43,7 +39,7 @@ export class AppVariablesService {
     this.errorData.set(null);
     try {
       const result = await firstValueFrom(
-        this.api.variablesControllerGetAppVariables(appId, 'all')
+        this.api.variablesControllerGetAppVariables(appId, 'all'),
       );
       this.combinedData.set(result ?? null);
     } catch (err: unknown) {
@@ -53,12 +49,16 @@ export class AppVariablesService {
     }
   }
 
-  async upsertPlain(appId: string, data: Record<string, string>, deleteKeys: string[] = []): Promise<AppVariablesCombinedResponseDto | null> {
+  async upsertPlain(
+    appId: string,
+    data: Record<string, string>,
+    deleteKeys: string[] = [],
+  ): Promise<AppVariablesCombinedResponseDto | null> {
     this.savingData.set(true);
     this.errorData.set(null);
     try {
       const result = await firstValueFrom(
-        this.api.variablesControllerUpsertAppVariables(appId, { data, deleteKeys }, 'plain')
+        this.api.variablesControllerUpsertAppVariables(appId, { data, deleteKeys }, 'plain'),
       );
       this.combinedData.set(result ?? null);
       return result ?? null;
@@ -70,12 +70,16 @@ export class AppVariablesService {
     }
   }
 
-  async upsertSensitive(appId: string, data: Record<string, string>, deleteKeys: string[] = []): Promise<AppVariablesCombinedResponseDto | null> {
+  async upsertSensitive(
+    appId: string,
+    data: Record<string, string>,
+    deleteKeys: string[] = [],
+  ): Promise<AppVariablesCombinedResponseDto | null> {
     this.savingData.set(true);
     this.errorData.set(null);
     try {
       const result = await firstValueFrom(
-        this.api.variablesControllerUpsertAppVariables(appId, { data, deleteKeys }, 'sensitive')
+        this.api.variablesControllerUpsertAppVariables(appId, { data, deleteKeys }, 'sensitive'),
       );
       this.combinedData.set(result ?? null);
       return result ?? null;

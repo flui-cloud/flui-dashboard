@@ -1,10 +1,26 @@
-import { Component, OnDestroy, OnInit, inject, signal, computed, effect, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnDestroy,
+  OnInit,
+  inject,
+  signal,
+  computed,
+  effect,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
-  lucideRefreshCw, lucideLoader, lucideSearch, lucideRocket,
-  lucideTrash, lucideCircleCheck, lucideTriangleAlert, lucideImage, lucideInfo,
+  lucideRefreshCw,
+  lucideLoader,
+  lucideSearch,
+  lucideRocket,
+  lucideTrash,
+  lucideCircleCheck,
+  lucideTriangleAlert,
+  lucideImage,
+  lucideInfo,
 } from '@ng-icons/lucide';
 import { ImageRegistryFeatureService } from '../../service/image-registry.service';
 import { ImageResponseDto } from '../../../core/api/model/imageResponseDto';
@@ -21,10 +37,19 @@ import {
   selector: 'app-image-registry-list',
   standalone: true,
   imports: [FormsModule, NgIcon, FluiTagManagerComponent],
-  providers: [provideIcons({
-    lucideRefreshCw, lucideLoader, lucideSearch, lucideRocket,
-    lucideTrash, lucideCircleCheck, lucideTriangleAlert, lucideImage, lucideInfo,
-  })],
+  providers: [
+    provideIcons({
+      lucideRefreshCw,
+      lucideLoader,
+      lucideSearch,
+      lucideRocket,
+      lucideTrash,
+      lucideCircleCheck,
+      lucideTriangleAlert,
+      lucideImage,
+      lucideInfo,
+    }),
+  ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-6 p-6">
@@ -34,9 +59,16 @@ import {
           <h1 class="text-2xl font-bold">Image Registry</h1>
           <p class="text-sm text-muted-foreground mt-1">Manage container images built by Flui</p>
         </div>
-        <button (click)="refresh()" [disabled]="service.loading()"
-          class="inline-flex items-center gap-2 px-4 py-2 border border-border rounded-md text-sm hover:bg-accent transition-colors disabled:opacity-50">
-          <ng-icon name="lucideRefreshCw" class="h-4 w-4" [class.animate-spin]="service.loading()" />
+        <button
+          (click)="refresh()"
+          [disabled]="service.loading()"
+          class="inline-flex items-center gap-2 px-4 py-2 border border-border rounded-md text-sm hover:bg-accent transition-colors disabled:opacity-50"
+        >
+          <ng-icon
+            name="lucideRefreshCw"
+            class="h-4 w-4"
+            [class.animate-spin]="service.loading()"
+          />
           Refresh
         </button>
       </div>
@@ -44,12 +76,23 @@ import {
       <!-- Filters -->
       <div class="flex gap-3">
         <div class="relative flex-1 max-w-sm">
-          <ng-icon name="lucideSearch" class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <input type="text" [(ngModel)]="searchQuery" placeholder="Filter by image ref or branch..."
-            class="w-full pl-10 pr-3 py-2 border border-input rounded-md bg-background text-sm" />
+          <ng-icon
+            name="lucideSearch"
+            class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+          />
+          <input
+            type="text"
+            [(ngModel)]="searchQuery"
+            placeholder="Filter by image ref or branch..."
+            class="w-full pl-10 pr-3 py-2 border border-input rounded-md bg-background text-sm"
+          />
         </div>
-        <input type="text" [(ngModel)]="tagFilter" placeholder="Filter by tag..."
-          class="w-40 px-3 py-2 border border-input rounded-md bg-background text-sm" />
+        <input
+          type="text"
+          [(ngModel)]="tagFilter"
+          placeholder="Filter by tag..."
+          class="w-40 px-3 py-2 border border-input rounded-md bg-background text-sm"
+        />
       </div>
 
       <!-- Loading -->
@@ -66,7 +109,9 @@ import {
           <div class="text-center py-12">
             <ng-icon name="lucideImage" class="h-12 w-12 text-muted-foreground mx-auto mb-3" />
             <h3 class="font-medium mb-1">No images found</h3>
-            <p class="text-sm text-muted-foreground">Images will appear here after your first build.</p>
+            <p class="text-sm text-muted-foreground">
+              Images will appear here after your first build.
+            </p>
           </div>
         } @else {
           <div class="border border-border rounded-lg overflow-hidden">
@@ -87,11 +132,16 @@ import {
                     <td class="px-4 py-3">
                       <div class="flex items-center gap-2">
                         @if (img.isCurrentlyDeployed) {
-                          <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                          <span
+                            class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+                          >
                             <ng-icon name="lucideCircleCheck" class="h-3 w-3" /> Live
                           </span>
-                        }                          
-                        <span class="font-mono text-xs truncate max-w-[200px]" [title]="img.imageRef">
+                        }
+                        <span
+                          class="font-mono text-xs truncate max-w-[200px]"
+                          [title]="img.imageRef"
+                        >
                           {{ truncateRef(img.imageRef) }}
                         </span>
                       </div>
@@ -112,14 +162,24 @@ import {
                     </td>
                     <td class="px-4 py-3 text-right">
                       <div class="flex items-center justify-end gap-1">
-                        <button (click)="onDeploy(img)" [disabled]="actionBusy()"
+                        <button
+                          (click)="onDeploy(img)"
+                          [disabled]="actionBusy()"
                           class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs border border-border hover:bg-accent transition-colors disabled:opacity-50"
-                          title="Deploy this image">
+                          title="Deploy this image"
+                        >
                           <ng-icon name="lucideRocket" class="h-3 w-3" /> Deploy
                         </button>
-                        <button (click)="onDelete(img)" [disabled]="actionBusy() || img.isCurrentlyDeployed"
+                        <button
+                          (click)="onDelete(img)"
+                          [disabled]="actionBusy() || img.isCurrentlyDeployed"
                           class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs border border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-colors disabled:opacity-50"
-                          [title]="img.isCurrentlyDeployed ? 'Cannot delete deployed image' : 'Delete image'">
+                          [title]="
+                            img.isCurrentlyDeployed
+                              ? 'Cannot delete deployed image'
+                              : 'Delete image'
+                          "
+                        >
                           <ng-icon name="lucideTrash" class="h-3 w-3" />
                         </button>
                       </div>
@@ -160,10 +220,17 @@ import {
             <h3 class="font-semibold">{{ confirmAction()!.title }}</h3>
             <p class="text-sm text-muted-foreground">{{ confirmAction()!.message }}</p>
             <div class="flex justify-end gap-2">
-              <button (click)="confirmAction.set(null)"
-                class="px-3 py-1.5 text-sm border border-border rounded-md hover:bg-accent">Cancel</button>
-              <button (click)="executeConfirmed()" [disabled]="actionBusy()"
-                class="px-3 py-1.5 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+              <button
+                (click)="confirmAction.set(null)"
+                class="px-3 py-1.5 text-sm border border-border rounded-md hover:bg-accent"
+              >
+                Cancel
+              </button>
+              <button
+                (click)="executeConfirmed()"
+                [disabled]="actionBusy()"
+                class="px-3 py-1.5 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              >
                 @if (actionBusy()) {
                   <ng-icon name="lucideLoader" class="h-3 w-3 animate-spin inline mr-1" />
                 }
@@ -199,14 +266,15 @@ export class ImageRegistryListComponent implements OnInit, OnDestroy {
     const tag = this.tagFilter().trim().toLowerCase();
 
     if (search) {
-      images = images.filter(i =>
-        i.imageRef.toLowerCase().includes(search) ||
-        i.branch.toLowerCase().includes(search) ||
-        i.commitSha?.toLowerCase().includes(search)
+      images = images.filter(
+        (i) =>
+          i.imageRef.toLowerCase().includes(search) ||
+          i.branch.toLowerCase().includes(search) ||
+          i.commitSha?.toLowerCase().includes(search),
       );
     }
     if (tag) {
-      images = images.filter(i => i.fluiTags.some(t => t.toLowerCase().includes(tag)));
+      images = images.filter((i) => i.fluiTags.some((t) => t.toLowerCase().includes(tag)));
     }
     return images;
   });
@@ -234,7 +302,9 @@ export class ImageRegistryListComponent implements OnInit, OnDestroy {
       isLoading: this.service.loading(),
       refused: this.service.refused(),
       hasError: Boolean(this.service.errorMessage()),
-      confirm: confirm ? { kind: confirm.kind, imageId: confirm.imageId, label: confirm.imageLabel } : null,
+      confirm: confirm
+        ? { kind: confirm.kind, imageId: confirm.imageId, label: confirm.imageLabel }
+        : null,
       actionBusy: this.actionBusy(),
     };
   });
@@ -268,7 +338,9 @@ export class ImageRegistryListComponent implements OnInit, OnDestroy {
   async refresh(): Promise<void> {
     try {
       await this.service.loadImages();
-    } catch { /* error in service signal */ }
+    } catch {
+      /* error in service signal */
+    }
   }
 
   truncateRef(ref: string): string {
@@ -279,16 +351,27 @@ export class ImageRegistryListComponent implements OnInit, OnDestroy {
 
   formatDate(date: string): string {
     return new Date(date).toLocaleDateString(undefined, {
-      month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
   }
 
   async onAddTag(imageId: string, tag: string): Promise<void> {
-    try { await this.service.addTag(imageId, tag); } catch { /* ignore */ }
+    try {
+      await this.service.addTag(imageId, tag);
+    } catch {
+      /* ignore */
+    }
   }
 
   async onRemoveTag(imageId: string, tag: string): Promise<void> {
-    try { await this.service.removeTag(imageId, tag); } catch { /* ignore */ }
+    try {
+      await this.service.removeTag(imageId, tag);
+    } catch {
+      /* ignore */
+    }
   }
 
   onDeploy(img: ImageResponseDto): void {
@@ -326,7 +409,9 @@ export class ImageRegistryListComponent implements OnInit, OnDestroy {
     try {
       await action.action();
       this.confirmAction.set(null);
-    } catch { /* error in service */ } finally {
+    } catch {
+      /* error in service */
+    } finally {
       this.actionBusy.set(false);
     }
   }

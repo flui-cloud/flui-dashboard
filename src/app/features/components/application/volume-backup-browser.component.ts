@@ -64,36 +64,21 @@ export interface VolumeRestoreStarted {
         <div class="text-sm font-medium">
           Files in the backup of {{ formatDate(backup().createdAt ?? '') }}
           @if (backup().volumeName) {
-            <span class="font-mono text-xs text-muted-foreground"
-              >· {{ backup().volumeName }}</span
-            >
+            <span class="font-mono text-xs text-muted-foreground">· {{ backup().volumeName }}</span>
           }
         </div>
-        <button
-          (click)="closed.emit()"
-          class="p-1 rounded hover:bg-muted"
-          title="Close"
-        >
+        <button (click)="closed.emit()" class="p-1 rounded hover:bg-muted" title="Close">
           <ng-icon name="lucideX" class="h-4 w-4" />
         </button>
       </div>
 
       <nav class="flex flex-wrap items-center gap-1 text-xs">
-        <button
-          (click)="open('')"
-          class="px-1.5 py-0.5 rounded hover:bg-muted font-medium"
-        >
+        <button (click)="open('')" class="px-1.5 py-0.5 rounded hover:bg-muted font-medium">
           /
         </button>
         @for (c of crumbs(); track c.path) {
-          <ng-icon
-            name="lucideChevronRight"
-            class="h-3 w-3 text-muted-foreground"
-          />
-          <button
-            (click)="open(c.path)"
-            class="px-1.5 py-0.5 rounded hover:bg-muted font-mono"
-          >
+          <ng-icon name="lucideChevronRight" class="h-3 w-3 text-muted-foreground" />
+          <button (click)="open(c.path)" class="px-1.5 py-0.5 rounded hover:bg-muted font-mono">
             {{ c.label }}
           </button>
         }
@@ -133,18 +118,12 @@ export interface VolumeRestoreStarted {
                         (click)="open(full)"
                         class="inline-flex items-center gap-1.5 hover:underline"
                       >
-                        <ng-icon
-                          name="lucideFolder"
-                          class="h-3.5 w-3.5 text-indigo-500"
-                        />
+                        <ng-icon name="lucideFolder" class="h-3.5 w-3.5 text-indigo-500" />
                         {{ e.name }}
                       </button>
                     } @else {
                       <span class="inline-flex items-center gap-1.5">
-                        <ng-icon
-                          name="lucideFile"
-                          class="h-3.5 w-3.5 text-muted-foreground"
-                        />
+                        <ng-icon name="lucideFile" class="h-3.5 w-3.5 text-muted-foreground" />
                         {{ e.name }}
                         @if (e.consistentCopy) {
                           <span
@@ -156,10 +135,14 @@ export interface VolumeRestoreStarted {
                       </span>
                     }
                   </td>
-                  <td class="px-3 py-1.5 text-right text-xs text-muted-foreground whitespace-nowrap">
+                  <td
+                    class="px-3 py-1.5 text-right text-xs text-muted-foreground whitespace-nowrap"
+                  >
                     {{ bytesOrDash(e.size) }}
                   </td>
-                  <td class="px-3 py-1.5 text-right text-xs text-muted-foreground whitespace-nowrap hidden sm:table-cell">
+                  <td
+                    class="px-3 py-1.5 text-right text-xs text-muted-foreground whitespace-nowrap hidden sm:table-cell"
+                  >
                     {{ e.modifiedAt ? formatDate(e.modifiedAt) : '' }}
                   </td>
                 </tr>
@@ -206,7 +189,9 @@ export interface VolumeRestoreStarted {
         }
         <button
           (click)="restoreSelected()"
-          [disabled]="!selection().length || starting() || (mode() === 'folder' && !folder().trim())"
+          [disabled]="
+            !selection().length || starting() || (mode() === 'folder' && !folder().trim())
+          "
           class="inline-flex h-8 items-center gap-1.5 px-3 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
         >
           <ng-icon
@@ -225,9 +210,9 @@ export interface VolumeRestoreStarted {
       </div>
       @if (showHelp()) {
         <p class="text-xs text-muted-foreground max-w-2xl">
-          Selected files and folders are written into the app's volume while it
-          runs. Nothing else on the volume changes. If the app is writing to a
-          file you restore — a database file, say — stop the app first.
+          Selected files and folders are written into the app's volume while it runs. Nothing else
+          on the volume changes. If the app is writing to a file you restore — a database file, say
+          — stop the app first.
         </p>
       }
     </div>
@@ -255,9 +240,7 @@ export class VolumeBackupBrowserComponent {
   protected readonly showHelp = signal(false);
 
   protected readonly crumbs = computed(() => backupPathCrumbs(this.path()));
-  protected readonly selection = computed(() =>
-    collapseSelection(this.selected()),
-  );
+  protected readonly selection = computed(() => collapseSelection(this.selected()));
 
   protected readonly formatDate = formatDate;
   protected readonly bytesOrDash = bytesOrDash;
@@ -280,11 +263,7 @@ export class VolumeBackupBrowserComponent {
     this.loading.set(true);
     this.error.set(null);
     try {
-      const listing = await this.api.browse(
-        this.appId(),
-        this.backup().id,
-        path,
-      );
+      const listing = await this.api.browse(this.appId(), this.backup().id, path);
       if (listing.isFile) return;
       this.path.set(listing.path);
       this.entries.set(listing.entries);

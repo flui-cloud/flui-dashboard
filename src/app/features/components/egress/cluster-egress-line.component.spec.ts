@@ -30,6 +30,8 @@ describe('the outbound line in the cluster summary', () => {
       ],
       summary: '',
     });
-    expect(el.querySelector('[data-testid="cluster-egress-line"]')?.textContent).toContain('ports 80, 443');
+    expect(el.querySelector('[data-testid="cluster-egress-line"]')?.textContent).toContain(
+      'ports 80, 443',
+    );
   });
 });

@@ -1,4 +1,13 @@
-import { Component, OnDestroy, OnInit, computed, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnDestroy,
+  OnInit,
+  computed,
+  effect,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { ActivatedRoute } from '@angular/router';
 import { BackupService } from '../../../service/backup.service';
@@ -18,48 +27,55 @@ import { MaskIdPipe } from '../../../../shared/pipes/mask-id.pipe';
 @Component({
   selector: 'app-restore-detail',
   standalone: true,
-  imports: [MaskIdPipe, BackupStatusBadgeComponent, BackupProgressModalComponent, BackupBackLinkComponent],
+  imports: [
+    MaskIdPipe,
+    BackupStatusBadgeComponent,
+    BackupProgressModalComponent,
+    BackupBackLinkComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="p-6 max-w-3xl space-y-4">
       <app-backup-back-link link="/management/backup/restore" label="Back to restores" />
       @if (job(); as r) {
-      <header class="flex items-start justify-between">
-        <div>
-          <h1 class="text-2xl font-semibold">Restore job</h1>
-          <p class="text-xs text-muted-foreground font-mono">{{ r.id | maskId }}</p>
-        </div>
-        <app-backup-status-badge kind="restore" [value]="r.status" />
-      </header>
+        <header class="flex items-start justify-between">
+          <div>
+            <h1 class="text-2xl font-semibold">Restore job</h1>
+            <p class="text-xs text-muted-foreground font-mono">{{ r.id | maskId }}</p>
+          </div>
+          <app-backup-status-badge kind="restore" [value]="r.status" />
+        </header>
 
-      <div class="rounded-lg border border-border bg-card p-5 grid grid-cols-2 gap-3 text-sm">
-        <div>
-          <div class="text-xs text-muted-foreground">Artifact</div>
-          <div class="font-mono text-xs">{{ r.artifactId }}</div>
+        <div class="rounded-lg border border-border bg-card p-5 grid grid-cols-2 gap-3 text-sm">
+          <div>
+            <div class="text-xs text-muted-foreground">Artifact</div>
+            <div class="font-mono text-xs">{{ r.artifactId }}</div>
+          </div>
+          <div>
+            <div class="text-xs text-muted-foreground">Target</div>
+            <div class="capitalize">{{ r.targetKind }} → {{ r.targetClusterId }}</div>
+          </div>
+          <div>
+            <div class="text-xs text-muted-foreground">Source destination</div>
+            <div class="font-mono text-xs">{{ r.sourceDestinationId }}</div>
+          </div>
         </div>
-        <div>
-          <div class="text-xs text-muted-foreground">Target</div>
-          <div class="capitalize">{{ r.targetKind }} → {{ r.targetClusterId }}</div>
-        </div>
-        <div>
-          <div class="text-xs text-muted-foreground">Source destination</div>
-          <div class="font-mono text-xs">{{ r.sourceDestinationId }}</div>
-        </div>
-      </div>
 
-      @if (r.errorMessage) {
-      <div class="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-400">
-        {{ r.errorMessage }}
-      </div>
-      }
+        @if (r.errorMessage) {
+          <div
+            class="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-400"
+          >
+            {{ r.errorMessage }}
+          </div>
+        }
 
-      <app-backup-progress-modal
-        [operationId]="opId()"
-        title="Restore in progress"
-        (closed)="opId.set(null)"
-      />
+        <app-backup-progress-modal
+          [operationId]="opId()"
+          title="Restore in progress"
+          (closed)="opId.set(null)"
+        />
       } @else {
-      <p class="text-sm text-muted-foreground">Loading…</p>
+        <p class="text-sm text-muted-foreground">Loading…</p>
       }
     </div>
   `,
@@ -100,7 +116,10 @@ export class RestoreDetailComponent implements OnInit, OnDestroy {
       if (!id) return;
       const r = await this.backup.getRestoreJob(id);
       this.job.set(r);
-      if (r?.infrastructureOperationId && this.backup.activeOperations()[r.infrastructureOperationId]) {
+      if (
+        r?.infrastructureOperationId &&
+        this.backup.activeOperations()[r.infrastructureOperationId]
+      ) {
         this.opId.set(r.infrastructureOperationId);
       }
     })();

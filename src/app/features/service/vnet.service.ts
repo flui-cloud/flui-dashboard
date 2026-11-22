@@ -19,7 +19,7 @@ import {
   AttachServerToSubnetDto,
   DetachServerFromSubnetDto,
   SubnetResponseDto,
-  VNetRouteResponseDto
+  VNetRouteResponseDto,
 } from '../../core/api/model/models';
 import {
   VNetInfo,
@@ -31,11 +31,11 @@ import {
   VNetStatistics,
   AttachServerToSubnetConfiguration,
   DetachServerFromSubnetConfiguration,
-  getAllAttachedServerIds
+  getAllAttachedServerIds,
 } from '../model/vnet.models';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class VNetService {
   private readonly vnetApi = inject(VNetsService);
@@ -84,19 +84,18 @@ export class VNetService {
     const vnets = this.vnetsList();
     return {
       total: vnets.length,
-      active: vnets.filter(v => v.status === VNetStatus.ACTIVE).length,
-      pending: vnets.filter(v => v.status === VNetStatus.PENDING).length,
-      failed: vnets.filter(v => v.status === VNetStatus.FAILED).length,
+      active: vnets.filter((v) => v.status === VNetStatus.ACTIVE).length,
+      pending: vnets.filter((v) => v.status === VNetStatus.PENDING).length,
+      failed: vnets.filter((v) => v.status === VNetStatus.FAILED).length,
       totalSubnets: vnets.reduce((sum, v) => sum + v.subnets.length, 0),
-      totalAttachedServers: vnets.reduce((sum, v) =>
-        sum + getAllAttachedServerIds(v).length, 0)
+      totalAttachedServers: vnets.reduce((sum, v) => sum + getAllAttachedServerIds(v).length, 0),
     };
   });
 
   readonly vnetById = computed(() => {
     const id = this.selectedVNetId();
     if (!id) return null;
-    return this.vnetsList().find(v => v.id === id) || null;
+    return this.vnetsList().find((v) => v.id === id) || null;
   });
 
   /**
@@ -110,7 +109,7 @@ export class VNetService {
 
     try {
       const response = await firstValueFrom(
-        this.vnetApi.vNetsControllerListVNets(provider, clusterId)
+        this.vnetApi.vNetsControllerListVNets(provider, clusterId),
       );
 
       const vnets = this.mapListResponseToVNetInfo(response);
@@ -134,16 +133,14 @@ export class VNetService {
     this.error.set(null);
 
     try {
-      const response = await firstValueFrom(
-        this.vnetApi.vNetsControllerGetVNet(id)
-      );
+      const response = await firstValueFrom(this.vnetApi.vNetsControllerGetVNet(id));
 
       const vnet = this.mapDtoToVNetInfo(response);
       this.selectedVNetInfo.set(vnet);
       this.selectedVNetId.set(id);
 
-      this.vnetsList.update(vnets => {
-        const index = vnets.findIndex(v => v.id === id);
+      this.vnetsList.update((vnets) => {
+        const index = vnets.findIndex((v) => v.id === id);
         if (index !== -1) {
           const updated = [...vnets];
           updated[index] = vnet;
@@ -173,7 +170,7 @@ export class VNetService {
 
     try {
       const response = await firstValueFrom(
-        this.vnetApi.vNetsControllerGetVNetByProviderResourceId(providerResourceId)
+        this.vnetApi.vNetsControllerGetVNetByProviderResourceId(providerResourceId),
       );
 
       const vnet = this.mapDtoToVNetInfo(response);
@@ -203,22 +200,24 @@ export class VNetService {
         provider: config.provider as any,
         ipRange: config.ipRange,
         networkZone: config.networkZone,
-        labels: config.labels?.map(l => `${l.key}:${l.value}`),
+        labels: config.labels?.map((l) => `${l.key}:${l.value}`),
         metadata: config.metadata,
-        subnets: config.subnet ? [{
-          networkZone: config.subnet.networkZone,
-          ipRange: config.subnet.ipRange,
-          vswitchId: config.subnet.vswitchId
-        }] : undefined
+        subnets: config.subnet
+          ? [
+              {
+                networkZone: config.subnet.networkZone,
+                ipRange: config.subnet.ipRange,
+                vswitchId: config.subnet.vswitchId,
+              },
+            ]
+          : undefined,
       };
 
-      const response = await firstValueFrom(
-        this.vnetApi.vNetsControllerCreateVNet(dto)
-      );
+      const response = await firstValueFrom(this.vnetApi.vNetsControllerCreateVNet(dto));
 
       const vnet = this.mapDtoToVNetInfo(response);
 
-      this.vnetsList.update(vnets => [...vnets, vnet]);
+      this.vnetsList.update((vnets) => [...vnets, vnet]);
 
       return vnet;
     } catch (error: any) {
@@ -240,11 +239,9 @@ export class VNetService {
     this.error.set(null);
 
     try {
-      await firstValueFrom(
-        this.vnetApi.vNetsControllerDeleteVNet(id)
-      );
+      await firstValueFrom(this.vnetApi.vNetsControllerDeleteVNet(id));
 
-      this.vnetsList.update(vnets => vnets.filter(v => v.id !== id));
+      this.vnetsList.update((vnets) => vnets.filter((v) => v.id !== id));
 
       if (this.selectedVNetId() === id) {
         this.selectedVNetInfo.set(null);
@@ -269,15 +266,13 @@ export class VNetService {
     this.error.set(null);
 
     try {
-      const response = await firstValueFrom(
-        this.vnetApi.vNetsControllerSyncVNet(id)
-      );
+      const response = await firstValueFrom(this.vnetApi.vNetsControllerSyncVNet(id));
 
       const vnet = this.mapDtoToVNetInfo(response);
 
       // Update in list
-      this.vnetsList.update(vnets => {
-        const index = vnets.findIndex(v => v.id === id);
+      this.vnetsList.update((vnets) => {
+        const index = vnets.findIndex((v) => v.id === id);
         if (index !== -1) {
           const updated = [...vnets];
           updated[index] = vnet;
@@ -315,18 +310,16 @@ export class VNetService {
       const dto: AddSubnetDto = {
         networkZone: config.networkZone,
         ipRange: config.ipRange,
-        vswitchId: config.vswitchId
+        vswitchId: config.vswitchId,
       };
 
-      const response = await firstValueFrom(
-        this.vnetApi.vNetsControllerAddSubnet(vnetId, dto)
-      );
+      const response = await firstValueFrom(this.vnetApi.vNetsControllerAddSubnet(vnetId, dto));
 
       const vnet = this.mapDtoToVNetInfo(response);
 
       // Update in list
-      this.vnetsList.update(vnets => {
-        const index = vnets.findIndex(v => v.id === vnetId);
+      this.vnetsList.update((vnets) => {
+        const index = vnets.findIndex((v) => v.id === vnetId);
         if (index !== -1) {
           const updated = [...vnets];
           updated[index] = vnet;
@@ -361,18 +354,16 @@ export class VNetService {
     this.error.set(null);
 
     try {
-      await firstValueFrom(
-        this.vnetApi.vNetsControllerDeleteSubnet(vnetId, subnetId)
-      );
+      await firstValueFrom(this.vnetApi.vNetsControllerDeleteSubnet(vnetId, subnetId));
 
       // Update VNet in list (remove subnet)
-      this.vnetsList.update(vnets => {
-        const index = vnets.findIndex(v => v.id === vnetId);
+      this.vnetsList.update((vnets) => {
+        const index = vnets.findIndex((v) => v.id === vnetId);
         if (index !== -1) {
           const updated = [...vnets];
           updated[index] = {
             ...updated[index],
-            subnets: updated[index].subnets.filter(s => s.providerSubnetId !== subnetId)
+            subnets: updated[index].subnets.filter((s) => s.providerSubnetId !== subnetId),
           };
           return updated;
         }
@@ -381,11 +372,11 @@ export class VNetService {
 
       // Update selected if it's the same
       if (this.selectedVNetId() === vnetId) {
-        this.selectedVNetInfo.update(current => {
+        this.selectedVNetInfo.update((current) => {
           if (!current) return null;
           return {
             ...current,
-            subnets: current.subnets.filter(s => s.providerSubnetId !== subnetId)
+            subnets: current.subnets.filter((s) => s.providerSubnetId !== subnetId),
           };
         });
       }
@@ -406,7 +397,7 @@ export class VNetService {
    */
   async attachServerToSubnet(
     subnetId: string,
-    config: AttachServerToSubnetConfiguration
+    config: AttachServerToSubnetConfiguration,
   ): Promise<SubnetInfo> {
     this.isLoading.set(true);
     this.error.set(null);
@@ -415,11 +406,11 @@ export class VNetService {
       const dto: AttachServerToSubnetDto = {
         serverId: config.serverId,
         ip: config.ip,
-        aliasIps: config.aliasIps
+        aliasIps: config.aliasIps,
       };
 
       const response = await firstValueFrom(
-        this.subnetsApi.subnetsControllerAttachServer(subnetId, dto)
+        this.subnetsApi.subnetsControllerAttachServer(subnetId, dto),
       );
 
       const subnet = this.mapSubnetDtoToInfo(response);
@@ -445,18 +436,18 @@ export class VNetService {
    */
   async detachServerFromSubnet(
     subnetId: string,
-    config: DetachServerFromSubnetConfiguration
+    config: DetachServerFromSubnetConfiguration,
   ): Promise<SubnetInfo> {
     this.isLoading.set(true);
     this.error.set(null);
 
     try {
       const dto: DetachServerFromSubnetDto = {
-        serverId: config.serverId
+        serverId: config.serverId,
       };
 
       const response = await firstValueFrom(
-        this.subnetsApi.subnetsControllerDetachServer(subnetId, dto)
+        this.subnetsApi.subnetsControllerDetachServer(subnetId, dto),
       );
 
       const subnet = this.mapSubnetDtoToInfo(response);
@@ -481,10 +472,7 @@ export class VNetService {
    * @param subnetId Subnet UUID
    * @param serverIds Array of server provider resource IDs
    */
-  async bulkAttachServersToSubnet(
-    subnetId: string,
-    serverIds: string[]
-  ): Promise<void> {
+  async bulkAttachServersToSubnet(subnetId: string, serverIds: string[]): Promise<void> {
     this.isLoading.set(true);
     this.error.set(null);
 
@@ -508,9 +496,9 @@ export class VNetService {
    */
   private updateSubnetInState(subnet: SubnetInfo): void {
     // Update in vnets list
-    this.vnetsList.update(vnets => {
-      return vnets.map(vnet => {
-        const subnetIndex = vnet.subnets.findIndex(s => s.id === subnet.id);
+    this.vnetsList.update((vnets) => {
+      return vnets.map((vnet) => {
+        const subnetIndex = vnet.subnets.findIndex((s) => s.id === subnet.id);
         if (subnetIndex !== -1) {
           const updatedSubnets = [...vnet.subnets];
           updatedSubnets[subnetIndex] = subnet;
@@ -521,9 +509,9 @@ export class VNetService {
     });
 
     // Update in selected VNet if it contains this subnet
-    this.selectedVNetInfo.update(current => {
+    this.selectedVNetInfo.update((current) => {
       if (!current) return null;
-      const subnetIndex = current.subnets.findIndex(s => s.id === subnet.id);
+      const subnetIndex = current.subnets.findIndex((s) => s.id === subnet.id);
       if (subnetIndex !== -1) {
         const updatedSubnets = [...current.subnets];
         updatedSubnets[subnetIndex] = subnet;
@@ -567,14 +555,14 @@ export class VNetService {
       ipRange: dto.ipRange,
       implementation: dto.implementation,
       labels: dto.labels
-        .filter(l => l.key !== undefined && l.value !== undefined)
-        .map(l => ({ key: l.key!, value: l.value! })),
+        .filter((l) => l.key !== undefined && l.value !== undefined)
+        .map((l) => ({ key: l.key!, value: l.value! })),
       metadata: dto.metadata,
       status: dto.status as VNetStatus,
-      subnets: dto.subnets.map(s => this.mapSubnetDtoToInfo(s)),
-      routes: dto.routes.map(r => this.mapRouteDtoToInfo(r)),
+      subnets: dto.subnets.map((s) => this.mapSubnetDtoToInfo(s)),
+      routes: dto.routes.map((r) => this.mapRouteDtoToInfo(r)),
       createdAt: new Date(dto.createdAt),
-      updatedAt: new Date(dto.updatedAt)
+      updatedAt: new Date(dto.updatedAt),
     };
   }
 
@@ -582,7 +570,7 @@ export class VNetService {
    * Map list response to VNet info array
    */
   private mapListResponseToVNetInfo(response: VNetListResponseDto): VNetInfo[] {
-    return response.vnets.map(dto => this.mapDtoToVNetInfo(dto));
+    return response.vnets.map((dto) => this.mapDtoToVNetInfo(dto));
   }
 
   /**
@@ -600,7 +588,7 @@ export class VNetService {
       vswitchId: dto.vswitchId,
       attachedServerIds: dto.attachedServerIds || [],
       createdAt: new Date(dto.createdAt),
-      updatedAt: new Date(dto.updatedAt)
+      updatedAt: new Date(dto.updatedAt),
     };
   }
 
@@ -611,7 +599,7 @@ export class VNetService {
     return {
       id: dto.id,
       destination: dto.destination,
-      gateway: dto.gateway
+      gateway: dto.gateway,
     };
   }
 }

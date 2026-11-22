@@ -49,17 +49,24 @@ interface ScopeCheckResult {
   template: `
     <div class="flex flex-col items-center py-10 px-4 text-center">
       <!-- GitHub logo -->
-      <div class="w-16 h-16 rounded-full bg-slate-900 dark:bg-slate-700 flex items-center justify-center mb-6">
+      <div
+        class="w-16 h-16 rounded-full bg-slate-900 dark:bg-slate-700 flex items-center justify-center mb-6"
+      >
         <ng-icon name="lucideGithub" size="32" class="text-white" />
       </div>
 
       @if (authMethod() === 'github_app') {
-        <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-1">Install Flui on GitHub</h2>
+        <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-1">
+          Install Flui on GitHub
+        </h2>
         <p class="text-sm text-slate-500 dark:text-slate-400 max-w-sm mb-8">
-          Install the Flui GitHub App to automate builds and deployments directly from your repositories.
+          Install the Flui GitHub App to automate builds and deployments directly from your
+          repositories.
         </p>
       } @else {
-        <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-1">Connect your GitHub account</h2>
+        <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-1">
+          Connect your GitHub account
+        </h2>
         <p class="text-sm text-slate-500 dark:text-slate-400 max-w-sm mb-8">
           Paste a Personal Access Token to give Flui access to your GitHub repositories.
         </p>
@@ -81,44 +88,66 @@ interface ScopeCheckResult {
           }
         </button>
         <p class="text-xs text-slate-400 dark:text-slate-500 mt-4 max-w-sm">
-          You'll install the app and authorize access in one step. After you return,
-          your repositories and packages will be available automatically.
+          You'll install the app and authorize access in one step. After you return, your
+          repositories and packages will be available automatically.
         </p>
         @if (error()) {
-          <div class="mt-4 flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800 max-w-sm w-full text-left">
-            <ng-icon name="lucideAlertCircle" size="16" class="text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+          <div
+            class="mt-4 flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800 max-w-sm w-full text-left"
+          >
+            <ng-icon
+              name="lucideAlertCircle"
+              size="16"
+              class="text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5"
+            />
             <p class="text-xs text-red-700 dark:text-red-400">{{ error() }}</p>
           </div>
         }
       } @else {
         <!-- PAT form -->
         <div class="w-full max-w-sm space-y-4 text-left">
-
           <!-- Scope check result (shown after connect) -->
           @if (scopeCheck()) {
             @let check = scopeCheck()!;
             @if (check.missingScopes.length === 0) {
-              <div class="flex items-start gap-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-                <ng-icon name="lucideCheck" size="16" class="text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
-                <p class="text-xs text-green-700 dark:text-green-400 font-medium">All required scopes are present. You're good to go!</p>
+              <div
+                class="flex items-start gap-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800"
+              >
+                <ng-icon
+                  name="lucideCheck"
+                  size="16"
+                  class="text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5"
+                />
+                <p class="text-xs text-green-700 dark:text-green-400 font-medium">
+                  All required scopes are present. You're good to go!
+                </p>
               </div>
             } @else {
-              <div class="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800 space-y-2">
-                <div class="flex items-center gap-1.5 text-xs font-medium text-amber-800 dark:text-amber-300">
+              <div
+                class="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800 space-y-2"
+              >
+                <div
+                  class="flex items-center gap-1.5 text-xs font-medium text-amber-800 dark:text-amber-300"
+                >
                   <ng-icon name="lucideTriangleAlert" size="14" class="flex-shrink-0" />
                   Missing scopes — some features may not work
                 </div>
                 <div class="flex flex-wrap gap-1.5">
                   @for (scope of requiredScopes; track scope) {
                     <span [class]="getScopeBadgeClass(scope, check.grantedScopes)">
-                      <ng-icon [name]="check.grantedScopes.includes(scope) ? 'lucideCheck' : 'lucideX'" size="10" class="flex-shrink-0" />
+                      <ng-icon
+                        [name]="check.grantedScopes.includes(scope) ? 'lucideCheck' : 'lucideX'"
+                        size="10"
+                        class="flex-shrink-0"
+                      />
                       {{ scope }}
                     </span>
                   }
                 </div>
                 @if (check.missingScopes.includes('workflow')) {
                   <p class="text-xs text-amber-700 dark:text-amber-400">
-                    The <span class="font-mono">workflow</span> scope is required to commit GitHub Actions workflows to your repository.
+                    The <span class="font-mono">workflow</span> scope is required to commit GitHub
+                    Actions workflows to your repository.
                   </p>
                 }
                 <a
@@ -155,10 +184,14 @@ interface ScopeCheckResult {
           </div>
 
           <div class="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg space-y-2">
-            <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Required scopes (classic token):</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">
+              Required scopes (classic token):
+            </p>
             <div class="flex flex-wrap gap-1">
               @for (scope of requiredScopes; track scope) {
-                <span class="px-2 py-0.5 text-xs font-mono bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-300 rounded">
+                <span
+                  class="px-2 py-0.5 text-xs font-mono bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-300 rounded"
+                >
                   {{ scope }}
                 </span>
               }
@@ -166,7 +199,10 @@ interface ScopeCheckResult {
             <!-- GHA hint -->
             <div class="flex items-start gap-1.5 pt-1 text-xs text-slate-500 dark:text-slate-400">
               <ng-icon name="lucideGithub" size="12" class="flex-shrink-0 mt-0.5" />
-              <span>The <span class="font-mono">workflow</span> scope is needed to commit GitHub Actions workflow files to your repository.</span>
+              <span
+                >The <span class="font-mono">workflow</span> scope is needed to commit GitHub
+                Actions workflow files to your repository.</span
+              >
             </div>
             <a
               [href]="patCreateUrl"
@@ -183,8 +219,14 @@ interface ScopeCheckResult {
           </div>
 
           @if (error()) {
-            <div class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
-              <ng-icon name="lucideAlertCircle" size="16" class="text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+            <div
+              class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800"
+            >
+              <ng-icon
+                name="lucideAlertCircle"
+                size="16"
+                class="text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5"
+              />
               <p class="text-xs text-red-700 dark:text-red-400">{{ error() }}</p>
             </div>
           }
@@ -204,7 +246,6 @@ interface ScopeCheckResult {
           </button>
         </div>
       }
-
     </div>
   `,
 })
@@ -239,17 +280,14 @@ export class GithubConnectComponent {
         return;
       }
       if (!response.installUrl) {
-        this.error.set(
-          'API did not return an install URL. Please retry or contact support.',
-        );
+        this.error.set('API did not return an install URL. Please retry or contact support.');
         this.isLoading.set(false);
         return;
       }
       globalThis.window.location.href = response.installUrl;
     } catch (err: any) {
       this.error.set(
-        err?.error?.message ||
-          'Could not generate the GitHub install link. Please try again.',
+        err?.error?.message || 'Could not generate the GitHub install link. Please try again.',
       );
       this.isLoading.set(false);
     }
@@ -267,7 +305,7 @@ export class GithubConnectComponent {
       const response = await firstValueFrom(
         this.gitHubOAuthApi.gitHubOAuthControllerConnectPat({
           personalAccessToken: this.patToken.trim(),
-        })
+        }),
       );
       this.pendingUsername = response.githubUsername || '';
 
@@ -293,15 +331,16 @@ export class GithubConnectComponent {
 
   private async checkScopes(): Promise<void> {
     try {
-      const status = await firstValueFrom(
-        this.gitHubOAuthApi.gitHubOAuthControllerGetStatus()
-      );
+      const status = await firstValueFrom(this.gitHubOAuthApi.gitHubOAuthControllerGetStatus());
       const rawScopes = status.scopes ?? '';
       // GitHub returns scopes comma-separated; some backends store them space-separated
       const separator = rawScopes.includes(',') ? ',' : ' ';
-      const grantedScopes = rawScopes.split(separator).map(s => s.trim()).filter(Boolean);
+      const grantedScopes = rawScopes
+        .split(separator)
+        .map((s) => s.trim())
+        .filter(Boolean);
 
-      const missingScopes = REQUIRED_SCOPES.filter(s => !grantedScopes.includes(s));
+      const missingScopes = REQUIRED_SCOPES.filter((s) => !grantedScopes.includes(s));
       this.scopeCheck.set({ grantedScopes, missingScopes });
     } catch {
       // Scope check best-effort: if it fails, proceed normally

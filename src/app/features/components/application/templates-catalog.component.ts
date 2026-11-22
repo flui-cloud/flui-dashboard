@@ -1,4 +1,13 @@
-import { Component, OnInit, OnDestroy, inject, signal, computed, effect, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  inject,
+  signal,
+  computed,
+  effect,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -52,7 +61,7 @@ import {
 type Category = 'frontend' | 'backend' | 'fullstack' | 'generic';
 
 interface FrameworkMeta {
-  icon: SimpleIcon | null;  // null → fallback to generic package icon
+  icon: SimpleIcon | null; // null → fallback to generic package icon
   /** Tailwind text color classes for the icon. Uses currentColor in the SVG. */
   colorClass: string;
 }
@@ -62,26 +71,26 @@ interface FrameworkMeta {
  * Add new entries here when the API exposes new templates.
  */
 const FRAMEWORK_META: Record<string, FrameworkMeta> = {
-  nextjs:        { icon: siNextdotjs,  colorClass: 'text-black dark:text-white' },
-  nuxt:          { icon: siNuxt,       colorClass: 'text-[#00DC82]' },
-  angular:       { icon: siAngular,    colorClass: 'text-[#DD0031] dark:text-[#FF4081]' },
+  nextjs: { icon: siNextdotjs, colorClass: 'text-black dark:text-white' },
+  nuxt: { icon: siNuxt, colorClass: 'text-[#00DC82]' },
+  angular: { icon: siAngular, colorClass: 'text-[#DD0031] dark:text-[#FF4081]' },
   // SvelteKit — accept both kebab-case and one-word variants from the API
-  'svelte-kit':  { icon: siSvelte,     colorClass: 'text-[#FF3E00]' },
-  sveltekit:     { icon: siSvelte,     colorClass: 'text-[#FF3E00]' },
-  svelte:        { icon: siSvelte,     colorClass: 'text-[#FF3E00]' },
-  nestjs:        { icon: siNestjs,     colorClass: 'text-[#E0234E]' },
+  'svelte-kit': { icon: siSvelte, colorClass: 'text-[#FF3E00]' },
+  sveltekit: { icon: siSvelte, colorClass: 'text-[#FF3E00]' },
+  svelte: { icon: siSvelte, colorClass: 'text-[#FF3E00]' },
+  nestjs: { icon: siNestjs, colorClass: 'text-[#E0234E]' },
   'spring-boot': { icon: siSpringboot, colorClass: 'text-[#6DB33F]' },
-  springboot:    { icon: siSpringboot, colorClass: 'text-[#6DB33F]' },
-  django:        { icon: siDjango,     colorClass: 'text-[#092E20] dark:text-[#44B78B]' },
-  fastapi:       { icon: siFastapi,    colorClass: 'text-[#009688]' },
-  'aspnet-core': { icon: siDotnet,     colorClass: 'text-[#512BD4] dark:text-[#9B7BFF]' },
-  aspnetcore:    { icon: siDotnet,     colorClass: 'text-[#512BD4] dark:text-[#9B7BFF]' },
-  dotnet:        { icon: siDotnet,     colorClass: 'text-[#512BD4] dark:text-[#9B7BFF]' },
-  astro:         { icon: siAstro,      colorClass: 'text-black dark:text-white' },
-  'vue-vite':    { icon: siVuedotjs,   colorClass: 'text-[#4FC08D]' },
-  vue:           { icon: siVuedotjs,   colorClass: 'text-[#4FC08D]' },
-  vitepress:     { icon: siVitepress,  colorClass: 'text-[#5072A7] dark:text-[#8AB4F8]' },
-  generic:       { icon: null,         colorClass: 'text-slate-600 dark:text-white' },
+  springboot: { icon: siSpringboot, colorClass: 'text-[#6DB33F]' },
+  django: { icon: siDjango, colorClass: 'text-[#092E20] dark:text-[#44B78B]' },
+  fastapi: { icon: siFastapi, colorClass: 'text-[#009688]' },
+  'aspnet-core': { icon: siDotnet, colorClass: 'text-[#512BD4] dark:text-[#9B7BFF]' },
+  aspnetcore: { icon: siDotnet, colorClass: 'text-[#512BD4] dark:text-[#9B7BFF]' },
+  dotnet: { icon: siDotnet, colorClass: 'text-[#512BD4] dark:text-[#9B7BFF]' },
+  astro: { icon: siAstro, colorClass: 'text-black dark:text-white' },
+  'vue-vite': { icon: siVuedotjs, colorClass: 'text-[#4FC08D]' },
+  vue: { icon: siVuedotjs, colorClass: 'text-[#4FC08D]' },
+  vitepress: { icon: siVitepress, colorClass: 'text-[#5072A7] dark:text-[#8AB4F8]' },
+  generic: { icon: null, colorClass: 'text-slate-600 dark:text-white' },
 };
 
 /**
@@ -92,22 +101,34 @@ const FRAMEWORK_META: Record<string, FrameworkMeta> = {
  * Frameworks not listed here fall back to the API-provided category.
  */
 const CATEGORY_OVERRIDES: Record<string, Category> = {
-  nextjs:       'frontend',
-  nuxt:         'frontend',
-  angular:      'frontend',
+  nextjs: 'frontend',
+  nuxt: 'frontend',
+  angular: 'frontend',
   'svelte-kit': 'frontend',
-  sveltekit:    'frontend',
-  svelte:       'frontend',
-  astro:        'frontend',
-  vitepress:    'frontend',
-  generic:      'generic',
+  sveltekit: 'frontend',
+  svelte: 'frontend',
+  astro: 'frontend',
+  vitepress: 'frontend',
+  generic: 'generic',
 };
 
 const CATEGORY_LABELS: Record<Category, { label: string; class: string }> = {
-  frontend:  { label: 'Frontend',   class: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' },
-  backend:   { label: 'Backend',    class: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' },
-  fullstack: { label: 'Full-stack', class: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' },
-  generic:   { label: 'Generic',    class: 'bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200' },
+  frontend: {
+    label: 'Frontend',
+    class: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+  },
+  backend: {
+    label: 'Backend',
+    class: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+  },
+  fullstack: {
+    label: 'Full-stack',
+    class: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
+  },
+  generic: {
+    label: 'Generic',
+    class: 'bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200',
+  },
 };
 
 const TEMPLATE_REPO_BASE = 'https://github.com/flui-cloud';
@@ -118,8 +139,14 @@ const TEMPLATE_REPO_BASE = 'https://github.com/flui-cloud';
   imports: [FormsModule, NgIconComponent],
   providers: [
     provideIcons({
-      lucideRefreshCw, lucideLoader, lucideSearch, lucideGitBranch,
-      lucideServer, lucideArrowRight, lucidePackage, lucideRocket,
+      lucideRefreshCw,
+      lucideLoader,
+      lucideSearch,
+      lucideGitBranch,
+      lucideServer,
+      lucideArrowRight,
+      lucidePackage,
+      lucideRocket,
     }),
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -130,7 +157,8 @@ const TEMPLATE_REPO_BASE = 'https://github.com/flui-cloud';
         <div>
           <h1 class="text-2xl font-bold">Flui Templates</h1>
           <p class="mt-1 text-sm text-muted-foreground">
-            Grab a production-ready Dockerfile for your framework — fork the repo, add it to your project, and deploy.
+            Grab a production-ready Dockerfile for your framework — fork the repo, add it to your
+            project, and deploy.
           </p>
         </div>
         <button
@@ -146,7 +174,10 @@ const TEMPLATE_REPO_BASE = 'https://github.com/flui-cloud';
       <!-- Search + Category Filters -->
       <div class="flex items-center gap-3 flex-wrap">
         <div class="relative flex-1 min-w-[200px] max-w-sm">
-          <ng-icon name="lucideSearch" class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <ng-icon
+            name="lucideSearch"
+            class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+          />
           <input
             type="text"
             [(ngModel)]="searchQuery"
@@ -155,10 +186,25 @@ const TEMPLATE_REPO_BASE = 'https://github.com/flui-cloud';
           />
         </div>
         <div class="flex gap-1.5">
-          <button (click)="categoryFilter.set('')"          [class]="getCategoryFilterClass('')">All</button>
-          <button (click)="categoryFilter.set('frontend')"  [class]="getCategoryFilterClass('frontend')">Frontend</button>
-          <button (click)="categoryFilter.set('backend')"   [class]="getCategoryFilterClass('backend')">Backend</button>
-          <button (click)="categoryFilter.set('generic')"   [class]="getCategoryFilterClass('generic')">Generic</button>
+          <button (click)="categoryFilter.set('')" [class]="getCategoryFilterClass('')">All</button>
+          <button
+            (click)="categoryFilter.set('frontend')"
+            [class]="getCategoryFilterClass('frontend')"
+          >
+            Frontend
+          </button>
+          <button
+            (click)="categoryFilter.set('backend')"
+            [class]="getCategoryFilterClass('backend')"
+          >
+            Backend
+          </button>
+          <button
+            (click)="categoryFilter.set('generic')"
+            [class]="getCategoryFilterClass('generic')"
+          >
+            Generic
+          </button>
         </div>
       </div>
 
@@ -176,47 +222,69 @@ const TEMPLATE_REPO_BASE = 'https://github.com/flui-cloud';
           @for (template of filteredTemplates(); track template.framework) {
             @let meta = getMeta(template.framework);
             @let cat = getCategoryInfo(getCategory(template));
-            <div class="group bg-card border border-border rounded-xl overflow-hidden transition-all hover:shadow-lg hover:border-primary/30 hover:-translate-y-0.5 flex flex-col h-full"
-                 [class.ring-2]="highlightedFramework() === template.framework"
-                 [class.ring-primary]="highlightedFramework() === template.framework">
-
+            <div
+              class="group bg-card border border-border rounded-xl overflow-hidden transition-all hover:shadow-lg hover:border-primary/30 hover:-translate-y-0.5 flex flex-col h-full"
+              [class.ring-2]="highlightedFramework() === template.framework"
+              [class.ring-primary]="highlightedFramework() === template.framework"
+            >
               <!-- Card Header with brand-colored gradient + icon -->
               <div class="px-5 pt-5 pb-4 relative overflow-hidden">
                 <!-- Subtle brand-color background tint -->
-                <div class="absolute inset-0 opacity-[0.07] pointer-events-none"
-                     [style.background-color]="getBrandColor(template.framework)"></div>
+                <div
+                  class="absolute inset-0 opacity-[0.07] pointer-events-none"
+                  [style.background-color]="getBrandColor(template.framework)"
+                ></div>
 
                 <div class="relative flex items-start justify-between">
                   <div class="flex items-center gap-3">
                     <!-- Framework Icon — uses currentColor + brand-tone colorClass that adapts to dark mode -->
-                    <div [class]="'w-11 h-11 rounded-lg bg-background border border-border flex items-center justify-center shadow-sm shrink-0 ' + meta.colorClass"
-                         [innerHTML]="getIconSafeHtml(template.framework)">
-                    </div>
+                    <div
+                      [class]="
+                        'w-11 h-11 rounded-lg bg-background border border-border flex items-center justify-center shadow-sm shrink-0 ' +
+                        meta.colorClass
+                      "
+                      [innerHTML]="getIconSafeHtml(template.framework)"
+                    ></div>
                     <div>
-                      <h3 class="font-semibold text-base leading-tight group-hover:text-primary transition-colors">
+                      <h3
+                        class="font-semibold text-base leading-tight group-hover:text-primary transition-colors"
+                      >
                         {{ template.displayName }}
                       </h3>
-                      <span [class]="'inline-block mt-1 text-[10px] font-medium px-1.5 py-0.5 rounded ' + cat.class">
+                      <span
+                        [class]="
+                          'inline-block mt-1 text-[10px] font-medium px-1.5 py-0.5 rounded ' +
+                          cat.class
+                        "
+                      >
                         {{ cat.label }}
                       </span>
                     </div>
                   </div>
                 </div>
-                <p class="relative text-xs text-muted-foreground mt-3 line-clamp-2">{{ template.description }}</p>
+                <p class="relative text-xs text-muted-foreground mt-3 line-clamp-2">
+                  {{ template.description }}
+                </p>
               </div>
 
               <!-- Card Body -->
               <div class="px-5 py-4 border-t border-border/50 flex flex-col flex-1 gap-3">
                 <!-- Tech details as pills -->
                 <div class="flex flex-wrap gap-1.5">
-                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-muted text-muted-foreground border border-border/50">
+                  <span
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-muted text-muted-foreground border border-border/50"
+                  >
                     <ng-icon name="lucideServer" class="h-3 w-3" />
                     Port {{ template.port }}
                   </span>
-                  <span class="px-2 py-0.5 rounded-full text-[11px] font-medium bg-muted text-muted-foreground border border-border/50 font-mono">
+                  <span
+                    class="px-2 py-0.5 rounded-full text-[11px] font-medium bg-muted text-muted-foreground border border-border/50 font-mono"
+                  >
                     {{ template.healthcheckPath }}
                   </span>
-                  <span class="px-2 py-0.5 rounded-full text-[11px] font-medium bg-muted text-muted-foreground border border-border/50">
+                  <span
+                    class="px-2 py-0.5 rounded-full text-[11px] font-medium bg-muted text-muted-foreground border border-border/50"
+                  >
                     {{ template.buildTool }}
                   </span>
                 </div>
@@ -234,7 +302,10 @@ const TEMPLATE_REPO_BASE = 'https://github.com/flui-cloud';
                       <ng-icon name="lucideRocket" class="h-3.5 w-3.5" />
                       Use this template
                     </span>
-                    <ng-icon name="lucideArrowRight" class="h-3.5 w-3.5 text-muted-foreground transition-transform group-hover/use:translate-x-0.5" />
+                    <ng-icon
+                      name="lucideArrowRight"
+                      class="h-3.5 w-3.5 text-muted-foreground transition-transform group-hover/use:translate-x-0.5"
+                    />
                   </button>
                   <a
                     [href]="template.repoUrl || getRepoUrl(template.framework)"
@@ -246,7 +317,10 @@ const TEMPLATE_REPO_BASE = 'https://github.com/flui-cloud';
                       <ng-icon name="lucideGitBranch" class="h-3.5 w-3.5" />
                       View on GitHub
                     </span>
-                    <ng-icon name="lucideArrowRight" class="h-3.5 w-3.5 text-muted-foreground transition-transform group-hover/link:translate-x-0.5" />
+                    <ng-icon
+                      name="lucideArrowRight"
+                      class="h-3.5 w-3.5 text-muted-foreground transition-transform group-hover/link:translate-x-0.5"
+                    />
                   </a>
                 </div>
               </div>
@@ -256,7 +330,9 @@ const TEMPLATE_REPO_BASE = 'https://github.com/flui-cloud';
 
         @if (filteredTemplates().length === 0 && !isLoading()) {
           <div class="text-center py-16">
-            <div class="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+            <div
+              class="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4"
+            >
               <ng-icon name="lucideSearch" class="h-7 w-7 text-muted-foreground" />
             </div>
             <h3 class="font-medium mb-1">No templates found</h3>
@@ -267,12 +343,13 @@ const TEMPLATE_REPO_BASE = 'https://github.com/flui-cloud';
 
       <!-- Error -->
       @if (templateService.errorMessage()) {
-        <div class="p-3 rounded-md border border-destructive/20 bg-destructive/5 text-sm text-destructive">
+        <div
+          class="p-3 rounded-md border border-destructive/20 bg-destructive/5 text-sm text-destructive"
+        >
           {{ templateService.errorMessage() }}
         </div>
       }
     </div>
-
   `,
 })
 export class TemplatesCatalogComponent implements OnInit, OnDestroy {
@@ -293,7 +370,7 @@ export class TemplatesCatalogComponent implements OnInit, OnDestroy {
   disabledTooltip = computed(() =>
     this.repositoryService.setupStatus()?.authMethod === 'github_app'
       ? 'Install the Flui GitHub App first'
-      : 'Connect GitHub with the repo scope first'
+      : 'Connect GitHub with the repo scope first',
   );
 
   private readonly iconCache = new Map<string, SafeHtml>();
@@ -304,17 +381,18 @@ export class TemplatesCatalogComponent implements OnInit, OnDestroy {
     let templates = this.templateService.templates();
 
     if (search) {
-      templates = templates.filter(t =>
-        t.displayName.toLowerCase().includes(search) ||
-        t.framework.toLowerCase().includes(search) ||
-        t.description.toLowerCase().includes(search)
+      templates = templates.filter(
+        (t) =>
+          t.displayName.toLowerCase().includes(search) ||
+          t.framework.toLowerCase().includes(search) ||
+          t.description.toLowerCase().includes(search),
       );
     }
     if (cat) {
-      templates = templates.filter(t => this.getCategory(t) === cat);
+      templates = templates.filter((t) => this.getCategory(t) === cat);
     }
     // Hide deprecated templates by default
-    templates = templates.filter(t => !t.isDeprecated);
+    templates = templates.filter((t) => !t.isDeprecated);
     return templates;
   });
 
@@ -371,7 +449,7 @@ export class TemplatesCatalogComponent implements OnInit, OnDestroy {
     void (async () => {
       const fw = this.route.snapshot.queryParamMap.get('framework');
       if (fw) this.highlightedFramework.set(fw);
-  
+
       // Load templates, setup/OAuth status, and clusters in parallel — these are independent
       await Promise.allSettled([
         this.loadTemplates(),

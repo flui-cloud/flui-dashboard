@@ -7,7 +7,12 @@ import type {
   SurfaceSnapshot,
 } from '@flui-cloud/semantic-surface';
 
-import type { MailDomainSummary, MailKpi, MailOverview, MailWindow } from '../../model/mail-console.models';
+import type {
+  MailDomainSummary,
+  MailKpi,
+  MailOverview,
+  MailWindow,
+} from '../../model/mail-console.models';
 
 const SURFACE_APP_ID = 'flui-dashboard';
 const SURFACE_NAMESPACE = 'flui';
@@ -33,11 +38,19 @@ export interface MailOverviewSurfaceContext {
   appVersion?: string;
 }
 
-function textObservation(key: string, value: string | undefined | null, source: ObservationSource): Observation | null {
+function textObservation(
+  key: string,
+  value: string | undefined | null,
+  source: ObservationSource,
+): Observation | null {
   return value ? { key, presentedAs: { text: value }, source } : null;
 }
 
-function valueObservation(key: string, value: number | boolean, source: ObservationSource): Observation {
+function valueObservation(
+  key: string,
+  value: number | boolean,
+  source: ObservationSource,
+): Observation {
   return { key, presentedAs: { value }, source };
 }
 
@@ -54,7 +67,11 @@ function pageObservations(o: MailOverview, window: MailWindow): Observation[] {
     textObservation('flui.mail.active_provider', o.provider, 'api'),
     ...kpiObservations(o.kpis),
     o.unregisteredDomains.length
-      ? valueObservation('flui.mail.unregistered_domains_count', o.unregisteredDomains.length, 'derived')
+      ? valueObservation(
+          'flui.mail.unregistered_domains_count',
+          o.unregisteredDomains.length,
+          'derived',
+        )
       : null,
     // `incident.detail` is shown on screen but is provider-originated technical text
     // (font-mono in the template) — same exclusion as raw error text elsewhere in this
@@ -65,7 +82,11 @@ function pageObservations(o: MailOverview, window: MailWindow): Observation[] {
 }
 
 function domainRowScope(d: MailDomainSummary): SemanticScopeSnapshot {
-  const entity: EntityReference = { ref: mailDomainEntityRef(d.domain), label: d.domain, role: 'related' };
+  const entity: EntityReference = {
+    ref: mailDomainEntityRef(d.domain),
+    label: d.domain,
+    role: 'related',
+  };
   return {
     id: `${DOMAINS_LIST_ID}:${d.domain}`,
     parentId: DOMAINS_LIST_ID,

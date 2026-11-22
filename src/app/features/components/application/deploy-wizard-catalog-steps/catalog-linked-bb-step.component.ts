@@ -33,9 +33,11 @@ import { CatalogReusableInstanceDto } from '../../../../core/api/model/catalogRe
         </h3>
         <p class="text-sm text-muted-foreground">
           @if (bbRefs().length > 1) {
-            This client supports multiple building blocks
-            (<span class="font-mono">{{ slugList() }}</span>). Pick a running instance of any of
-            them to auto-connect after install. Credentials are wired automatically.
+            This client supports multiple building blocks (<span class="font-mono">{{
+              slugList()
+            }}</span
+            >). Pick a running instance of any of them to auto-connect after install. Credentials
+            are wired automatically.
           } @else {
             Pick a running <span class="font-mono">{{ bbLabel() }}</span> to auto-connect this
             client after install. Credentials are wired automatically — you won't be asked for a
@@ -46,11 +48,19 @@ import { CatalogReusableInstanceDto } from '../../../../core/api/model/catalogRe
 
       @if (bbRefs().length > 1 && !state.reusableInstancesLoading() && allInstances().length > 0) {
         <div class="flex flex-wrap items-center gap-1.5">
-          <button type="button" (click)="setSlugFilter(null)" [class]="slugChipClass(slugFilter() === null)">
+          <button
+            type="button"
+            (click)="setSlugFilter(null)"
+            [class]="slugChipClass(slugFilter() === null)"
+          >
             All
           </button>
           @for (s of bbRefs(); track s) {
-            <button type="button" (click)="setSlugFilter(s)" [class]="slugChipClass(slugFilter() === s)">
+            <button
+              type="button"
+              (click)="setSlugFilter(s)"
+              [class]="slugChipClass(slugFilter() === s)"
+            >
               {{ s }}
             </button>
           }
@@ -85,15 +95,18 @@ import { CatalogReusableInstanceDto } from '../../../../core/api/model/catalogRe
               @if (bbRefs().length > 1) {
                 Install one of {{ slugList() }} first, then come back to this wizard to link it.
               } @else {
-                Install a {{ bbLabel() }} building block first, then come back to this
-                wizard to link it.
+                Install a {{ bbLabel() }} building block first, then come back to this wizard to
+                link it.
               }
             </p>
           </div>
         </div>
       } @else {
         <ul class="space-y-2">
-          @for (instance of instances(); track instance.catalogInstallId || instance.applicationId) {
+          @for (
+            instance of instances();
+            track instance.catalogInstallId || instance.applicationId
+          ) {
             <li>
               <button
                 type="button"
@@ -112,7 +125,9 @@ import { CatalogReusableInstanceDto } from '../../../../core/api/model/catalogRe
                         {{ instance.status }}
                       </span>
                       @if (bbRefs().length > 1 && instance.catalogSlug) {
-                        <span class="rounded-full border border-sky-300 bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-800 dark:border-sky-700 dark:bg-sky-900/20 dark:text-sky-300">
+                        <span
+                          class="rounded-full border border-sky-300 bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-800 dark:border-sky-700 dark:bg-sky-900/20 dark:text-sky-300"
+                        >
                           {{ instance.catalogSlug }}
                         </span>
                       }
@@ -122,8 +137,7 @@ import { CatalogReusableInstanceDto } from '../../../../core/api/model/catalogRe
                     </div>
                     @if (!instance.catalogInstallId) {
                       <div class="mt-1 text-[11px] text-amber-700 dark:text-amber-300">
-                        This instance was not created via catalog install — it can't
-                        be linked.
+                        This instance was not created via catalog install — it can't be linked.
                       </div>
                     }
                   </div>
@@ -157,7 +171,10 @@ export class CatalogLinkedBbStepComponent {
   });
 
   protected isSelected(instance: CatalogReusableInstanceDto): boolean {
-    return !!instance.catalogInstallId && this.state.pendingLinkedInstallId() === instance.catalogInstallId;
+    return (
+      !!instance.catalogInstallId &&
+      this.state.pendingLinkedInstallId() === instance.catalogInstallId
+    );
   }
 
   protected select(instance: CatalogReusableInstanceDto): void {
@@ -177,8 +194,7 @@ export class CatalogLinkedBbStepComponent {
   }
 
   protected cardClass(selected: boolean, disabled: boolean): string {
-    const base =
-      'flex w-full items-start rounded-lg border p-4 text-left transition';
+    const base = 'flex w-full items-start rounded-lg border p-4 text-left transition';
     if (disabled) return `${base} border-border bg-muted/20 opacity-60 cursor-not-allowed`;
     return selected
       ? `${base} border-primary bg-primary/5`

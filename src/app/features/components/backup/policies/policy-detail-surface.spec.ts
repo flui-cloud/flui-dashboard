@@ -58,7 +58,11 @@ const ACTIVITY: BackupPolicyActivity = {
     nextRunAt: '2026-10-01T02:00:00.000Z',
     previousDueAt: '2026-09-30T02:00:00.000Z',
   },
-  health: { state: 'missed', detail: 'The 02:00 run did not happen', lastSuccessAt: '2026-09-29T02:03:00.000Z' },
+  health: {
+    state: 'missed',
+    detail: 'The 02:00 run did not happen',
+    lastSuccessAt: '2026-09-29T02:03:00.000Z',
+  },
   lastRun: null,
   runs: [
     {
@@ -82,13 +86,17 @@ function input(over: Partial<PolicyDetailSurfaceInput> = {}): PolicyDetailSurfac
 }
 
 function snapshotOf(over: Partial<PolicyDetailSurfaceInput> = {}): SurfaceSnapshot {
-  const s = buildPolicyDetailSurface(input(over), { revision: 1, generatedAt: '2026-09-02T09:00:00.000Z' });
+  const s = buildPolicyDetailSurface(input(over), {
+    revision: 1,
+    generatedAt: '2026-09-02T09:00:00.000Z',
+  });
   if (!s) throw new Error('the producer described nothing');
   return s;
 }
 
 const pageScope = (s: SurfaceSnapshot) => s.scopes.find((x) => x.kind === 'page')!;
-const observation = (s: SurfaceSnapshot, key: string) => pageScope(s).observations?.find((o) => o.key === key);
+const observation = (s: SurfaceSnapshot, key: string) =>
+  pageScope(s).observations?.find((o) => o.key === key);
 
 describe('policy detail surface producer', () => {
   it('emits a snapshot that validates against the real schema and passes semantic checks', () => {
@@ -101,32 +109,51 @@ describe('policy detail surface producer', () => {
 
   it('bumps the revision on real change', () => {
     const tracker = new PolicyDetailSurfaceRevision();
-    const first = buildPolicyDetailSurface(input(), { revision: tracker.next(presentedContent(input())!), generatedAt: '2026-09-02T09:13:00.000Z' })!;
+    const first = buildPolicyDetailSurface(input(), {
+      revision: tracker.next(presentedContent(input())!),
+      generatedAt: '2026-09-02T09:13:00.000Z',
+    })!;
     const changed = input({ policy: { ...POLICY, status: 'paused' } });
-    const second = buildPolicyDetailSurface(changed, { revision: tracker.next(presentedContent(changed)!), generatedAt: '2026-09-02T09:14:00.000Z' })!;
+    const second = buildPolicyDetailSurface(changed, {
+      revision: tracker.next(presentedContent(changed)!),
+      generatedAt: '2026-09-02T09:14:00.000Z',
+    })!;
     expect(second.surface.revision).toBe(first.surface.revision + 1);
     expect(validateSurfaceSemantics(second, { previousSnapshot: first })).toEqual([]);
   });
 
   it('flags a snapshot whose revision does not advance on the previous one', () => {
     const first = snapshotOf();
-    const stale = { ...snapshotOf(), surface: { ...snapshotOf().surface, revision: first.surface.revision } };
+    const stale = {
+      ...snapshotOf(),
+      surface: { ...snapshotOf().surface, revision: first.surface.revision },
+    };
     const issues = validateSurfaceSemantics(stale, { previousSnapshot: first });
-    expect(issues).toEqual([jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' })]);
+    expect(issues).toEqual([
+      jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' }),
+    ]);
   });
 
   it('claims the page and the policy itself, with reason route and role primary', () => {
     const snapshot = snapshotOf();
     expect(snapshot.attention).toEqual([
-      { scopeId: `backup-policy-detail:${POLICY.id}`, entityRef: policyEntityRef(POLICY.id), reason: 'route' },
+      {
+        scopeId: `backup-policy-detail:${POLICY.id}`,
+        entityRef: policyEntityRef(POLICY.id),
+        reason: 'route',
+      },
     ]);
-    expect(pageScope(snapshot).entities).toEqual([{ ref: policyEntityRef(POLICY.id), label: POLICY.name, role: 'primary' }]);
+    expect(pageScope(snapshot).entities).toEqual([
+      { ref: policyEntityRef(POLICY.id), label: POLICY.name, role: 'primary' },
+    ]);
   });
 
   it('references its destinations as related entities, using the same ref the destination-detail producer mints', () => {
     const snapshot = snapshotOf();
     const destRow = snapshot.scopes.find((s) => s.id.endsWith(':destinations:dest-1'))!;
-    expect(destRow.entities).toEqual([{ ref: destinationEntityRef('dest-1'), label: 'primary-eu', role: 'related' }]);
+    expect(destRow.entities).toEqual([
+      { ref: destinationEntityRef('dest-1'), label: 'primary-eu', role: 'related' },
+    ]);
   });
 
   it('presents status, profile, scope, schedule and retention', () => {
@@ -137,7 +164,12 @@ describe('policy detail surface producer', () => {
   });
 
   it('produces no snapshot at all when there is no policy loaded — no invented selection', () => {
-    expect(buildPolicyDetailSurface(input({ policy: null }), { revision: 1, generatedAt: '2026-09-02T09:13:00.000Z' })).toBeNull();
+    expect(
+      buildPolicyDetailSurface(input({ policy: null }), {
+        revision: 1,
+        generatedAt: '2026-09-02T09:13:00.000Z',
+      }),
+    ).toBeNull();
   });
 
   it('never invents a destinations list scope when the policy has none', () => {
@@ -149,8 +181,12 @@ describe('policy detail surface producer', () => {
     const snapshot = snapshotOf({ activity: ACTIVITY });
     expectValidSurface(snapshot);
     expect(observation(snapshot, 'flui.backup.policy.health')?.presentedAs.text).toBe('missed');
-    expect(observation(snapshot, 'flui.backup.policy.schedule_description')?.presentedAs.text).toBe('Every day at 02:00 UTC');
-    expect(observation(snapshot, 'flui.backup.policy.next_run_at')?.presentedAs.text).toBe('2026-10-01T02:00:00.000Z');
+    expect(observation(snapshot, 'flui.backup.policy.schedule_description')?.presentedAs.text).toBe(
+      'Every day at 02:00 UTC',
+    );
+    expect(observation(snapshot, 'flui.backup.policy.next_run_at')?.presentedAs.text).toBe(
+      '2026-10-01T02:00:00.000Z',
+    );
   });
 
   it('lists the runs as related backup jobs', () => {
@@ -159,7 +195,9 @@ describe('policy detail surface producer', () => {
     expect(runs.completeness).toEqual({ shown: 1, total: 1 });
     const row = snapshot.scopes.find((s) => s.parentId === runs.id)!;
     expect(row.entities).toEqual([{ ref: jobEntityRef('job-1'), role: 'related' }]);
-    expect(row.observations?.find((o) => o.key === 'flui.backup.run.encrypted')?.presentedAs.value).toBe(true);
+    expect(
+      row.observations?.find((o) => o.key === 'flui.backup.run.encrypted')?.presentedAs.value,
+    ).toBe(true);
   });
 
   it('adds no runs list before activity has loaded', () => {

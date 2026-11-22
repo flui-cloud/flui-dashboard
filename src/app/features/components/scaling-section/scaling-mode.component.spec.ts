@@ -12,7 +12,12 @@ const group = (over: Partial<SectionGroup> = {}): SectionGroup =>
     bounds: { min: 1, desired: 1, max: 3 },
     limits: { hourlyBillingOnly: true, maxMonthlyCost: null },
     capability: { canProvision: true, hasCatalogue: true, billing: 'hourly' },
-    acts: { acts: false, says: 'Nothing is added on its own.', label: 'Manual — Flui does not add nodes', attention: true },
+    acts: {
+      acts: false,
+      says: 'Nothing is added on its own.',
+      label: 'Manual — Flui does not add nodes',
+      attention: true,
+    },
     ...over,
   }) as unknown as SectionGroup;
 
@@ -26,7 +31,10 @@ describe('switching a group to automatic', () => {
       imports: [ScalingModeComponent],
       providers: [
         { provide: ScalingApiService, useValue: { updateGroup } },
-        { provide: ToastService, useValue: { showSuccess: () => undefined, showError: () => undefined } },
+        {
+          provide: ToastService,
+          useValue: { showSuccess: () => undefined, showError: () => undefined },
+        },
       ],
     }).compileComponents();
     fixture = TestBed.createComponent(ScalingModeComponent);
@@ -67,7 +75,9 @@ describe('switching a group to automatic', () => {
   });
 
   it('keeps the ceiling the group already has', async () => {
-    await build(group({ limits: { hourlyBillingOnly: true, maxMonthlyCost: 30 } } as Partial<SectionGroup>));
+    await build(
+      group({ limits: { hourlyBillingOnly: true, maxMonthlyCost: 30 } } as Partial<SectionGroup>),
+    );
     open();
     expect(find('scaling-mode-cap')).toBeNull();
     (find('scaling-mode-switch-confirm') as HTMLButtonElement).click();
@@ -95,7 +105,9 @@ describe('switching a group to automatic', () => {
     );
     open();
     expect((find('scaling-mode-cap') as HTMLInputElement).value).toBe('45');
-    expect(find('scaling-mode-confirm')!.textContent).toContain('up to 3 nodes, never past a spending ceiling of €45.00');
+    expect(find('scaling-mode-confirm')!.textContent).toContain(
+      'up to 3 nodes, never past a spending ceiling of €45.00',
+    );
     (find('scaling-mode-switch-confirm') as HTMLButtonElement).click();
     await fixture.whenStable();
     expect(updateGroup).toHaveBeenCalledWith('g-1', {

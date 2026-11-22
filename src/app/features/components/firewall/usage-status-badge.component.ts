@@ -15,11 +15,7 @@ import { lucideCheck, lucideX } from '@ng-icons/lucide';
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <span
-      hlmBadge
-      [variant]="variant()"
-      class="inline-flex items-center gap-1.5 font-medium"
-    >
+    <span hlmBadge [variant]="variant()" class="inline-flex items-center gap-1.5 font-medium">
       <ng-icon [name]="icon()" class="h-3 w-3" />
       {{ label() }}
     </span>

@@ -13,10 +13,16 @@ import { BackupBand, RunState, TONE_TEXT, routeOf, runBusy, runLabel } from './a
   host: { class: 'block' },
   template: `
     @let b = band();
-    <div class="flex flex-wrap items-center gap-x-5 gap-y-3 rounded-lg bg-muted/40 px-4 py-3" data-testid="recap-backup">
+    <div
+      class="flex flex-wrap items-center gap-x-5 gap-y-3 rounded-lg bg-muted/40 px-4 py-3"
+      data-testid="recap-backup"
+    >
       @if (b) {
         <span class="inline-flex items-center gap-1.5 text-sm font-semibold" [class]="text[b.tone]">
-          <ng-icon [name]="b.tone === 'ok' ? 'lucideShieldCheck' : 'lucideShieldAlert'" class="h-4 w-4" />
+          <ng-icon
+            [name]="b.tone === 'ok' ? 'lucideShieldCheck' : 'lucideShieldAlert'"
+            class="h-4 w-4"
+          />
           {{ b.label }}
         </span>
         <div class="flex min-w-0 flex-1 flex-wrap gap-x-4 gap-y-1 text-xs text-foreground">
@@ -42,7 +48,8 @@ import { BackupBand, RunState, TONE_TEXT, routeOf, runBusy, runLabel } from './a
               [routerLink]="route(b.protectPath).path"
               [queryParams]="route(b.protectPath).query"
               class="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-            >Protect</a>
+              >Protect</a
+            >
           } @else if (b.runPolicyId) {
             <button
               type="button"
@@ -50,18 +57,23 @@ import { BackupBand, RunState, TONE_TEXT, routeOf, runBusy, runLabel } from './a
               [disabled]="busy(runState()[b.runPolicyId])"
               class="rounded-md border border-border bg-background px-3 py-1.5 text-sm font-medium hover:bg-muted disabled:opacity-60"
               data-testid="recap-backup-now"
-            >{{ label(runState()[b.runPolicyId]) }}</button>
+            >
+              {{ label(runState()[b.runPolicyId]) }}
+            </button>
           }
           @if (b.holdsData) {
             <a
               [routerLink]="['/apps/applications', appId(), 'snapshots']"
               [queryParams]="{ returnTo: recapPath() }"
               class="rounded-md border border-border bg-background px-3 py-1.5 text-sm font-medium hover:bg-muted"
-            >Restore</a>
+              >Restore</a
+            >
           }
         </div>
       } @else {
-        <span class="text-sm text-muted-foreground">{{ protectionLoaded() ? 'Backup state unavailable' : 'Reading the backup state…' }}</span>
+        <span class="text-sm text-muted-foreground">{{
+          protectionLoaded() ? 'Backup state unavailable' : 'Reading the backup state…'
+        }}</span>
       }
     </div>
   `,

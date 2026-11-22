@@ -11,6 +11,6 @@ export class DnsRefreshService {
   readonly trigger = this._trigger.asReadonly();
 
   triggerRefresh(): void {
-    this._trigger.update(n => n + 1);
+    this._trigger.update((n) => n + 1);
   }
 }

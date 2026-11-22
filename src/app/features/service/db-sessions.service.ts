@@ -4,8 +4,7 @@ import { Observable } from 'rxjs';
 import { AppConfigService } from '../../core/services/app-config.service';
 
 // Hand-written calls, not part of the generated API client.
-export type DbSessionKind =
-  'client' | 'pooler' | 'local' | 'replication' | 'background';
+export type DbSessionKind = 'client' | 'pooler' | 'local' | 'replication' | 'background';
 export type DbSessionAction = 'cancel' | 'terminate';
 
 export interface DbSession {
@@ -113,10 +112,9 @@ export class DbSessionsService {
     session: Pick<DbSession, 'pid' | 'backendStart'>,
     action: DbSessionAction,
   ): Observable<DbSessionActionResult> {
-    return this.http.post<DbSessionActionResult>(
-      `${this.base(appId)}/${session.pid}/${action}`,
-      { backendStart: session.backendStart },
-    );
+    return this.http.post<DbSessionActionResult>(`${this.base(appId)}/${session.pid}/${action}`, {
+      backendStart: session.backendStart,
+    });
   }
 
   closeClient(

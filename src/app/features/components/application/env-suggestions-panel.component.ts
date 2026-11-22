@@ -33,7 +33,9 @@ import { DetectedEnvVarDto } from '../../../core/api/model/detectedEnvVarDto';
   template: `
     <!-- Loading state -->
     @if (loading()) {
-      <div class="flex items-center justify-between p-3 rounded-md border border-border bg-muted/30">
+      <div
+        class="flex items-center justify-between p-3 rounded-md border border-border bg-muted/30"
+      >
         <div class="flex items-center gap-2 text-sm text-muted-foreground">
           <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin shrink-0" />
           <span>Analyzing repository for environment variables...</span>
@@ -51,7 +53,9 @@ import { DetectedEnvVarDto } from '../../../core/api/model/detectedEnvVarDto';
 
     <!-- Error state -->
     @if (!loading() && error()) {
-      <div class="flex items-start justify-between gap-2 p-3 rounded-md border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/10 text-sm text-yellow-800 dark:text-yellow-300">
+      <div
+        class="flex items-start justify-between gap-2 p-3 rounded-md border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/10 text-sm text-yellow-800 dark:text-yellow-300"
+      >
         <div class="flex items-start gap-2">
           <ng-icon name="lucideInfo" class="h-4 w-4 shrink-0 mt-0.5" />
           <span>{{ error() }} Configure variables manually below.</span>
@@ -85,15 +89,22 @@ import { DetectedEnvVarDto } from '../../../core/api/model/detectedEnvVarDto';
 
       <!-- Fallback warning -->
       @if (r.isFallback) {
-        <div class="flex items-start gap-2 p-3 rounded-md border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/10 text-sm text-yellow-800 dark:text-yellow-300">
+        <div
+          class="flex items-start gap-2 p-3 rounded-md border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/10 text-sm text-yellow-800 dark:text-yellow-300"
+        >
           <ng-icon name="lucideTriangleAlert" class="h-4 w-4 shrink-0 mt-0.5" />
-          <span>List detected automatically from base configuration — may be incomplete. Verify before proceeding.</span>
+          <span
+            >List detected automatically from base configuration — may be incomplete. Verify before
+            proceeding.</span
+          >
         </div>
       }
 
       <!-- No candidates -->
       @if (r.candidates.length === 0 && !r.isFallback) {
-        <div class="flex items-center gap-2 p-3 rounded-md border border-border bg-muted/20 text-sm text-muted-foreground">
+        <div
+          class="flex items-center gap-2 p-3 rounded-md border border-border bg-muted/20 text-sm text-muted-foreground"
+        >
           <ng-icon name="lucideInfo" class="h-4 w-4 shrink-0" />
           <span>No environment variable files detected. Add variables manually below.</span>
         </div>
@@ -115,7 +126,9 @@ import { DetectedEnvVarDto } from '../../../core/api/model/detectedEnvVarDto';
                   <span class="ml-1.5 text-xs opacity-60">(recommended)</span>
                 }
                 @if (candidate.sourceFrameworkHint) {
-                  <span class="ml-1.5 px-1 py-0.5 rounded text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                  <span
+                    class="ml-1.5 px-1 py-0.5 rounded text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                  >
                     {{ candidate.sourceFrameworkHint }}
                   </span>
                 }
@@ -134,11 +147,15 @@ import { DetectedEnvVarDto } from '../../../core/api/model/detectedEnvVarDto';
             Variables pre-filled from
             <span class="font-mono">{{ c.sourceFile }}</span>
             @if (c.detectedPattern) {
-              <span class="ml-1">(pattern: <span class="font-mono">{{ c.detectedPattern }}</span>)</span>
+              <span class="ml-1"
+                >(pattern: <span class="font-mono">{{ c.detectedPattern }}</span>)</span
+              >
             }
           </span>
           @if (c.sourceFrameworkHint) {
-            <span class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 font-mono">
+            <span
+              class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 font-mono"
+            >
               {{ c.sourceFrameworkHint }}
             </span>
           }
@@ -163,7 +180,9 @@ import { DetectedEnvVarDto } from '../../../core/api/model/detectedEnvVarDto';
                 @if (v.sensitive) {
                   <ng-icon name="lucideLock" class="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 }
-                <span class="shrink-0 text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">Fixed</span>
+                <span class="shrink-0 text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground"
+                  >Fixed</span
+                >
               </div>
             }
           </div>
@@ -184,7 +203,7 @@ export class EnvSuggestionsPanelComponent {
 
   getReadOnlyVars(candidate: EnvVarCandidateDto | undefined): DetectedEnvVarDto[] {
     if (!candidate) return [];
-    return candidate.vars.filter(v => v.readOnly);
+    return candidate.vars.filter((v) => v.readOnly);
   }
 
   getCandidateButtonClass(index: number): string {

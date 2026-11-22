@@ -3,10 +3,7 @@ import { Component, inject, input, output, signal, ChangeDetectionStrategy } fro
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { BackupService } from '../../../service/backup.service';
-import {
-  StorageBackendProvider,
-  EncryptionMode,
-} from '../../../model/backup.models';
+import { StorageBackendProvider, EncryptionMode } from '../../../model/backup.models';
 import { CreateBackupDestinationDto } from '../../../../core/api/model/createBackupDestinationDto';
 
 @Component({
@@ -17,40 +14,54 @@ import { CreateBackupDestinationDto } from '../../../../core/api/model/createBac
   template: `
     <div class="space-y-6" [class]="embedded() ? 'p-5' : 'p-6 max-w-2xl'">
       <header class="flex items-center justify-between">
-        <h1 class="font-semibold" [class]="embedded() ? 'text-lg' : 'text-2xl'">New backup destination</h1>
+        <h1 class="font-semibold" [class]="embedded() ? 'text-lg' : 'text-2xl'">
+          New backup destination
+        </h1>
         @if (embedded()) {
-        <button type="button" class="text-sm text-muted-foreground hover:underline" (click)="cancelled.emit()">
-          Cancel
-        </button>
+          <button
+            type="button"
+            class="text-sm text-muted-foreground hover:underline"
+            (click)="cancelled.emit()"
+          >
+            Cancel
+          </button>
         } @else {
-        <a routerLink="/management/backup/destinations" class="text-sm text-muted-foreground hover:underline">
-          Cancel
-        </a>
+          <a
+            routerLink="/management/backup/destinations"
+            class="text-sm text-muted-foreground hover:underline"
+          >
+            Cancel
+          </a>
         }
       </header>
 
       <p class="text-sm text-muted-foreground">
         Add an <strong class="text-foreground">external</strong> S3-compatible bucket as a backup
         destination — AWS, Wasabi, Backblaze B2, Cloudflare R2, IDrive E2, MinIO, or any other
-        endpoint that speaks the S3 API.@if (!embedded()) { On Scaleway you don't need this form.}
+        endpoint that speaks the S3 API.
+        @if (!embedded()) {
+          On Scaleway you don't need this form.
+        }
       </p>
 
       @if (!embedded()) {
-      <div class="rounded-md border border-primary/30 bg-primary/5 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div class="text-sm">
-          <p class="font-medium">⚡ Using Scaleway? Skip this form.</p>
-          <p class="text-xs text-muted-foreground mt-0.5">
-            Flui sets up the destination, schedule and first backup for a cluster in one click —
-            no bucket or keys to copy.
-          </p>
-        </div>
-        <a
-          routerLink="/management/backup"
-          class="shrink-0 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 text-center"
+        <div
+          class="rounded-md border border-primary/30 bg-primary/5 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
         >
-          Enable backups →
-        </a>
-      </div>
+          <div class="text-sm">
+            <p class="font-medium">⚡ Using Scaleway? Skip this form.</p>
+            <p class="text-xs text-muted-foreground mt-0.5">
+              Flui sets up the destination, schedule and first backup for a cluster in one click —
+              no bucket or keys to copy.
+            </p>
+          </div>
+          <a
+            routerLink="/management/backup"
+            class="shrink-0 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 text-center"
+          >
+            Enable backups →
+          </a>
+        </div>
       }
 
       <form (ngSubmit)="onSubmit()" #f="ngForm" class="space-y-5">
@@ -160,25 +171,21 @@ import { CreateBackupDestinationDto } from '../../../../core/api/model/createBac
         </div>
 
         @if (form.encryptionMode === 'byo_passphrase') {
-        <label class="block">
-          <span class="text-sm font-medium">Passphrase *</span>
-          <input
-            required
-            type="password"
-            name="encryptionPassphrase"
-            [(ngModel)]="form.encryptionPassphrase"
-            class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm font-mono"
-          />
-        </label>
+          <label class="block">
+            <span class="text-sm font-medium">Passphrase *</span>
+            <input
+              required
+              type="password"
+              name="encryptionPassphrase"
+              [(ngModel)]="form.encryptionPassphrase"
+              class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm font-mono"
+            />
+          </label>
         }
 
         <div class="flex flex-wrap gap-4">
           <label class="inline-flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              name="forcePathStyle"
-              [(ngModel)]="form.forcePathStyle"
-            />
+            <input type="checkbox" name="forcePathStyle" [(ngModel)]="form.forcePathStyle" />
             Force path-style addressing
           </label>
           <label class="inline-flex items-center gap-2 text-sm">
@@ -186,26 +193,33 @@ import { CreateBackupDestinationDto } from '../../../../core/api/model/createBac
             Use server-side encryption (SSE)
           </label>
           <label class="inline-flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              name="usableForEtcdL1"
-              [(ngModel)]="form.usableForEtcdL1"
-            />
+            <input type="checkbox" name="usableForEtcdL1" [(ngModel)]="form.usableForEtcdL1" />
             Usable for etcd L1 snapshots
           </label>
         </div>
 
         @if (errorMsg()) {
-        <div class="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-400">
-          {{ errorMsg() }}
-        </div>
-        } @if (testResult(); as r) {
-        <div
-          class="rounded border px-3 py-2 text-sm"
-          [class]="r.healthy ? 'border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400' : 'border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-400'"
-        >
-          @if (r.healthy) { Connection successful. } @else { Connection failed: {{ r.error }} }
-        </div>
+          <div
+            class="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-400"
+          >
+            {{ errorMsg() }}
+          </div>
+        }
+        @if (testResult(); as r) {
+          <div
+            class="rounded border px-3 py-2 text-sm"
+            [class]="
+              r.healthy
+                ? 'border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400'
+                : 'border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-400'
+            "
+          >
+            @if (r.healthy) {
+              Connection successful.
+            } @else {
+              Connection failed: {{ r.error }}
+            }
+          </div>
         }
 
         <div class="flex gap-2">

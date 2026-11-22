@@ -7,10 +7,7 @@ import { ToastService } from '../../shared/services/toast.service';
 import { AppRuntimeResponseDto } from '../../core/api/model/appRuntimeResponseDto';
 import { UpdateResourcesDto } from '../../core/api/model/updateResourcesDto';
 import { UpdateReplicasDto } from '../../core/api/model/updateReplicasDto';
-import {
-  AppRuntimeWebSocketService,
-  RolloutProgressEvent,
-} from './app-runtime-websocket.service';
+import { AppRuntimeWebSocketService, RolloutProgressEvent } from './app-runtime-websocket.service';
 
 export interface ResourceProposal {
   containerName: string;
@@ -95,9 +92,7 @@ export class AppRuntimeService {
     this.loadingData.set(true);
     this.errorData.set(null);
     try {
-      const result = await firstValueFrom(
-        this.api.appManagementControllerGetRuntimeStatus(appId)
-      );
+      const result = await firstValueFrom(this.api.appManagementControllerGetRuntimeStatus(appId));
       this.runtimeData.set(result ?? null);
     } catch (err: unknown) {
       this.errorData.set(this.extractErrorMessage(err, 'Failed to load runtime status'));
@@ -111,11 +106,12 @@ export class AppRuntimeService {
     this.errorData.set(null);
     try {
       const result = await firstValueFrom(
-        this.api.appManagementControllerUpdateResources(appId, dto)
+        this.api.appManagementControllerUpdateResources(appId, dto),
       );
       this.runtimeData.set(result ?? null);
       this.watchRollout(appId, 'update-resources');
-      const written = result?.containers.find(c => c.name === dto.containerName) ?? result?.containers[0];
+      const written =
+        result?.containers.find((c) => c.name === dto.containerName) ?? result?.containers[0];
       this.toast.showSuccess({
         title: 'Resources saved — the app restarts with them',
         message: written
@@ -141,7 +137,10 @@ export class AppRuntimeService {
     );
   }
 
-  async applyProposal(appId: string, proposal: ResourceProposal): Promise<ResourceProposalAnswer | null> {
+  async applyProposal(
+    appId: string,
+    proposal: ResourceProposal,
+  ): Promise<ResourceProposalAnswer | null> {
     this.savingResourcesData.set(true);
     try {
       const answer = await firstValueFrom(
@@ -200,7 +199,7 @@ export class AppRuntimeService {
     this.errorData.set(null);
     try {
       const result = await firstValueFrom(
-        this.api.appManagementControllerUpdateReplicas(appId, dto)
+        this.api.appManagementControllerUpdateReplicas(appId, dto),
       );
       this.runtimeData.set(result ?? null);
       this.watchRollout(appId, 'scale');
@@ -217,9 +216,7 @@ export class AppRuntimeService {
     this.savingRestartData.set(true);
     this.errorData.set(null);
     try {
-      const result = await firstValueFrom(
-        this.api.appManagementControllerRestartDeployment(appId)
-      );
+      const result = await firstValueFrom(this.api.appManagementControllerRestartDeployment(appId));
       this.runtimeData.set(result ?? null);
       this.watchRollout(appId, 'restart');
       return true;

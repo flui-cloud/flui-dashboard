@@ -31,7 +31,10 @@ function input(over: Partial<MailDomainsSurfaceInput> = {}): MailDomainsSurfaceI
 }
 
 function snapshotOf(over: Partial<MailDomainsSurfaceInput> = {}): SurfaceSnapshot {
-  return buildMailDomainsSurface(input(over), { revision: 1, generatedAt: '2026-09-02T09:00:00.000Z' });
+  return buildMailDomainsSurface(input(over), {
+    revision: 1,
+    generatedAt: '2026-09-02T09:00:00.000Z',
+  });
 }
 
 const listScope = (s: SurfaceSnapshot) => s.scopes.find((x) => x.kind === 'list')!;
@@ -63,9 +66,14 @@ describe('mail domains surface producer', () => {
 
   it('flags a snapshot whose revision does not advance on the previous one', () => {
     const first = snapshotOf();
-    const stale = { ...snapshotOf(), surface: { ...snapshotOf().surface, revision: first.surface.revision } };
+    const stale = {
+      ...snapshotOf(),
+      surface: { ...snapshotOf().surface, revision: first.surface.revision },
+    };
     const issues = validateSurfaceSemantics(stale, { previousSnapshot: first });
-    expect(issues).toEqual([jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' })]);
+    expect(issues).toEqual([
+      jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' }),
+    ]);
   });
 
   it('is a list page with no selection: every row is related, uses the same domain ref as mail-overview', () => {

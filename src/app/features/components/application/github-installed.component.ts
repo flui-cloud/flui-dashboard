@@ -30,19 +30,29 @@ import { GhcrPatModalComponent } from './ghcr-pat-modal.component';
   template: `
     <div class="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 p-4">
       <div class="max-w-md w-full bg-white dark:bg-slate-800 rounded-lg shadow-md p-8">
-        <div class="w-16 h-16 mx-auto rounded-full bg-slate-900 dark:bg-slate-700 flex items-center justify-center mb-6">
+        <div
+          class="w-16 h-16 mx-auto rounded-full bg-slate-900 dark:bg-slate-700 flex items-center justify-center mb-6"
+        >
           <ng-icon name="lucideGithub" size="32" class="text-white" />
         </div>
 
         @if (state() === 'error') {
           <div class="text-center">
             <div class="flex items-center justify-center gap-2 mb-3">
-              <ng-icon name="lucideTriangleAlert" size="20" class="text-amber-600 dark:text-amber-400" />
-              <h1 class="text-lg font-semibold text-slate-900 dark:text-white">Connection incomplete</h1>
+              <ng-icon
+                name="lucideTriangleAlert"
+                size="20"
+                class="text-amber-600 dark:text-amber-400"
+              />
+              <h1 class="text-lg font-semibold text-slate-900 dark:text-white">
+                Connection incomplete
+              </h1>
             </div>
             <p class="text-sm text-slate-500 dark:text-slate-400 mb-1">{{ errorLabel() }}</p>
             @if (errorDetails()) {
-              <p class="text-xs text-slate-400 dark:text-slate-500 mb-6 font-mono">{{ errorDetails() }}</p>
+              <p class="text-xs text-slate-400 dark:text-slate-500 mb-6 font-mono">
+                {{ errorDetails() }}
+              </p>
             }
             <button
               (click)="goToRepositories()"
@@ -64,8 +74,8 @@ import { GhcrPatModalComponent } from './ghcr-pat-modal.component';
               </h1>
             </div>
             <p class="text-sm text-slate-500 dark:text-slate-400 text-center mb-6">
-              One more step: provide a classic Personal Access Token so Flui can pull
-              the container images from your GHCR registry.
+              One more step: provide a classic Personal Access Token so Flui can pull the container
+              images from your GHCR registry.
             </p>
             <button
               (click)="showModal.set(true)"
@@ -89,11 +99,18 @@ import { GhcrPatModalComponent } from './ghcr-pat-modal.component';
             </div>
             <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">
               @if (login()) {
-                Connected as <span class="font-medium text-slate-700 dark:text-slate-200">&#64;{{ login() }}</span>.
+                Connected as
+                <span class="font-medium text-slate-700 dark:text-slate-200"
+                  >&#64;{{ login() }}</span
+                >.
               }
               Redirecting you back to the dashboard…
             </p>
-            <ng-icon name="lucideLoader" size="24" class="animate-spin text-slate-400 dark:text-slate-500 mx-auto" />
+            <ng-icon
+              name="lucideLoader"
+              size="24"
+              class="animate-spin text-slate-400 dark:text-slate-500 mx-auto"
+            />
           </div>
         } @else {
           <p class="text-sm text-slate-500 dark:text-slate-400 text-center">Finishing up…</p>
@@ -102,11 +119,7 @@ import { GhcrPatModalComponent } from './ghcr-pat-modal.component';
     </div>
 
     @if (showModal()) {
-      <app-ghcr-pat-modal
-        mode="create"
-        (cancelled)="showModal.set(false)"
-        (saved)="onPatSaved()"
-      />
+      <app-ghcr-pat-modal mode="create" (cancelled)="showModal.set(false)" (saved)="onPatSaved()" />
     }
   `,
 })
@@ -126,7 +139,7 @@ export class GithubInstalledComponent implements OnInit {
       const params = this.route.snapshot.queryParamMap;
       const status = params.get('status');
       const error = params.get('error');
-  
+
       if (error) {
         this.state.set('error');
         this.errorLabel.set(this.friendlyError(error));
@@ -134,7 +147,7 @@ export class GithubInstalledComponent implements OnInit {
         if (msg) this.errorDetails.set(decodeURIComponent(msg));
         return;
       }
-  
+
       const claim = params.get('claim');
       if (claim) {
         try {
@@ -152,7 +165,7 @@ export class GithubInstalledComponent implements OnInit {
         this.errorLabel.set('Unexpected response from GitHub.');
         return;
       }
-  
+
       try {
         const patStatus = await this.oauthApi.getPackagesPatStatus();
         if (patStatus.configured || patStatus.needed === false) {
@@ -181,8 +194,10 @@ export class GithubInstalledComponent implements OnInit {
 
   private claimError(err: unknown): string {
     const status = (err as { status?: number })?.status;
-    if (status === 403) return 'This GitHub link was started from another account. Start the connection again from your own.';
-    if (status === 400) return 'The connection expired or was already finished. Please start it again.';
+    if (status === 403)
+      return 'This GitHub link was started from another account. Start the connection again from your own.';
+    if (status === 400)
+      return 'The connection expired or was already finished. Please start it again.';
     return 'We could not complete the GitHub connection.';
   }
 

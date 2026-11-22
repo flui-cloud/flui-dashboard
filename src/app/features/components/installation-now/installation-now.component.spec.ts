@@ -1,4 +1,10 @@
-import { ComponentFixture, TestBed, fakeAsync, tick, discardPeriodicTasks } from '@angular/core/testing';
+import {
+  ComponentFixture,
+  TestBed,
+  fakeAsync,
+  tick,
+  discardPeriodicTasks,
+} from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
 import { InstallationNow } from '../../model/installation-now.models';
@@ -9,12 +15,48 @@ function now(over: Partial<InstallationNow> = {}): InstallationNow {
   return {
     measuredAt: '2026-10-09T09:59:30.000Z',
     nodes: [
-      { clusterId: 'c-1', clusterName: 'control', node: 'busy', cpuPercent: 92, memoryPercent: 81, mbpsOut: 420, mbpsIn: 30, monthPaceBytes: 18.4e12, includedTb: 20 },
-      { clusterId: 'c-1', clusterName: 'control', node: 'calm', cpuPercent: 10, memoryPercent: 20, mbpsOut: 1, mbpsIn: 1, monthPaceBytes: 0.1e12, includedTb: null },
+      {
+        clusterId: 'c-1',
+        clusterName: 'control',
+        node: 'busy',
+        cpuPercent: 92,
+        memoryPercent: 81,
+        mbpsOut: 420,
+        mbpsIn: 30,
+        monthPaceBytes: 18.4e12,
+        includedTb: 20,
+      },
+      {
+        clusterId: 'c-1',
+        clusterName: 'control',
+        node: 'calm',
+        cpuPercent: 10,
+        memoryPercent: 20,
+        mbpsOut: 1,
+        mbpsIn: 1,
+        monthPaceBytes: 0.1e12,
+        includedTb: null,
+      },
     ],
     edges: [
-      { clusterId: 'c-1', clusterName: 'control', rpsNow: 40, rpsBefore: 4, rateLimited10m: 120, requests10m: 1000, serverErrors10m: 80 },
-      { clusterId: 'c-2', clusterName: 'workload', rpsNow: 2, rpsBefore: 0, rateLimited10m: 0, requests10m: 0, serverErrors10m: 0 },
+      {
+        clusterId: 'c-1',
+        clusterName: 'control',
+        rpsNow: 40,
+        rpsBefore: 4,
+        rateLimited10m: 120,
+        requests10m: 1000,
+        serverErrors10m: 80,
+      },
+      {
+        clusterId: 'c-2',
+        clusterName: 'workload',
+        rpsNow: 2,
+        rpsBefore: 0,
+        rateLimited10m: 0,
+        requests10m: 0,
+        serverErrors10m: 0,
+      },
     ],
     platform: [
       { name: 'API', cpuPercent: 40, memoryPercent: 85, restartsLastHour: 1 },
@@ -31,7 +73,14 @@ function now(over: Partial<InstallationNow> = {}): InstallationNow {
     },
     sandbox: { live: 18, warm: 2, ceiling: 24, waiting: 3, fullRefusals: 0 },
     alerts: { firing: 2, critical: 1, names: ['FluiTrafficSurge', 'FluiNodeCpuHigh'] },
-    thresholds: { nodeMbps: 400, monthlyTrafficPercent: 80, spikeFactor: 3, spikeMinRps: 5, rateLimitedPer10m: 100, edgeErrorPercent: 5 },
+    thresholds: {
+      nodeMbps: 400,
+      monthlyTrafficPercent: 80,
+      spikeFactor: 3,
+      spikeMinRps: 5,
+      rateLimitedPer10m: 100,
+      edgeErrorPercent: 5,
+    },
     ...over,
   };
 }
@@ -115,13 +164,17 @@ describe('the Now page', () => {
     render(now());
     const busy = q('now-node-busy')!;
     expect(q('now-node-cpu', busy)!.querySelector('span')!.className).toContain('text-destructive');
-    expect(q('now-node-memory', busy)!.querySelector('span')!.className).toContain('text-amber-600');
+    expect(q('now-node-memory', busy)!.querySelector('span')!.className).toContain(
+      'text-amber-600',
+    );
     expect(q('now-node-link', busy)!.className).toContain('text-amber-600');
     expect(q('now-node-month', busy)!.textContent).toContain('18.4 of 20 TB');
     expect(q('now-node-month', busy)!.className).toContain('text-amber-600');
 
     const calm = q('now-node-calm')!;
-    expect(q('now-node-cpu', calm)!.querySelector('span')!.className).not.toContain('text-amber-600');
+    expect(q('now-node-cpu', calm)!.querySelector('span')!.className).not.toContain(
+      'text-amber-600',
+    );
     expect(q('now-node-month', calm)!.textContent).toContain('not metered');
   });
 

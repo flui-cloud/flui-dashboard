@@ -1,4 +1,12 @@
-import { Component, OnInit, OnDestroy, signal, computed, inject, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  signal,
+  computed,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { Router, ActivatedRoute } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -15,7 +23,13 @@ import {
 } from '@ng-icons/lucide';
 import { firstValueFrom } from 'rxjs';
 import { ApplicationService, BuildExpectation } from '../../service/application.service';
-import { AppRuntimeWebSocketService, BuildCompletedEvent, BuildFailedEvent, OperationProgressEvent, OperationFailedEvent } from '../../service/app-runtime-websocket.service';
+import {
+  AppRuntimeWebSocketService,
+  BuildCompletedEvent,
+  BuildFailedEvent,
+  OperationProgressEvent,
+  OperationFailedEvent,
+} from '../../service/app-runtime-websocket.service';
 import { AppBuildsService } from '../../../core/api/api/appBuilds.service';
 import { AppBuildResponseDto } from '../../../core/api/model/appBuildResponseDto';
 import {
@@ -26,7 +40,8 @@ import {
   LastBuildConclusionEnum,
 } from '../../model/application.models';
 
-type MonitorPhase = 'queued' | 'building' | 'build_done' | 'deploying' | 'live' | 'build_failed' | 'deploy_failed';
+type MonitorPhase =
+  'queued' | 'building' | 'build_done' | 'deploying' | 'live' | 'build_failed' | 'deploy_failed';
 
 interface TimelineStep {
   label: string;
@@ -76,21 +91,38 @@ const BUILD_WARNING_MS = 25 * 60 * 1000;
   standalone: true,
   imports: [NgIcon],
   providers: [
-    provideIcons({ lucideGithub, lucideLoader, lucideCheck, lucideX, lucideExternalLink, lucideRefreshCw, lucideRocket, lucideCircleCheck, lucideTriangleAlert }),
+    provideIcons({
+      lucideGithub,
+      lucideLoader,
+      lucideCheck,
+      lucideX,
+      lucideExternalLink,
+      lucideRefreshCw,
+      lucideRocket,
+      lucideCircleCheck,
+      lucideTriangleAlert,
+    }),
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="min-h-screen bg-background">
       <div class="max-w-2xl mx-auto px-6 py-12 space-y-8">
-
         <!-- Header -->
         <div class="space-y-1">
           <h1 class="text-xl font-semibold">
             @switch (phase()) {
-              @case ('build_failed') { Build Failed }
-              @case ('deploy_failed') { Deploy Failed }
-              @case ('live') { App is Live }
-              @default { Build in Progress }
+              @case ('build_failed') {
+                Build Failed
+              }
+              @case ('deploy_failed') {
+                Deploy Failed
+              }
+              @case ('live') {
+                App is Live
+              }
+              @default {
+                Build in Progress
+              }
             }
           </h1>
           <p class="text-sm text-muted-foreground">GitHub Actions · {{ applicationId() }}</p>
@@ -134,7 +166,9 @@ const BUILD_WARNING_MS = 25 * 60 * 1000;
 
         <!-- Live state -->
         @if (phase() === 'live') {
-          <div class="rounded-lg border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/10 p-5">
+          <div
+            class="rounded-lg border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/10 p-5"
+          >
             <div class="flex items-center gap-2 text-green-700 dark:text-green-400">
               <ng-icon name="lucideCircleCheck" class="h-5 w-5" />
               <span class="font-medium">Application deployed successfully</span>
@@ -183,10 +217,12 @@ const BUILD_WARNING_MS = 25 * 60 * 1000;
 
         <!-- Build elapsed time + timeout warning -->
         @if ((phase() === 'queued' || phase() === 'building') && buildElapsedLabel(); as elapsed) {
-          <div class="flex items-center gap-2 text-xs"
-               [class.text-muted-foreground]="!isBuildNearTimeout()"
-               [class.text-orange-600]="isBuildNearTimeout()"
-               [class.dark:text-orange-400]="isBuildNearTimeout()">
+          <div
+            class="flex items-center gap-2 text-xs"
+            [class.text-muted-foreground]="!isBuildNearTimeout()"
+            [class.text-orange-600]="isBuildNearTimeout()"
+            [class.dark:text-orange-400]="isBuildNearTimeout()"
+          >
             @if (isBuildNearTimeout()) {
               <ng-icon name="lucideTriangleAlert" class="h-3.5 w-3.5 shrink-0" />
               <span>Build in progress · {{ elapsed }} — approaching 30 min timeout</span>
@@ -246,7 +282,6 @@ const BUILD_WARNING_MS = 25 * 60 * 1000;
             </button>
           </div>
         }
-
       </div>
     </div>
   `,
@@ -294,7 +329,9 @@ export class GithubActionsMonitorComponent implements OnInit, OnDestroy {
   private readonly MAX_CONSECUTIVE_ERRORS = 5;
   private readonly BUILD_REFRESH_INTERVAL_MS = 12_000;
   private static readonly TERMINAL_BUILD_STATES: ReadonlyArray<AppBuildResponseDto['status']> = [
-    'COMPLETED', 'FAILED', 'CANCELLED',
+    'COMPLETED',
+    'FAILED',
+    'CANCELLED',
   ];
 
   /** Elapsed build time as "Xm Ys", recomputed on each 1s tick while active. */
@@ -325,14 +362,14 @@ export class GithubActionsMonitorComponent implements OnInit, OnDestroy {
     void (async () => {
       const appId = this.route.snapshot.paramMap.get('applicationId') ?? '';
       this.applicationId.set(appId);
-  
+
       // WS events: complementary real-time updates. Polling drives recovery/boot,
       // WS delivers immediate transitions when the backend fires them.
       this.wsService.subscribeToBuildEvents(appId, {
         onCompleted: (e: BuildCompletedEvent) => this.onBuildCompleted(e),
         onFailed: (e: BuildFailedEvent) => this.onBuildFailed(e),
       });
-  
+
       this.wsService.subscribeToOperationEvents(appId, {
         onProgress: (e: OperationProgressEvent) => {
           this.phase.set('deploying');
@@ -352,7 +389,7 @@ export class GithubActionsMonitorComponent implements OnInit, OnDestroy {
           this.phase.set('deploy_failed');
         },
       });
-  
+
       void this.appService
         .getBuildExpectation(appId)
         .then((e) => this.buildExpectation.set(e))
@@ -360,14 +397,14 @@ export class GithubActionsMonitorComponent implements OnInit, OnDestroy {
 
       // 1s ticker to keep elapsed-time display smooth (independent of poll cadence)
       this.tickInterval = setInterval(() => this.nowTick.set(Date.now()), 1_000);
-  
+
       // Forces backend to re-poll GitHub Actions every 12s while the latest build
       // is non-terminal. Backend may also flip the app from AWAITING_BUILD to deploy.
       this.buildRefreshInterval = setInterval(
         () => this.tickBuildRefresh(appId),
         this.BUILD_REFRESH_INTERVAL_MS,
       );
-  
+
       // Initial hydration — will also schedule polling if the app is transitional
       try {
         const app = await this.appService.getApplication(appId);
@@ -430,9 +467,7 @@ export class GithubActionsMonitorComponent implements OnInit, OnDestroy {
     switch (app.status) {
       case ApplicationStatusEnum.Failed:
         this.stopPolling();
-        this.buildError.set(
-          app.reconciliationError ?? op?.errorMessage ?? 'Operation failed'
-        );
+        this.buildError.set(app.reconciliationError ?? op?.errorMessage ?? 'Operation failed');
         // Distinguish build failure from deploy failure: if the last known
         // build conclusion was a failure, it's a build failure; if we have a
         // DEPLOY operation that failed, it's a deploy failure.

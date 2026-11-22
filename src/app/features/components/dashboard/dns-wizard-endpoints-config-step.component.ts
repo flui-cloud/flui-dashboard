@@ -61,19 +61,33 @@ export function validatePrefix(value: string): string | null {
   standalone: true,
   imports: [FormsModule, NgIconComponent],
   providers: [
-    provideIcons({ lucideEdit2, lucidePlus, lucideX, lucideLoader, lucideCheckCircle, lucideAlertCircle, lucideRefreshCw, lucideZap, lucideGlobe }),
+    provideIcons({
+      lucideEdit2,
+      lucidePlus,
+      lucideX,
+      lucideLoader,
+      lucideCheckCircle,
+      lucideAlertCircle,
+      lucideRefreshCw,
+      lucideZap,
+      lucideGlobe,
+    }),
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="flex items-start justify-between mb-1">
       <h3 class="text-sm font-semibold text-foreground">Configure app endpoints</h3>
       @if (wiz.loadingDirectConfig()) {
-        <ng-icon name="lucideLoader" class="h-4 w-4 text-muted-foreground animate-spin flex-shrink-0" />
+        <ng-icon
+          name="lucideLoader"
+          class="h-4 w-4 text-muted-foreground animate-spin flex-shrink-0"
+        />
       }
     </div>
     <p class="text-xs text-muted-foreground mb-4">
-      Pick a public address for each app. Use <strong>Test address</strong> for instant access without DNS setup,
-      or <strong>Your domain</strong> if you have one. One certificate covers them all.
+      Pick a public address for each app. Use <strong>Test address</strong> for instant access
+      without DNS setup, or <strong>Your domain</strong> if you have one. One certificate covers
+      them all.
     </p>
 
     <div class="flex flex-col gap-2">
@@ -85,7 +99,9 @@ export function validatePrefix(value: string): string | null {
             @if (row.configured || row.endpoint?.id) {
               <ng-icon name="lucideCheckCircle" class="h-4 w-4 text-emerald-500 flex-shrink-0" />
             } @else {
-              <div class="h-4 w-4 rounded-full border-2 border-muted-foreground/30 flex-shrink-0"></div>
+              <div
+                class="h-4 w-4 rounded-full border-2 border-muted-foreground/30 flex-shrink-0"
+              ></div>
             }
 
             <!-- Label + fqdn -->
@@ -95,9 +111,11 @@ export function validatePrefix(value: string): string | null {
                 <div class="flex items-center gap-1.5">
                   <span
                     class="text-[10px] px-1.5 py-0.5 rounded font-medium"
-                    [class]="row.draftHostnameMode === 'ip'
-                      ? 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
-                      : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'"
+                    [class]="
+                      row.draftHostnameMode === 'ip'
+                        ? 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                        : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                    "
                   >
                     {{ row.draftHostnameMode === 'ip' ? 'Test' : 'Domain' }}
                   </span>
@@ -107,7 +125,12 @@ export function validatePrefix(value: string): string | null {
                 <p class="text-xs text-muted-foreground italic">No endpoint configured</p>
               }
               @if (row.error && activeFormKey() !== row.key) {
-                <p class="text-xs text-destructive mt-0.5" [attr.data-testid]="'direct-row-error-' + row.key">{{ row.error }}</p>
+                <p
+                  class="text-xs text-destructive mt-0.5"
+                  [attr.data-testid]="'direct-row-error-' + row.key"
+                >
+                  {{ row.error }}
+                </p>
               }
             </div>
 
@@ -141,14 +164,20 @@ export function validatePrefix(value: string): string | null {
             <div class="border-t border-border px-4 py-3 bg-muted/30 space-y-3">
               <!-- Hostname mode toggle (compact segmented) -->
               <div>
-                <label class="block text-xs font-medium text-muted-foreground mb-1.5">Hostname source</label>
+                <label class="block text-xs font-medium text-muted-foreground mb-1.5"
+                  >Hostname source</label
+                >
                 <div class="inline-flex rounded-md border border-border overflow-hidden text-xs">
                   <button
                     type="button"
                     (click)="setMode(row.key, 'ip')"
                     [disabled]="!wiz.masterIp()"
                     [class]="modeBtnClass(f.hostnameMode === 'ip', !wiz.masterIp())"
-                    [title]="!wiz.masterIp() ? 'Cluster IP not available yet' : 'Auto-generated test address'"
+                    [title]="
+                      !wiz.masterIp()
+                        ? 'Cluster IP not available yet'
+                        : 'Auto-generated test address'
+                    "
                   >
                     <ng-icon name="lucideZap" class="h-3 w-3" />
                     Test address
@@ -177,11 +206,16 @@ export function validatePrefix(value: string): string | null {
                     [class.border-destructive]="f.prefixError"
                   />
                   @if (f.hostnameMode === 'ip') {
-                    <span class="inline-flex items-center px-2 py-1.5 border border-l-0 rounded-r-md bg-muted text-xs text-muted-foreground font-mono whitespace-nowrap select-none">
+                    <span
+                      class="inline-flex items-center px-2 py-1.5 border border-l-0 rounded-r-md bg-muted text-xs text-muted-foreground font-mono whitespace-nowrap select-none"
+                    >
                       .{{ ipDashed() }}.nip.io
                     </span>
                   } @else {
-                    <span class="inline-flex items-center px-2 py-1.5 border border-l-0 bg-muted text-xs text-muted-foreground font-mono select-none">.</span>
+                    <span
+                      class="inline-flex items-center px-2 py-1.5 border border-l-0 bg-muted text-xs text-muted-foreground font-mono select-none"
+                      >.</span
+                    >
                     <input
                       type="text"
                       [(ngModel)]="f.domain"
@@ -203,27 +237,48 @@ export function validatePrefix(value: string): string | null {
                     Works out of the box — no DNS setup required.
                   </p>
                 }
-                @if (f.hostnameMode === 'domain' && !f.prefixError && !f.domainError && f.prefix.trim() && f.domain.trim()) {
+                @if (
+                  f.hostnameMode === 'domain' &&
+                  !f.prefixError &&
+                  !f.domainError &&
+                  f.prefix.trim() &&
+                  f.domain.trim()
+                ) {
                   <p class="mt-1 text-[11px] text-muted-foreground">
-                    Make sure <span class="font-mono">{{ f.prefix }}.{{ f.domain }}</span> points to <span class="font-mono">{{ wiz.masterIp() || 'your cluster IP' }}</span>.
+                    Make sure <span class="font-mono">{{ f.prefix }}.{{ f.domain }}</span> points to
+                    <span class="font-mono">{{ wiz.masterIp() || 'your cluster IP' }}</span>.
                   </p>
                 }
               </div>
 
               <!-- DNS resolution check (custom domain only) -->
-              @if (f.hostnameMode === 'domain' && wiz.masterIp() && f.prefix.trim() && f.domain.trim() && !f.prefixError && !f.domainError) {
+              @if (
+                f.hostnameMode === 'domain' &&
+                wiz.masterIp() &&
+                f.prefix.trim() &&
+                f.domain.trim() &&
+                !f.prefixError &&
+                !f.domainError
+              ) {
                 <div class="flex items-center gap-1.5 text-xs">
                   @if (f.dnsChecking) {
-                    <ng-icon name="lucideLoader" class="h-3 w-3 animate-spin text-muted-foreground" />
+                    <ng-icon
+                      name="lucideLoader"
+                      class="h-3 w-3 animate-spin text-muted-foreground"
+                    />
                     <span class="text-muted-foreground">Checking…</span>
                   } @else if (f.dnsOk === true) {
                     <ng-icon name="lucideCheckCircle" class="h-3 w-3 text-emerald-500" />
-                    <span class="text-emerald-600 dark:text-emerald-400">Points to your cluster</span>
+                    <span class="text-emerald-600 dark:text-emerald-400"
+                      >Points to your cluster</span
+                    >
                   } @else if (f.dnsOk === false) {
                     <ng-icon name="lucideAlertCircle" class="h-3 w-3 text-amber-500" />
                     <span class="text-amber-600 dark:text-amber-400">
                       Doesn't point to {{ wiz.masterIp() }} yet
-                      @if (f.dnsResolved.length) { — currently {{ f.dnsResolved.join(', ') }} }
+                      @if (f.dnsResolved.length) {
+                        — currently {{ f.dnsResolved.join(', ') }}
+                      }
                     </span>
                   }
                 </div>
@@ -267,7 +322,9 @@ export function validatePrefix(value: string): string | null {
     }
 
     @if (allConfigured()) {
-      <div class="mt-3 rounded-md bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-3 py-2 flex items-center gap-2">
+      <div
+        class="mt-3 rounded-md bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-3 py-2 flex items-center gap-2"
+      >
         <ng-icon name="lucideCheckCircle" class="h-4 w-4 text-emerald-500 flex-shrink-0" />
         <p class="text-xs text-emerald-700 dark:text-emerald-300">
           All set. Click Next to publish the addresses and issue the certificate.
@@ -284,14 +341,14 @@ export class DnsWizardEndpointsConfigStepComponent {
   protected allConfigured = computed(() => {
     const rows = this.wiz.directEndpoints();
     if (rows.length === 0) return false;
-    return rows.every(r => {
+    return rows.every((r) => {
       if (!r.configured) return false;
       if (r.draftHostnameMode === 'ip') return !!r.draftPrefix.trim() && !!this.wiz.masterIp();
       return !!r.draftFqdn.trim();
     });
   });
 
-  protected ipDashed = computed(() => this.wiz.masterIp().replaceAll('.',  '-') || '<cluster-ip>');
+  protected ipDashed = computed(() => this.wiz.masterIp().replaceAll('.', '-') || '<cluster-ip>');
 
   protected rowForms = new Map<string, RowForm>();
 
@@ -317,7 +374,8 @@ export class DnsWizardEndpointsConfigStepComponent {
   protected openForm(row: DirectEndpointRow): void {
     // Default to nip.io when the master IP is available — fastest path. If the
     // user previously committed a domain, restore prefix + domain split.
-    const initialMode: HostnameMode = row.draftHostnameMode || (this.wiz.masterIp() ? 'ip' : 'domain');
+    const initialMode: HostnameMode =
+      row.draftHostnameMode || (this.wiz.masterIp() ? 'ip' : 'domain');
     let initialPrefix = row.draftPrefix;
     let initialDomain = '';
     if (initialMode === 'domain' && row.draftFqdn) {
@@ -394,7 +452,9 @@ export class DnsWizardEndpointsConfigStepComponent {
   private async runDnsCheck(key: string, hostname: string, expectedIp: string): Promise<void> {
     const f = this.getForm(key);
     try {
-      const res = await firstValueFrom(this.dnsZonesApi.dnsZoneControllerVerifyDns(hostname, expectedIp));
+      const res = await firstValueFrom(
+        this.dnsZonesApi.dnsZoneControllerVerifyDns(hostname, expectedIp),
+      );
       f.dnsOk = res.matches;
       f.dnsResolved = res.resolvedAddresses;
     } catch {
@@ -407,18 +467,17 @@ export class DnsWizardEndpointsConfigStepComponent {
 
   protected canSaveRow(key: string): boolean {
     const f = this.getForm(key);
-    if (f.hostnameMode === 'ip') return !!f.prefix.trim() && !f.prefixError && !!this.wiz.masterIp();
-    return !!f.prefix.trim() && !f.prefixError
-      && !!f.domain.trim() && !f.domainError
-      && !f.dnsChecking;
+    if (f.hostnameMode === 'ip')
+      return !!f.prefix.trim() && !f.prefixError && !!this.wiz.masterIp();
+    return (
+      !!f.prefix.trim() && !f.prefixError && !!f.domain.trim() && !f.domainError && !f.dnsChecking
+    );
   }
 
   protected save(row: DirectEndpointRow): void {
     const f = this.getForm(row.key);
     if (!this.canSaveRow(row.key)) return;
-    const fqdn = f.hostnameMode === 'domain'
-      ? `${f.prefix.trim()}.${f.domain.trim()}`
-      : '';
+    const fqdn = f.hostnameMode === 'domain' ? `${f.prefix.trim()}.${f.domain.trim()}` : '';
     this.wiz.commitDirectRow(row.key, {
       hostnameMode: f.hostnameMode,
       fqdn,

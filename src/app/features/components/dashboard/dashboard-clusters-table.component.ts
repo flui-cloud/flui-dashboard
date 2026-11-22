@@ -1,4 +1,13 @@
-import { Component, OnDestroy, OnInit, computed, inject, input, signal, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnDestroy,
+  OnInit,
+  computed,
+  inject,
+  input,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideArrowRight, lucidePlus } from '@ng-icons/lucide';
@@ -43,12 +52,19 @@ const TEXT: Record<Tone, string> = {
       <div class="flex items-center justify-between px-5 py-4 border-b border-border">
         <h2 class="font-semibold text-foreground">Clusters</h2>
         @if (fresh()) {
-          <a routerLink="/cluster/new" class="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline" data-testid="clusters-create-workload">
+          <a
+            routerLink="/cluster/new"
+            class="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+            data-testid="clusters-create-workload"
+          >
             <ng-icon name="lucidePlus" class="h-3 w-3" />
             Create a workload cluster
           </a>
         } @else {
-          <a routerLink="/cluster" class="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
+          <a
+            routerLink="/cluster"
+            class="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+          >
             View all
             <ng-icon name="lucideArrowRight" class="h-3 w-3" />
           </a>
@@ -58,11 +74,18 @@ const TEXT: Record<Tone, string> = {
       @if (rows().length === 0) {
         <div class="px-5 py-8 text-center">
           <p class="text-sm text-muted-foreground">No clusters yet</p>
-          <a routerLink="/cluster/new" class="text-xs text-primary hover:underline mt-1 inline-block">Create your first cluster</a>
+          <a
+            routerLink="/cluster/new"
+            class="text-xs text-primary hover:underline mt-1 inline-block"
+            >Create your first cluster</a
+          >
         </div>
       } @else {
         @if (!fresh()) {
-          <div class="hidden md:grid gap-3 px-5 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground" [style.grid-template-columns]="columns()">
+          <div
+            class="hidden md:grid gap-3 px-5 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
+            [style.grid-template-columns]="columns()"
+          >
             <span>Cluster</span>
             <span>Status</span>
             @if (showMetrics()) {
@@ -80,7 +103,9 @@ const TEXT: Record<Tone, string> = {
             [attr.data-testid]="'cluster-row-' + row.id"
           >
             <div class="flex items-center gap-3 min-w-0 flex-1 md:flex-none">
-              <span class="icon-chip icon-chip-sm chip-brand text-[11px] font-bold">{{ row.chip }}</span>
+              <span class="icon-chip icon-chip-sm chip-brand text-[11px] font-bold">{{
+                row.chip
+              }}</span>
               <div class="flex flex-col min-w-0">
                 <span class="text-sm font-semibold text-foreground truncate">{{ row.name }}</span>
                 <span class="text-xs text-muted-foreground truncate">{{ row.meta }}</span>
@@ -92,26 +117,51 @@ const TEXT: Record<Tone, string> = {
               @if (autoscaleWarning(row.id); as level) {
                 <span
                   class="ml-1 text-[9px] font-semibold uppercase tracking-wider px-1 py-0.5 rounded"
-                  [class]="level === 'DANGER_NEEDS_SCALE' ? 'bg-destructive/10 text-destructive' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'"
-                  [title]="level === 'DANGER_NEEDS_SCALE' ? 'Critical pressure — open Scaling' : 'Sustained pressure — open Scaling'"
-                >{{ level === 'DANGER_NEEDS_SCALE' ? 'alert' : 'warn' }}</span>
+                  [class]="
+                    level === 'DANGER_NEEDS_SCALE'
+                      ? 'bg-destructive/10 text-destructive'
+                      : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                  "
+                  [title]="
+                    level === 'DANGER_NEEDS_SCALE'
+                      ? 'Critical pressure — open Scaling'
+                      : 'Sustained pressure — open Scaling'
+                  "
+                  >{{ level === 'DANGER_NEEDS_SCALE' ? 'alert' : 'warn' }}</span
+                >
               }
             </span>
             @if (showMetrics() && !fresh()) {
               @if (row.live) {
                 <div class="hidden md:flex items-center gap-2">
-                  <app-spark-line [values]="row.cpu" [color]="cpuColor" [width]="72" [height]="22" ariaLabel="CPU trend" />
+                  <app-spark-line
+                    [values]="row.cpu"
+                    [color]="cpuColor"
+                    [width]="72"
+                    [height]="22"
+                    ariaLabel="CPU trend"
+                  />
                   <span class="text-xs font-mono tabular-nums">{{ row.cpuNow }}</span>
                 </div>
                 <div class="hidden md:flex items-center gap-2">
-                  <app-spark-line [values]="row.memory" [color]="memoryColor" [width]="72" [height]="22" ariaLabel="Memory trend" />
+                  <app-spark-line
+                    [values]="row.memory"
+                    [color]="memoryColor"
+                    [width]="72"
+                    [height]="22"
+                    ariaLabel="Memory trend"
+                  />
                   <span class="text-xs font-mono tabular-nums">{{ row.memoryNow }}</span>
                 </div>
               } @else {
                 <div class="hidden md:flex flex-col gap-1.5 md:col-span-2">
                   @if (progressFor(row) !== null) {
                     <div class="h-1.5 rounded-full bg-muted overflow-hidden">
-                      <div class="h-full rounded-full" [class]="dot(row)" [style.width.%]="progressFor(row)"></div>
+                      <div
+                        class="h-full rounded-full"
+                        [class]="dot(row)"
+                        [style.width.%]="progressFor(row)"
+                      ></div>
                     </div>
                   }
                   <span class="text-xs text-muted-foreground">{{ row.note || '—' }}</span>
@@ -122,7 +172,10 @@ const TEXT: Record<Tone, string> = {
           </a>
         }
         @if (fresh()) {
-          <p class="px-5 py-3 border-t border-border text-xs text-muted-foreground bg-muted/30" data-testid="clusters-fresh-hint">
+          <p
+            class="px-5 py-3 border-t border-border text-xs text-muted-foreground bg-muted/30"
+            data-testid="clusters-fresh-hint"
+          >
             Your apps run on workload clusters. Create one on any provider you have connected.
           </p>
         }

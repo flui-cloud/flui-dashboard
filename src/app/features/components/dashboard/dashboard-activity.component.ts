@@ -1,10 +1,7 @@
 import { Component, inject, computed, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideActivity,
-  lucideArrowRight,
-} from '@ng-icons/lucide';
+import { lucideActivity, lucideArrowRight } from '@ng-icons/lucide';
 import { ClusterService } from '../../service/cluster.service';
 import { ClusterStatus } from '../../model/cluster.models';
 
@@ -15,17 +12,54 @@ interface ActivityItem {
   provider?: string;
 }
 
-const STATUS_COLORS: Partial<Record<ClusterStatus, { dot: string; label: string; text: string }>> = {
-  [ClusterStatus.ACTIVE]:   { dot: 'bg-green-500',  label: 'active',   text: 'text-green-600 dark:text-green-400' },
-  [ClusterStatus.ERROR]:    { dot: 'bg-red-500',    label: 'error',    text: 'text-red-600 dark:text-red-400' },
-  [ClusterStatus.CREATING]: { dot: 'bg-blue-500',   label: 'creating', text: 'text-blue-600 dark:text-blue-400' },
-  [ClusterStatus.SCALING]:  { dot: 'bg-purple-500', label: 'scaling',  text: 'text-purple-600 dark:text-purple-400' },
-  [ClusterStatus.UPDATING]: { dot: 'bg-yellow-500', label: 'updating', text: 'text-yellow-600 dark:text-yellow-400' },
-  [ClusterStatus.STOPPED]:  { dot: 'bg-gray-400',   label: 'stopped',  text: 'text-muted-foreground' },
-  [ClusterStatus.STOPPING]: { dot: 'bg-orange-500', label: 'stopping', text: 'text-orange-600 dark:text-orange-400' },
-  [ClusterStatus.STARTING]: { dot: 'bg-green-400',  label: 'starting', text: 'text-green-600 dark:text-green-400' },
-  [ClusterStatus.DELETING]: { dot: 'bg-red-400',    label: 'deleting', text: 'text-red-600 dark:text-red-400' },
-};
+const STATUS_COLORS: Partial<Record<ClusterStatus, { dot: string; label: string; text: string }>> =
+  {
+    [ClusterStatus.ACTIVE]: {
+      dot: 'bg-green-500',
+      label: 'active',
+      text: 'text-green-600 dark:text-green-400',
+    },
+    [ClusterStatus.ERROR]: {
+      dot: 'bg-red-500',
+      label: 'error',
+      text: 'text-red-600 dark:text-red-400',
+    },
+    [ClusterStatus.CREATING]: {
+      dot: 'bg-blue-500',
+      label: 'creating',
+      text: 'text-blue-600 dark:text-blue-400',
+    },
+    [ClusterStatus.SCALING]: {
+      dot: 'bg-purple-500',
+      label: 'scaling',
+      text: 'text-purple-600 dark:text-purple-400',
+    },
+    [ClusterStatus.UPDATING]: {
+      dot: 'bg-yellow-500',
+      label: 'updating',
+      text: 'text-yellow-600 dark:text-yellow-400',
+    },
+    [ClusterStatus.STOPPED]: {
+      dot: 'bg-gray-400',
+      label: 'stopped',
+      text: 'text-muted-foreground',
+    },
+    [ClusterStatus.STOPPING]: {
+      dot: 'bg-orange-500',
+      label: 'stopping',
+      text: 'text-orange-600 dark:text-orange-400',
+    },
+    [ClusterStatus.STARTING]: {
+      dot: 'bg-green-400',
+      label: 'starting',
+      text: 'text-green-600 dark:text-green-400',
+    },
+    [ClusterStatus.DELETING]: {
+      dot: 'bg-red-400',
+      label: 'deleting',
+      text: 'text-red-600 dark:text-red-400',
+    },
+  };
 
 @Component({
   selector: 'app-dashboard-activity',
@@ -53,7 +87,10 @@ const STATUS_COLORS: Partial<Record<ClusterStatus, { dot: string; label: string;
       @if (recentActivity().length === 0) {
         <div class="text-center py-6">
           <p class="text-sm text-muted-foreground">No clusters found</p>
-          <a routerLink="/cluster/new" class="text-xs text-primary hover:underline mt-1 inline-block">
+          <a
+            routerLink="/cluster/new"
+            class="text-xs text-primary hover:underline mt-1 inline-block"
+          >
             Create your first cluster →
           </a>
         </div>
@@ -86,7 +123,9 @@ const STATUS_COLORS: Partial<Record<ClusterStatus, { dot: string; label: string;
                       {{ getStatusLabel(item.status) }}
                     </span>
                     @if (item.provider) {
-                      <span class="text-xs text-muted-foreground ml-1.5 capitalize">· {{ item.provider }}</span>
+                      <span class="text-xs text-muted-foreground ml-1.5 capitalize"
+                        >· {{ item.provider }}</span
+                      >
                     }
                   </div>
                   <span class="text-xs text-muted-foreground flex-shrink-0 mt-0.5">
@@ -117,7 +156,7 @@ export class DashboardActivityComponent {
         status: c.status,
         time: c.lastActivity ?? c.createdAt,
         provider: c.provider,
-      }))
+      })),
   );
 
   getDotBg(status: ClusterStatus): string {

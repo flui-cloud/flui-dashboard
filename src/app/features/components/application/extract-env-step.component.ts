@@ -11,7 +11,10 @@ import {
   lucideInfo,
   lucideTriangleAlert,
 } from '@ng-icons/lucide';
-import { DeployWizardStateService, GhaEnvVarEntry } from '../../service/deploy-wizard-state.service';
+import {
+  DeployWizardStateService,
+  GhaEnvVarEntry,
+} from '../../service/deploy-wizard-state.service';
 import { RepositoryService } from '../../service/repository.service';
 
 @Component({
@@ -19,14 +22,27 @@ import { RepositoryService } from '../../service/repository.service';
   standalone: true,
   imports: [FormsModule, NgIcon],
   providers: [
-    provideIcons({ lucideLock, lucideFileText, lucideLoader, lucidePlus, lucideTrash2, lucideInfo, lucideTriangleAlert }),
+    provideIcons({
+      lucideLock,
+      lucideFileText,
+      lucideLoader,
+      lucidePlus,
+      lucideTrash2,
+      lucideInfo,
+      lucideTriangleAlert,
+    }),
   ],
   template: `
     <div class="space-y-4">
       <!-- Security notice -->
-      <div class="flex items-start gap-2 p-3 rounded-md border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/10 text-sm text-blue-800 dark:text-blue-300">
+      <div
+        class="flex items-start gap-2 p-3 rounded-md border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/10 text-sm text-blue-800 dark:text-blue-300"
+      >
         <ng-icon name="lucideInfo" class="h-4 w-4 shrink-0 mt-0.5" />
-        <span>Variable values are never written to the GitHub repository. They are injected by Flui securely at deploy time.</span>
+        <span
+          >Variable values are never written to the GitHub repository. They are injected by Flui
+          securely at deploy time.</span
+        >
       </div>
 
       <!-- Loading -->
@@ -39,7 +55,9 @@ import { RepositoryService } from '../../service/repository.service';
 
       <!-- Error -->
       @if (!isLoading() && error()) {
-        <div class="flex items-start gap-2 p-3 rounded-md border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/10 text-sm text-yellow-800 dark:text-yellow-300">
+        <div
+          class="flex items-start gap-2 p-3 rounded-md border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/10 text-sm text-yellow-800 dark:text-yellow-300"
+        >
           <ng-icon name="lucideTriangleAlert" class="h-4 w-4 shrink-0 mt-0.5" />
           <span>{{ error() }}. Add variables manually below.</span>
         </div>
@@ -53,9 +71,17 @@ import { RepositoryService } from '../../service/repository.service';
               <table class="w-full text-sm">
                 <thead class="bg-muted/50">
                   <tr>
-                    <th class="text-left px-3 py-2 text-xs font-medium text-muted-foreground w-2/5">Key</th>
-                    <th class="text-left px-3 py-2 text-xs font-medium text-muted-foreground">Value</th>
-                    <th class="px-3 py-2 text-xs font-medium text-muted-foreground w-24 text-center">Type</th>
+                    <th class="text-left px-3 py-2 text-xs font-medium text-muted-foreground w-2/5">
+                      Key
+                    </th>
+                    <th class="text-left px-3 py-2 text-xs font-medium text-muted-foreground">
+                      Value
+                    </th>
+                    <th
+                      class="px-3 py-2 text-xs font-medium text-muted-foreground w-24 text-center"
+                    >
+                      Type
+                    </th>
                     <th class="w-10"></th>
                   </tr>
                 </thead>
@@ -65,7 +91,9 @@ import { RepositoryService } from '../../service/repository.service';
                       <td class="px-3 py-2">
                         <span class="font-mono text-xs">{{ entry.key }}</span>
                         @if (entry.source) {
-                          <span class="ml-1.5 text-xs text-muted-foreground opacity-60">{{ entry.source }}</span>
+                          <span class="ml-1.5 text-xs text-muted-foreground opacity-60">{{
+                            entry.source
+                          }}</span>
                         }
                       </td>
                       <td class="px-3 py-2">
@@ -95,7 +123,10 @@ import { RepositoryService } from '../../service/repository.service';
                           [class]="getTypeButtonClass(entry.isSecret)"
                           [title]="entry.isSecret ? 'Switch to Plain' : 'Switch to Secret'"
                         >
-                          <ng-icon [name]="entry.isSecret ? 'lucideLock' : 'lucideFileText'" class="h-3 w-3" />
+                          <ng-icon
+                            [name]="entry.isSecret ? 'lucideLock' : 'lucideFileText'"
+                            class="h-3 w-3"
+                          />
                           {{ entry.isSecret ? 'Secret' : 'Plain' }}
                         </button>
                       </td>
@@ -114,7 +145,9 @@ import { RepositoryService } from '../../service/repository.service';
               </table>
             </div>
           } @else if (!error()) {
-            <p class="text-sm text-muted-foreground py-2">No environment variables detected. Add them manually below.</p>
+            <p class="text-sm text-muted-foreground py-2">
+              No environment variables detected. Add them manually below.
+            </p>
           }
 
           <!-- Add variable -->
@@ -135,8 +168,20 @@ import { RepositoryService } from '../../service/repository.service';
                 class="flex-1 bg-transparent text-xs font-mono outline-none placeholder:text-muted-foreground/50"
                 (keyup.enter)="addVar()"
               />
-              <button type="button" (click)="addVar()" class="text-xs px-2 py-1 rounded bg-primary text-primary-foreground hover:bg-primary/90">Add</button>
-              <button type="button" (click)="showAddForm.set(false)" class="text-xs px-2 py-1 rounded border border-border hover:bg-accent">Cancel</button>
+              <button
+                type="button"
+                (click)="addVar()"
+                class="text-xs px-2 py-1 rounded bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                Add
+              </button>
+              <button
+                type="button"
+                (click)="showAddForm.set(false)"
+                class="text-xs px-2 py-1 rounded border border-border hover:bg-accent"
+              >
+                Cancel
+              </button>
             </div>
           } @else {
             <button
@@ -179,7 +224,7 @@ export class ExtractEnvStepComponent implements OnInit {
       const extracted = await this.repoService.extractEnvVars(
         this.state.repositoryId(),
         this.state.branch(),
-        this.state.confirmedFramework()
+        this.state.confirmedFramework(),
       );
       this.state.setEnvVarsFromExtracted(extracted);
     } catch (e: any) {
@@ -190,26 +235,24 @@ export class ExtractEnvStepComponent implements OnInit {
   }
 
   updateValue(index: number, value: string): void {
-    this.state.envVars.update(vars =>
-      vars.map((v, i) => i === index ? { ...v, value } : v)
-    );
+    this.state.envVars.update((vars) => vars.map((v, i) => (i === index ? { ...v, value } : v)));
   }
 
   toggleSecret(index: number): void {
-    this.state.envVars.update(vars =>
-      vars.map((v, i) => i === index ? { ...v, isSecret: !v.isSecret } : v)
+    this.state.envVars.update((vars) =>
+      vars.map((v, i) => (i === index ? { ...v, isSecret: !v.isSecret } : v)),
     );
   }
 
   removeVar(index: number): void {
-    this.state.envVars.update(vars => vars.filter((_, i) => i !== index));
+    this.state.envVars.update((vars) => vars.filter((_, i) => i !== index));
   }
 
   addVar(): void {
     const key = this.newKey.trim().toUpperCase();
     if (!key) return;
     const entry: GhaEnvVarEntry = { key, value: this.newValue, isSecret: false };
-    this.state.envVars.update(vars => [...vars, entry]);
+    this.state.envVars.update((vars) => [...vars, entry]);
     this.newKey = '';
     this.newValue = '';
     this.showAddForm.set(false);

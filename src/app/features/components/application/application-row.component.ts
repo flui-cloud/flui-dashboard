@@ -47,8 +47,12 @@ import { ProjectBadgeComponent } from '../projects/project-badge.component';
 
       <!-- Name + slug -->
       <div class="min-w-0 flex-1">
-        <span class="text-sm font-medium text-gray-900 dark:text-white truncate block">{{ app().name }}</span>
-        <span class="text-xs text-gray-400 dark:text-gray-500 font-mono truncate block">{{ app().slug }}</span>
+        <span class="text-sm font-medium text-gray-900 dark:text-white truncate block">{{
+          app().name
+        }}</span>
+        <span class="text-xs text-gray-400 dark:text-gray-500 font-mono truncate block">{{
+          app().slug
+        }}</span>
       </div>
 
       @if (showProject() && project()) {
@@ -62,30 +66,42 @@ import { ProjectBadgeComponent } from '../projects/project-badge.component';
 
       <!-- Build path badge -->
       @if (getBuildPath()) {
-        <span [class]="getBuildPathBadgeClass()" class="flex-shrink-0 text-xs font-mono font-medium px-1.5 py-0.5 rounded hidden sm:inline-flex">
+        <span
+          [class]="getBuildPathBadgeClass()"
+          class="flex-shrink-0 text-xs font-mono font-medium px-1.5 py-0.5 rounded hidden sm:inline-flex"
+        >
           {{ getBuildPathLabel() }}
         </span>
       }
 
       <!-- Status label -->
-      <span [class]="getStatusBadgeClass(app().status)" class="flex-shrink-0 hidden sm:inline-flex items-center gap-1">
+      <span
+        [class]="getStatusBadgeClass(app().status)"
+        class="flex-shrink-0 hidden sm:inline-flex items-center gap-1"
+      >
         <ng-icon [name]="getStatusIcon(app().status)" class="h-3 w-3" />
         {{ getStatusDisplayLabel(app().status) }}
       </span>
 
       <!-- Replicas -->
-      <span class="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0 hidden lg:flex items-center gap-1 w-16">
+      <span
+        class="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0 hidden lg:flex items-center gap-1 w-16"
+      >
         <span class="inline-flex h-1.5 w-1.5 rounded-full bg-gray-400 dark:bg-gray-500"></span>
         {{ app().replicas }}x
       </span>
 
       <!-- Namespace -->
-      <span class="text-xs text-gray-500 dark:text-gray-400 font-mono flex-shrink-0 hidden lg:block w-32 truncate">
+      <span
+        class="text-xs text-gray-500 dark:text-gray-400 font-mono flex-shrink-0 hidden lg:block w-32 truncate"
+      >
         {{ app().k8sNamespace }}
       </span>
 
       <!-- Created at -->
-      <span class="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0 hidden md:block w-20 text-right">
+      <span
+        class="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0 hidden md:block w-20 text-right"
+      >
         {{ formatDate(app().createdAt) }}
       </span>
 
@@ -233,8 +249,10 @@ export class ApplicationRowComponent {
 
   getBuildPathBadgeClass(): string {
     const bp = this.getBuildPath();
-    if (bp === 'github-actions') return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
-    if (bp === 'railpack') return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+    if (bp === 'github-actions')
+      return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+    if (bp === 'railpack')
+      return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
     return 'bg-muted text-muted-foreground';
   }
 

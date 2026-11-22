@@ -27,7 +27,18 @@ describe('InstallationNowService', () => {
   it('reads the installation now', async () => {
     const pending = service.load();
     expect(service.loading()).toBe(true);
-    http.expectOne(url).flush({ measuredAt: 't', nodes: [], edges: [], platform: [], registry: null, sandbox: null, alerts: { firing: 0, critical: 0, names: [] }, thresholds: {} });
+    http
+      .expectOne(url)
+      .flush({
+        measuredAt: 't',
+        nodes: [],
+        edges: [],
+        platform: [],
+        registry: null,
+        sandbox: null,
+        alerts: { firing: 0, critical: 0, names: [] },
+        thresholds: {},
+      });
     await pending;
     expect(service.loading()).toBe(false);
     expect(service.now()?.measuredAt).toBe('t');
@@ -55,7 +66,9 @@ describe('InstallationNowService', () => {
     http.expectOne(url).flush({ measuredAt: 't1' });
     await first;
     const second = service.load();
-    http.expectOne(url).flush({ message: 'Prometheus is down' }, { status: 500, statusText: 'Error' });
+    http
+      .expectOne(url)
+      .flush({ message: 'Prometheus is down' }, { status: 500, statusText: 'Error' });
     await second;
     expect(service.error()).toBe('Prometheus is down');
     expect(service.now()?.measuredAt).toBe('t1');

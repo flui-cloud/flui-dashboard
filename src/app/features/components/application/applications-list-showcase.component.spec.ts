@@ -5,7 +5,8 @@ import {
   showcaseNote,
 } from './applications-list-showcase.component';
 
-const API_WHY = 'A Flui project — read-only for you. Everything else you see in this instance is yours alone.';
+const API_WHY =
+  'A Flui project — read-only for you. Everything else you see in this instance is yours alone.';
 
 describe('showcaseNote', () => {
   it('keeps the API sentence for a guest with a space of their own', () => {
@@ -31,6 +32,8 @@ describe('ApplicationsListShowcaseComponent', () => {
     fixture.componentRef.setInput('rows', []);
     fixture.componentRef.setInput('why', READ_ONLY_DEMO_SHOWCASE_NOTE);
     fixture.detectChanges();
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain(READ_ONLY_DEMO_SHOWCASE_NOTE);
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+      READ_ONLY_DEMO_SHOWCASE_NOTE,
+    );
   });
 });

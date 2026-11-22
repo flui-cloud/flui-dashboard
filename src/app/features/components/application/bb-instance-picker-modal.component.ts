@@ -6,7 +6,7 @@ import {
   inject,
   input,
   signal,
-  output
+  output,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -51,11 +51,11 @@ import { CatalogService } from '../../service/catalog.service';
             </h3>
             <p class="mt-1 text-sm text-muted-foreground">
               @if (bbSlugs().length > 1) {
-                Pick a target install — this client connects to {{ slugList() }}. Credentials
-                are wired automatically.
+                Pick a target install — this client connects to {{ slugList() }}. Credentials are
+                wired automatically.
               } @else {
-                Pick the {{ bbLabel() }} install to connect to. Credentials are wired
-                automatically — no passwords required.
+                Pick the {{ bbLabel() }} install to connect to. Credentials are wired automatically
+                — no passwords required.
               }
             </p>
           </div>
@@ -72,11 +72,19 @@ import { CatalogService } from '../../service/catalog.service';
         <div class="mt-5 space-y-3">
           @if (bbSlugs().length > 1 && !loading() && allInstances().length > 0) {
             <div class="flex flex-wrap items-center gap-1.5">
-              <button type="button" (click)="setSlugFilter(null)" [class]="slugChipClass(slugFilter() === null)">
+              <button
+                type="button"
+                (click)="setSlugFilter(null)"
+                [class]="slugChipClass(slugFilter() === null)"
+              >
                 All
               </button>
               @for (s of bbSlugs(); track s) {
-                <button type="button" (click)="setSlugFilter(s)" [class]="slugChipClass(slugFilter() === s)">
+                <button
+                  type="button"
+                  (click)="setSlugFilter(s)"
+                  [class]="slugChipClass(slugFilter() === s)"
+                >
                   {{ s }}
                 </button>
               }
@@ -88,12 +96,16 @@ import { CatalogService } from '../../service/catalog.service';
               Loading running {{ bbLabel() }} instances…
             </div>
           } @else if (error()) {
-            <div class="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+            <div
+              class="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive"
+            >
               <ng-icon name="lucideCircleAlert" class="h-4 w-4 mt-0.5" />
               <div>{{ error() }}</div>
             </div>
           } @else if (instances().length === 0) {
-            <div class="flex items-start gap-3 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 p-4">
+            <div
+              class="flex items-start gap-3 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 p-4"
+            >
               <ng-icon
                 name="lucideTriangleAlert"
                 class="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400"
@@ -113,7 +125,10 @@ import { CatalogService } from '../../service/catalog.service';
             </div>
           } @else {
             <ul class="space-y-2">
-              @for (instance of instances(); track instance.catalogInstallId || instance.applicationId) {
+              @for (
+                instance of instances();
+                track instance.catalogInstallId || instance.applicationId
+              ) {
                 <li>
                   <button
                     type="button"
@@ -132,12 +147,19 @@ import { CatalogService } from '../../service/catalog.service';
                             {{ instance.status }}
                           </span>
                           @if (bbSlugs().length > 1 && instance.catalogSlug) {
-                            <span class="rounded-full border border-sky-300 bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-800 dark:border-sky-700 dark:bg-sky-900/20 dark:text-sky-300">
+                            <span
+                              class="rounded-full border border-sky-300 bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-800 dark:border-sky-700 dark:bg-sky-900/20 dark:text-sky-300"
+                            >
                               {{ instance.catalogSlug }}
                             </span>
                           }
-                          @if (instance.catalogInstallId && instance.catalogInstallId === currentConnectedInstallId()) {
-                            <span class="rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                          @if (
+                            instance.catalogInstallId &&
+                            instance.catalogInstallId === currentConnectedInstallId()
+                          ) {
+                            <span
+                              class="rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground"
+                            >
                               Current
                             </span>
                           }

@@ -52,7 +52,11 @@ function textObservation(key: string, value: string, source: ObservationSource):
   return { key, presentedAs: { text: value }, source };
 }
 
-function valueObservation(key: string, value: number, source: ObservationSource): Observation | null {
+function valueObservation(
+  key: string,
+  value: number,
+  source: ObservationSource,
+): Observation | null {
   return value > 0 ? { key, presentedAs: { value }, source } : null;
 }
 
@@ -61,7 +65,9 @@ function pageObservations(input: DashboardSurfaceInput): Observation[] {
   // Offline") — 'checking' is the brief pre-load state and is never actually settled by
   // the time this page stops loading, so it is excluded rather than presented as a fact.
   return [
-    input.backendHealth !== 'checking' ? textObservation('flui.dashboard.backend_health', input.backendHealth, 'api') : null,
+    input.backendHealth !== 'checking'
+      ? textObservation('flui.dashboard.backend_health', input.backendHealth, 'api')
+      : null,
     valueObservation('flui.dashboard.active_operations', input.activeOperations, 'derived'),
     valueObservation('flui.dashboard.providers_connected', input.providersConnected, 'derived'),
     valueObservation('flui.dashboard.clusters_total', input.clustersTotal, 'derived'),

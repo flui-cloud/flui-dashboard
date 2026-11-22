@@ -26,10 +26,14 @@ function input(over: Partial<BackupOverviewSurfaceInput> = {}): BackupOverviewSu
 }
 
 function snapshotOf(over: Partial<BackupOverviewSurfaceInput> = {}): SurfaceSnapshot {
-  return buildBackupOverviewSurface(input(over), { revision: 1, generatedAt: '2026-09-02T09:00:00.000Z' });
+  return buildBackupOverviewSurface(input(over), {
+    revision: 1,
+    generatedAt: '2026-09-02T09:00:00.000Z',
+  });
 }
 
-const pageScope = (snapshot: SurfaceSnapshot) => snapshot.scopes.find((s) => s.id === 'backup-overview')!;
+const pageScope = (snapshot: SurfaceSnapshot) =>
+  snapshot.scopes.find((s) => s.id === 'backup-overview')!;
 const observation = (snapshot: SurfaceSnapshot, key: string) =>
   pageScope(snapshot).observations?.find((o) => o.key === key);
 
@@ -44,20 +48,28 @@ describe('backup overview surface producer', () => {
 
   it('bumps the revision on real change', () => {
     const tracker = new BackupOverviewSurfaceRevision();
-    const first = buildBackupOverviewSurface(input(), { revision: tracker.next(presentedContent(input())), generatedAt: '2026-09-02T09:13:00.000Z' });
-    const second = buildBackupOverviewSurface(
-      input({ destinationsCount: 3 }),
-      { revision: tracker.next(presentedContent(input({ destinationsCount: 3 }))), generatedAt: '2026-09-02T09:14:00.000Z' },
-    );
+    const first = buildBackupOverviewSurface(input(), {
+      revision: tracker.next(presentedContent(input())),
+      generatedAt: '2026-09-02T09:13:00.000Z',
+    });
+    const second = buildBackupOverviewSurface(input({ destinationsCount: 3 }), {
+      revision: tracker.next(presentedContent(input({ destinationsCount: 3 }))),
+      generatedAt: '2026-09-02T09:14:00.000Z',
+    });
     expect(second.surface.revision).toBe(first.surface.revision + 1);
     expect(validateSurfaceSemantics(second, { previousSnapshot: first })).toEqual([]);
   });
 
   it('flags a snapshot whose revision does not advance on the previous one', () => {
     const first = snapshotOf();
-    const stale = { ...snapshotOf(), surface: { ...snapshotOf().surface, revision: first.surface.revision } };
+    const stale = {
+      ...snapshotOf(),
+      surface: { ...snapshotOf().surface, revision: first.surface.revision },
+    };
     const issues = validateSurfaceSemantics(stale, { previousSnapshot: first });
-    expect(issues).toEqual([jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' })]);
+    expect(issues).toEqual([
+      jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' }),
+    ]);
   });
 
   it('names only the page in attention — no invented selection on a dashboard of counts', () => {
@@ -68,14 +80,23 @@ describe('backup overview surface producer', () => {
 
   it('presents the counts actually shown on the cards', () => {
     const snapshot = snapshotOf({ destinationsCount: 5, policiesCount: 2, restoreJobsCount: 7 });
-    expect(observation(snapshot, 'flui.backup.destinations_count')?.presentedAs).toEqual({ value: 5 });
+    expect(observation(snapshot, 'flui.backup.destinations_count')?.presentedAs).toEqual({
+      value: 5,
+    });
     expect(observation(snapshot, 'flui.backup.policies_count')?.presentedAs).toEqual({ value: 2 });
-    expect(observation(snapshot, 'flui.backup.restore_jobs_count')?.presentedAs).toEqual({ value: 7 });
+    expect(observation(snapshot, 'flui.backup.restore_jobs_count')?.presentedAs).toEqual({
+      value: 7,
+    });
   });
 
   it('says nothing about degraded policies when the count is zero, and something when it is not', () => {
-    expect(observation(snapshotOf({ degradedPoliciesCount: 0 }), 'flui.backup.policies_degraded_count')).toBeUndefined();
-    expect(observation(snapshotOf({ degradedPoliciesCount: 2 }), 'flui.backup.policies_degraded_count')?.presentedAs.value).toBe(2);
+    expect(
+      observation(snapshotOf({ degradedPoliciesCount: 0 }), 'flui.backup.policies_degraded_count'),
+    ).toBeUndefined();
+    expect(
+      observation(snapshotOf({ degradedPoliciesCount: 2 }), 'flui.backup.policies_degraded_count')
+        ?.presentedAs.value,
+    ).toBe(2);
   });
 
   it('sets scope.state.error on a failed load, never on domain content', () => {
@@ -90,11 +111,17 @@ describe('backup overview surface producer', () => {
   });
 
   it('lists the backups needing attention as related policies', () => {
-    const snapshot = snapshotOf({ attentionPolicies: [{ id: 'pol-1', name: 'nightly', state: 'missed' }] });
+    const snapshot = snapshotOf({
+      attentionPolicies: [{ id: 'pol-1', name: 'nightly', state: 'missed' }],
+    });
     expectValidSurface(snapshot);
-    expect(observation(snapshot, 'flui.backup.policies_attention_count')?.presentedAs.value).toBe(1);
+    expect(observation(snapshot, 'flui.backup.policies_attention_count')?.presentedAs.value).toBe(
+      1,
+    );
     const row = snapshot.scopes.find((s) => s.parentId === 'backup-overview:attention')!;
-    expect(row.entities).toEqual([{ ref: 'flui://backup-policy/pol-1', label: 'nightly', role: 'related' }]);
+    expect(row.entities).toEqual([
+      { ref: 'flui://backup-policy/pol-1', label: 'nightly', role: 'related' },
+    ]);
   });
 
   it('adds no attention list when every backup is fine', () => {

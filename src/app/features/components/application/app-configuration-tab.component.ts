@@ -11,7 +11,10 @@ import {
 } from '@ng-icons/lucide';
 import { ApplicationService } from '../../service/application.service';
 import { AppVariablesService } from '../../service/app-variables.service';
-import { AppVariablesEditorComponent, VariablesSavePayload } from './app-variables-editor.component';
+import {
+  AppVariablesEditorComponent,
+  VariablesSavePayload,
+} from './app-variables-editor.component';
 
 @Component({
   selector: 'app-configuration-tab',
@@ -24,9 +27,10 @@ import { AppVariablesEditorComponent, VariablesSavePayload } from './app-variabl
   template: `
     @if (app(); as app) {
       <div class="space-y-6">
-
         @if (focusVar() || missingName()) {
-          <div class="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-lg text-sm text-blue-800 dark:text-blue-300">
+          <div
+            class="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-lg text-sm text-blue-800 dark:text-blue-300"
+          >
             <ng-icon name="lucideInfo" class="h-4 w-4 mt-0.5 flex-shrink-0" />
             <div class="flex-1 space-y-1 min-w-0">
               @if (focusVar()) {
@@ -66,7 +70,9 @@ import { AppVariablesEditorComponent, VariablesSavePayload } from './app-variabl
         }
 
         @if (variablesService.error()) {
-          <div class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400">
+          <div
+            class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400"
+          >
             <ng-icon name="lucideAlertCircle" class="h-4 w-4 mt-0.5 flex-shrink-0" />
             <span>{{ variablesService.error() }}</span>
           </div>
@@ -90,7 +96,6 @@ import { AppVariablesEditorComponent, VariablesSavePayload } from './app-variabl
           [saving]="variablesService.saving()"
           (save)="onSaveSensitive($event)"
         />
-
       </div>
     }
   `,
@@ -113,7 +118,7 @@ export class AppConfigurationTabComponent implements OnInit {
       this.focusVar.set(params.get('focusVar'));
       this.missingKind.set(params.get('missingKind'));
       this.missingName.set(params.get('missingName'));
-  
+
       const app = this.app();
       if (!app?.id) return;
       await this.variablesService.loadVariables(app.id);

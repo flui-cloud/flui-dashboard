@@ -88,22 +88,16 @@ export class IamService {
   readonly projects = signal<ProjectOption[]>([]);
 
   readonly tags = computed(() =>
-    Array.from(new Set(this.apps().flatMap((a) => a.tags))).sort((a, b) =>
-      a.localeCompare(b),
-    ),
+    Array.from(new Set(this.apps().flatMap((a) => a.tags))).sort((a, b) => a.localeCompare(b)),
   );
 
   readonly kinds = computed(() =>
-    Array.from(new Set(this.apps().map((a) => a.kind))).sort((a, b) =>
-      a.localeCompare(b),
-    ),
+    Array.from(new Set(this.apps().map((a) => a.kind))).sort((a, b) => a.localeCompare(b)),
   );
 
   readonly roles = signal<RoleDef[]>([]);
 
-  readonly grantableRoles = computed(() =>
-    this.roles().filter((r) => r.grantable),
-  );
+  readonly grantableRoles = computed(() => this.roles().filter((r) => r.grantable));
 
   isGrantable(role: string): boolean {
     return this.roles().some((r) => r.key === role && r.grantable);
@@ -214,12 +208,10 @@ export class IamService {
   }
 
   removeGrant(id: string): void {
-    this.http
-      .delete<{ delta?: AccessDelta }>(`${this.iamBase}/grants/${id}`)
-      .subscribe({
-        next: () => this._grants.update((g) => g.filter((x) => x.id !== id)),
-        error: (e) => this.fail('remove grant', e),
-      });
+    this.http.delete<{ delta?: AccessDelta }>(`${this.iamBase}/grants/${id}`).subscribe({
+      next: () => this._grants.update((g) => g.filter((x) => x.id !== id)),
+      error: (e) => this.fail('remove grant', e),
+    });
   }
 
   revocationPreview(id: string): Observable<AccessDelta | null> {
@@ -289,9 +281,7 @@ export class IamService {
       })
       .subscribe({
         next: () =>
-          this._users.update((u) =>
-            u.map((x) => (x.id === id ? { ...x, isAdmin: makeAdmin } : x)),
-          ),
+          this._users.update((u) => u.map((x) => (x.id === id ? { ...x, isAdmin: makeAdmin } : x))),
         error: (e) => this.fail('change admin', e),
       });
   }
@@ -310,16 +300,13 @@ export class IamService {
     };
   }): void {
     this.http
-      .post<CreatedIdentityUserDto>(
-        `${this.appConfig.apiBaseUrl}/api/v1/auth/users`,
-        {
-          email: input.email,
-          firstName: input.firstName,
-          lastName: input.lastName,
-          sendInvite: input.sendInvite,
-          role: input.admin ? 'admin' : 'user',
-        },
-      )
+      .post<CreatedIdentityUserDto>(`${this.appConfig.apiBaseUrl}/api/v1/auth/users`, {
+        email: input.email,
+        firstName: input.firstName,
+        lastName: input.lastName,
+        sendInvite: input.sendInvite,
+        role: input.admin ? 'admin' : 'user',
+      })
       .subscribe({
         next: (u) => {
           this._lastInvite.set({
@@ -395,10 +382,7 @@ export class IamService {
         {},
       )
       .subscribe({
-        next: () =>
-          this._users.update((u) =>
-            u.map((x) => (x.id === id ? { ...x, status } : x)),
-          ),
+        next: () => this._users.update((u) => u.map((x) => (x.id === id ? { ...x, status } : x))),
         error: (e) => this.fail(status === 'disabled' ? 'disable user' : 'enable user', e),
       });
   }
@@ -424,10 +408,7 @@ export class IamService {
 
   addGroupMember(name: string, email: string): void {
     this.http
-      .post<ApiGroup>(
-        `${this.iamBase}/groups/${name}/members/${encodeURIComponent(email)}`,
-        {},
-      )
+      .post<ApiGroup>(`${this.iamBase}/groups/${name}/members/${encodeURIComponent(email)}`, {})
       .subscribe({
         next: (g) => this.replaceGroup(g),
         error: (e) => this.fail('add member', e),
@@ -436,9 +417,7 @@ export class IamService {
 
   removeGroupMember(name: string, email: string): void {
     this.http
-      .delete<ApiGroup>(
-        `${this.iamBase}/groups/${name}/members/${encodeURIComponent(email)}`,
-      )
+      .delete<ApiGroup>(`${this.iamBase}/groups/${name}/members/${encodeURIComponent(email)}`)
       .subscribe({
         next: (g) => this.replaceGroup(g),
         error: (e) => this.fail('remove member', e),
@@ -473,8 +452,7 @@ export class IamService {
 
   principalDisplay(p: AccessBinding['principal']): string {
     return (
-      this.principals().find((x) => x.type === p.type && x.ref === p.ref)
-        ?.displayName ?? p.ref
+      this.principals().find((x) => x.type === p.type && x.ref === p.ref)?.displayName ?? p.ref
     );
   }
 

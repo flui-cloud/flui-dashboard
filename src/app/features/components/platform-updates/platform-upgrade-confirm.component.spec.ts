@@ -7,9 +7,7 @@ import {
 } from '../../service/platform-update.service';
 import { PlatformUpgradeConfirmComponent } from './platform-upgrade-confirm.component';
 
-const plan = (
-  blockers: PlatformUpgradePlan['blockers'],
-): PlatformUpgradePlan => ({
+const plan = (blockers: PlatformUpgradePlan['blockers']): PlatformUpgradePlan => ({
   planId: 'p1',
   fromVersion: '0.19.0',
   targetVersion: '0.20.0',
@@ -38,8 +36,8 @@ describe('PlatformUpgradeConfirmComponent', () => {
   const planData = signal<PlatformUpgradePlan | null>(null);
 
   const startButton = (): HTMLButtonElement =>
-    [...(fixture.nativeElement as HTMLElement).querySelectorAll('button')].find(
-      (b) => b.textContent?.includes('Start update'),
+    [...(fixture.nativeElement as HTMLElement).querySelectorAll('button')].find((b) =>
+      b.textContent?.includes('Start update'),
     )!;
 
   beforeEach(() => {
@@ -66,9 +64,7 @@ describe('PlatformUpgradeConfirmComponent', () => {
   });
 
   it('keeps the start button disabled until a missing backup is acknowledged', () => {
-    planData.set(
-      plan([{ phase: 'backup', message: 'No backup.', overridable: true }]),
-    );
+    planData.set(plan([{ phase: 'backup', message: 'No backup.', overridable: true }]));
     fixture.detectChanges();
     expect(startButton().disabled).toBeTrue();
 
@@ -81,9 +77,7 @@ describe('PlatformUpgradeConfirmComponent', () => {
   });
 
   it('starts the planned update without a backup and closes', async () => {
-    planData.set(
-      plan([{ phase: 'backup', message: 'No backup.', overridable: true }]),
-    );
+    planData.set(plan([{ phase: 'backup', message: 'No backup.', overridable: true }]));
     let closed = false;
     fixture.componentInstance.closed.subscribe(() => (closed = true));
     fixture.detectChanges();
@@ -103,9 +97,7 @@ describe('PlatformUpgradeConfirmComponent', () => {
   });
 
   it('never enables start while a hard blocker stands', () => {
-    planData.set(
-      plan([{ phase: 'k3s', message: 'Node down.', overridable: false }]),
-    );
+    planData.set(plan([{ phase: 'k3s', message: 'Node down.', overridable: false }]));
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Node down.');
     expect(startButton().disabled).toBeTrue();

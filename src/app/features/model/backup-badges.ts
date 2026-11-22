@@ -13,17 +13,13 @@ export interface BadgeStyle {
 }
 
 const TONE = {
-  green:
-    'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/30',
+  green: 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/30',
   blue: 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30',
-  amber:
-    'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30',
+  amber: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30',
   red: 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/30',
   gray: 'bg-gray-500/10 text-gray-700 dark:text-gray-400 border-gray-500/30',
-  violet:
-    'bg-violet-500/10 text-violet-700 dark:text-violet-400 border-violet-500/30',
-  alarm:
-    'bg-amber-500/20 text-amber-800 dark:text-amber-300 border-amber-600/60 font-semibold',
+  violet: 'bg-violet-500/10 text-violet-700 dark:text-violet-400 border-violet-500/30',
+  alarm: 'bg-amber-500/20 text-amber-800 dark:text-amber-300 border-amber-600/60 font-semibold',
 };
 
 export function healthBadge(status: DestinationHealthStatus): BadgeStyle {

@@ -1,7 +1,12 @@
 import { StatTileData, NODE_SERIES_COLORS } from '../../../shared/components/charts';
 import { formatDelta, formatRate } from '../../../shared/utils/metric-format';
 import { ClusterInfo, ClusterStatus, isControlClusterType } from '../../model/cluster.models';
-import { FleetClusterMetrics, FleetMetrics, FleetPoint, FleetWindow } from '../../service/fleet.service';
+import {
+  FleetClusterMetrics,
+  FleetMetrics,
+  FleetPoint,
+  FleetWindow,
+} from '../../service/fleet.service';
 
 export interface FreshInput {
   loading: boolean;
@@ -75,12 +80,24 @@ export function fleetTiles(metrics: FleetMetrics, fresh: boolean): StatTileData[
   const netOut = current?.networkOutBytesPerSecond ?? null;
 
   return [
-    tile('Avg CPU', NODE_SERIES_COLORS[0], (p) => p.cpuPercent, percent, '%',
-      fresh ? 'control cluster only' : `${plural(clustersReporting, 'cluster')} reporting`),
+    tile(
+      'Avg CPU',
+      NODE_SERIES_COLORS[0],
+      (p) => p.cpuPercent,
+      percent,
+      '%',
+      fresh ? 'control cluster only' : `${plural(clustersReporting, 'cluster')} reporting`,
+    ),
     tile('Avg memory', NODE_SERIES_COLORS[1], (p) => p.memoryPercent, percent, '%', nodes),
     tile('Avg disk', NODE_SERIES_COLORS[2], (p) => p.diskPercent, percent, '%', nodes),
-    tile('Network', NODE_SERIES_COLORS[3], networkOf, formatRate, '',
-      `↓ ${formatRate(netIn)} · ↑ ${formatRate(netOut)}`),
+    tile(
+      'Network',
+      NODE_SERIES_COLORS[3],
+      networkOf,
+      formatRate,
+      '',
+      `↓ ${formatRate(netIn)} · ↑ ${formatRate(netOut)}`,
+    ),
   ];
 }
 
@@ -144,7 +161,10 @@ export interface ClusterRow {
 }
 
 export function providerChip(name: string): string {
-  const words = name.trim().split(/[\s-]+/).filter(Boolean);
+  const words = name
+    .trim()
+    .split(/[\s-]+/)
+    .filter(Boolean);
   if (words.length > 1) return (words[0][0] + words[1][0]).toUpperCase();
   return (words[0] ?? '?').slice(0, 2).toUpperCase();
 }
@@ -198,10 +218,13 @@ export function clusterRow(
     clusterStatus: cluster.status,
     live,
     cpu: live ? valuesOf(series, (p) => p.cpuPercent) : [],
-    cpuNow: live && metrics!.current!.cpuPercent != null ? percent(metrics!.current!.cpuPercent) : '—',
+    cpuNow:
+      live && metrics!.current!.cpuPercent != null ? percent(metrics!.current!.cpuPercent) : '—',
     memory: live ? valuesOf(series, (p) => p.memoryPercent) : [],
     memoryNow:
-      live && metrics!.current!.memoryPercent != null ? percent(metrics!.current!.memoryPercent) : '—',
+      live && metrics!.current!.memoryPercent != null
+        ? percent(metrics!.current!.memoryPercent)
+        : '—',
     note: live ? '' : (inProgressNote ?? metricsNote(metrics, now)),
     inProgress: !!inProgressNote,
     apps: appsLabel(apps),

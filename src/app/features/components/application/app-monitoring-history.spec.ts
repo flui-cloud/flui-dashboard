@@ -37,6 +37,8 @@ describe('monitoring history signals', () => {
   });
 
   it('reports no dip when every step was ready or carried no data', () => {
-    expect(lastReadinessDip([point(0, { replicas_ready: 2, replicas_desired: 2 }), point(1, {})])).toBeNull();
+    expect(
+      lastReadinessDip([point(0, { replicas_ready: 2, replicas_desired: 2 }), point(1, {})]),
+    ).toBeNull();
   });
 });

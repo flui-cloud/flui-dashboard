@@ -72,7 +72,10 @@ export class TopologyDashboardService {
     const base = this.appConfig.apiBaseUrl ?? '';
     const url = `${base}/api/v1/topology/stream${this.systemApps.shownOnMap() ? '?system=1' : ''}`;
     const path = apiPath(url, base);
-    if (path !== null && (!this.sandbox.allows('GET', path) || this.sandbox.needsSignIn('GET', path))) {
+    if (
+      path !== null &&
+      (!this.sandbox.allows('GET', path) || this.sandbox.needsSignIn('GET', path))
+    ) {
       this.abort = null;
       return;
     }

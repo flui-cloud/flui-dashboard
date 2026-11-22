@@ -33,7 +33,10 @@ function input(over: Partial<DashboardSurfaceInput> = {}): DashboardSurfaceInput
 }
 
 function snapshotOf(over: Partial<DashboardSurfaceInput> = {}): SurfaceSnapshot {
-  return buildDashboardSurface(input(over), { revision: 1, generatedAt: '2026-08-20T09:13:00.000Z' });
+  return buildDashboardSurface(input(over), {
+    revision: 1,
+    generatedAt: '2026-08-20T09:13:00.000Z',
+  });
 }
 
 const pageScope = (snapshot: SurfaceSnapshot) => snapshot.scopes.find((s) => s.id === 'dashboard')!;
@@ -51,11 +54,14 @@ describe('dashboard surface producer', () => {
 
   it('bumps the revision on real change, and validateSurfaceSemantics accepts it against the previous snapshot', () => {
     const tracker = new DashboardSurfaceRevision();
-    const first = buildDashboardSurface(input(), { revision: tracker.next(presentedContent(input())), generatedAt: '2026-08-20T09:13:00.000Z' });
-    const second = buildDashboardSurface(
-      input({ clustersTotal: 4 }),
-      { revision: tracker.next(presentedContent(input({ clustersTotal: 4 }))), generatedAt: '2026-08-20T09:14:00.000Z' },
-    );
+    const first = buildDashboardSurface(input(), {
+      revision: tracker.next(presentedContent(input())),
+      generatedAt: '2026-08-20T09:13:00.000Z',
+    });
+    const second = buildDashboardSurface(input({ clustersTotal: 4 }), {
+      revision: tracker.next(presentedContent(input({ clustersTotal: 4 }))),
+      generatedAt: '2026-08-20T09:14:00.000Z',
+    });
     expect(second.surface.revision).toBe(first.surface.revision + 1);
     expect(validateSurfaceSemantics(second, { previousSnapshot: first })).toEqual([]);
   });
@@ -69,7 +75,10 @@ describe('dashboard surface producer', () => {
 
   it('flags a snapshot whose revision does not advance on the previous one', () => {
     const first = snapshotOf();
-    const stale = { ...snapshotOf(), surface: { ...snapshotOf().surface, revision: first.surface.revision } };
+    const stale = {
+      ...snapshotOf(),
+      surface: { ...snapshotOf().surface, revision: first.surface.revision },
+    };
     const issues = validateSurfaceSemantics(stale, { previousSnapshot: first });
     expect(issues).toEqual([
       jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' }),
@@ -82,7 +91,7 @@ describe('dashboard surface producer', () => {
     expect(pageScope(snapshot).entities).toBeUndefined();
   });
 
-  it('presents the counts actually shown across the page\'s own cards', () => {
+  it("presents the counts actually shown across the page's own cards", () => {
     const snapshot = snapshotOf();
     expect(observation(snapshot, 'flui.dashboard.backend_health')?.presentedAs.text).toBe('online');
     expect(observation(snapshot, 'flui.dashboard.clusters_total')?.presentedAs.value).toBe(3);
@@ -92,7 +101,7 @@ describe('dashboard surface producer', () => {
     expect(observation(snapshot, 'flui.dashboard.apps_failed')?.presentedAs.value).toBe(1);
   });
 
-  it('omits a zero-valued count, mirroring the app producer\'s own diagnoses-badge pattern', () => {
+  it("omits a zero-valued count, mirroring the app producer's own diagnoses-badge pattern", () => {
     const snapshot = snapshotOf({ activeOperations: 0, clusterNodesTotal: 0 });
     expect(observation(snapshot, 'flui.dashboard.active_operations')).toBeUndefined();
     expect(observation(snapshot, 'flui.dashboard.cluster_nodes_total')).toBeUndefined();
@@ -117,6 +126,10 @@ describe('dashboard surface producer', () => {
     const snapshot = snapshotOf();
     const keys = (pageScope(snapshot).observations ?? []).map((o) => o.key);
     expect(keys.every((k) => k.startsWith('flui.dashboard.'))).toBe(true);
-    expect(pageScope(snapshot).observations?.every((o) => o.presentedAs.text === undefined || o.source === 'api')).toBe(true);
+    expect(
+      pageScope(snapshot).observations?.every(
+        (o) => o.presentedAs.text === undefined || o.source === 'api',
+      ),
+    ).toBe(true);
   });
 });

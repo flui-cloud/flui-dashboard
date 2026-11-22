@@ -8,7 +8,11 @@ import type {
 } from '@flui-cloud/semantic-surface';
 
 import type { AppGroupView } from '../../model/application.models';
-import { WORKLOAD_LIST_LABEL, WORKLOAD_LIST_ROUTE, type WorkloadList } from '../../model/workload-list';
+import {
+  WORKLOAD_LIST_LABEL,
+  WORKLOAD_LIST_ROUTE,
+  type WorkloadList,
+} from '../../model/workload-list';
 
 // Shared with application-surface.ts (app.id + namespace conventions) — see the
 // producer-playbook, §2: same app.id for every producer in this repo, not one per page.
@@ -176,7 +180,11 @@ export function presentedContent(input: ApplicationsListSurfaceInput): Presented
     },
   };
 
-  const scopes: SemanticScopeSnapshot[] = [pageScope, listScope, ...rows.map((group) => rowScope(listId, group))];
+  const scopes: SemanticScopeSnapshot[] = [
+    pageScope,
+    listScope,
+    ...rows.map((group) => rowScope(listId, group)),
+  ];
 
   // No entity in attention: the page itself is what's being looked at, nothing on it is
   // "selected" (see the note on presentedContent above).

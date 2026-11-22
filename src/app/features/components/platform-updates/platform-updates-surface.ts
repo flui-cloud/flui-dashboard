@@ -148,7 +148,8 @@ export function presentedContent(input: PlatformUpdatesSurfaceInput): PresentedC
   const checkFailed = !!status?.checkError;
   const changedCount = status?.components.filter((c) => c.changed).length ?? 0;
   const offReleaseCount =
-    status?.components.filter((c) => c.installed && !!c.installedVersion && !c.installedIsRelease).length ?? 0;
+    status?.components.filter((c) => c.installed && !!c.installedVersion && !c.installedIsRelease)
+      .length ?? 0;
   const blockerCount = status?.advisories.filter((a) => a.level === 'blocker').length ?? 0;
   const warningCount = status?.advisories.filter((a) => a.level === 'warning').length ?? 0;
   const infoCount = status?.advisories.filter((a) => a.level === 'info').length ?? 0;
@@ -158,14 +159,26 @@ export function presentedContent(input: PlatformUpdatesSurfaceInput): PresentedC
     kind: 'page',
     label: 'Updates',
     observations: keep([
-      status ? textObservation('flui.platform_update.installed_version', status.installedVersion, 'api') : null,
-      status ? textObservation('flui.platform_update.available_version', status.availableVersion, 'api') : null,
-      status ? boolObservation('flui.platform_update.update_available', status.updateAvailable, 'api') : null,
+      status
+        ? textObservation('flui.platform_update.installed_version', status.installedVersion, 'api')
+        : null,
+      status
+        ? textObservation('flui.platform_update.available_version', status.availableVersion, 'api')
+        : null,
+      status
+        ? boolObservation('flui.platform_update.update_available', status.updateAvailable, 'api')
+        : null,
       status ? boolObservation('flui.platform_update.applicable', status.applicable, 'api') : null,
       status && status.updateAvailable
-        ? textObservation('flui.platform_update.required_cli_version', status.requiredCliVersion, 'api')
+        ? textObservation(
+            'flui.platform_update.required_cli_version',
+            status.requiredCliVersion,
+            'api',
+          )
         : null,
-      status ? textObservation('flui.platform_update.published_at', status.publishedAt, 'api') : null,
+      status
+        ? textObservation('flui.platform_update.published_at', status.publishedAt, 'api')
+        : null,
       status ? textObservation('flui.platform_update.checked_at', status.checkedAt, 'api') : null,
       status ? boolObservation('flui.platform_update.check_failed', checkFailed, 'derived') : null,
       boolObservation('flui.platform_update.checking', input.checking, 'ui'),
@@ -173,7 +186,13 @@ export function presentedContent(input: PlatformUpdatesSurfaceInput): PresentedC
       status && !checkFailed && status.updateAvailable
         ? valueObservation('flui.platform_update.changed_components', changedCount, 'derived')
         : null,
-      status ? valueObservation('flui.platform_update.off_release_components', offReleaseCount, 'derived') : null,
+      status
+        ? valueObservation(
+            'flui.platform_update.off_release_components',
+            offReleaseCount,
+            'derived',
+          )
+        : null,
       status && status.advisories.length > 0
         ? valueObservation('flui.platform_update.advisories_blocker_count', blockerCount, 'derived')
         : null,
@@ -228,7 +247,11 @@ export function presentedContent(input: PlatformUpdatesSurfaceInput): PresentedC
         textObservation('flui.platform_update.target_version', operation.targetVersion, 'api'),
         valueObservation('flui.platform_update.progress', operation.progress, 'api', '%'),
         valueObservation('flui.platform_update.migrations', operation.migrations, 'api'),
-        boolObservation('flui.platform_update.awaiting_self_restart', operation.awaitingSelfRestart, 'api'),
+        boolObservation(
+          'flui.platform_update.awaiting_self_restart',
+          operation.awaitingSelfRestart,
+          'api',
+        ),
         textObservation('flui.platform_update.completed_at', operation.completedAt, 'api'),
         boolObservation('flui.platform_update.failed', !!operation.errorMessage, 'api'),
       ]),
@@ -268,9 +291,17 @@ export function presentedContent(input: PlatformUpdatesSurfaceInput): PresentedC
           textObservation('flui.platform_update.component_role', c.role, 'api'),
           boolObservation('flui.platform_update.component_installed', c.installed, 'api'),
           boolObservation('flui.platform_update.component_observed', c.observed, 'api'),
-          textObservation('flui.platform_update.component_installed_version', c.installedVersion, 'api'),
+          textObservation(
+            'flui.platform_update.component_installed_version',
+            c.installedVersion,
+            'api',
+          ),
           textObservation('flui.platform_update.component_target_version', c.targetVersion, 'api'),
-          boolObservation('flui.platform_update.component_installed_is_release', c.installedIsRelease, 'api'),
+          boolObservation(
+            'flui.platform_update.component_installed_is_release',
+            c.installedIsRelease,
+            'api',
+          ),
           boolObservation('flui.platform_update.component_changed', c.changed, 'api'),
           boolObservation(
             'flui.platform_update.component_restarts_control_plane',
@@ -280,7 +311,10 @@ export function presentedContent(input: PlatformUpdatesSurfaceInput): PresentedC
         ]),
       ),
     });
-    componentScopes[0] = { ...componentScopes[0], state: { empty: status.components.length === 0 } };
+    componentScopes[0] = {
+      ...componentScopes[0],
+      state: { empty: status.components.length === 0 },
+    };
     scopes.push(...componentScopes);
   }
 
@@ -297,7 +331,13 @@ export function presentedContent(input: PlatformUpdatesSurfaceInput): PresentedC
 
   const attention: AttentionTarget[] =
     running && operationScopeId
-      ? [{ scopeId: operationScopeId, entityRef: platformUpdateOperationEntityRef(operation!.id), reason: 'active-view' }]
+      ? [
+          {
+            scopeId: operationScopeId,
+            entityRef: platformUpdateOperationEntityRef(operation!.id),
+            reason: 'active-view',
+          },
+        ]
       : [{ scopeId: PAGE_ID, reason: 'route' }];
 
   return { scopes, attention };

@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnDestroy,
+  OnInit,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map, firstValueFrom } from 'rxjs';
@@ -20,14 +29,10 @@ import { evaluateEndpointReadiness } from '../../model/endpoint-readiness';
 import { buildOpenAppUrl } from '../../model/open-app-url';
 import { DbConnectionInfo } from '../../model/db-console.models';
 import { databaseEngineOf } from '../../model/db-engine';
-import {
-  CatalogInstallResponseDto,
-  ApplicationResponseDto,
-} from '../../../core/api/model/models';
+import { CatalogInstallResponseDto, ApplicationResponseDto } from '../../../core/api/model/models';
 import { CatalogInstallStatusBadgeComponent } from './catalog-install-status-badge.component';
 import { AppDbConnectCardComponent } from '../application/app-db-connect-card.component';
 import { AppComponentsListComponent } from '../application/app-components-list.component';
-
 
 const TERMINAL_STATES: Set<CatalogInstallResponseDto.StatusEnum> = new Set([
   CatalogInstallResponseDto.StatusEnum.Running,
@@ -120,7 +125,9 @@ import {
               }
             } @else if (inst.resolvedFqdn) {
               @let r = readiness();
-              <div class="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-muted/30 p-4">
+              <div
+                class="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-muted/30 p-4"
+              >
                 <div class="min-w-0 flex-1">
                   <p class="text-xs uppercase tracking-wide text-muted-foreground">Endpoint</p>
                   <p class="mt-0.5 truncate text-sm font-mono">{{ inst.resolvedFqdn }}</p>
@@ -130,7 +137,10 @@ import {
                         <ng-icon name="lucideCircleAlert" class="h-3.5 w-3.5 text-destructive" />
                         <span class="font-medium text-destructive">{{ r.label }}</span>
                       } @else {
-                        <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin text-primary" />
+                        <ng-icon
+                          name="lucideLoader"
+                          class="h-3.5 w-3.5 animate-spin text-primary"
+                        />
                         <span>{{ r.label }}</span>
                       }
                     </p>
@@ -162,7 +172,9 @@ import {
                 }
               </div>
             } @else if (dnsAppId()) {
-              <div class="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 p-4">
+              <div
+                class="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 p-4"
+              >
                 <div class="min-w-0">
                   <p class="text-sm font-medium text-amber-800 dark:text-amber-200">
                     No endpoint configured
@@ -194,7 +206,6 @@ import {
               <p class="mt-1 text-xs text-destructive/90">{{ inst.errorMessage }}</p>
             </div>
           }
-
         </section>
 
         <app-components-list [components]="components()" [primaryComponentId]="primaryId()" />
@@ -215,9 +226,7 @@ export class CatalogInstallDetailComponent implements OnInit, OnDestroy {
   private readonly connRequested = new Set<string>();
 
   // Every component that is a database/cache (composed apps may bundle several, e.g. postgres + valkey).
-  protected readonly dbApps = computed(() =>
-    this.components().filter((c) => databaseEngineOf(c)),
-  );
+  protected readonly dbApps = computed(() => this.components().filter((c) => databaseEngineOf(c)));
 
   protected connInfoFor(appId: string): DbConnectionInfo | null {
     return this.connInfo()[appId] ?? null;
@@ -227,15 +236,13 @@ export class CatalogInstallDetailComponent implements OnInit, OnDestroy {
   protected readonly primaryId = signal<string | undefined>(undefined);
   private readonly componentsKey = signal<string | null>(null);
 
-  private readonly id = toSignal(
-    this.route.paramMap.pipe(map((p) => p.get('id'))),
-    { initialValue: this.route.snapshot.paramMap.get('id') },
-  );
+  private readonly id = toSignal(this.route.paramMap.pipe(map((p) => p.get('id'))), {
+    initialValue: this.route.snapshot.paramMap.get('id'),
+  });
 
-  private readonly from = toSignal(
-    this.route.queryParamMap.pipe(map((p) => p.get('from'))),
-    { initialValue: this.route.snapshot.queryParamMap.get('from') },
-  );
+  private readonly from = toSignal(this.route.queryParamMap.pipe(map((p) => p.get('from'))), {
+    initialValue: this.route.snapshot.queryParamMap.get('from'),
+  });
   protected readonly backLink = computed(() =>
     this.from() === 'applications' ? '/apps/applications' : '/apps/catalog',
   );
@@ -249,24 +256,16 @@ export class CatalogInstallDetailComponent implements OnInit, OnDestroy {
   protected readonly errorMessage = signal<string | null>(null);
 
   protected readonly progressPct = computed(() => this.progress()?.overallProgress ?? 0);
-  protected readonly currentStepLabel = computed(
-    () => this.progress()?.stepLabel ?? 'Preparing…',
-  );
-  protected readonly firstAppId = computed(
-    () => this.install()?.applicationIds?.[0] ?? null,
-  );
-  protected readonly dnsAppId = computed(
-    () => this.primaryId() ?? this.firstAppId(),
-  );
+  protected readonly currentStepLabel = computed(() => this.progress()?.stepLabel ?? 'Preparing…');
+  protected readonly firstAppId = computed(() => this.install()?.applicationIds?.[0] ?? null);
+  protected readonly dnsAppId = computed(() => this.primaryId() ?? this.firstAppId());
 
   protected readonly matchedEndpoint = computed(() => {
     const fqdn = this.install()?.resolvedFqdn;
     if (!fqdn) return null;
     return this.endpointsService.endpoints().find((e) => e.fqdn === fqdn) ?? null;
   });
-  protected readonly readiness = computed(() =>
-    evaluateEndpointReadiness(this.matchedEndpoint()),
-  );
+  protected readonly readiness = computed(() => evaluateEndpointReadiness(this.matchedEndpoint()));
 
   /** entrypointPath of the catalog app this install belongs to, looked up via `catalogAppDefinitionId`. */
   private readonly entrypointPath = signal<string | undefined>(undefined);
@@ -354,15 +353,14 @@ export class CatalogInstallDetailComponent implements OnInit, OnDestroy {
       const group = groups.find((g) => g.catalogInstallId === installId);
       this.components.set(group?.components ?? []);
       this.primaryId.set(group?.primaryComponentId);
-    } catch {
-    }
+    } catch {}
   }
 
   ngOnInit(): void {
     void (async () => {
       const id = this.id();
       if (!id) return;
-  
+
       this.loading.set(true);
       this.errorMessage.set(null);
       const first = await this.catalog.getInstall(id);

@@ -19,15 +19,23 @@ export class ProviderBadgeComponent {
   displayName(): string {
     const p = this.provider().toLowerCase();
     switch (p) {
-      case 'hetzner':    return 'Hetzner';
-      case 'contabo':    return 'Contabo';
-      case 'scaleway':   return 'Scaleway';
-      case 'aws':        return 'AWS';
-      case 'digitalocean': return 'DigitalOcean';
+      case 'hetzner':
+        return 'Hetzner';
+      case 'contabo':
+        return 'Contabo';
+      case 'scaleway':
+        return 'Scaleway';
+      case 'aws':
+        return 'AWS';
+      case 'digitalocean':
+        return 'DigitalOcean';
       case 'gcp':
-      case 'google':     return 'Google Cloud';
-      case 'azure':      return 'Azure';
-      default:           return this.provider();
+      case 'google':
+        return 'Google Cloud';
+      case 'azure':
+        return 'Azure';
+      default:
+        return this.provider();
     }
   }
 }

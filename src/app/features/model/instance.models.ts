@@ -27,11 +27,7 @@ export type InstanceOwnership = 'self' | 'other-flui' | 'unmanaged';
 
 export function getOwnership(instance: InstanceWithLabels): InstanceOwnership {
   const ownership = instance.ownership;
-  if (
-    ownership === 'self' ||
-    ownership === 'other-flui' ||
-    ownership === 'unmanaged'
-  ) {
+  if (ownership === 'self' || ownership === 'other-flui' || ownership === 'unmanaged') {
     return ownership;
   }
   return isManagedByFlui(instance) ? 'self' : 'unmanaged';
@@ -60,10 +56,7 @@ export function getClusterNodeId(instance: InstanceWithLabels): string | null {
   return instance.id ?? null;
 }
 
-export function mapClusterNodeToInstance(
-  node: any,
-  clusterId: string,
-): InstanceWithLabels {
+export function mapClusterNodeToInstance(node: any, clusterId: string): InstanceWithLabels {
   const ip: string | undefined = node.ipAddress || node.privateIp;
   return {
     id: node.id,

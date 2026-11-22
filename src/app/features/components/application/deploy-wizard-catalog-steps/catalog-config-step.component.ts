@@ -59,9 +59,7 @@ import { DeployWizardStateService } from '../../../service/deploy-wizard-state.s
 })
 export class CatalogConfigStepComponent {
   protected readonly state = inject(DeployWizardStateService);
-  protected readonly envs = computed(
-    () => this.state.catalogDetail()?.editableEnv ?? [],
-  );
+  protected readonly envs = computed(() => this.state.catalogDetail()?.editableEnv ?? []);
 
   valueFor(name: string): string {
     return this.state.envOverrides()[name] ?? '';

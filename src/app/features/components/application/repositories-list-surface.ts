@@ -180,7 +180,13 @@ export function presentedContent(input: RepositoriesListSurfaceInput): Presented
       parentId: PAGE_ID,
       kind: 'overlay',
       label: 'Import Repositories',
-      observations: [valueObservation('flui.repositories.import_selected_count', input.importSelectedCount, 'ui')],
+      observations: [
+        valueObservation(
+          'flui.repositories.import_selected_count',
+          input.importSelectedCount,
+          'ui',
+        ),
+      ],
     });
     attention = [{ scopeId: IMPORT_OVERLAY_ID, reason: 'overlay' }];
   }

@@ -4,15 +4,11 @@ import {
   input,
   signal,
   viewChild,
-  output
+  output,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucidePlay,
-  lucideRotateCcw,
-  lucideSlidersHorizontal,
-} from '@ng-icons/lucide';
+import { lucidePlay, lucideRotateCcw, lucideSlidersHorizontal } from '@ng-icons/lucide';
 import { DocumentField } from '../../model/document-console.models';
 import { DocumentFilterEditorComponent } from './document-filter-editor.component';
 
@@ -40,11 +36,7 @@ export interface DocQuery {
     <div class="rounded-lg border border-border bg-card">
       <div class="flex items-center gap-2 p-2">
         <span class="shrink-0 pl-1 font-mono text-xs text-muted-foreground">Filter</span>
-        <app-document-filter-editor
-          [fields]="fields()"
-          [disabled]="disabled()"
-          (run)="emit()"
-        />
+        <app-document-filter-editor [fields]="fields()" [disabled]="disabled()" (run)="emit()" />
         <button
           type="button"
           (click)="showOptions.set(!showOptions())"
@@ -82,7 +74,7 @@ export interface DocQuery {
               (keydown.enter)="emit()"
               [disabled]="disabled()"
               spellcheck="false"
-              placeholder='{ name: 1, _id: 0 }'
+              placeholder="{ name: 1, _id: 0 }"
               class="rounded-md border border-border bg-muted px-2 py-1 font-mono text-xs outline-none focus:border-primary disabled:opacity-50"
             />
           </label>
@@ -93,7 +85,7 @@ export interface DocQuery {
               (keydown.enter)="emit()"
               [disabled]="disabled()"
               spellcheck="false"
-              placeholder='{ createdAt: -1 }'
+              placeholder="{ createdAt: -1 }"
               class="rounded-md border border-border bg-muted px-2 py-1 font-mono text-xs outline-none focus:border-primary disabled:opacity-50"
             />
           </label>

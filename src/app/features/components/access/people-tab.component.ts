@@ -1,4 +1,11 @@
-import { Component, computed, inject, signal, viewChild, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  signal,
+  viewChild,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideUserPlus,
@@ -14,10 +21,7 @@ import {
   lucideInfo,
   lucideTriangleAlert,
 } from '@ng-icons/lucide';
-import {
-  HlmCardDirective,
-  HlmCardContentDirective,
-} from '@spartan-ng/ui-card-helm';
+import { HlmCardDirective, HlmCardContentDirective } from '@spartan-ng/ui-card-helm';
 import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog.component';
 import { IamService } from '../../service/iam.service';
 import { PermissionService } from '../../../core/services/permission.service';
@@ -101,8 +105,7 @@ export class PeopleTabComponent {
   private groupSections(name: string): string[] {
     const keys = new Set<string>(['home', 'settings']);
     for (const g of this.iam.grants()) {
-      if (g.binding.principal.type !== 'group' || g.binding.principal.ref !== name)
-        continue;
+      if (g.binding.principal.type !== 'group' || g.binding.principal.ref !== name) continue;
       const perms = this.rolePermissions(g.binding.role);
       const isGlobal = g.binding.scope.type === 'global';
       for (const s of sectionsForPermissions(perms, isGlobal)) keys.add(s);
@@ -113,9 +116,7 @@ export class PeopleTabComponent {
   readonly previewSections = computed<string[]>(() => {
     if (this.isAdminAccount()) return ALL_SECTION_KEYS;
     if (this.accessMode() === 'group') {
-      return this.groupName()
-        ? this.groupSections(this.groupName())
-        : ['home', 'settings'];
+      return this.groupName() ? this.groupSections(this.groupName()) : ['home', 'settings'];
     }
     return sectionsForPermissions(
       this.rolePermissions(this.role()),
@@ -237,9 +238,7 @@ export class PeopleTabComponent {
 
   readonly roleDialogDetails = computed(() => {
     const delta = this.roleDelta();
-    return delta
-      ? accessDeltaLines(delta, { identityProvider: this.identityProvider })
-      : [];
+    return delta ? accessDeltaLines(delta, { identityProvider: this.identityProvider }) : [];
   });
 
   readonly roleDialogVariant = computed<'danger' | 'info'>(() =>
@@ -260,10 +259,7 @@ export class PeopleTabComponent {
         principalType: 'user',
         principalRef: u.email,
         removeGrantIds: existing ? [existing.id] : [],
-        add:
-          value === 'none'
-            ? []
-            : [{ role: value, scopeType: 'global' }],
+        add: value === 'none' ? [] : [{ role: value, scopeType: 'global' }],
       })
       .subscribe((delta) => {
         if (this.pendingRoleUser()?.id !== u.id) return;
@@ -293,9 +289,7 @@ export class PeopleTabComponent {
   readonly pendingAdminUser = signal<UserRecord | null>(null);
 
   readonly adminDialogTitle = computed(() =>
-    this.pendingAdminUser()?.isAdmin
-      ? 'Revoke platform admin'
-      : 'Make platform admin',
+    this.pendingAdminUser()?.isAdmin ? 'Revoke platform admin' : 'Make platform admin',
   );
   readonly adminDialogCta = computed(() =>
     this.pendingAdminUser()?.isAdmin ? 'Revoke' : 'Make admin',

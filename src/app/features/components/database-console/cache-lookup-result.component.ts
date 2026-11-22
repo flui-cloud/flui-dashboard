@@ -1,9 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  inject,
-  output,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, output } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideTrash2 } from '@ng-icons/lucide';
 import { CacheEntry } from '../../model/cache-console.models';
@@ -26,8 +21,7 @@ import { bytes, formatValue, isJson } from './cache-format';
             <span class="truncate font-mono text-foreground">{{ e.key }}</span>
             <span class="flex shrink-0 items-center gap-1.5">
               @if (json(e)) {
-                <span
-                  class="rounded bg-muted px-1 py-0.5 text-[10px] font-medium uppercase"
+                <span class="rounded bg-muted px-1 py-0.5 text-[10px] font-medium uppercase"
                   >JSON</span
                 >
               }
@@ -45,8 +39,7 @@ import { bytes, formatValue, isJson } from './cache-format';
           </div>
           <pre
             class="max-h-72 overflow-auto whitespace-pre-wrap break-words p-2 font-mono text-xs text-foreground"
-            >{{ value(e) }}</pre
-          >
+            >{{ value(e) }}</pre>
           @if (e.encoding === 'base64') {
             <span class="block px-2 pb-1.5 text-[10px] text-muted-foreground"
               >(base64 — binary value)</span
@@ -54,9 +47,7 @@ import { bytes, formatValue, isJson } from './cache-format';
           }
         </div>
       } @else {
-        <p class="text-xs text-muted-foreground">
-          No value stored for that key.
-        </p>
+        <p class="text-xs text-muted-foreground">No value stored for that key.</p>
       }
     }
   `,

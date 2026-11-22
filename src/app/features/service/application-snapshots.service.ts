@@ -36,8 +36,7 @@ export class ApplicationSnapshotsService {
 
   private pollingHandle: ReturnType<typeof setTimeout> | null = null;
   private pollingStartedAt = 0;
-  private pollContext:
-    { kind: 'app'; id: string } | { kind: 'cluster'; id: string } | null = null;
+  private pollContext: { kind: 'app'; id: string } | { kind: 'cluster'; id: string } | null = null;
 
   readonly snapshots = this.snapshotsData.asReadonly();
   readonly loading = this.loadingData.asReadonly();
@@ -46,9 +45,7 @@ export class ApplicationSnapshotsService {
   readonly error = this.errorData.asReadonly();
   readonly capability = this.capabilityData.asReadonly();
 
-  readonly hasPending = computed(() =>
-    this.snapshotsData().some((s) => !s.ready || s.deleting),
-  );
+  readonly hasPending = computed(() => this.snapshotsData().some((s) => !s.ready || s.deleting));
 
   async loadForApp(appId: string): Promise<void> {
     this.loadingData.set(true);
@@ -56,9 +53,7 @@ export class ApplicationSnapshotsService {
     this.capabilityData.set(null);
     try {
       const data = (await firstValueFrom(
-        this.applicationsApi.applicationSnapshotsControllerListSnapshotsForApp(
-          appId,
-        ),
+        this.applicationsApi.applicationSnapshotsControllerListSnapshotsForApp(appId),
       )) as SnapshotListResponse | ApplicationSnapshot[];
       const response = this.normalizeAppList(data);
       this.capabilityData.set({
@@ -82,9 +77,7 @@ export class ApplicationSnapshotsService {
     this.capabilityData.set(null);
     try {
       const data = (await firstValueFrom(
-        this.applicationsApi.applicationSnapshotsControllerListSnapshotsForCluster(
-          clusterId,
-        ),
+        this.applicationsApi.applicationSnapshotsControllerListSnapshotsForCluster(clusterId),
       )) as ApplicationSnapshot[] | { snapshots: ApplicationSnapshot[] };
       this.snapshotsData.set(this.normalizeList(data));
       this.pollContext = { kind: 'cluster', id: clusterId };
@@ -113,9 +106,7 @@ export class ApplicationSnapshotsService {
   async loadSpare(appId: string): Promise<void> {
     try {
       const url = `${this.basePath}/api/v1/applications/${encodeURIComponent(appId)}/volumes/spare`;
-      this.spareData.set(
-        await firstValueFrom(this.http.get<SpareVolume[]>(url)),
-      );
+      this.spareData.set(await firstValueFrom(this.http.get<SpareVolume[]>(url)));
     } catch {
       this.spareData.set([]);
     }
@@ -128,9 +119,7 @@ export class ApplicationSnapshotsService {
       this.spareData.update((list) => list.filter((v) => v.name !== name));
       return true;
     } catch (error: any) {
-      this.errorData.set(
-        error?.error?.message || 'Failed to delete the volume',
-      );
+      this.errorData.set(error?.error?.message || 'Failed to delete the volume');
       return false;
     }
   }
@@ -144,9 +133,7 @@ export class ApplicationSnapshotsService {
     this.refusalData.set(null);
     try {
       const url = `${this.basePath}/api/v1/applications/${encodeURIComponent(appId)}/snapshots`;
-      const created = await firstValueFrom(
-        this.http.post<ApplicationSnapshot>(url, body),
-      );
+      const created = await firstValueFrom(this.http.post<ApplicationSnapshot>(url, body));
       if (created) {
         this.snapshotsData.update((list) => [created, ...list]);
         this.maybeStartPolling();
@@ -156,17 +143,13 @@ export class ApplicationSnapshotsService {
       if (error?.error?.code === 'VOLUME_COPY_REFUSED') {
         this.refusalData.set({
           message: error.error.message,
-          options: Array.isArray(error.error.options)
-            ? error.error.options
-            : [],
+          options: Array.isArray(error.error.options) ? error.error.options : [],
           request: body,
         });
         return null;
       }
       console.error('Error creating snapshot:', error);
-      this.errorData.set(
-        error?.error?.message || error?.message || 'Failed to create snapshot',
-      );
+      this.errorData.set(error?.error?.message || error?.message || 'Failed to create snapshot');
       return null;
     } finally {
       this.creatingData.set(false);
@@ -178,15 +161,10 @@ export class ApplicationSnapshotsService {
     this.errorData.set(null);
     try {
       await firstValueFrom(
-        this.applicationsApi.applicationSnapshotsControllerDeleteSnapshot(
-          appId,
-          snapshotId,
-        ),
+        this.applicationsApi.applicationSnapshotsControllerDeleteSnapshot(appId, snapshotId),
       );
       this.snapshotsData.update((list) =>
-        list.map((s) =>
-          s.exportId === snapshotId ? { ...s, deleting: true } : s,
-        ),
+        list.map((s) => (s.exportId === snapshotId ? { ...s, deleting: true } : s)),
       );
       this.maybeStartPolling();
       return true;
@@ -216,14 +194,10 @@ export class ApplicationSnapshotsService {
           operationId: string;
         }>(url, {}),
       );
-      return res
-        ? { newPvcName: res.newPvcName, operationId: res.operationId }
-        : null;
+      return res ? { newPvcName: res.newPvcName, operationId: res.operationId } : null;
     } catch (error: any) {
       console.error('Error restoring snapshot:', error);
-      this.errorData.set(
-        error?.error?.message || error?.message || 'Failed to restore snapshot',
-      );
+      this.errorData.set(error?.error?.message || error?.message || 'Failed to restore snapshot');
       return null;
     }
   }
@@ -245,9 +219,7 @@ export class ApplicationSnapshotsService {
       return res ?? null;
     } catch (error: any) {
       console.error('Error swapping volume:', error);
-      this.errorData.set(
-        error?.error?.message || error?.message || 'Failed to swap volume',
-      );
+      this.errorData.set(error?.error?.message || error?.message || 'Failed to swap volume');
       return null;
     }
   }
@@ -292,11 +264,7 @@ export class ApplicationSnapshotsService {
   }
 
   private normalizeList(
-    raw:
-      | ApplicationSnapshot[]
-      | { snapshots: ApplicationSnapshot[] }
-      | null
-      | undefined,
+    raw: ApplicationSnapshot[] | { snapshots: ApplicationSnapshot[] } | null | undefined,
   ): ApplicationSnapshot[] {
     if (!raw) return [];
     if (Array.isArray(raw)) return raw;
@@ -343,16 +311,10 @@ export class ApplicationSnapshotsService {
     try {
       const obs =
         ctx.kind === 'app'
-          ? this.applicationsApi.applicationSnapshotsControllerListSnapshotsForApp(
-              ctx.id,
-            )
-          : this.applicationsApi.applicationSnapshotsControllerListSnapshotsForCluster(
-              ctx.id,
-            );
+          ? this.applicationsApi.applicationSnapshotsControllerListSnapshotsForApp(ctx.id)
+          : this.applicationsApi.applicationSnapshotsControllerListSnapshotsForCluster(ctx.id);
       const data = (await firstValueFrom(obs)) as
-        | SnapshotListResponse
-        | ApplicationSnapshot[]
-        | { snapshots: ApplicationSnapshot[] };
+        SnapshotListResponse | ApplicationSnapshot[] | { snapshots: ApplicationSnapshot[] };
       if (ctx.kind === 'app') {
         const response = this.normalizeAppList(
           data as SnapshotListResponse | ApplicationSnapshot[],
@@ -364,10 +326,7 @@ export class ApplicationSnapshotsService {
         this.snapshotsData.set(response.items);
       } else {
         this.snapshotsData.set(
-          this.normalizeList(
-            data as
-              ApplicationSnapshot[] | { snapshots: ApplicationSnapshot[] },
-          ),
+          this.normalizeList(data as ApplicationSnapshot[] | { snapshots: ApplicationSnapshot[] }),
         );
       }
     } catch (error) {

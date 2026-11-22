@@ -1,16 +1,6 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  input,
-  output
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideChevronLeft,
-  lucideChevronRight,
-  lucideTriangleAlert,
-} from '@ng-icons/lucide';
+import { lucideChevronLeft, lucideChevronRight, lucideTriangleAlert } from '@ng-icons/lucide';
 import { JsonViewerComponent } from './json-viewer.component';
 
 /** Paged result list (Compass-style): a fixed page of documents + prev/next. */
@@ -20,9 +10,7 @@ import { JsonViewerComponent } from './json-viewer.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'contents' },
   imports: [NgIcon, JsonViewerComponent],
-  providers: [
-    provideIcons({ lucideChevronLeft, lucideChevronRight, lucideTriangleAlert }),
-  ],
+  providers: [provideIcons({ lucideChevronLeft, lucideChevronRight, lucideTriangleAlert })],
   template: `
     @if (error(); as e) {
       <div

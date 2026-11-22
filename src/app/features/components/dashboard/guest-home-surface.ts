@@ -11,10 +11,7 @@ import {
   valueObservation,
 } from '../../../shared/utils/surface-kit';
 import { applicationEntityRef } from '../application/application-surface';
-import type {
-  SandboxArea,
-  SandboxQuota,
-} from '../../../core/services/sandbox.service';
+import type { SandboxArea, SandboxQuota } from '../../../core/services/sandbox.service';
 
 /* Semantic Surface for a demo guest's Home.
  *
@@ -53,10 +50,7 @@ function keep(observations: (Observation | null)[]): Observation[] {
   return observations.filter((o): o is Observation => o !== null);
 }
 
-function areaNames(
-  areas: SandboxArea[],
-  level: SandboxArea['level'],
-): string | null {
+function areaNames(areas: SandboxArea[], level: SandboxArea['level']): string | null {
   const names = areas.filter((a) => a.level === level).map((a) => a.area);
   return names.length ? names.join(', ') : null;
 }
@@ -75,11 +69,7 @@ export function guestHomeContent(input: GuestHomeSurfaceInput): {
     observations: keep([
       textObservation('flui.guest_home.explore', input.exploreText, 'ui'),
       textObservation('flui.guest_home.install', input.installText, 'ui'),
-      textObservation(
-        'flui.guest_home.install_ways',
-        input.installWays.join('; '),
-        'ui',
-      ),
+      textObservation('flui.guest_home.install_ways', input.installWays.join('; '), 'ui'),
       textObservation(
         'flui.guest_home.visitor',
         input.visitor ? 'visitor without an account: read-only' : null,
@@ -95,11 +85,7 @@ export function guestHomeContent(input: GuestHomeSurfaceInput): {
         areaNames(input.areas, 'read-only'),
         'ui',
       ),
-      textObservation(
-        'flui.guest_home.closed_sections',
-        areaNames(input.areas, 'closed'),
-        'ui',
-      ),
+      textObservation('flui.guest_home.closed_sections', areaNames(input.areas, 'closed'), 'ui'),
     ]),
     state: { loading: input.loading },
   };
@@ -113,29 +99,15 @@ export function guestHomeContent(input: GuestHomeSurfaceInput): {
         label: 'In the showcase',
         totalCount: input.showcase.length,
         listObservations: [
-          textObservation(
-            'flui.guest_home.showcase_note',
-            'real applications, running',
-            'ui',
-          ),
+          textObservation('flui.guest_home.showcase_note', 'real applications, running', 'ui'),
         ],
         rows: input.showcase.map((app) => ({
           id: `${PAGE_ID}:showcase:${scopeIdPart(app.id)}`,
           ref: applicationEntityRef(app.id),
           label: app.name,
           observations: keep([
-            textObservation(
-              'flui.guest_home.showcase_description',
-              app.note,
-              'api',
-            ),
-            app.hasLink
-              ? textObservation(
-                  'flui.guest_home.showcase_open',
-                  'Open it',
-                  'ui',
-                )
-              : null,
+            textObservation('flui.guest_home.showcase_description', app.note, 'api'),
+            app.hasLink ? textObservation('flui.guest_home.showcase_open', 'Open it', 'ui') : null,
           ]),
         })),
       }).scopes,
@@ -162,9 +134,7 @@ export function guestHomeContent(input: GuestHomeSurfaceInput): {
             id: `${PAGE_ID}:your-space:${scopeIdPart(app.id)}`,
             ref: applicationEntityRef(app.id),
             label: app.name,
-            observations: keep([
-              textObservation('flui.application.status', app.status, 'api'),
-            ]),
+            observations: keep([textObservation('flui.application.status', app.status, 'api')]),
           })),
         }).scopes,
       );

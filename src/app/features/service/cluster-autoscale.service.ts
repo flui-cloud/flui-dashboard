@@ -37,7 +37,7 @@ export class ClusterAutoscaleService {
     const cached = this.defaultsData();
     if (cached && !force) return cached;
     const result = await firstValueFrom(
-      this.http.get<AutoscaleDefaults>(`${this.base}/autoscale/defaults`)
+      this.http.get<AutoscaleDefaults>(`${this.base}/autoscale/defaults`),
     );
     this.defaultsData.set(result);
     return result;
@@ -47,7 +47,7 @@ export class ClusterAutoscaleService {
     this.loadingData.set(true);
     try {
       const result = await firstValueFrom(
-        this.http.get<AutoscaleStatus>(`${this.base}/${clusterId}/autoscale/status`)
+        this.http.get<AutoscaleStatus>(`${this.base}/${clusterId}/autoscale/status`),
       );
       this.statusData.set(result);
       return result;
@@ -62,7 +62,7 @@ export class ClusterAutoscaleService {
    */
   async fetchStatusFor(clusterId: string): Promise<AutoscaleStatus> {
     return firstValueFrom(
-      this.http.get<AutoscaleStatus>(`${this.base}/${clusterId}/autoscale/status`)
+      this.http.get<AutoscaleStatus>(`${this.base}/${clusterId}/autoscale/status`),
     );
   }
 
@@ -72,10 +72,12 @@ export class ClusterAutoscaleService {
     }
     this.stopStatusPolling();
     this.polledClusterId.set(clusterId);
-    void this.getStatus(clusterId).catch(err => console.warn('autoscale status fetch failed', err));
+    void this.getStatus(clusterId).catch((err) =>
+      console.warn('autoscale status fetch failed', err),
+    );
     this.pollHandle = setInterval(() => {
-      void this.getStatus(clusterId).catch(err =>
-        console.warn('autoscale status poll failed', err)
+      void this.getStatus(clusterId).catch((err) =>
+        console.warn('autoscale status poll failed', err),
       );
     }, intervalMs);
   }
@@ -90,13 +92,13 @@ export class ClusterAutoscaleService {
 
   async updateAutoscale(
     clusterId: string,
-    payload: UpdateClusterAutoscalePayload
+    payload: UpdateClusterAutoscalePayload,
   ): Promise<AutoscaleStatus> {
     this.savingData.set(true);
     this.errorData.set(null);
     try {
       const result = await firstValueFrom(
-        this.http.patch<AutoscaleStatus>(`${this.base}/${clusterId}/autoscale`, payload)
+        this.http.patch<AutoscaleStatus>(`${this.base}/${clusterId}/autoscale`, payload),
       );
       this.statusData.set(result);
       return result;

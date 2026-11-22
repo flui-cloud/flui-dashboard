@@ -31,8 +31,8 @@ import { DependencyChoiceDto } from '../../../../core/api/model/dependencyChoice
       <div>
         <h3 class="text-base font-semibold">Dependencies</h3>
         <p class="text-sm text-muted-foreground">
-          This app needs other building blocks to run. For each one, pick a running
-          instance to reuse or let Flui create a dedicated one alongside the install.
+          This app needs other building blocks to run. For each one, pick a running instance to
+          reuse or let Flui create a dedicated one alongside the install.
         </p>
       </div>
 
@@ -54,11 +54,15 @@ import { DependencyChoiceDto } from '../../../../core/api/model/dependencyChoice
             <div class="flex flex-wrap items-center gap-2">
               <ng-icon name="lucideDatabase" class="h-4 w-4 text-primary" />
               <span class="text-sm font-semibold text-foreground">{{ dep.ref }}</span>
-              <span class="rounded-full border border-border px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+              <span
+                class="rounded-full border border-border px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
+              >
                 alias: {{ dep.as }}
               </span>
               @if (dep.required) {
-                <span class="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                <span
+                  class="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
+                >
                   required
                 </span>
               }
@@ -73,9 +77,7 @@ import { DependencyChoiceDto } from '../../../../core/api/model/dependencyChoice
                 <div class="flex items-start gap-3">
                   <ng-icon name="lucidePlus" class="h-5 w-5 text-primary mt-0.5" />
                   <div class="min-w-0 flex-1 text-left">
-                    <div class="text-sm font-semibold text-foreground">
-                      Create new dedicated
-                    </div>
+                    <div class="text-sm font-semibold text-foreground">Create new dedicated</div>
                     <div class="mt-0.5 text-xs text-muted-foreground">
                       Flui installs a fresh {{ dep.ref }} as a private dependency of this app.
                     </div>
@@ -89,9 +91,7 @@ import { DependencyChoiceDto } from '../../../../core/api/model/dependencyChoice
               @if (instancesFor(dep.ref).length > 0) {
                 <div [class]="optionClass(isReuse(dep))" class="cursor-default">
                   <div class="space-y-2">
-                    <div class="text-sm font-semibold text-foreground">
-                      Reuse existing
-                    </div>
+                    <div class="text-sm font-semibold text-foreground">Reuse existing</div>
                     <ul class="space-y-1.5">
                       @for (instance of instancesFor(dep.ref); track instance.applicationId) {
                         <li>
@@ -101,7 +101,10 @@ import { DependencyChoiceDto } from '../../../../core/api/model/dependencyChoice
                             [class]="instanceClass(isReuseSelected(dep, instance))"
                           >
                             <div class="flex items-center gap-2">
-                              <ng-icon name="lucideDatabase" class="h-4 w-4 text-muted-foreground" />
+                              <ng-icon
+                                name="lucideDatabase"
+                                class="h-4 w-4 text-muted-foreground"
+                              />
                               <span class="text-xs font-medium text-foreground">
                                 {{ instance.displayName }}
                               </span>
@@ -109,7 +112,10 @@ import { DependencyChoiceDto } from '../../../../core/api/model/dependencyChoice
                                 {{ instance.status }}
                               </span>
                               @if (isReuseSelected(dep, instance)) {
-                                <ng-icon name="lucideCircleCheck" class="h-4 w-4 text-primary ml-auto" />
+                                <ng-icon
+                                  name="lucideCircleCheck"
+                                  class="h-4 w-4 text-primary ml-auto"
+                                />
                               }
                             </div>
                             <div class="mt-0.5 truncate text-[11px] text-muted-foreground">
@@ -122,7 +128,9 @@ import { DependencyChoiceDto } from '../../../../core/api/model/dependencyChoice
                   </div>
                 </div>
               } @else {
-                <div class="rounded-lg border border-dashed border-border p-4 text-xs text-muted-foreground">
+                <div
+                  class="rounded-lg border border-dashed border-border p-4 text-xs text-muted-foreground"
+                >
                   No running {{ dep.ref }} on this cluster — Flui will create a dedicated one.
                 </div>
               }
@@ -143,16 +151,12 @@ export class CatalogDependenciesStepComponent {
   }
 
   protected isDedicated(dep: CatalogDependencyDto): boolean {
-    return (
-      this.state.dependencyChoices()[dep.as]?.mode ===
-      DependencyChoiceDto.ModeEnum.Dedicated
-    );
+    return this.state.dependencyChoices()[dep.as]?.mode === DependencyChoiceDto.ModeEnum.Dedicated;
   }
 
   protected isReuse(dep: CatalogDependencyDto): boolean {
     return (
-      this.state.dependencyChoices()[dep.as]?.mode ===
-      DependencyChoiceDto.ModeEnum.ReuseExisting
+      this.state.dependencyChoices()[dep.as]?.mode === DependencyChoiceDto.ModeEnum.ReuseExisting
     );
   }
 
@@ -173,10 +177,7 @@ export class CatalogDependenciesStepComponent {
     });
   }
 
-  protected pickReuse(
-    dep: CatalogDependencyDto,
-    instance: CatalogReusableInstanceDto,
-  ): void {
+  protected pickReuse(dep: CatalogDependencyDto, instance: CatalogReusableInstanceDto): void {
     this.state.setDependencyChoice(dep.as, {
       mode: DependencyChoiceDto.ModeEnum.ReuseExisting,
       existingApplicationId: instance.applicationId,
@@ -184,16 +185,14 @@ export class CatalogDependenciesStepComponent {
   }
 
   protected optionClass(active: boolean): string {
-    const base =
-      'flex w-full rounded-lg border p-3 text-left transition';
+    const base = 'flex w-full rounded-lg border p-3 text-left transition';
     return active
       ? `${base} border-primary bg-primary/5`
       : `${base} border-border hover:bg-accent/40`;
   }
 
   protected instanceClass(active: boolean): string {
-    const base =
-      'flex w-full flex-col rounded-md border px-2.5 py-1.5 text-left transition';
+    const base = 'flex w-full flex-col rounded-md border px-2.5 py-1.5 text-left transition';
     return active
       ? `${base} border-primary bg-primary/10`
       : `${base} border-border hover:bg-accent/40`;

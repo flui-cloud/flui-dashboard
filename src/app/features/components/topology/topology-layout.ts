@@ -21,7 +21,9 @@ const CACHE_LIMIT = 50;
 /** Identity of a graph's shape: what it holds and how it connects, never what it shows. */
 export function graphDigest(graph: TopologyGraph): string {
   const byText = (a: string, b: string) => a.localeCompare(b);
-  const nodes = graph.nodes.map((n) => `${n.id}:${n.width}x${n.height}:${n.parent ?? ''}`).sort(byText);
+  const nodes = graph.nodes
+    .map((n) => `${n.id}:${n.width}x${n.height}:${n.parent ?? ''}`)
+    .sort(byText);
   const edges = graph.edges.map((e) => e.id).sort(byText);
   return `${graph.level}${graph.stacked ? ':rows' : ''}|${nodes.join(',')}|${edges.join(',')}`;
 }
@@ -34,7 +36,10 @@ interface ElkResult {
   width?: number;
   height?: number;
   children?: ElkResult[];
-  edges?: { id: string; sections?: { startPoint: Point; endPoint: Point; bendPoints?: Point[] }[] }[];
+  edges?: {
+    id: string;
+    sections?: { startPoint: Point; endPoint: Point; bendPoints?: Point[] }[];
+  }[];
 }
 
 /** Set on every region too: ELK does not hand spacing down to a box's children. */
@@ -115,7 +120,8 @@ export async function layoutGraph(graph: TopologyGraph): Promise<GraphLayout> {
   }
   // The same at the top: a cluster's unlinked stacks, or a fleet's unlinked clusters, once there are a few.
   const topLoose = graph.nodes.filter((n) => !n.parent && n.kind !== 'region' && !linked.has(n.id));
-  const topGrid = topLoose.length >= TOP_GRID_FROM ? gridOf(topLoose, columnsFor(topLoose.length)) : null;
+  const topGrid =
+    topLoose.length >= TOP_GRID_FROM ? gridOf(topLoose, columnsFor(topLoose.length)) : null;
   const elkNode = (n: TopologyGraph['nodes'][number]): unknown => {
     if (n.kind !== 'region') return { id: n.id, width: n.width, height: n.height };
     const grid = grids.get(n.id);
@@ -139,7 +145,9 @@ export async function layoutGraph(graph: TopologyGraph): Promise<GraphLayout> {
     };
   };
 
-  const result = await (await engine()).layout({
+  const result = await (
+    await engine()
+  ).layout({
     id: 'root',
     layoutOptions: {
       ...SPACING,
@@ -221,7 +229,10 @@ export function laneOf(routed: Point[], a: Point, b: Point): number | null {
   const mid = (a.y + b.y) / 2;
   const inner = routed.slice(1, -1);
   if (!inner.length) return null;
-  const far = inner.reduce((best, p) => (Math.abs(p.y - mid) > Math.abs(best.y - mid) ? p : best), inner[0]);
+  const far = inner.reduce(
+    (best, p) => (Math.abs(p.y - mid) > Math.abs(best.y - mid) ? p : best),
+    inner[0],
+  );
   return Math.abs(far.y - mid) < 8 ? null : far.y;
 }
 

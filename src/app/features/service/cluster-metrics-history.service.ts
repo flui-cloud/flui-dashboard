@@ -6,12 +6,19 @@ import {
   MetricsDataPointDto,
   ServerMetricsHistoryDto,
 } from '../../core/api/model/models';
-import { TimeSeriesChartData, TimeSeriesSeries, NODE_SERIES_COLORS } from '../../shared/components/charts';
+import {
+  TimeSeriesChartData,
+  TimeSeriesSeries,
+  NODE_SERIES_COLORS,
+} from '../../shared/components/charts';
 
 export type MetricsRange = '1h' | '3h' | '6h' | '1d';
 
 /** Window length and sampling step per range, kept in one place. */
-const RANGES: Record<MetricsRange, { hours: number; step: string; stepSeconds: number; label: string }> = {
+const RANGES: Record<
+  MetricsRange,
+  { hours: number; step: string; stepSeconds: number; label: string }
+> = {
   '1h': { hours: 1, step: '30s', stepSeconds: 30, label: 'last hour' },
   '3h': { hours: 3, step: '1m', stepSeconds: 60, label: 'last 3 hours' },
   '6h': { hours: 6, step: '2m', stepSeconds: 120, label: 'last 6 hours' },
@@ -58,20 +65,22 @@ export class ClusterMetricsHistoryService {
       server.data_points.forEach((point) => {
         const at = Date.parse(point.datetime);
         if (at > newest) newest = at;
-      })
+      }),
     );
     return newest || null;
   });
 
   /** How old a sample may be before it stops describing the current reading. */
-  readonly freshnessBudgetMs = computed(() => RANGES[this.rangeSignal()].stepSeconds * STALE_AFTER_STEPS * 1000);
+  readonly freshnessBudgetMs = computed(
+    () => RANGES[this.rangeSignal()].stepSeconds * STALE_AFTER_STEPS * 1000,
+  );
 
   /**
    * How often the window should be re-fetched to keep reaching the present.
    * One sampling step, floored so the shortest range does not query in a loop.
    */
   readonly refreshIntervalMs = computed(() =>
-    Math.max(MIN_REFRESH_MS, RANGES[this.rangeSignal()].stepSeconds * 1000)
+    Math.max(MIN_REFRESH_MS, RANGES[this.rangeSignal()].stepSeconds * 1000),
   );
 
   /**
@@ -88,7 +97,7 @@ export class ClusterMetricsHistoryService {
   readonly nodeCount = computed(() => this.historySignal()?.servers?.length ?? 0);
   readonly isSummarised = computed(() => this.nodeCount() > NODE_SERIES_COLORS.length);
   readonly seriesSubtitle = computed(() =>
-    this.isSummarised() ? `average and busiest of ${this.nodeCount()} nodes` : 'per node'
+    this.isSummarised() ? `average and busiest of ${this.nodeCount()} nodes` : 'per node',
   );
 
   readonly cpu = computed(() => this.percentSeries('cpu_percent', 'CPU per node'));
@@ -109,7 +118,7 @@ export class ClusterMetricsHistoryService {
         bucket.inBytes += point.network_in ?? 0;
         bucket.outBytes += point.network_out ?? 0;
         totals.set(point.datetime, bucket);
-      })
+      }),
     );
 
     const ordered = [...totals.entries()].sort((a, b) => a[0].localeCompare(b[0]));
@@ -122,13 +131,19 @@ export class ClusterMetricsHistoryService {
           name: 'Inbound',
           color: NODE_SERIES_COLORS[0],
           smooth: true,
-          data: ordered.map(([datetime, v]) => ({ timestamp: new Date(datetime), value: v.inBytes })),
+          data: ordered.map(([datetime, v]) => ({
+            timestamp: new Date(datetime),
+            value: v.inBytes,
+          })),
         },
         {
           name: 'Outbound',
           color: NODE_SERIES_COLORS[2],
           smooth: true,
-          data: ordered.map(([datetime, v]) => ({ timestamp: new Date(datetime), value: v.outBytes })),
+          data: ordered.map(([datetime, v]) => ({
+            timestamp: new Date(datetime),
+            value: v.outBytes,
+          })),
         },
       ],
     };
@@ -168,8 +183,8 @@ export class ClusterMetricsHistoryService {
           clusterId,
           start.toISOString(),
           end.toISOString(),
-          step
-        )
+          step,
+        ),
       );
       // A slow answer for the cluster we left must not overwrite the one we opened.
       if (this.pendingFor !== clusterId) return;
@@ -201,7 +216,10 @@ export class ClusterMetricsHistoryService {
           smooth: true,
           data: server.data_points
             .filter((point) => point[field] != null)
-            .map((point) => ({ timestamp: new Date(point.datetime), value: point[field] as number })),
+            .map((point) => ({
+              timestamp: new Date(point.datetime),
+              value: point[field] as number,
+            })),
         }));
 
     return series.some((s) => s.data.length > 0) ? { title, series } : null;
@@ -214,14 +232,17 @@ export class ClusterMetricsHistoryService {
    * it typically runs at, and the node closest to the threshold. Every node is
    * still listed, by name, in the nodes table.
    */
-  private summarySeries(servers: ServerMetricsHistoryDto[], field: PercentField): TimeSeriesSeries[] {
+  private summarySeries(
+    servers: ServerMetricsHistoryDto[],
+    field: PercentField,
+  ): TimeSeriesSeries[] {
     const byTimestamp = new Map<string, number[]>();
     servers.forEach((server) =>
       server.data_points.forEach((point) => {
         const value = point[field];
         if (value == null) return;
         byTimestamp.set(point.datetime, [...(byTimestamp.get(point.datetime) ?? []), value]);
-      })
+      }),
     );
 
     const ordered = [...byTimestamp.entries()].sort((a, b) => a[0].localeCompare(b[0]));
@@ -261,7 +282,7 @@ export class ClusterMetricsHistoryService {
         bucket.total += value;
         bucket.count += 1;
         sums.set(point.datetime, bucket);
-      })
+      }),
     );
 
     return [...sums.entries()]

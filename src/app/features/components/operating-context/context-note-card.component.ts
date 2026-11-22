@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  input,
-  output,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -114,8 +107,8 @@ import {
               aria-label="Note"
             ></textarea>
             <p class="m-0 text-[11px] text-muted-foreground">
-              Rewording never moves the level. Where a note applies is what the
-              note is — to say it somewhere else, write it there.
+              Rewording never moves the level. Where a note applies is what the note is — to say it
+              somewhere else, write it there.
             </p>
             <div class="flex gap-2">
               <button
@@ -241,17 +234,11 @@ export class ContextNoteCardComponent {
   protected draftTitle = '';
   protected draftBody = '';
 
-  protected readonly verdict = computed(
-    () => VALIDITY_COPY[this.entry().confidence],
-  );
+  protected readonly verdict = computed(() => VALIDITY_COPY[this.entry().confidence]);
 
-  protected readonly natureCopy = computed(
-    () => NATURE_COPY[this.entry().nature],
-  );
+  protected readonly natureCopy = computed(() => NATURE_COPY[this.entry().nature]);
 
-  protected readonly checkCopy = computed(
-    () => CHECK_COPY[this.entry().checkedBy],
-  );
+  protected readonly checkCopy = computed(() => CHECK_COPY[this.entry().checkedBy]);
 
   protected readonly level = computed(() =>
     describeScope(this.entry(), (id) => this.clusterNames()[id]),
@@ -274,17 +261,11 @@ export class ContextNoteCardComponent {
     return at ? formatTimeSince(at).toLowerCase() : null;
   });
 
-  protected readonly writtenBy = computed(() =>
-    describeHand(this.entry().writtenBy),
-  );
+  protected readonly writtenBy = computed(() => describeHand(this.entry().writtenBy));
 
-  protected readonly confirmedBy = computed(() =>
-    describeHand(this.entry().confirmedBy),
-  );
+  protected readonly confirmedBy = computed(() => describeHand(this.entry().confirmedBy));
 
-  protected readonly retiredBy = computed(() =>
-    describeHand(this.entry().archivedBy),
-  );
+  protected readonly retiredBy = computed(() => describeHand(this.entry().archivedBy));
 
   protected readonly railClass = computed(() => {
     if (isSuspect(this.entry().confidence)) {
@@ -319,9 +300,7 @@ export class ContextNoteCardComponent {
     }
   });
 
-  protected readonly offersConfirm = computed(
-    () => this.entry().checkedBy === 'attestation',
-  );
+  protected readonly offersConfirm = computed(() => this.entry().checkedBy === 'attestation');
 
   protected startEdit(): void {
     this.draftTitle = this.entry().title;

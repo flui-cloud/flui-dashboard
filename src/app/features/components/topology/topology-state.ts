@@ -63,7 +63,14 @@ const LEVELS: readonly TopologyLevel[] = ['fleet', 'cluster', 'stack', 'app'];
 const COLORS: readonly TopologyColorBy[] = ['memory', 'cpu', 'pods', 'network'];
 const GROUPS: readonly TopologyGroupBy[] = ['cluster', 'provider'];
 const DRILLS: readonly TopologyDrill[] = ['capacity', 'path'];
-const TYPES: readonly TopologyEntityType[] = ['cluster', 'server', 'stack', 'app', 'link', 'platform'];
+const TYPES: readonly TopologyEntityType[] = [
+  'cluster',
+  'server',
+  'stack',
+  'app',
+  'link',
+  'platform',
+];
 
 function oneOf<T extends string>(value: unknown, allowed: readonly T[], fallback: T): T {
   return typeof value === 'string' && (allowed as readonly string[]).includes(value)
@@ -102,7 +109,9 @@ export function parseTopologyState(params: Params): TopologyViewState {
     colorBy: oneOf(params['colorBy'], COLORS, d.colorBy),
     groupBy: oneOf(params['groupBy'], GROUPS, d.groupBy),
     list: params['list'] === '1',
-    drill: (DRILLS as readonly string[]).includes(params['drill']) ? (params['drill'] as TopologyDrill) : null,
+    drill: (DRILLS as readonly string[]).includes(params['drill'])
+      ? (params['drill'] as TopologyDrill)
+      : null,
   };
 }
 

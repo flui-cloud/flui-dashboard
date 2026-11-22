@@ -18,9 +18,7 @@ describe('whose activity this is', () => {
   });
 
   it('falls to the account only when no credential can exist', () => {
-    expect(actorRef({ actorKeyId: null, userId: 'u-bot' })).toBe(
-      'account:u-bot',
-    );
+    expect(actorRef({ actorKeyId: null, userId: 'u-bot' })).toBe('account:u-bot');
   });
 
   describe('the identity directory, indexed the only way it joins', () => {
@@ -39,17 +37,13 @@ describe('whose activity this is', () => {
 
     it('leaves out an identity that has never authenticated', () => {
       expect(
-        identityNamesByAccount([
-          { userId: 'idp-9', userName: 'never-arrived', fluiUserId: null },
-        ]),
+        identityNamesByAccount([{ userId: 'idp-9', userName: 'never-arrived', fluiUserId: null }]),
       ).toEqual({});
     });
 
     it('falls back to the provider username when no name was given', () => {
       expect(
-        identityNamesByAccount([
-          { userId: 'idp-1', userName: 'flui-agent-x', fluiUserId: 'u-x' },
-        ]),
+        identityNamesByAccount([{ userId: 'idp-1', userName: 'flui-agent-x', fluiUserId: 'u-x' }]),
       ).toEqual({ 'u-x': 'flui-agent-x' });
     });
   });
@@ -58,9 +52,7 @@ describe('whose activity this is', () => {
     const row = { actorKeyId: 'k-1', actorKeyName: 'from-register', userId: 'u-1' };
 
     it('prefers what the register itself resolved', () => {
-      expect(namedActor(row, { 'k-1': 'from-directory' }, {})).toBe(
-        'from-register',
-      );
+      expect(namedActor(row, { 'k-1': 'from-directory' }, {})).toBe('from-register');
     });
 
     it('returns nothing rather than inventing a name', () => {
@@ -96,15 +88,13 @@ describe('under which permission a row happened', () => {
   });
 
   it('reads a refusal first, even with a permission stamped beside it', () => {
-    expect(underLabel({ ...row, allowed: false, under: 'approval' }).tone).toBe(
-      'refused',
-    );
+    expect(underLabel({ ...row, allowed: false, under: 'approval' }).tone).toBe('refused');
   });
 
   it('reads a pause before a permission, because it was not answered yet', () => {
-    expect(
-      underLabel({ ...row, outcome: 'input_required', under: 'concession' }).tone,
-    ).toBe('asked');
+    expect(underLabel({ ...row, outcome: 'input_required', under: 'concession' }).tone).toBe(
+      'asked',
+    );
   });
 
   it('calls a missing trace a missing trace', () => {
@@ -131,9 +121,7 @@ describe('the operation clause', () => {
   };
 
   it('names the operation short, as the design writes it', () => {
-    expect(operationNote({ operation: op, operationId: op.id })).toBe(
-      'operation 4c1f, succeeded',
-    );
+    expect(operationNote({ operation: op, operationId: op.id })).toBe('operation 4c1f, succeeded');
   });
 
   it('keeps the two silences apart', () => {

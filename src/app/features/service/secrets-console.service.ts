@@ -19,9 +19,7 @@ export class SecretsConsoleService {
   }
 
   getConnectionInfo(appId: string): Observable<SecretsConnectionInfo> {
-    return this.http.get<SecretsConnectionInfo>(
-      `${this.base(appId)}/connection-info`,
-    );
+    return this.http.get<SecretsConnectionInfo>(`${this.base(appId)}/connection-info`);
   }
 
   getServerInfo(appId: string): Observable<SecretsServerInfo> {
@@ -34,11 +32,7 @@ export class SecretsConsoleService {
     });
   }
 
-  read(
-    appId: string,
-    path: string,
-    version?: number,
-  ): Observable<SecretReadResult> {
+  read(appId: string, path: string, version?: number): Observable<SecretReadResult> {
     return this.http.post<SecretReadResult>(`${this.base(appId)}/read`, {
       path,
       version,
@@ -49,10 +43,7 @@ export class SecretsConsoleService {
     appId: string,
     req: { path: string; data: Record<string, string>; readOnly?: boolean },
   ): Observable<{ version: number }> {
-    return this.http.post<{ version: number }>(
-      `${this.base(appId)}/write`,
-      req,
-    );
+    return this.http.post<{ version: number }>(`${this.base(appId)}/write`, req);
   }
 
   delete(

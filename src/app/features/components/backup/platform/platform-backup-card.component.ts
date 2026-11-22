@@ -27,7 +27,11 @@ import { ReadOnlySectionDirective } from '../../../../shared/directives/read-onl
 import { ToastService } from '../../../../shared/services/toast.service';
 import { BackupService } from '../../../service/backup.service';
 import { BackupPolicyActivity } from '../../../model/backup-run.models';
-import { formatLocalDateTime, formatRelativeTime, formatUtcDateTime } from '../../../model/backup-activity';
+import {
+  formatLocalDateTime,
+  formatRelativeTime,
+  formatUtcDateTime,
+} from '../../../model/backup-activity';
 import {
   PlatformBackupJob,
   PlatformBackupPolicy,
@@ -76,224 +80,269 @@ const RECENT_RUNS = 5;
 
       <div class="rounded-lg border border-border bg-card p-5">
         @if (loading()) {
-        <p class="text-sm text-muted-foreground">Loading platform backup status…</p>
+          <p class="text-sm text-muted-foreground">Loading platform backup status…</p>
         } @else if (!policy()) {
-        <div class="space-y-2">
-          <div class="flex items-center gap-2 text-sm font-medium">
-            <ng-icon name="lucideCircleAlert" class="h-4 w-4 text-muted-foreground" />
-            Platform backup not initialized
+          <div class="space-y-2">
+            <div class="flex items-center gap-2 text-sm font-medium">
+              <ng-icon name="lucideCircleAlert" class="h-4 w-4 text-muted-foreground" />
+              Platform backup not initialized
+            </div>
+            <p class="text-sm text-muted-foreground">
+              No platform (control-plane DR) policy exists yet. Set it up from the CLI: the key that
+              opens these backups is created on your own machine and kept in your vault, never on a
+              server.
+            </p>
+            <code class="block w-fit rounded bg-muted px-2 py-1 text-xs"
+              >flui backup platform init</code
+            >
+            <code class="mt-1 block w-fit rounded bg-muted px-2 py-1 text-xs"
+              >flui backup enable platform -D &lt;destination-id&gt;</code
+            >
           </div>
-          <p class="text-sm text-muted-foreground">
-            No platform (control-plane DR) policy exists yet. Set it up from the CLI: the key that
-            opens these backups is created on your own machine and kept in your vault, never on a
-            server.
-          </p>
-          <code class="block w-fit rounded bg-muted px-2 py-1 text-xs">flui backup platform init</code>
-          <code class="mt-1 block w-fit rounded bg-muted px-2 py-1 text-xs">flui backup enable platform -D &lt;destination-id&gt;</code>
-        </div>
         } @else {
-        <div class="space-y-5">
-          <!-- Recovery status -->
-          <div class="space-y-3">
-            <!-- Operator recipient -->
-            @if (hasRecipient()) {
-            <div class="flex items-start gap-2 text-sm">
-              <ng-icon name="lucideCircleCheck" class="mt-0.5 h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-              <div>
-                <div class="font-medium">Operator recipient configured</div>
-                <div class="font-mono text-xs text-muted-foreground">{{ recipientPrefix() }}…</div>
-              </div>
-            </div>
-            } @else {
-            <div class="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              <ng-icon name="lucideCircleX" class="mt-0.5 h-4 w-4 shrink-0" />
-              <div>
-                <div class="font-medium">No operator recipient — platform backup cannot run</div>
-                <div class="mt-1 text-xs">
-                  Set it from the CLI:
-                  <code class="rounded bg-destructive/10 px-1 py-0.5">flui backup platform init</code>
-                </div>
-              </div>
-            </div>
-            }
-
-            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <!-- Heartbeat -->
-              <div class="flex items-start gap-2 text-sm">
-                <ng-icon name="lucideHeartPulse" class="mt-0.5 h-4 w-4 text-muted-foreground" />
-                <div data-testid="platform-heartbeat">
-                  <div class="text-xs text-muted-foreground">Dead-man's switch</div>
-                  @if (!heartbeatConfigured()) {
-                  <div>Not configured</div>
-                  } @else if (heartbeatStatus(); as h) {
-                  @switch (h.state) {
-                  @case ('beating') {
-                  <div>Sending{{ h.lastBeatAt ? ' · last ' + relative(h.lastBeatAt) : '' }}</div>
-                  }
-                  @case ('withheld') {
-                  <div class="text-destructive">Withheld: your watchdog will raise the alarm</div>
-                  }
-                  @case ('failing') {
-                  <div class="text-destructive">Not delivered</div>
-                  }
-                  @default {
-                  <div>Heartbeat URL configured</div>
-                  }
-                  }
-                  @for (reason of h.reasons; track reason) {
-                  <div class="text-xs text-muted-foreground" data-testid="platform-heartbeat-reason">{{ reason }}</div>
-                  }
-                  } @else {
-                  <div>Heartbeat URL configured</div>
-                  }
-                </div>
-              </div>
-
-              <!-- Schedule -->
-              <div class="flex items-start gap-2 text-sm">
-                <ng-icon name="lucideClock" class="mt-0.5 h-4 w-4 text-muted-foreground" />
-                <div>
-                  <div class="text-xs text-muted-foreground">Schedule</div>
-                  @if (activity(); as a) {
-                  <div>{{ a.schedule.description }}</div>
-                  @if (a.schedule.nextRunAt) {
-                  <div class="text-xs text-muted-foreground" [attr.title]="utc(a.schedule.nextRunAt)">
-                    Next {{ relative(a.schedule.nextRunAt) }} · {{ local(a.schedule.nextRunAt) }}
+          <div class="space-y-5">
+            <!-- Recovery status -->
+            <div class="space-y-3">
+              <!-- Operator recipient -->
+              @if (hasRecipient()) {
+                <div class="flex items-start gap-2 text-sm">
+                  <ng-icon
+                    name="lucideCircleCheck"
+                    class="mt-0.5 h-4 w-4 text-emerald-600 dark:text-emerald-400"
+                  />
+                  <div>
+                    <div class="font-medium">Operator recipient configured</div>
+                    <div class="font-mono text-xs text-muted-foreground">
+                      {{ recipientPrefix() }}…
+                    </div>
                   </div>
-                  }
-                  } @else {
-                  <div class="font-mono text-xs">{{ policy()?.cronSchedule || '—' }}</div>
-                  }
                 </div>
-              </div>
-            </div>
-
-            <div class="rounded-md border border-border bg-background p-3 space-y-2">
-              <div class="flex flex-wrap items-center justify-between gap-2">
-                <div class="flex flex-wrap items-center gap-2">
-                  <span class="text-xs text-muted-foreground">Health</span>
-                  @if (activity(); as a) {
-                  <app-backup-health-badge [state]="a.health.state" [detail]="a.health.detail" />
-                  }
-                </div>
-                <button
-                  appReadOnlySection="backup"
-                  type="button"
-                  class="rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted disabled:opacity-50"
-                  [disabled]="!hasRecipient() || running() || !!activeOpId()"
-                  (click)="backUpNow()"
-                >
-                  {{ running() ? 'Starting…' : 'Back up now' }}
-                </button>
-              </div>
-              @if (activity(); as a) {
-              @if (a.health.detail) {
-              <p class="text-xs text-muted-foreground">{{ a.health.detail }}</p>
-              }
-              @if (a.runs.length) {
-              <app-backup-runs-table [runs]="a.runs" [compact]="true" [limit]="recentRuns" />
               } @else {
-              <p class="text-sm text-muted-foreground">No runs yet</p>
+                <div
+                  class="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                >
+                  <ng-icon name="lucideCircleX" class="mt-0.5 h-4 w-4 shrink-0" />
+                  <div>
+                    <div class="font-medium">
+                      No operator recipient — platform backup cannot run
+                    </div>
+                    <div class="mt-1 text-xs">
+                      Set it from the CLI:
+                      <code class="rounded bg-destructive/10 px-1 py-0.5"
+                        >flui backup platform init</code
+                      >
+                    </div>
+                  </div>
+                </div>
               }
-              <a
-                [routerLink]="['/management/backup/policies', a.policyId]"
-                class="inline-block text-xs text-primary hover:underline"
-              >
-                View all runs →
-              </a>
-              } @else if (activityError()) {
-              <p class="text-xs text-muted-foreground">Run history unavailable.</p>
-              }
-            </div>
 
-            <!-- Zitadel / identity coverage -->
-            @if (zitadelKnown()) {
-            @if (zitadelCovered()) {
-            <div class="flex items-start gap-2 text-sm">
-              <ng-icon name="lucideFingerprint" class="mt-0.5 h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-              <div>Identity data (Zitadel) covered</div>
-            </div>
-            } @else {
-            <div class="flex items-start gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
-              <ng-icon name="lucideFingerprint" class="mt-0.5 h-4 w-4 shrink-0" />
-              <div>Identity data not covered — Zitadel reverts to fresh on rebuild.</div>
-            </div>
-            }
-            }
+              <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <!-- Heartbeat -->
+                <div class="flex items-start gap-2 text-sm">
+                  <ng-icon name="lucideHeartPulse" class="mt-0.5 h-4 w-4 text-muted-foreground" />
+                  <div data-testid="platform-heartbeat">
+                    <div class="text-xs text-muted-foreground">Dead-man's switch</div>
+                    @if (!heartbeatConfigured()) {
+                      <div>Not configured</div>
+                    } @else if (heartbeatStatus(); as h) {
+                      @switch (h.state) {
+                        @case ('beating') {
+                          <div>
+                            Sending{{ h.lastBeatAt ? ' · last ' + relative(h.lastBeatAt) : '' }}
+                          </div>
+                        }
+                        @case ('withheld') {
+                          <div class="text-destructive">
+                            Withheld: your watchdog will raise the alarm
+                          </div>
+                        }
+                        @case ('failing') {
+                          <div class="text-destructive">Not delivered</div>
+                        }
+                        @default {
+                          <div>Heartbeat URL configured</div>
+                        }
+                      }
+                      @for (reason of h.reasons; track reason) {
+                        <div
+                          class="text-xs text-muted-foreground"
+                          data-testid="platform-heartbeat-reason"
+                        >
+                          {{ reason }}
+                        </div>
+                      }
+                    } @else {
+                      <div>Heartbeat URL configured</div>
+                    }
+                  </div>
+                </div>
 
-            <!-- Insecure default key material -->
-            @if (sshKeyInsecure()) {
-            <div class="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-4 w-4 shrink-0" />
-              <div>
-                <div class="font-medium">Insecure default: SSH key encryption key</div>
-                <div class="mt-1 text-xs">
-                  <code class="rounded bg-destructive/10 px-1 py-0.5">{{ insecureSshKey }}</code>
-                  is still a built-in default. Anyone holding the platform backup can decrypt SSH key
-                  material — rotate it before relying on this DR path.
+                <!-- Schedule -->
+                <div class="flex items-start gap-2 text-sm">
+                  <ng-icon name="lucideClock" class="mt-0.5 h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <div class="text-xs text-muted-foreground">Schedule</div>
+                    @if (activity(); as a) {
+                      <div>{{ a.schedule.description }}</div>
+                      @if (a.schedule.nextRunAt) {
+                        <div
+                          class="text-xs text-muted-foreground"
+                          [attr.title]="utc(a.schedule.nextRunAt)"
+                        >
+                          Next {{ relative(a.schedule.nextRunAt) }} ·
+                          {{ local(a.schedule.nextRunAt) }}
+                        </div>
+                      }
+                    } @else {
+                      <div class="font-mono text-xs">{{ policy()?.cronSchedule || '—' }}</div>
+                    }
+                  </div>
                 </div>
               </div>
-            </div>
-            }
-          </div>
 
-          <!-- Heartbeat URL form -->
-          <div class="space-y-2 border-t border-border pt-4">
-            <label for="platform-heartbeat-url" class="text-sm font-medium">
-              Dead-man's-switch heartbeat URL
-            </label>
-            <p class="text-xs text-muted-foreground">
-              Called every 5 minutes while the installation is healthy and its last backup is fresh.
-              Point it at your watchdog, for example a healthchecks.io check. Keep it private.
-            </p>
-            @if (heartbeatHost(); as host) {
-            <p class="text-sm" data-testid="platform-heartbeat-set">Set, sending to {{ host }}</p>
-            }
-            <div class="flex flex-col gap-2 sm:flex-row">
-              <input
-                id="platform-heartbeat-url"
-                type="url"
-                [(ngModel)]="heartbeatUrlInput"
-                [disabled]="!hasRecipient() || saving()"
-                [placeholder]="heartbeatConfigured() ? 'Paste a new address to replace it' : 'https://…'"
-                class="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm disabled:opacity-50"
-              />
-              <button
-                type="button"
-                class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                [disabled]="!hasRecipient() || saving() || !heartbeatUrlInput.trim()"
-                (click)="saveHeartbeat()"
-                data-testid="platform-heartbeat-save"
-              >
-                {{ saving() ? 'Saving…' : 'Save' }}
-              </button>
-              @if (heartbeatConfigured()) {
-              <button
-                type="button"
-                class="rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-destructive disabled:opacity-50"
-                [disabled]="saving()"
-                (click)="stopHeartbeat()"
-                data-testid="platform-heartbeat-stop"
-              >
-                Stop
-              </button>
+              <div class="rounded-md border border-border bg-background p-3 space-y-2">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-xs text-muted-foreground">Health</span>
+                    @if (activity(); as a) {
+                      <app-backup-health-badge
+                        [state]="a.health.state"
+                        [detail]="a.health.detail"
+                      />
+                    }
+                  </div>
+                  <button
+                    appReadOnlySection="backup"
+                    type="button"
+                    class="rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted disabled:opacity-50"
+                    [disabled]="!hasRecipient() || running() || !!activeOpId()"
+                    (click)="backUpNow()"
+                  >
+                    {{ running() ? 'Starting…' : 'Back up now' }}
+                  </button>
+                </div>
+                @if (activity(); as a) {
+                  @if (a.health.detail) {
+                    <p class="text-xs text-muted-foreground">{{ a.health.detail }}</p>
+                  }
+                  @if (a.runs.length) {
+                    <app-backup-runs-table [runs]="a.runs" [compact]="true" [limit]="recentRuns" />
+                  } @else {
+                    <p class="text-sm text-muted-foreground">No runs yet</p>
+                  }
+                  <a
+                    [routerLink]="['/management/backup/policies', a.policyId]"
+                    class="inline-block text-xs text-primary hover:underline"
+                  >
+                    View all runs →
+                  </a>
+                } @else if (activityError()) {
+                  <p class="text-xs text-muted-foreground">Run history unavailable.</p>
+                }
+              </div>
+
+              <!-- Zitadel / identity coverage -->
+              @if (zitadelKnown()) {
+                @if (zitadelCovered()) {
+                  <div class="flex items-start gap-2 text-sm">
+                    <ng-icon
+                      name="lucideFingerprint"
+                      class="mt-0.5 h-4 w-4 text-emerald-600 dark:text-emerald-400"
+                    />
+                    <div>Identity data (Zitadel) covered</div>
+                  </div>
+                } @else {
+                  <div
+                    class="flex items-start gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400"
+                  >
+                    <ng-icon name="lucideFingerprint" class="mt-0.5 h-4 w-4 shrink-0" />
+                    <div>Identity data not covered — Zitadel reverts to fresh on rebuild.</div>
+                  </div>
+                }
+              }
+
+              <!-- Insecure default key material -->
+              @if (sshKeyInsecure()) {
+                <div
+                  class="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                >
+                  <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-4 w-4 shrink-0" />
+                  <div>
+                    <div class="font-medium">Insecure default: SSH key encryption key</div>
+                    <div class="mt-1 text-xs">
+                      <code class="rounded bg-destructive/10 px-1 py-0.5">{{
+                        insecureSshKey
+                      }}</code>
+                      is still a built-in default. Anyone holding the platform backup can decrypt
+                      SSH key material — rotate it before relying on this DR path.
+                    </div>
+                  </div>
+                </div>
               }
             </div>
-            @if (!hasRecipient()) {
-            <p class="text-xs text-muted-foreground">
-              Configure the operator recipient via the CLI first.
-            </p>
-            }
-          </div>
 
-          <!-- CLI note -->
-          <p class="border-t border-border pt-4 text-xs text-muted-foreground">
-            The operator recipient (<code class="rounded bg-muted px-1">age1…</code>) is set with
-            <code class="rounded bg-muted px-1">flui backup platform init</code>. The matching private
-            key stays in the operator's vault on their own machine — the master can never decrypt its
-            own backup, so it is never generated in the browser.
-          </p>
-        </div>
+            <!-- Heartbeat URL form -->
+            <div class="space-y-2 border-t border-border pt-4">
+              <label for="platform-heartbeat-url" class="text-sm font-medium">
+                Dead-man's-switch heartbeat URL
+              </label>
+              <p class="text-xs text-muted-foreground">
+                Called every 5 minutes while the installation is healthy and its last backup is
+                fresh. Point it at your watchdog, for example a healthchecks.io check. Keep it
+                private.
+              </p>
+              @if (heartbeatHost(); as host) {
+                <p class="text-sm" data-testid="platform-heartbeat-set">
+                  Set, sending to {{ host }}
+                </p>
+              }
+              <div class="flex flex-col gap-2 sm:flex-row">
+                <input
+                  id="platform-heartbeat-url"
+                  type="url"
+                  [(ngModel)]="heartbeatUrlInput"
+                  [disabled]="!hasRecipient() || saving()"
+                  [placeholder]="
+                    heartbeatConfigured() ? 'Paste a new address to replace it' : 'https://…'
+                  "
+                  class="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm disabled:opacity-50"
+                />
+                <button
+                  type="button"
+                  class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                  [disabled]="!hasRecipient() || saving() || !heartbeatUrlInput.trim()"
+                  (click)="saveHeartbeat()"
+                  data-testid="platform-heartbeat-save"
+                >
+                  {{ saving() ? 'Saving…' : 'Save' }}
+                </button>
+                @if (heartbeatConfigured()) {
+                  <button
+                    type="button"
+                    class="rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-destructive disabled:opacity-50"
+                    [disabled]="saving()"
+                    (click)="stopHeartbeat()"
+                    data-testid="platform-heartbeat-stop"
+                  >
+                    Stop
+                  </button>
+                }
+              </div>
+              @if (!hasRecipient()) {
+                <p class="text-xs text-muted-foreground">
+                  Configure the operator recipient via the CLI first.
+                </p>
+              }
+            </div>
+
+            <!-- CLI note -->
+            <p class="border-t border-border pt-4 text-xs text-muted-foreground">
+              The operator recipient (<code class="rounded bg-muted px-1">age1…</code>) is set with
+              <code class="rounded bg-muted px-1">flui backup platform init</code>. The matching
+              private key stays in the operator's vault on their own machine — the master can never
+              decrypt its own backup, so it is never generated in the browser.
+            </p>
+          </div>
         }
 
         <app-backup-progress-modal
@@ -303,9 +352,11 @@ const RECENT_RUNS = 5;
         />
 
         @if (error()) {
-        <div class="mt-3 rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-400">
-          {{ error() }}
-        </div>
+          <div
+            class="mt-3 rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-400"
+          >
+            {{ error() }}
+          </div>
         }
       </div>
     </section>

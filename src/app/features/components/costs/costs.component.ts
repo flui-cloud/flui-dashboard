@@ -39,7 +39,8 @@ import { clusterRows, headline, monthCell, monthLabel, vatNote } from './costs-v
         <div>
           <h1 class="text-xl font-semibold">Costs</h1>
           <p class="text-sm text-muted-foreground mt-0.5">
-            What the machines and volumes of your clusters cost, month by month, deleted clusters included.
+            What the machines and volumes of your clusters cost, month by month, deleted clusters
+            included.
           </p>
         </div>
         <div class="flex items-center gap-2">
@@ -60,7 +61,11 @@ import { clusterRows, headline, monthCell, monthLabel, vatNote } from './costs-v
             [disabled]="costs.loading()"
             class="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground disabled:opacity-60"
           >
-            <ng-icon name="lucideRefreshCw" class="h-3.5 w-3.5" [class.animate-spin]="costs.loading()" />
+            <ng-icon
+              name="lucideRefreshCw"
+              class="h-3.5 w-3.5"
+              [class.animate-spin]="costs.loading()"
+            />
             Refresh
           </button>
         </div>
@@ -97,7 +102,10 @@ import { clusterRows, headline, monthCell, monthLabel, vatNote } from './costs-v
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div class="card-surface p-5">
                 <div class="flex items-center gap-2 mb-3">
-                  <ng-icon name="lucideCreditCard" class="h-4 w-4 text-green-600 dark:text-green-400" />
+                  <ng-icon
+                    name="lucideCreditCard"
+                    class="h-4 w-4 text-green-600 dark:text-green-400"
+                  />
                   <span class="text-label">Spent this month</span>
                 </div>
                 <p class="text-2xl font-bold text-value">{{ money(h.spent) }}</p>
@@ -110,17 +118,21 @@ import { clusterRows, headline, monthCell, monthLabel, vatNote } from './costs-v
               </div>
               <div class="card-surface p-5">
                 <div class="flex items-center gap-2 mb-3">
-                  <ng-icon name="lucideTrendingUp" class="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <ng-icon
+                    name="lucideTrendingUp"
+                    class="h-4 w-4 text-blue-600 dark:text-blue-400"
+                  />
                   <span class="text-label">Expected by month end</span>
                 </div>
                 <p class="text-2xl font-bold text-value">{{ money(h.forecast) }}</p>
-                <p class="text-xs text-sub mt-1">
-                  excl. VAT · if what runs now keeps running
-                </p>
+                <p class="text-xs text-sub mt-1">excl. VAT · if what runs now keeps running</p>
               </div>
               <div class="card-surface p-5">
                 <div class="flex items-center gap-2 mb-3">
-                  <ng-icon name="lucideCalendar" class="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                  <ng-icon
+                    name="lucideCalendar"
+                    class="h-4 w-4 text-purple-600 dark:text-purple-400"
+                  />
                   <span class="text-label">{{ h.lastMonthLabel ?? 'Last month' }}</span>
                 </div>
                 <p class="text-2xl font-bold text-value">{{ money(h.lastMonth) }}</p>
@@ -146,25 +158,39 @@ import { clusterRows, headline, monthCell, monthLabel, vatNote } from './costs-v
                     <td class="p-3 font-medium capitalize">{{ p.provider }}</td>
                     @if (p.priced) {
                       @for (key of c.months; track key; let i = $index) {
-                        <td class="p-3 text-right tabular-nums">{{ money(cell(p.months[i]).spent) }}</td>
+                        <td class="p-3 text-right tabular-nums">
+                          {{ money(cell(p.months[i]).spent) }}
+                        </td>
                       }
-                      <td class="p-3 text-right tabular-nums">{{ money(currentForecast(p.months)) }}</td>
+                      <td class="p-3 text-right tabular-nums">
+                        {{ money(currentForecast(p.months)) }}
+                      </td>
                     } @else {
-                      <td class="p-3 text-right text-muted-foreground" [attr.colspan]="c.months.length + 1">not priced</td>
+                      <td
+                        class="p-3 text-right text-muted-foreground"
+                        [attr.colspan]="c.months.length + 1"
+                      >
+                        not priced
+                      </td>
                     }
                   </tr>
                 }
                 <tr class="font-semibold">
                   <td class="p-3">All providers</td>
                   @for (key of c.months; track key; let i = $index) {
-                    <td class="p-3 text-right tabular-nums">{{ money(cell(c.totals[i]).spent) }}</td>
+                    <td class="p-3 text-right tabular-nums">
+                      {{ money(cell(c.totals[i]).spent) }}
+                    </td>
                   }
-                  <td class="p-3 text-right tabular-nums">{{ money(currentForecast(c.totals)) }}</td>
+                  <td class="p-3 text-right tabular-nums">
+                    {{ money(currentForecast(c.totals)) }}
+                  </td>
                 </tr>
               </tbody>
             </table>
             <p class="px-3 pb-3 text-xs text-muted-foreground">
-              Excluding VAT. The running month shows what was spent so far; "Expected" is its forecast.
+              Excluding VAT. The running month shows what was spent so far; "Expected" is its
+              forecast.
             </p>
           </div>
 
@@ -196,10 +222,15 @@ import { clusterRows, headline, monthCell, monthLabel, vatNote } from './costs-v
                         <td class="p-3">
                           <span class="font-medium">{{ row.name }}</span>
                           @if (row.removed) {
-                            <span class="ml-2 text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">deleted</span>
+                            <span
+                              class="ml-2 text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground"
+                              >deleted</span
+                            >
                           }
                           @if (row.unpriced) {
-                            <span class="ml-2 text-xs text-muted-foreground">{{ row.unpriced }} not priced</span>
+                            <span class="ml-2 text-xs text-muted-foreground"
+                              >{{ row.unpriced }} not priced</span
+                            >
                           }
                         </td>
                         <td class="p-3 text-right tabular-nums">{{ money(row.spent) }}</td>
@@ -208,7 +239,9 @@ import { clusterRows, headline, monthCell, monthLabel, vatNote } from './costs-v
                       </tr>
                     } @empty {
                       <tr>
-                        <td colspan="4" class="p-3 text-xs text-muted-foreground">No cost in these months.</td>
+                        <td colspan="4" class="p-3 text-xs text-muted-foreground">
+                          No cost in these months.
+                        </td>
                       </tr>
                     }
                   </tbody>
@@ -217,10 +250,16 @@ import { clusterRows, headline, monthCell, monthLabel, vatNote } from './costs-v
               @if (p.priced && (p.listPriced || p.unpriced)) {
                 <div class="px-4 pb-3 pt-1 text-xs text-sub space-y-0.5">
                   @if (p.listPriced) {
-                    <p>{{ p.listPriced }} priced at today's list price: they started before Flui recorded the price they started at.</p>
+                    <p>
+                      {{ p.listPriced }} priced at today's list price: they started before Flui
+                      recorded the price they started at.
+                    </p>
                   }
                   @if (p.unpriced) {
-                    <p>{{ p.unpriced }} could not be priced and {{ p.unpriced === 1 ? 'is' : 'are' }} left out.</p>
+                    <p>
+                      {{ p.unpriced }} could not be priced and
+                      {{ p.unpriced === 1 ? 'is' : 'are' }} left out.
+                    </p>
                   }
                 </div>
               }
@@ -232,7 +271,9 @@ import { clusterRows, headline, monthCell, monthLabel, vatNote } from './costs-v
               <p>{{ note }}</p>
             }
             @if (c.recordedSince) {
-              <p>Recorded since {{ c.recordedSince | date: 'mediumDate' }}; nothing earlier is known.</p>
+              <p>
+                Recorded since {{ c.recordedSince | date: 'mediumDate' }}; nothing earlier is known.
+              </p>
             }
           </div>
         }

@@ -103,7 +103,10 @@ export class RegistryStorageService {
     } catch (err) {
       if (!this.noteRefusal(err)) {
         this.loadErrorData.set(
-          messageOf(err, measure ? 'Could not measure the space now' : 'Could not read the image registry'),
+          messageOf(
+            err,
+            measure ? 'Could not measure the space now' : 'Could not read the image registry',
+          ),
         );
       }
     } finally {
@@ -114,9 +117,7 @@ export class RegistryStorageService {
   async loadMode(): Promise<void> {
     try {
       const before = this.modeData();
-      const mode = await firstValueFrom(
-        this.http.get<RegistryModeStatus>(this.modeUrl('/mode')),
-      );
+      const mode = await firstValueFrom(this.http.get<RegistryModeStatus>(this.modeUrl('/mode')));
       this.modeData.set(mode);
       this.followUntilReady(mode);
       if (before?.mode === 'flui' && !before.ready && mode.ready) {
@@ -193,10 +194,9 @@ export class RegistryStorageService {
     this.trafficFailedData.set(false);
     try {
       const traffic = await firstValueFrom(
-        this.http.get<RegistryTraffic>(
-          `${this.appConfig.apiBaseUrl}/api/v1/registry/traffic`,
-          { params: new HttpParams().set('window', window) },
-        ),
+        this.http.get<RegistryTraffic>(`${this.appConfig.apiBaseUrl}/api/v1/registry/traffic`, {
+          params: new HttpParams().set('window', window),
+        }),
       );
       if (this.trafficWindowData() !== window) return;
       this.trafficData.set(traffic);
@@ -217,9 +217,7 @@ export class RegistryStorageService {
 
   async loadBuckets(): Promise<void> {
     try {
-      const buckets = await firstValueFrom(
-        this.http.get<RegistryBucket[]>(this.url('/buckets')),
-      );
+      const buckets = await firstValueFrom(this.http.get<RegistryBucket[]>(this.url('/buckets')));
       this.bucketsData.set(buckets);
     } catch (err) {
       this.noteRefusal(err);
@@ -238,7 +236,8 @@ export class RegistryStorageService {
       this.bucketsData.update((buckets) => buckets.filter((b) => b.id !== id));
       return removal;
     } catch (err) {
-      if (!this.noteRefusal(err)) this.removeErrorData.set(messageOf(err, 'Could not remove the bucket'));
+      if (!this.noteRefusal(err))
+        this.removeErrorData.set(messageOf(err, 'Could not remove the bucket'));
       return null;
     } finally {
       this.removingData.set(null);
@@ -333,7 +332,9 @@ export class RegistryStorageService {
     if (!refused) return false;
     this.refusedData.set(true);
     this.refusalMessageData.set(
-      isSandboxRefusal(err) ? (bodyMessage(err) ?? REGISTRY_REFUSED_MESSAGE) : REGISTRY_REFUSED_MESSAGE,
+      isSandboxRefusal(err)
+        ? (bodyMessage(err) ?? REGISTRY_REFUSED_MESSAGE)
+        : REGISTRY_REFUSED_MESSAGE,
     );
     return true;
   }

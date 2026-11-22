@@ -29,9 +29,7 @@ export class KafkaConsoleService {
   }
 
   getConnectionInfo(appId: string): Observable<KafkaConnectionInfo> {
-    return this.http.get<KafkaConnectionInfo>(
-      `${this.base(appId)}/connection-info`,
-    );
+    return this.http.get<KafkaConnectionInfo>(`${this.base(appId)}/connection-info`);
   }
 
   getClusterInfo(appId: string): Observable<KafkaClusterInfo> {
@@ -46,17 +44,11 @@ export class KafkaConsoleService {
     return this.http.get<KafkaGroupSummary[]>(`${this.base(appId)}/groups`);
   }
 
-  run(
-    appId: string,
-    req: { command: string; readOnly?: boolean },
-  ): Observable<KafkaCommandResult> {
+  run(appId: string, req: { command: string; readOnly?: boolean }): Observable<KafkaCommandResult> {
     return this.http.post<KafkaCommandResult>(`${this.base(appId)}/run`, req);
   }
 
-  assist(
-    appId: string,
-    req: KafkaAssistRequest,
-  ): Observable<KafkaAssistResult> {
+  assist(appId: string, req: KafkaAssistRequest): Observable<KafkaAssistResult> {
     return this.http.post<KafkaAssistResult>(`${this.base(appId)}/assist`, req);
   }
 }

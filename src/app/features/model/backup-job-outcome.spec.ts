@@ -8,13 +8,23 @@ describe('backupJobOutcome', () => {
   });
 
   it('calls a completed run complete, saying when no new full backup was needed', () => {
-    expect(backupJobOutcome({ status: 'completed' })).toEqual({ status: 'completed', partial: false, detail: undefined });
-    expect(backupJobOutcome({ status: 'completed', metadata: { baseSkipped: true } })?.detail).toContain('no new one was needed');
+    expect(backupJobOutcome({ status: 'completed' })).toEqual({
+      status: 'completed',
+      partial: false,
+      detail: undefined,
+    });
+    expect(
+      backupJobOutcome({ status: 'completed', metadata: { baseSkipped: true } })?.detail,
+    ).toContain('no new one was needed');
   });
 
   it('says when a run had nothing to copy', () => {
     expect(
-      backupJobOutcome({ status: 'completed', errorMessage: undefined, metadata: { volumesCopied: [] } } as never)?.detail,
+      backupJobOutcome({
+        status: 'completed',
+        errorMessage: undefined,
+        metadata: { volumesCopied: [] },
+      } as never)?.detail,
     ).toContain('Nothing to copy');
   });
 
@@ -31,7 +41,9 @@ describe('backupJobOutcome', () => {
   });
 
   it('gives the reason a run failed or was cancelled', () => {
-    expect(backupJobOutcome({ status: 'failed', errorMessage: 'bucket refused the upload' })).toEqual({
+    expect(
+      backupJobOutcome({ status: 'failed', errorMessage: 'bucket refused the upload' }),
+    ).toEqual({
       status: 'failed',
       partial: false,
       detail: 'bucket refused the upload',

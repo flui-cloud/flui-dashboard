@@ -23,9 +23,7 @@ export class ObjectStoreConsoleService {
   }
 
   getConnectionInfo(appId: string): Observable<ObjectStoreConnectionInfo> {
-    return this.http.get<ObjectStoreConnectionInfo>(
-      `${this.base(appId)}/connection-info`,
-    );
+    return this.http.get<ObjectStoreConnectionInfo>(`${this.base(appId)}/connection-info`);
   }
 
   listBuckets(appId: string): Observable<S3Bucket[]> {
@@ -54,11 +52,7 @@ export class ObjectStoreConsoleService {
     );
   }
 
-  setBucketPolicy(
-    appId: string,
-    bucket: string,
-    isPublic: boolean,
-  ): Observable<BucketPolicy> {
+  setBucketPolicy(appId: string, bucket: string, isPublic: boolean): Observable<BucketPolicy> {
     return this.http.post<BucketPolicy>(`${this.base(appId)}/buckets/policy`, {
       bucket,
       public: isPublic,
@@ -70,11 +64,7 @@ export class ObjectStoreConsoleService {
     return this.http.post<S3Listing>(`${this.base(appId)}/objects`, req);
   }
 
-  headObject(
-    appId: string,
-    bucket: string,
-    key: string,
-  ): Observable<S3ObjectMeta> {
+  headObject(appId: string, bucket: string, key: string): Observable<S3ObjectMeta> {
     return this.http.post<S3ObjectMeta>(`${this.base(appId)}/object/head`, {
       bucket,
       key,
@@ -97,18 +87,11 @@ export class ObjectStoreConsoleService {
     key: string,
     file: File,
   ): Observable<{ ok: true; key: string }> {
-    const params = new HttpParams()
-      .set('bucket', bucket)
-      .set('key', key)
-      .set('readOnly', 'false');
-    return this.http.post<{ ok: true; key: string }>(
-      `${this.base(appId)}/upload`,
-      file,
-      {
-        params,
-        headers: { 'Content-Type': file.type || 'application/octet-stream' },
-      },
-    );
+    const params = new HttpParams().set('bucket', bucket).set('key', key).set('readOnly', 'false');
+    return this.http.post<{ ok: true; key: string }>(`${this.base(appId)}/upload`, file, {
+      params,
+      headers: { 'Content-Type': file.type || 'application/octet-stream' },
+    });
   }
 
   deleteObject(
@@ -116,10 +99,11 @@ export class ObjectStoreConsoleService {
     bucket: string,
     key: string,
   ): Observable<{ ok: true; deleted: number }> {
-    return this.http.post<{ ok: true; deleted: number }>(
-      `${this.base(appId)}/delete`,
-      { bucket, key, readOnly: false },
-    );
+    return this.http.post<{ ok: true; deleted: number }>(`${this.base(appId)}/delete`, {
+      bucket,
+      key,
+      readOnly: false,
+    });
   }
 
   deletePrefix(
@@ -127,18 +111,14 @@ export class ObjectStoreConsoleService {
     bucket: string,
     prefix: string,
   ): Observable<{ ok: true; deleted: number }> {
-    return this.http.post<{ ok: true; deleted: number }>(
-      `${this.base(appId)}/delete`,
-      { bucket, prefix, readOnly: false },
-    );
+    return this.http.post<{ ok: true; deleted: number }>(`${this.base(appId)}/delete`, {
+      bucket,
+      prefix,
+      readOnly: false,
+    });
   }
 
-  share(
-    appId: string,
-    bucket: string,
-    key: string,
-    ttlSeconds?: number,
-  ): Observable<ShareLink> {
+  share(appId: string, bucket: string, key: string, ttlSeconds?: number): Observable<ShareLink> {
     return this.http.post<ShareLink>(`${this.base(appId)}/share`, {
       bucket,
       key,
@@ -156,9 +136,6 @@ export class ObjectStoreConsoleService {
   }
 
   revokeShare(appId: string, shareId: string): Observable<ShareRecord> {
-    return this.http.post<ShareRecord>(
-      `${this.base(appId)}/shares/${shareId}/revoke`,
-      {},
-    );
+    return this.http.post<ShareRecord>(`${this.base(appId)}/shares/${shareId}/revoke`, {});
   }
 }

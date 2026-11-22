@@ -1,6 +1,15 @@
 import { SandboxService } from '../../../core/services/sandbox.service';
 import { GuestHomeComponent } from './guest-home.component';
-import { Component, OnDestroy, inject, signal, computed, effect, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnDestroy,
+  inject,
+  signal,
+  computed,
+  effect,
+  OnInit,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { DashboardService } from '../../service/dashboard.service';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
 import {
@@ -45,7 +54,11 @@ const FLEET_REFRESH_MS = 60_000;
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="flex flex-col gap-4 md:gap-5 p-4 md:p-6 min-h-full">
-      <app-dashboard-home-header [fresh]="fresh()" [refreshing]="refreshing()" (refresh)="refresh()" />
+      <app-dashboard-home-header
+        [fresh]="fresh()"
+        [refreshing]="refreshing()"
+        (refresh)="refresh()"
+      />
 
       <app-platform-update-banner />
 
@@ -77,7 +90,10 @@ const FLEET_REFRESH_MS = 60_000;
         <div data-testid="home-fresh" class="contents">
           <app-dashboard-certs [firstStep]="true" />
           <app-dashboard-fleet-tiles [fresh]="true" />
-          <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-4 items-start" data-testid="home-columns">
+          <div
+            class="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-4 items-start"
+            data-testid="home-columns"
+          >
             <div class="contents lg:flex lg:flex-col lg:gap-4">
               <app-dashboard-clusters-table class="order-1" [fresh]="true" />
               <app-dashboard-activity class="order-5" />
@@ -92,7 +108,10 @@ const FLEET_REFRESH_MS = 60_000;
       } @else {
         <div data-testid="home-control-room" class="contents">
           <app-dashboard-fleet-tiles />
-          <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-4 items-start" data-testid="home-columns">
+          <div
+            class="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-4 items-start"
+            data-testid="home-columns"
+          >
             <div class="contents lg:flex lg:flex-col lg:gap-4">
               <app-dashboard-clusters-table class="order-1" />
               <app-dashboard-certs class="order-4" />

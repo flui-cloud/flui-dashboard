@@ -1,11 +1,6 @@
 import { Component, computed, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideAlertTriangle,
-  lucideCheck,
-  lucideExternalLink,
-  lucideX,
-} from '@ng-icons/lucide';
+import { lucideAlertTriangle, lucideCheck, lucideExternalLink, lucideX } from '@ng-icons/lucide';
 import { ChatActionRequest, PendingAction } from '../../service/assistant.service';
 
 interface ActionGroup {
@@ -30,19 +25,31 @@ interface ActionGroup {
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <div class="mx-4 mb-3 rounded-xl border overflow-hidden text-sm"
-      [class]="isDestructive()
-        ? 'border-destructive/30 bg-destructive/5'
-        : 'border-amber-500/30 bg-amber-500/5'">
-
-      <div class="flex items-center gap-2 px-3 py-2 border-b"
-        [class]="isDestructive()
-          ? 'border-destructive/20 bg-destructive/10'
-          : 'border-amber-500/20 bg-amber-500/10'">
-        <ng-icon name="lucideAlertTriangle" class="h-3.5 w-3.5 shrink-0"
-          [class]="isDestructive() ? 'text-destructive' : 'text-amber-600 dark:text-amber-400'" />
-        <p class="text-xs font-semibold"
-          [class]="isDestructive() ? 'text-destructive' : 'text-amber-700 dark:text-amber-400'">
+    <div
+      class="mx-4 mb-3 rounded-xl border overflow-hidden text-sm"
+      [class]="
+        isDestructive()
+          ? 'border-destructive/30 bg-destructive/5'
+          : 'border-amber-500/30 bg-amber-500/5'
+      "
+    >
+      <div
+        class="flex items-center gap-2 px-3 py-2 border-b"
+        [class]="
+          isDestructive()
+            ? 'border-destructive/20 bg-destructive/10'
+            : 'border-amber-500/20 bg-amber-500/10'
+        "
+      >
+        <ng-icon
+          name="lucideAlertTriangle"
+          class="h-3.5 w-3.5 shrink-0"
+          [class]="isDestructive() ? 'text-destructive' : 'text-amber-600 dark:text-amber-400'"
+        />
+        <p
+          class="text-xs font-semibold"
+          [class]="isDestructive() ? 'text-destructive' : 'text-amber-700 dark:text-amber-400'"
+        >
           {{ isDestructive() ? 'Destructive action — confirm carefully' : 'Confirm action' }}
         </p>
       </div>
@@ -51,15 +58,21 @@ interface ActionGroup {
         @for (group of groups(); track group.toolCallIds[0]) {
           <div class="space-y-2">
             <div class="flex items-center gap-2 flex-wrap">
-              <span class="rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
-                [class]="group.tier === 'destructive'
-                  ? 'bg-destructive/15 text-destructive'
-                  : 'bg-amber-500/15 text-amber-700 dark:text-amber-400'">
+              <span
+                class="rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+                [class]="
+                  group.tier === 'destructive'
+                    ? 'bg-destructive/15 text-destructive'
+                    : 'bg-amber-500/15 text-amber-700 dark:text-amber-400'
+                "
+              >
                 {{ group.tier }}
               </span>
               <span class="font-medium text-foreground text-xs">{{ group.label }}</span>
               @if (group.toolCallIds.length > 1) {
-                <span class="text-[10px] text-muted-foreground">({{ group.toolCallIds.length }} components)</span>
+                <span class="text-[10px] text-muted-foreground"
+                  >({{ group.toolCallIds.length }} components)</span
+                >
               }
             </div>
 
@@ -75,8 +88,10 @@ interface ActionGroup {
             }
 
             @for (request of group.requests; track request) {
-              <div class="rounded-lg border border-border bg-background/70 px-3 py-2.5 space-y-2"
-                data-testid="cycle-request">
+              <div
+                class="rounded-lg border border-border bg-background/70 px-3 py-2.5 space-y-2"
+                data-testid="cycle-request"
+              >
                 <p class="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Approving here answers this request
                 </p>
@@ -84,15 +99,21 @@ interface ActionGroup {
                   {{ request.sentence }}
                 </p>
                 @if (request.estimateNote) {
-                  <p class="text-[11px] leading-relaxed text-amber-700 dark:text-amber-400"
-                    data-testid="cycle-estimate">
+                  <p
+                    class="text-[11px] leading-relaxed text-amber-700 dark:text-amber-400"
+                    data-testid="cycle-estimate"
+                  >
                     {{ request.estimateNote }}
                   </p>
                 }
                 @if (request.decideUrl) {
-                  <a [href]="request.decideUrl" target="_blank" rel="noopener noreferrer"
+                  <a
+                    [href]="request.decideUrl"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     class="inline-flex items-center gap-1 text-[11px] font-medium text-blue-600 hover:underline dark:text-blue-400"
-                    data-testid="cycle-decide-url">
+                    data-testid="cycle-decide-url"
+                  >
                     <ng-icon name="lucideExternalLink" class="h-3 w-3" />
                     Open it on the requests page
                   </a>
@@ -103,16 +124,24 @@ interface ActionGroup {
         }
 
         <div class="flex gap-2 pt-1">
-          <button type="button" (click)="deny()"
-            class="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors">
+          <button
+            type="button"
+            (click)="deny()"
+            class="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+          >
             <ng-icon name="lucideX" class="h-3 w-3" />
             Deny
           </button>
-          <button type="button" (click)="approve()"
+          <button
+            type="button"
+            (click)="approve()"
             class="flex-1 flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition-all hover:opacity-90 active:scale-95"
-            [class]="isDestructive()
-              ? 'bg-destructive shadow-sm shadow-destructive/30'
-              : 'bg-gradient-to-r from-blue-500 to-blue-700 shadow-sm shadow-blue-500/30'">
+            [class]="
+              isDestructive()
+                ? 'bg-destructive shadow-sm shadow-destructive/30'
+                : 'bg-gradient-to-r from-blue-500 to-blue-700 shadow-sm shadow-blue-500/30'
+            "
+          >
             <ng-icon name="lucideCheck" class="h-3 w-3" />
             {{ isDestructive() ? 'Confirm delete' : 'Approve' }}
           </button>
@@ -162,9 +191,12 @@ export class AssistantConfirmCardComponent {
     const id = args['id'] ?? args['appId'] ?? args['name'];
     const suffix = typeof id === 'string' || typeof id === 'number' ? ` "${id}"` : '';
     switch (name) {
-      case 'app_deploy': return `Redeploy application${suffix}`;
-      case 'app_delete': return `Delete application${suffix}`;
-      default: return name.replaceAll('_', ' ');
+      case 'app_deploy':
+        return `Redeploy application${suffix}`;
+      case 'app_delete':
+        return `Delete application${suffix}`;
+      default:
+        return name.replaceAll('_', ' ');
     }
   }
 

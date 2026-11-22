@@ -27,7 +27,11 @@ export interface RestoreDetailSurfaceContext {
   appVersion?: string;
 }
 
-function textObservation(key: string, value: string | undefined | null, source: ObservationSource): Observation | null {
+function textObservation(
+  key: string,
+  value: string | undefined | null,
+  source: ObservationSource,
+): Observation | null {
   return value ? { key, presentedAs: { text: value }, source } : null;
 }
 

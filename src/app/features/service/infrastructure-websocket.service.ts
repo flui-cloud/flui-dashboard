@@ -101,15 +101,21 @@ export class InfrastructureWebSocketService implements OnDestroy {
       this.isConnectedSignal.set(false);
     });
 
-    this.socket.on('infrastructure:operation:progress', (dto: InfrastructureOperationProgressDto) => {
-      this.resourceCallbacks.get(dto.resourceId)?.onProgress?.(dto);
-      this.operationCallbacks.get(dto.operationId)?.onProgress?.(dto);
-    });
+    this.socket.on(
+      'infrastructure:operation:progress',
+      (dto: InfrastructureOperationProgressDto) => {
+        this.resourceCallbacks.get(dto.resourceId)?.onProgress?.(dto);
+        this.operationCallbacks.get(dto.operationId)?.onProgress?.(dto);
+      },
+    );
 
-    this.socket.on('infrastructure:operation:completed', (dto: InfrastructureOperationCompletedDto) => {
-      this.resourceCallbacks.get(dto.resourceId)?.onCompleted?.(dto);
-      this.operationCallbacks.get(dto.operationId)?.onCompleted?.(dto);
-    });
+    this.socket.on(
+      'infrastructure:operation:completed',
+      (dto: InfrastructureOperationCompletedDto) => {
+        this.resourceCallbacks.get(dto.resourceId)?.onCompleted?.(dto);
+        this.operationCallbacks.get(dto.operationId)?.onCompleted?.(dto);
+      },
+    );
 
     this.socket.on('infrastructure:operation:failed', (dto: InfrastructureOperationFailedDto) => {
       console.error(`❌ Operation failed: ${dto.error}`);

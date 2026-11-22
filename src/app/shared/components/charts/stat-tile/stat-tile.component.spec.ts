@@ -17,11 +17,17 @@ describe('StatTileComponent note', () => {
   });
 
   it('draws nothing extra without a note', () => {
-    expect(render({ label: 'CPU', value: '10' }).querySelector('[data-testid="stat-tile-note"]')).toBeNull();
+    expect(
+      render({ label: 'CPU', value: '10' }).querySelector('[data-testid="stat-tile-note"]'),
+    ).toBeNull();
   });
 
   it('draws a line with its hint behind an info icon', () => {
-    const el = render({ label: 'CPU', value: '10', notes: [{ text: 'Held back', hint: 'Why it matters' }] });
+    const el = render({
+      label: 'CPU',
+      value: '10',
+      notes: [{ text: 'Held back', hint: 'Why it matters' }],
+    });
     const note = el.querySelector('[data-testid="stat-tile-note"]')!;
     expect(note.tagName).toBe('P');
     expect(note.textContent).toContain('Held back');
@@ -29,7 +35,11 @@ describe('StatTileComponent note', () => {
   });
 
   it('draws a chip with its hint on hover', () => {
-    const el = render({ label: 'Replicas', value: '2/2', notes: [{ text: 'Not ready at times', hint: 'Last at 10:20', kind: 'chip' }] });
+    const el = render({
+      label: 'Replicas',
+      value: '2/2',
+      notes: [{ text: 'Not ready at times', hint: 'Last at 10:20', kind: 'chip' }],
+    });
     const note = el.querySelector('[data-testid="stat-tile-note"]')!;
     expect(note.tagName).toBe('SPAN');
     expect(note.getAttribute('title')).toBe('Last at 10:20');
@@ -39,23 +49,39 @@ describe('StatTileComponent note', () => {
     const el = render({
       label: 'Health checks',
       value: '3',
-      notes: [{ text: 'Taken out of the route 3 times' }, { text: 'Restarted 1 times', tone: 'bad' }],
+      notes: [
+        { text: 'Taken out of the route 3 times' },
+        { text: 'Restarted 1 times', tone: 'bad' },
+      ],
     });
     const notes = Array.from(el.querySelectorAll('[data-testid="stat-tile-note"]'));
-    expect(notes.map((n) => n.textContent!.trim())).toEqual(['Taken out of the route 3 times', 'Restarted 1 times']);
+    expect(notes.map((n) => n.textContent!.trim())).toEqual([
+      'Taken out of the route 3 times',
+      'Restarted 1 times',
+    ]);
     expect(notes.every((n) => n.className.includes('text-sub'))).toBeTrue();
-    expect(notes[0].querySelector('[data-testid="stat-tile-note-dot"]')!.className).toContain('bg-amber-500');
-    expect(notes[1].querySelector('[data-testid="stat-tile-note-dot"]')!.className).toContain('bg-destructive');
+    expect(notes[0].querySelector('[data-testid="stat-tile-note-dot"]')!.className).toContain(
+      'bg-amber-500',
+    );
+    expect(notes[1].querySelector('[data-testid="stat-tile-note-dot"]')!.className).toContain(
+      'bg-destructive',
+    );
   });
 
   it('draws no dot for a muted note', () => {
-    const el = render({ label: 'Health checks', value: '0', notes: [{ text: 'Not answering while starting', tone: 'muted' }] });
+    const el = render({
+      label: 'Health checks',
+      value: '0',
+      notes: [{ text: 'Not answering while starting', tone: 'muted' }],
+    });
     expect(el.querySelector('[data-testid="stat-tile-note-dot"]')).toBeNull();
   });
 
   it('puts the hint behind an info icon next to the label', () => {
     const el = render({ label: 'Health checks', value: '0', hint: 'One line' });
-    expect(el.querySelector('[data-testid="stat-tile-hint"]')!.getAttribute('title')).toBe('One line');
+    expect(el.querySelector('[data-testid="stat-tile-hint"]')!.getAttribute('title')).toBe(
+      'One line',
+    );
   });
 
   it('says "no history yet" only for a figure that has one to draw', () => {

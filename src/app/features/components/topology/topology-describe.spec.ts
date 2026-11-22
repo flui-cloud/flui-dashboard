@@ -28,7 +28,9 @@ describe('the inspector', () => {
   });
 
   it('lists who calls an app beside what it calls', () => {
-    expect(section({ type: 'app', id: 'a-db' }, 'Called by')!.rows.map((r) => r.label)).toEqual(['Web']);
+    expect(section({ type: 'app', id: 'a-db' }, 'Called by')!.rows.map((r) => r.label)).toEqual([
+      'Web',
+    ]);
     expect(section({ type: 'app', id: 'a-db' }, 'Reachable from the Internet')).toBeUndefined();
   });
 
@@ -36,8 +38,23 @@ describe('the inspector', () => {
     const t = topologyFixture();
     const base = t.apps.find((a) => a.id === 'a-tools')!;
     t.apps.push(
-      { ...base, id: 'flui-system/flui-api', displayName: 'Flui API', clusterId: 'c-asia', kind: 'system', statusReason: null },
-      { ...base, id: 'flui-control/loki', displayName: 'Loki', clusterId: 'c-asia', kind: 'system', status: 'warning', statusReason: 'Restarting' },
+      {
+        ...base,
+        id: 'flui-system/flui-api',
+        displayName: 'Flui API',
+        clusterId: 'c-asia',
+        kind: 'system',
+        statusReason: null,
+      },
+      {
+        ...base,
+        id: 'flui-control/loki',
+        displayName: 'Loki',
+        clusterId: 'c-asia',
+        kind: 'system',
+        status: 'warning',
+        statusReason: 'Restarting',
+      },
     );
     const view = describeFocus({ type: 'platform', id: 'c-asia' }, t)!;
     expect(view.kind).toBe('Flui platform');

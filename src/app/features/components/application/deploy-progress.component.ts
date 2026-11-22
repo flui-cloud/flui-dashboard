@@ -31,10 +31,7 @@ import { ApplicationService } from '../../service/application.service';
 import { AppRuntimeWebSocketService } from '../../service/app-runtime-websocket.service';
 import { AppEndpointsService } from '../../service/app-endpoints.service';
 import { InfrastructureOperationsService } from '../../../core/api/api/infrastructureOperations.service';
-import {
-  DeploymentProgress,
-  DeploymentStep,
-} from '../../model/application.models';
+import { DeploymentProgress, DeploymentStep } from '../../model/application.models';
 import { buildOpenAppUrl } from '../../model/open-app-url';
 import { evaluateEndpointReadiness } from '../../model/endpoint-readiness';
 import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
@@ -137,16 +134,11 @@ const DEPLOY_STEPS: Array<{
               </p>
             </div>
             <div class="text-right">
-              <div
-                [class]="getStatusBadgeClass(deployment.status)"
-                class="inline-block mb-2"
-              >
+              <div [class]="getStatusBadgeClass(deployment.status)" class="inline-block mb-2">
                 {{ getStatusLabel(deployment.status) }}
               </div>
               @if (deployment.startedAt) {
-                <div
-                  class="text-xs text-muted-foreground flex items-center justify-end"
-                >
+                <div class="text-xs text-muted-foreground flex items-center justify-end">
                   <ng-icon name="lucideClock" class="h-3 w-3 mr-1" />
                   Elapsed: {{ getElapsedTime(deployment.startedAt) }}
                 </div>
@@ -163,8 +155,7 @@ const DEPLOY_STEPS: Array<{
                 class="h-full transition-all duration-500 ease-out"
               ></div>
             </div>
-            <span
-              class="text-xs text-muted-foreground tabular-nums w-8 text-right"
+            <span class="text-xs text-muted-foreground tabular-nums w-8 text-right"
               >{{ deployment.progress }}%</span
             >
           </div>
@@ -184,19 +175,13 @@ const DEPLOY_STEPS: Array<{
                 @for (step of deployment.steps; track step.id; let i = $index) {
                   <div class="flex items-start gap-4">
                     <!-- Step Icon -->
-                    <div
-                      [class]="getStepIconClass(step.status)"
-                      class="flex-shrink-0"
-                    >
+                    <div [class]="getStepIconClass(step.status)" class="flex-shrink-0">
                       @switch (step.status) {
                         @case ('completed') {
                           <ng-icon name="lucideCheck" class="h-5 w-5" />
                         }
                         @case ('running') {
-                          <ng-icon
-                            name="lucideLoader"
-                            class="h-5 w-5 animate-spin"
-                          />
+                          <ng-icon name="lucideLoader" class="h-5 w-5 animate-spin" />
                         }
                         @case ('error') {
                           <ng-icon name="lucideX" class="h-5 w-5" />
@@ -234,9 +219,7 @@ const DEPLOY_STEPS: Array<{
 
                     <!-- Connector -->
                     @if (i < deployment.steps.length - 1) {
-                      <div
-                        class="absolute left-[18px] top-[40px] w-0.5 h-8 bg-border"
-                      ></div>
+                      <div class="absolute left-[18px] top-[40px] w-0.5 h-8 bg-border"></div>
                     }
                   </div>
                 }
@@ -245,9 +228,7 @@ const DEPLOY_STEPS: Array<{
 
             <!-- Build Logs -->
             <div class="bg-card border border-border rounded-lg">
-              <div
-                class="p-4 border-b border-border flex items-center justify-between"
-              >
+              <div class="p-4 border-b border-border flex items-center justify-between">
                 <h2 class="text-lg font-semibold flex items-center">
                   <ng-icon name="lucidePackage" class="h-5 w-5 mr-2" />
                   Build Logs
@@ -261,20 +242,13 @@ const DEPLOY_STEPS: Array<{
                 </button>
               </div>
               <div class="p-4 bg-gray-900 dark:bg-black">
-                <div
-                  class="font-mono text-xs text-slate-200 space-y-1 max-h-96 overflow-y-auto"
-                >
+                <div class="font-mono text-xs text-slate-200 space-y-1 max-h-96 overflow-y-auto">
                   @for (log of deployment.logs; track $index) {
                     <div class="whitespace-pre-wrap">{{ log }}</div>
                   }
                   @if (deployment.status === 'in_progress') {
-                    <div
-                      class="flex items-center gap-1.5 text-gray-600 dark:text-gray-500 text-xs"
-                    >
-                      <ng-icon
-                        name="lucideLoader"
-                        class="h-3 w-3 animate-spin"
-                      />
+                    <div class="flex items-center gap-1.5 text-gray-600 dark:text-gray-500 text-xs">
+                      <ng-icon name="lucideLoader" class="h-3 w-3 animate-spin" />
                       waiting...
                     </div>
                   }
@@ -287,24 +261,19 @@ const DEPLOY_STEPS: Array<{
           <div class="space-y-6">
             <!-- Success State -->
             @if (deployment.status === 'completed') {
-              <div
-                class="card-surface p-6"
-              >
+              <div class="card-surface p-6">
                 <div class="flex items-center mb-4">
                   <div
                     class="h-12 w-12 rounded-full bg-green-500/15 flex items-center justify-center mr-4"
                   >
-                    <ng-icon name="lucideCheck" class="h-6 w-6 text-green-600 dark:text-green-400" />
+                    <ng-icon
+                      name="lucideCheck"
+                      class="h-6 w-6 text-green-600 dark:text-green-400"
+                    />
                   </div>
                   <div>
-                    <h3
-                      class="font-semibold text-foreground"
-                    >
-                      Deployment Successful!
-                    </h3>
-                    <p class="text-sm text-muted-foreground">
-                      Your application is live
-                    </p>
+                    <h3 class="font-semibold text-foreground">Deployment Successful!</h3>
+                    <p class="text-sm text-muted-foreground">Your application is live</p>
                   </div>
                 </div>
 
@@ -345,18 +314,11 @@ const DEPLOY_STEPS: Array<{
                   <div
                     class="h-12 w-12 rounded-full bg-red-500 flex items-center justify-center mr-4"
                   >
-                    <ng-icon
-                      name="lucideTriangleAlert"
-                      class="h-6 w-6 text-white"
-                    />
+                    <ng-icon name="lucideTriangleAlert" class="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <h3 class="font-semibold text-red-900 dark:text-red-100">
-                      Deployment Failed
-                    </h3>
-                    <p class="text-sm text-red-700 dark:text-red-300">
-                      An error occurred
-                    </p>
+                    <h3 class="font-semibold text-red-900 dark:text-red-100">Deployment Failed</h3>
+                    <p class="text-sm text-red-700 dark:text-red-300">An error occurred</p>
                   </div>
                 </div>
 
@@ -420,9 +382,7 @@ const DEPLOY_STEPS: Array<{
                 @if (deployment.estimatedDuration) {
                   <div class="flex justify-between">
                     <span class="text-muted-foreground">Est. Duration:</span>
-                    <span class="font-medium"
-                      >~{{ deployment.estimatedDuration }}s</span
-                    >
+                    <span class="font-medium">~{{ deployment.estimatedDuration }}s</span>
                   </div>
                 }
               </div>
@@ -437,12 +397,8 @@ const DEPLOY_STEPS: Array<{
                     class="h-4 w-4 text-muted-foreground mt-0.5 animate-spin flex-shrink-0"
                   />
                   <div>
-                    <h4 class="text-sm font-medium text-foreground mb-1">
-                      Deploying...
-                    </h4>
-                    <p class="text-xs text-muted-foreground">
-                      This may take a few minutes.
-                    </p>
+                    <h4 class="text-sm font-medium text-foreground mb-1">Deploying...</h4>
+                    <p class="text-xs text-muted-foreground">This may take a few minutes.</p>
                   </div>
                 </div>
               </div>
@@ -557,9 +513,7 @@ export class DeployProgressComponent implements OnInit, OnDestroy {
 
     try {
       const op: any = await firstValueFrom(
-        this.operationsApi.infrastructureOperationsControllerGetOperationStatus(
-          this.operationId,
-        ),
+        this.operationsApi.infrastructureOperationsControllerGetOperationStatus(this.operationId),
       );
       const mappedStatus = this.mapStatus(op.status);
       const name = op.resourceName ?? op.metadata?.applicationName;
@@ -607,8 +561,7 @@ export class DeployProgressComponent implements OnInit, OnDestroy {
 
     this.wsService.subscribeToOperationEvents(this.appId, {
       onProgress: (e) => {
-        const stepId =
-          e.currentStep > 0 ? (DEPLOY_STEPS[e.currentStep - 1]?.id ?? '') : '';
+        const stepId = e.currentStep > 0 ? (DEPLOY_STEPS[e.currentStep - 1]?.id ?? '') : '';
         this.applyOperationUpdate({
           percentage: e.percentage,
           currentStep: stepId,
@@ -656,11 +609,7 @@ export class DeployProgressComponent implements OnInit, OnDestroy {
       if (!prev) return prev;
 
       const mappedStatus = this.mapStatus(update.status);
-      const steps = this.buildSteps(
-        update.currentStep,
-        update.percentage,
-        update.errorMessage,
-      );
+      const steps = this.buildSteps(update.currentStep, update.percentage, update.errorMessage);
       const runningIdx = steps.findIndex((s) => s.status === 'running');
       const allCompleted = steps.every((s) => s.status === 'completed');
       let currentStepIdx: number;
@@ -673,18 +622,13 @@ export class DeployProgressComponent implements OnInit, OnDestroy {
         status: mappedStatus,
         progress: update.percentage,
         currentStep: update.currentStep,
-        currentStepIndex:
-          currentStepIdx >= 0 ? currentStepIdx : prev.currentStepIndex,
+        currentStepIndex: currentStepIdx >= 0 ? currentStepIdx : prev.currentStepIndex,
         totalSteps: update.totalSteps,
         steps,
         errorMessage: update.errorMessage,
         applicationId: update.appId || prev.applicationId,
-        startedAt:
-          prev.startedAt ??
-          (update.startedAt ? new Date(update.startedAt) : undefined),
-        logs: update.message
-          ? [...prev.logs, update.message].slice(-50)
-          : prev.logs,
+        startedAt: prev.startedAt ?? (update.startedAt ? new Date(update.startedAt) : undefined),
+        logs: update.message ? [...prev.logs, update.message].slice(-50) : prev.logs,
       };
     });
   }
@@ -714,11 +658,9 @@ export class DeployProgressComponent implements OnInit, OnDestroy {
   }
 
   private mapStatus(apiStatus: string): DeploymentProgress['status'] {
-    if (apiStatus === 'COMPLETED' || apiStatus === 'completed')
-      return 'completed';
+    if (apiStatus === 'COMPLETED' || apiStatus === 'completed') return 'completed';
     if (apiStatus === 'FAILED' || apiStatus === 'failed') return 'failed';
-    if (apiStatus === 'IN_PROGRESS' || apiStatus === 'in_progress')
-      return 'in_progress';
+    if (apiStatus === 'IN_PROGRESS' || apiStatus === 'in_progress') return 'in_progress';
     return 'pending';
   }
 
@@ -726,18 +668,14 @@ export class DeployProgressComponent implements OnInit, OnDestroy {
     this.elapsedIntervalId = setInterval(() => {
       const deployment = this.progress();
       if (deployment?.startedAt) {
-        const elapsed = Math.floor(
-          (Date.now() - new Date(deployment.startedAt).getTime()) / 1000,
-        );
+        const elapsed = Math.floor((Date.now() - new Date(deployment.startedAt).getTime()) / 1000);
         this.elapsedTime.set(this.formatDuration(elapsed));
       }
     }, 1000);
   }
 
   getElapsedTime(startedAt: Date): string {
-    const elapsed = Math.floor(
-      (Date.now() - new Date(startedAt).getTime()) / 1000,
-    );
+    const elapsed = Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000);
     return this.formatDuration(elapsed);
   }
 

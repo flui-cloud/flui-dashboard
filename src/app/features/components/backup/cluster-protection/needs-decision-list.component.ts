@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  inject,
-  input,
-  output,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, output, signal } from '@angular/core';
 import { BackupService } from '../../../service/backup.service';
 import { NeedsDecisionItem } from '../../../model/backup-protection.models';
 import { ReadOnlySectionDirective } from '../../../../shared/directives/read-only-section.directive';
@@ -27,7 +20,11 @@ import { ReadOnlySectionDirective } from '../../../../shared/directives/read-onl
       >
         <div class="flex items-center justify-between gap-2">
           <span class="text-sm font-medium text-amber-800 dark:text-amber-300">
-            {{ items().length === 1 ? '1 volume needs a decision' : items().length + ' volumes need a decision' }}
+            {{
+              items().length === 1
+                ? '1 volume needs a decision'
+                : items().length + ' volumes need a decision'
+            }}
           </span>
           <button
             type="button"
@@ -39,9 +36,8 @@ import { ReadOnlySectionDirective } from '../../../../shared/directives/read-onl
         </div>
         @if (showHelp()) {
           <p class="text-xs text-muted-foreground">
-            A copy taken while a database writes to its volume may not open
-            again. Stop the app for the length of each copy, or leave the volume
-            out and protect that data another way.
+            A copy taken while a database writes to its volume may not open again. Stop the app for
+            the length of each copy, or leave the volume out and protect that data another way.
           </p>
         }
         <ul class="space-y-2">
@@ -51,7 +47,9 @@ import { ReadOnlySectionDirective } from '../../../../shared/directives/read-onl
                 <span>
                   <span class="font-medium">{{ item.name || item.slug }}</span>
                   @if (item.volume) {
-                    <span class="font-mono text-xs text-muted-foreground"> / {{ item.volume }}</span>
+                    <span class="font-mono text-xs text-muted-foreground">
+                      / {{ item.volume }}</span
+                    >
                   }
                 </span>
                 <span class="inline-flex gap-1.5" appReadOnlySection="backup">
@@ -143,19 +141,14 @@ export class NeedsDecisionListComponent {
     });
   }
 
-  private async run(
-    item: NeedsDecisionItem,
-    action: () => Promise<void>,
-  ): Promise<void> {
+  private async run(item: NeedsDecisionItem, action: () => Promise<void>): Promise<void> {
     this.busy.set(this.key(item));
     this.failure.set(null);
     try {
       await action();
       this.decided.emit();
     } catch (err: any) {
-      this.failure.set(
-        err?.error?.message ?? err?.message ?? 'Could not save the decision',
-      );
+      this.failure.set(err?.error?.message ?? err?.message ?? 'Could not save the decision');
     } finally {
       this.busy.set(null);
     }

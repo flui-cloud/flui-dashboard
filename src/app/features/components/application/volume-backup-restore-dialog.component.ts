@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  input,
-  output,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideLoader, lucideRotateCcw } from '@ng-icons/lucide';
@@ -30,9 +23,8 @@ import { formatDate } from './snapshot-format';
       >
         <h3 class="text-lg font-semibold">Restore whole backup</h3>
         <p class="text-sm text-muted-foreground">
-          The backup of {{ taken() }} is
-          written into a new volume. The running app is not touched; switch to
-          the new volume when you are ready.
+          The backup of {{ taken() }} is written into a new volume. The running app is not touched;
+          switch to the new volume when you are ready.
         </p>
         <label class="block text-sm">
           <span class="text-xs text-muted-foreground">Restore into</span>

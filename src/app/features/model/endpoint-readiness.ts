@@ -1,11 +1,11 @@
 import { AppEndpointResponseDto } from '../../core/api/model/appEndpointResponseDto';
 
 export type EndpointReadinessState =
-  | 'loading'        // endpoint not yet fetched
-  | 'dns-pending'    // reconciliation still running
-  | 'cert-pending'   // DNS OK but certificate not yet valid
-  | 'ready'          // DNS in sync + cert valid (or cert not required)
-  | 'failed';        // reconciliation or cert in terminal error
+  | 'loading' // endpoint not yet fetched
+  | 'dns-pending' // reconciliation still running
+  | 'cert-pending' // DNS OK but certificate not yet valid
+  | 'ready' // DNS in sync + cert valid (or cert not required)
+  | 'failed'; // reconciliation or cert in terminal error
 
 export interface EndpointReadiness {
   state: EndpointReadinessState;

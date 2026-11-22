@@ -103,26 +103,19 @@ type StatusFilter = 'all' | SnapshotStatus;
         <app-db-pitr [appId]="appId()" />
       }
 
-      <app-volume-backups
-        #volumeBackups
-        [appId]="appId()"
-        (restoredHere)="reloadSpare()"
-      />
+      <app-volume-backups #volumeBackups [appId]="appId()" (restoredHere)="reloadSpare()" />
 
       <!-- Toolbar -->
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 class="text-lg font-semibold flex items-center gap-2">
-            <ng-icon
-              name="lucideCamera"
-              class="h-5 w-5 text-indigo-600 dark:text-indigo-400"
-            />
+            <ng-icon name="lucideCamera" class="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
             Volume copies
           </h2>
           <p class="text-sm text-muted-foreground mt-0.5">
-            A file copy of this app's volume, taken as it is unless the app was
-            stopped first. These live on the same disk as the app, so deleting
-            the app deletes them too — and they cost storage while they exist.
+            A file copy of this app's volume, taken as it is unless the app was stopped first. These
+            live on the same disk as the app, so deleting the app deletes them too — and they cost
+            storage while they exist.
           </p>
         </div>
         <div class="flex items-center gap-2">
@@ -251,10 +244,7 @@ type StatusFilter = 'all' | SnapshotStatus;
       } @else if (filtered().length === 0) {
         <!-- Empty -->
         <div class="card-inner p-8 text-center">
-          <ng-icon
-            name="lucideCamera"
-            class="h-10 w-10 text-muted-foreground mx-auto mb-3"
-          />
+          <ng-icon name="lucideCamera" class="h-10 w-10 text-muted-foreground mx-auto mb-3" />
           <p class="text-sm font-medium">
             @if (filter() === 'all') {
               No copies yet
@@ -264,9 +254,8 @@ type StatusFilter = 'all' | SnapshotStatus;
           </p>
           @if (filter() === 'all') {
             <p class="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
-              Take a copy to keep this volume's contents as they are now. Each
-              copy is a full second copy of the data, on the same storage the
-              application uses.
+              Take a copy to keep this volume's contents as they are now. Each copy is a full second
+              copy of the data, on the same storage the application uses.
             </p>
           }
         </div>
@@ -274,9 +263,7 @@ type StatusFilter = 'all' | SnapshotStatus;
         <div class="card-inner overflow-x-auto">
           <table class="w-full text-sm">
             <thead>
-              <tr
-                class="text-left text-muted-foreground border-b border-border"
-              >
+              <tr class="text-left text-muted-foreground border-b border-border">
                 <th class="px-4 py-3 font-normal">Created</th>
                 <th class="px-4 py-3 font-normal">Volume</th>
                 <th class="px-4 py-3 font-normal">Type</th>
@@ -288,12 +275,8 @@ type StatusFilter = 'all' | SnapshotStatus;
             <tbody>
               @for (snap of filtered(); track snap.exportId) {
                 @let st = derivedStatus(snap);
-                <tr
-                  class="border-b border-border/50 last:border-0 hover:bg-muted/30"
-                >
-                  <td
-                    class="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap"
-                  >
+                <tr class="border-b border-border/50 last:border-0 hover:bg-muted/30">
+                  <td class="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
                     {{ formatDate(snap.createdAt) }}
                   </td>
                   <td class="px-4 py-3 font-mono text-xs">
@@ -309,15 +292,9 @@ type StatusFilter = 'all' | SnapshotStatus;
                     </span>
                   </td>
                   <td class="px-4 py-3">
-                    <span
-                      class="text-xs flex items-center gap-1.5"
-                      [class]="statusClass(st)"
-                    >
+                    <span class="text-xs flex items-center gap-1.5" [class]="statusClass(st)">
                       @if (st === 'PENDING' || st === 'DELETING') {
-                        <ng-icon
-                          name="lucideLoader"
-                          class="h-3 w-3 animate-spin"
-                        />
+                        <ng-icon name="lucideLoader" class="h-3 w-3 animate-spin" />
                       }
                       {{ statusLabel(snap) }}
                     </span>
@@ -334,28 +311,19 @@ type StatusFilter = 'all' | SnapshotStatus;
                     <div class="inline-flex items-center gap-1">
                       <button
                         (click)="confirmRestore(snap)"
-                        [disabled]="
-                          !snap.ready ||
-                          st === 'DELETING' ||
-                          isRestoring(snap.exportId)
-                        "
+                        [disabled]="!snap.ready || st === 'DELETING' || isRestoring(snap.exportId)"
                         class="p-1.5 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 dark:text-blue-400 transition-colors disabled:opacity-50"
                         title="Restore snapshot"
                       >
                         @if (isRestoring(snap.exportId)) {
-                          <ng-icon
-                            name="lucideLoader"
-                            class="h-3.5 w-3.5 animate-spin"
-                          />
+                          <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
                         } @else {
                           <ng-icon name="lucideRotateCcw" class="h-3.5 w-3.5" />
                         }
                       </button>
                       <button
                         (click)="confirmDelete(snap)"
-                        [disabled]="
-                          st === 'DELETING' || isDeleting(snap.exportId)
-                        "
+                        [disabled]="st === 'DELETING' || isDeleting(snap.exportId)"
                         class="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors disabled:opacity-50"
                         title="Delete snapshot"
                       >
@@ -374,14 +342,11 @@ type StatusFilter = 'all' | SnapshotStatus;
         <div class="space-y-2">
           <h3 class="text-sm font-semibold">Restored and previous volumes</h3>
           <p class="text-xs text-muted-foreground">
-            Full volumes this application does not run on, paid for while they
-            exist.
+            Full volumes this application does not run on, paid for while they exist.
           </p>
           <div class="card-inner divide-y divide-border/50">
             @for (v of spare(); track v.name) {
-              <div
-                class="flex items-center justify-between gap-3 px-4 py-2 text-sm"
-              >
+              <div class="flex items-center justify-between gap-3 px-4 py-2 text-sm">
                 <div class="min-w-0">
                   <div class="font-mono text-xs truncate">{{ v.name }}</div>
                   <div class="text-xs text-muted-foreground">
@@ -427,9 +392,7 @@ type StatusFilter = 'all' | SnapshotStatus;
 
     <app-snapshot-delete-dialog
       [snapshot]="pendingDelete()"
-      [deleting]="
-        pendingDelete() ? isDeleting(pendingDelete()!.exportId) : false
-      "
+      [deleting]="pendingDelete() ? isDeleting(pendingDelete()!.exportId) : false"
       (execute)="executeDelete()"
       (cancelled)="cancelDelete()"
     />
@@ -458,9 +421,7 @@ export class AppSnapshotsTabComponent implements OnInit, OnDestroy {
     () => !!databaseEngineOf(this.appService.selectedApplication() as never),
   );
   readonly isPostgres = computed(
-    () =>
-      databaseEngineOf(this.appService.selectedApplication() as never) ===
-      'postgres',
+    () => databaseEngineOf(this.appService.selectedApplication() as never) === 'postgres',
   );
   readonly hasSeveralVolumes = computed(
     () =>
@@ -498,8 +459,7 @@ export class AppSnapshotsTabComponent implements OnInit, OnDestroy {
     return f === 'all' ? list : list.filter((s) => snapshotStatus(s) === f);
   });
 
-  readonly appId = (): string | null =>
-    this.appService.selectedApplication()?.id ?? null;
+  readonly appId = (): string | null => this.appService.selectedApplication()?.id ?? null;
 
   ngOnInit(): void {
     void (async () => {
@@ -511,10 +471,7 @@ export class AppSnapshotsTabComponent implements OnInit, OnDestroy {
     })();
   }
 
-  async retryRefused(extra: {
-    pause?: boolean;
-    allowInconsistent?: boolean;
-  }): Promise<void> {
+  async retryRefused(extra: { pause?: boolean; allowInconsistent?: boolean }): Promise<void> {
     const id = this.appId();
     const refused = this.refusal();
     if (!id || !refused) return;
@@ -629,11 +586,7 @@ export class AppSnapshotsTabComponent implements OnInit, OnDestroy {
       const result = await this.snapshotsService.restore(id, snap.exportId);
       if (!result) return;
       if (restoreAndSwap) {
-        await this.snapshotsService.swap(
-          id,
-          snap.sourcePvcName ?? 'data',
-          result.newPvcName,
-        );
+        await this.snapshotsService.swap(id, snap.sourcePvcName ?? 'data', result.newPvcName);
       }
       this.pendingRestore.set(null);
       await this.snapshotsService.loadForApp(id);

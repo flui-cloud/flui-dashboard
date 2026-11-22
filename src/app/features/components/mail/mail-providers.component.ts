@@ -7,7 +7,7 @@ import {
   effect,
   inject,
   signal,
-  viewChild
+  viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -54,7 +54,8 @@ const SCOPES: { id: MailScope; title: string; blurb: string }[] = [
   {
     id: 'transactional',
     title: 'Transactional',
-    blurb: 'One message, to one person, because they did something. Password resets, invites, receipts.',
+    blurb:
+      'One message, to one person, because they did something. Password resets, invites, receipts.',
   },
   {
     id: 'bulk',
@@ -68,7 +69,8 @@ const SCOPES: { id: MailScope; title: string; blurb: string }[] = [
   selector: 'app-mail-providers',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReadOnlySectionDirective, 
+  imports: [
+    ReadOnlySectionDirective,
     FormsModule,
     NgIcon,
     MailSectionNavComponent,
@@ -108,9 +110,9 @@ const SCOPES: { id: MailScope; title: string; blurb: string }[] = [
       </app-mail-section-nav>
 
       <p class="mb-5 max-w-3xl text-sm text-muted-foreground">
-        Two senders, kept apart on purpose. A provider that suspends an account over a mailing
-        list would take the password resets down with it, so bulk and transactional never share
-        an account, a credential or a sending domain.
+        Two senders, kept apart on purpose. A provider that suspends an account over a mailing list
+        would take the password resets down with it, so bulk and transactional never share an
+        account, a credential or a sending domain.
       </p>
 
       @if (loading()) {
@@ -141,145 +143,150 @@ const SCOPES: { id: MailScope; title: string; blurb: string }[] = [
             <div class="divide-y divide-border">
               @for (row of rowsFor(slot.id); track row.id) {
                 <div class="px-4 py-3">
-                 <div class="flex flex-wrap items-start justify-between gap-3">
-                  <div class="min-w-0">
-                    <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-                      <span class="flex items-center gap-1.5 font-medium text-foreground">
+                  <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div class="min-w-0">
+                      <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                        <span class="flex items-center gap-1.5 font-medium text-foreground">
+                          <span
+                            class="h-1.5 w-1.5 rounded-full"
+                            [class]="row.isActive ? 'bg-emerald-500' : 'bg-muted-foreground/40'"
+                          ></span>
+                          {{ row.label }}
+                        </span>
                         <span
-                          class="h-1.5 w-1.5 rounded-full"
-                          [class]="row.isActive ? 'bg-emerald-500' : 'bg-muted-foreground/40'"
-                        ></span>
-                        {{ row.label }}
-                      </span>
-                      <span
-                        class="rounded-md px-1.5 py-0.5 text-[11px]"
-                        [class]="
-                          row.isActive
-                            ? 'bg-emerald-50 font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400'
-                            : 'bg-muted text-muted-foreground'
-                        "
-                      >
-                        {{ row.isActive ? 'Sending' : 'Ready, not sending' }}
-                      </span>
-                      @if (row.implicit) {
-                        <span
-                          class="rounded-md bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground"
+                          class="rounded-md px-1.5 py-0.5 text-[11px]"
+                          [class]="
+                            row.isActive
+                              ? 'bg-emerald-50 font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400'
+                              : 'bg-muted text-muted-foreground'
+                          "
                         >
-                          already in use
+                          {{ row.isActive ? 'Sending' : 'Ready, not sending' }}
                         </span>
+                        @if (row.implicit) {
+                          <span
+                            class="rounded-md bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground"
+                          >
+                            already in use
+                          </span>
+                        }
+                        @if (row.sendingDomain) {
+                          <span class="font-mono text-xs text-muted-foreground">
+                            from {{ row.sendingDomain }}
+                          </span>
+                        }
+                        @if (blindSpotOf(row.provider); as blind) {
+                          <span
+                            class="inline-flex items-center gap-1 rounded-md bg-amber-50 px-1.5 py-0.5 text-[11px] text-amber-800 dark:bg-amber-500/10 dark:text-amber-400"
+                            [title]="blind"
+                          >
+                            <ng-icon name="lucideEyeOff" class="h-3 w-3" /> limited reporting
+                          </span>
+                        }
+                      </div>
+
+                      @if (row.credentialNote) {
+                        <p class="mt-1.5 text-xs text-muted-foreground">{{ row.credentialNote }}</p>
                       }
-                      @if (row.sendingDomain) {
-                        <span class="font-mono text-xs text-muted-foreground">
-                          from {{ row.sendingDomain }}
-                        </span>
+                      @if (row.implicit && !row.sendingDomain) {
+                        @if (verifiedDomains().length) {
+                          <p class="mt-1.5 text-xs text-muted-foreground">
+                            Sending from
+                            <span class="font-mono text-foreground">
+                              {{ verifiedDomains().join(', ') }}
+                            </span>
+                            — verified at the provider.
+                          </p>
+                        } @else {
+                          <p class="mt-1.5 text-xs text-muted-foreground">
+                            No verified domain yet. Mail is refused until one is set up.
+                          </p>
+                        }
                       }
                       @if (blindSpotOf(row.provider); as blind) {
-                        <span
-                          class="inline-flex items-center gap-1 rounded-md bg-amber-50 px-1.5 py-0.5 text-[11px] text-amber-800 dark:bg-amber-500/10 dark:text-amber-400"
-                          [title]="blind"
-                        >
-                          <ng-icon name="lucideEyeOff" class="h-3 w-3" /> limited reporting
-                        </span>
+                        <p class="mt-1.5 text-xs text-muted-foreground">{{ blind }}</p>
+                      }
+
+                      @if (!row.implicit) {
+                        <app-mail-connection-setup
+                          [connectionId]="row.id"
+                          [providerName]="providerLabel(row.provider)"
+                        />
+                      }
+
+                      @if (!row.webhookRegistered && pushes(row.provider)) {
+                        <div class="mt-2 rounded-md bg-amber-50 p-2 dark:bg-amber-500/10">
+                          <p class="text-xs font-medium text-amber-900 dark:text-amber-300">
+                            Delivered, bounced and marked-as-spam are not being reported.
+                          </p>
+                          @if (row.webhookNote) {
+                            <p class="mt-0.5 text-[11px] text-amber-800 dark:text-amber-400">
+                              {{ row.webhookNote }}
+                            </p>
+                          }
+                          <button
+                            appReadOnlySection="mail"
+                            type="button"
+                            (click)="retryWebhook(row)"
+                            [disabled]="retrying() === row.id"
+                            class="mt-1.5 inline-flex h-7 items-center gap-1.5 rounded-md border border-amber-300 px-2 text-[11px] font-medium text-amber-900 hover:bg-amber-100 disabled:opacity-60 dark:border-amber-500/40 dark:text-amber-300 dark:hover:bg-amber-500/20"
+                          >
+                            @if (retrying() === row.id) {
+                              <ng-icon name="lucideRotateCcw" class="h-3 w-3 animate-spin" />
+                            }
+                            Try again
+                          </button>
+                        </div>
                       }
                     </div>
 
-                    @if (row.credentialNote) {
-                      <p class="mt-1.5 text-xs text-muted-foreground">{{ row.credentialNote }}</p>
-                    }
-                    @if (row.implicit && !row.sendingDomain) {
-                      @if (verifiedDomains().length) {
-                        <p class="mt-1.5 text-xs text-muted-foreground">
-                          Sending from
-                          <span class="font-mono text-foreground">
-                            {{ verifiedDomains().join(', ') }}
-                          </span>
-                          — verified at the provider.
-                        </p>
-                      } @else {
-                        <p class="mt-1.5 text-xs text-muted-foreground">
-                          No verified domain yet. Mail is refused until one is set up.
-                        </p>
-                      }
-                    }
-                    @if (blindSpotOf(row.provider); as blind) {
-                      <p class="mt-1.5 text-xs text-muted-foreground">{{ blind }}</p>
-                    }
-
-                    @if (!row.implicit) {
-                      <app-mail-connection-setup
-                        [connectionId]="row.id"
-                        [providerName]="providerLabel(row.provider)"
-                      />
-                    }
-
-                    @if (!row.webhookRegistered && pushes(row.provider)) {
-                      <div class="mt-2 rounded-md bg-amber-50 p-2 dark:bg-amber-500/10">
-                        <p class="text-xs font-medium text-amber-900 dark:text-amber-300">
-                          Delivered, bounced and marked-as-spam are not being reported.
-                        </p>
-                        @if (row.webhookNote) {
-                          <p class="mt-0.5 text-[11px] text-amber-800 dark:text-amber-400">
-                            {{ row.webhookNote }}
-                          </p>
-                        }
-                        <button appReadOnlySection="mail"
+                    <div class="flex shrink-0 items-center gap-2">
+                      <button
+                        appReadOnlySection="mail"
+                        type="button"
+                        (click)="toggleTest(row)"
+                        class="inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-2.5 text-xs text-muted-foreground hover:bg-muted"
+                      >
+                        <ng-icon name="lucideSend" class="h-3.5 w-3.5" />
+                        {{ testing() === row.id ? 'Close' : 'Test' }}
+                      </button>
+                      @if (!row.implicit) {
+                        <button
+                          appReadOnlySection="mail"
                           type="button"
-                          (click)="retryWebhook(row)"
-                          [disabled]="retrying() === row.id"
-                          class="mt-1.5 inline-flex h-7 items-center gap-1.5 rounded-md border border-amber-300 px-2 text-[11px] font-medium text-amber-900 hover:bg-amber-100 disabled:opacity-60 dark:border-amber-500/40 dark:text-amber-300 dark:hover:bg-amber-500/20"
+                          (click)="toggleAddDomain(row)"
+                          class="inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-2.5 text-xs text-muted-foreground hover:bg-muted"
                         >
-                          @if (retrying() === row.id) {
-                            <ng-icon name="lucideRotateCcw" class="h-3 w-3 animate-spin" />
-                          }
-                          Try again
+                          <ng-icon name="lucidePlus" class="h-3.5 w-3.5" />
+                          {{ adding() === row.id ? 'Close' : 'Add domain' }}
                         </button>
-                      </div>
-                    }
+                      }
+                      @if (!row.isActive) {
+                        <button
+                          appReadOnlySection="mail"
+                          type="button"
+                          (click)="activate(row)"
+                          [disabled]="switching() === row.id"
+                          class="inline-flex h-8 items-center gap-1.5 rounded-md border border-primary bg-primary/10 px-2.5 text-xs font-medium text-foreground hover:bg-primary/20 disabled:opacity-60"
+                        >
+                          @if (switching() === row.id) {
+                            <ng-icon name="lucideRotateCcw" class="h-3.5 w-3.5 animate-spin" />
+                          }
+                          Send through this one
+                        </button>
+                      }
+                      @if (!row.implicit) {
+                        <button
+                          appReadOnlySection="mail"
+                          type="button"
+                          (click)="askDisconnect(row)"
+                          class="inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-2.5 text-xs text-muted-foreground hover:bg-muted"
+                        >
+                          <ng-icon name="lucideTrash2" class="h-3.5 w-3.5" /> Disconnect
+                        </button>
+                      }
+                    </div>
                   </div>
-
-                  <div class="flex shrink-0 items-center gap-2">
-                    <button appReadOnlySection="mail"
-                      type="button"
-                      (click)="toggleTest(row)"
-                      class="inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-2.5 text-xs text-muted-foreground hover:bg-muted"
-                    >
-                      <ng-icon name="lucideSend" class="h-3.5 w-3.5" />
-                      {{ testing() === row.id ? 'Close' : 'Test' }}
-                    </button>
-                    @if (!row.implicit) {
-                      <button appReadOnlySection="mail"
-                        type="button"
-                        (click)="toggleAddDomain(row)"
-                        class="inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-2.5 text-xs text-muted-foreground hover:bg-muted"
-                      >
-                        <ng-icon name="lucidePlus" class="h-3.5 w-3.5" />
-                        {{ adding() === row.id ? 'Close' : 'Add domain' }}
-                      </button>
-                    }
-                    @if (!row.isActive) {
-                      <button appReadOnlySection="mail"
-                        type="button"
-                        (click)="activate(row)"
-                        [disabled]="switching() === row.id"
-                        class="inline-flex h-8 items-center gap-1.5 rounded-md border border-primary bg-primary/10 px-2.5 text-xs font-medium text-foreground hover:bg-primary/20 disabled:opacity-60"
-                      >
-                        @if (switching() === row.id) {
-                          <ng-icon name="lucideRotateCcw" class="h-3.5 w-3.5 animate-spin" />
-                        }
-                        Send through this one
-                      </button>
-                    }
-                    @if (!row.implicit) {
-                      <button appReadOnlySection="mail"
-                        type="button"
-                        (click)="askDisconnect(row)"
-                        class="inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-2.5 text-xs text-muted-foreground hover:bg-muted"
-                      >
-                        <ng-icon name="lucideTrash2" class="h-3.5 w-3.5" /> Disconnect
-                      </button>
-                    }
-                  </div>
-                 </div>
 
                   @if (adding() === row.id) {
                     <div class="mt-3 rounded-md border border-border bg-muted/30 p-3">
@@ -295,7 +302,8 @@ const SCOPES: { id: MailScope; title: string; blurb: string }[] = [
                             (domainChange)="newDomain.set($event)"
                           />
                         </div>
-                        <button appReadOnlySection="mail"
+                        <button
+                          appReadOnlySection="mail"
                           type="button"
                           (click)="addDomain(row)"
                           [disabled]="registering() || !newDomain().trim()"
@@ -311,7 +319,9 @@ const SCOPES: { id: MailScope; title: string; blurb: string }[] = [
                         <p class="mt-2 text-xs text-destructive">{{ failed }}</p>
                       }
                       @if (added(); as done) {
-                        <p class="mt-2 text-xs text-emerald-700 dark:text-emerald-400">{{ done }}</p>
+                        <p class="mt-2 text-xs text-emerald-700 dark:text-emerald-400">
+                          {{ done }}
+                        </p>
                       }
                     </div>
                   }
@@ -335,7 +345,8 @@ const SCOPES: { id: MailScope; title: string; blurb: string }[] = [
 
             @if (openSlot() !== slot.id) {
               <div class="px-4 pb-3">
-                <button appReadOnlySection="mail"
+                <button
+                  appReadOnlySection="mail"
                   type="button"
                   (click)="openFor(slot.id)"
                   class="inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-2.5 text-xs font-medium text-foreground hover:bg-muted"
@@ -421,9 +432,7 @@ const SCOPES: { id: MailScope; title: string; blurb: string }[] = [
                     <div>
                       <app-mail-domain-picker
                         [suggestedPrefix]="slot.id === 'bulk' ? 'news' : 'mail'"
-                        [placeholder]="
-                          slot.id === 'bulk' ? 'news.example.com' : 'mail.example.com'
-                        "
+                        [placeholder]="slot.id === 'bulk' ? 'news.example.com' : 'mail.example.com'"
                         (domainChange)="domain = $event"
                       />
                       @if (slot.id === 'bulk') {
@@ -434,8 +443,8 @@ const SCOPES: { id: MailScope; title: string; blurb: string }[] = [
                       }
                       @if (!p.automatesDomain) {
                         <span class="mt-1 block text-[11px] text-muted-foreground">
-                          This provider verifies domains in its own console. Flui can still
-                          publish the records you paste.
+                          This provider verifies domains in its own console. Flui can still publish
+                          the records you paste.
                         </span>
                       }
                     </div>
@@ -544,7 +553,8 @@ const SCOPES: { id: MailScope; title: string; blurb: string }[] = [
                   }
 
                   <div class="mt-4 flex items-center gap-2">
-                    <button appReadOnlySection="mail"
+                    <button
+                      appReadOnlySection="mail"
                       type="button"
                       (click)="connect(slot.id)"
                       [disabled]="connecting() || !canConnect()"
@@ -802,7 +812,7 @@ export class MailProvidersComponent implements OnInit, OnDestroy {
           result.outstanding.length
             ? `${domain} is registered. Flui does not hold that zone, so its ${result.outstanding.length} record(s) are waiting on the Domains page.`
             : `${domain} is registered and its records are written. ` +
-              `${this.providerLabel(connection.provider)} verifies on its own schedule.`,
+                `${this.providerLabel(connection.provider)} verifies on its own schedule.`,
         );
       },
       error: (err) => {

@@ -14,7 +14,10 @@ import {
   lucideLoader,
   lucideCheck,
 } from '@ng-icons/lucide';
-import { WizardStepperComponent, WizardStepperStep } from '../../../shared/components/wizard-stepper/wizard-stepper.component';
+import {
+  WizardStepperComponent,
+  WizardStepperStep,
+} from '../../../shared/components/wizard-stepper/wizard-stepper.component';
 import { DeployWizardStateService } from '../../service/deploy-wizard-state.service';
 import {
   ApplicationService,
@@ -30,7 +33,10 @@ import { ClusterInfo } from '../../model/cluster.models';
 import { ExtractEnvStepComponent } from './extract-env-step.component';
 import { DeployConfigStepComponent } from './deploy-config-step.component';
 import { RuntimeConfigStepComponent } from './runtime-config-step.component';
-import { GenerateWorkflowStepComponent, WorkflowGenerationState } from './generate-workflow-step.component';
+import {
+  GenerateWorkflowStepComponent,
+  WorkflowGenerationState,
+} from './generate-workflow-step.component';
 
 interface WizardStep {
   id: string;
@@ -39,11 +45,11 @@ interface WizardStep {
 }
 
 const WIZARD_STEPS: WizardStep[] = [
-  { id: 'cluster',   label: 'Cluster',      icon: 'lucideServer' },
-  { id: 'envvars',   label: 'Env Vars',     icon: 'lucideKey' },
-  { id: 'config',    label: 'Deploy Config',icon: 'lucideSettings' },
-  { id: 'runtime',   label: 'Runtime',      icon: 'lucideCpu' },
-  { id: 'workflow',  label: 'Generate',     icon: 'lucideGithub' },
+  { id: 'cluster', label: 'Cluster', icon: 'lucideServer' },
+  { id: 'envvars', label: 'Env Vars', icon: 'lucideKey' },
+  { id: 'config', label: 'Deploy Config', icon: 'lucideSettings' },
+  { id: 'runtime', label: 'Runtime', icon: 'lucideCpu' },
+  { id: 'workflow', label: 'Generate', icon: 'lucideGithub' },
 ];
 
 @Component({
@@ -55,18 +61,32 @@ const WIZARD_STEPS: WizardStep[] = [
     ExtractEnvStepComponent,
     DeployConfigStepComponent,
     RuntimeConfigStepComponent,
-    GenerateWorkflowStepComponent
-],
+    GenerateWorkflowStepComponent,
+  ],
   providers: [
     DeployWizardStateService,
-    provideIcons({ lucideGithub, lucideKey, lucideSettings, lucideServer, lucideCpu, lucideArrowLeft, lucideArrowRight, lucideLoader, lucideCheck }),
+    provideIcons({
+      lucideGithub,
+      lucideKey,
+      lucideSettings,
+      lucideServer,
+      lucideCpu,
+      lucideArrowLeft,
+      lucideArrowRight,
+      lucideLoader,
+      lucideCheck,
+    }),
   ],
   template: `
     <div class="min-h-screen bg-background flex flex-col">
       <!-- Header -->
       <div class="border-b border-border px-6 py-4">
         <div class="flex items-center gap-3">
-          <button type="button" (click)="goBack()" class="p-1.5 rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground">
+          <button
+            type="button"
+            (click)="goBack()"
+            class="p-1.5 rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
+          >
             <ng-icon name="lucideArrowLeft" class="h-4 w-4" />
           </button>
           <div>
@@ -89,7 +109,9 @@ const WIZARD_STEPS: WizardStep[] = [
           @switch (currentStep().id) {
             @case ('cluster') {
               <div class="space-y-3">
-                <p class="text-sm text-muted-foreground">Select the cluster where the application will be deployed.</p>
+                <p class="text-sm text-muted-foreground">
+                  Select the cluster where the application will be deployed.
+                </p>
                 @if (isLoadingClusters()) {
                   <div class="flex items-center gap-2 text-sm text-muted-foreground">
                     <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
@@ -105,7 +127,9 @@ const WIZARD_STEPS: WizardStep[] = [
                       >
                         <div>
                           <div class="font-medium text-sm">{{ cluster.name }}</div>
-                          <div class="text-xs text-muted-foreground">{{ cluster.region }} · {{ cluster.nodeCount }} node(s)</div>
+                          <div class="text-xs text-muted-foreground">
+                            {{ cluster.region }} · {{ cluster.nodeCount }} node(s)
+                          </div>
                         </div>
                         @if (selectedClusterId() === cluster.id) {
                           <ng-icon name="lucideCheck" class="h-4 w-4 text-primary ml-auto" />
@@ -113,7 +137,9 @@ const WIZARD_STEPS: WizardStep[] = [
                       </button>
                     }
                     @if (availableClusters().length === 0) {
-                      <p class="text-sm text-muted-foreground">No clusters available. Create a cluster first.</p>
+                      <p class="text-sm text-muted-foreground">
+                        No clusters available. Create a cluster first.
+                      </p>
                     }
                   </div>
                 }
@@ -198,13 +224,11 @@ export class GhaDeployWizardComponent implements OnInit {
   workflowError = signal<string | null>(null);
   globalError = signal<string | null>(null);
 
-  readonly availableClusters = computed(() =>
-    this.clusterService.clusters().filter(c => !!c.id)
-  );
+  readonly availableClusters = computed(() => this.clusterService.clusters().filter((c) => !!c.id));
 
   readonly steps = WIZARD_STEPS;
   readonly visibleSteps = computed(() =>
-    this.state.needsRuntimeConfig() ? WIZARD_STEPS : WIZARD_STEPS.filter(s => s.id !== 'runtime')
+    this.state.needsRuntimeConfig() ? WIZARD_STEPS : WIZARD_STEPS.filter((s) => s.id !== 'runtime'),
   );
 
   readonly currentStep = computed(() => this.visibleSteps()[this.currentStepIndex()]);
@@ -217,7 +241,7 @@ export class GhaDeployWizardComponent implements OnInit {
       icon: s.icon,
       isValid: true,
       isCompleted: i < this.currentStepIndex(),
-    }))
+    })),
   );
 
   readonly canProceed = computed(() => {
@@ -230,21 +254,21 @@ export class GhaDeployWizardComponent implements OnInit {
     void (async () => {
       // Initialize from router navigation state
       const nav = this.router.currentNavigation();
-      const state = nav?.extras?.state as any ?? history.state;
-  
+      const state = (nav?.extras?.state as any) ?? history.state;
+
       if (state?.repositoryId && state?.branch && state?.analysisResult) {
         this.state.initialize(
           state.repositoryId,
           state.branch,
           state.analysisResult,
-          state.clusterId ?? ''
+          state.clusterId ?? '',
         );
         if (state.clusterId) {
           this.selectedClusterId.set(state.clusterId);
           this.state.clusterId.set(state.clusterId);
         }
       }
-  
+
       this.isLoadingClusters.set(true);
       try {
         await this.clusterService.loadClusters();
@@ -266,7 +290,7 @@ export class GhaDeployWizardComponent implements OnInit {
 
   nextStep(): void {
     if (this.currentStepIndex() < this.visibleSteps().length - 1) {
-      this.currentStepIndex.update(i => i + 1);
+      this.currentStepIndex.update((i) => i + 1);
       if (this.currentStep().id === 'workflow') {
         void this.enterWorkflowStep();
       }
@@ -280,15 +304,15 @@ export class GhaDeployWizardComponent implements OnInit {
       const appId = await this.ensureApplication();
       const [consent, expectation] = await Promise.all([
         this.appService.previewWorkflowV3(appId, { branch: this.state.branch() }),
-        this.appService
-          .getBuildExpectation(appId)
-          .catch((): BuildExpectation | null => null),
+        this.appService.getBuildExpectation(appId).catch((): BuildExpectation | null => null),
       ]);
       this.consent.set(consent);
       this.buildExpectation.set(expectation);
     } catch (e: any) {
       this.consentError.set(
-        e?.error?.message ?? e?.message ?? 'Could not read what would be written to your repository.',
+        e?.error?.message ??
+          e?.message ??
+          'Could not read what would be written to your repository.',
       );
     }
   }
@@ -309,7 +333,9 @@ export class GhaDeployWizardComponent implements OnInit {
 
     const response = await firstValueFrom(
       this.applicationsApi.applicationsControllerCreate(this.state.clusterId(), {
-        name: `${this.state.confirmedFramework()}-${this.state.branch()}`.toLowerCase().replaceAll(/[^a-z0-9-]/g, '-'),
+        name: `${this.state.confirmedFramework()}-${this.state.branch()}`
+          .toLowerCase()
+          .replaceAll(/[^a-z0-9-]/g, '-'),
         projectId: this.state.projectId() ?? undefined,
         category: CreateApplicationDto.CategoryEnum.User,
         sourceType: CreateApplicationDto.SourceTypeEnum.GitBuild,
@@ -337,7 +363,7 @@ export class GhaDeployWizardComponent implements OnInit {
 
   prevStep(): void {
     if (this.currentStepIndex() > 0) {
-      this.currentStepIndex.update(i => i - 1);
+      this.currentStepIndex.update((i) => i - 1);
     }
   }
 
@@ -392,7 +418,6 @@ export class GhaDeployWizardComponent implements OnInit {
           this.router.navigate(['/apps/deploy/gha-build', appId]);
         }, 1500);
       }, 2000);
-
     } catch (e: any) {
       this.workflowState.set('error');
       const msg = e?.message ?? 'Failed to generate workflow';

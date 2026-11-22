@@ -32,7 +32,10 @@ function input(over: Partial<MailProvidersSurfaceInput> = {}): MailProvidersSurf
 }
 
 function snapshotOf(over: Partial<MailProvidersSurfaceInput> = {}): SurfaceSnapshot {
-  return buildMailProvidersSurface(input(over), { revision: 1, generatedAt: '2026-09-02T09:00:00.000Z' });
+  return buildMailProvidersSurface(input(over), {
+    revision: 1,
+    generatedAt: '2026-09-02T09:00:00.000Z',
+  });
 }
 
 const listScope = (s: SurfaceSnapshot) => s.scopes.find((x) => x.kind === 'list')!;
@@ -64,9 +67,14 @@ describe('mail providers surface producer', () => {
 
   it('flags a snapshot whose revision does not advance on the previous one', () => {
     const first = snapshotOf();
-    const stale = { ...snapshotOf(), surface: { ...snapshotOf().surface, revision: first.surface.revision } };
+    const stale = {
+      ...snapshotOf(),
+      surface: { ...snapshotOf().surface, revision: first.surface.revision },
+    };
     const issues = validateSurfaceSemantics(stale, { previousSnapshot: first });
-    expect(issues).toEqual([jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' })]);
+    expect(issues).toEqual([
+      jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' }),
+    ]);
   });
 
   it('is a list page with no selection: every row is related, never primary', () => {

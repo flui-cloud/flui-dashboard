@@ -4,8 +4,16 @@ import { fit, frame } from './topology-view-export';
 import { topologyFixture } from './topology.fixture';
 
 const PALETTE: ExportPalette = {
-  bg: '#fff', card: '#fff', border: '#ddd', fg: '#111', muted: '#666',
-  brand: '#25e', ok: '#183', warn: '#b50', err: '#d22', track: '#eee',
+  bg: '#fff',
+  card: '#fff',
+  border: '#ddd',
+  fg: '#111',
+  muted: '#666',
+  brand: '#25e',
+  ok: '#183',
+  warn: '#b50',
+  err: '#d22',
+  track: '#eee',
 };
 
 describe('cluster capacity', () => {
@@ -32,7 +40,9 @@ describe('cluster capacity', () => {
 
   it('says so when no server has room', () => {
     const full = topologyFixture();
-    full.servers.forEach((s) => s.capacity && (s.capacity.requestedMemMi = s.capacity.allocatableMemMi));
+    full.servers.forEach(
+      (s) => s.capacity && (s.capacity.requestedMemMi = s.capacity.allocatableMemMi),
+    );
     expect(clusterCapacity(full, 'c-eu', 'a-db').ghostFits).toBeFalse();
   });
 });
@@ -49,7 +59,9 @@ describe('request path', () => {
       ['03 · Servers', 'ok'],
     ]);
     expect(path.hops[0].lines).toEqual(['120 req/s', '40.0% server errors']);
-    expect(path.data.map((d) => [d.title, d.check, d.lines[0]])).toEqual([['Database', 'ok', ':5432']]);
+    expect(path.data.map((d) => [d.title, d.check, d.lines[0]])).toEqual([
+      ['Database', 'ok', ':5432'],
+    ]);
   });
 
   it('answers nothing for an app the map no longer holds', () => {
@@ -61,14 +73,29 @@ describe('image export', () => {
   const t = topologyFixture();
 
   it('stamps an exported view Masked when mask mode is on, and only then', () => {
-    const on = frame('', { width: 400, height: 200 }, { title: 'Topology', subtitle: 'x', masked: true }, PALETTE);
-    const off = frame('', { width: 400, height: 200 }, { title: 'Topology', subtitle: 'x', masked: false }, PALETTE);
+    const on = frame(
+      '',
+      { width: 400, height: 200 },
+      { title: 'Topology', subtitle: 'x', masked: true },
+      PALETTE,
+    );
+    const off = frame(
+      '',
+      { width: 400, height: 200 },
+      { title: 'Topology', subtitle: 'x', masked: false },
+      PALETTE,
+    );
     expect(on.svg).toContain('>Masked<');
     expect(off.svg).not.toContain('Masked');
   });
 
   it('escapes what it writes and frames the view with room around it', () => {
-    const view = frame('<g/>', { width: 900, height: 300 }, { title: 'prod <eu> & co', subtitle: '', masked: false }, PALETTE);
+    const view = frame(
+      '<g/>',
+      { width: 900, height: 300 },
+      { title: 'prod <eu> & co', subtitle: '', masked: false },
+      PALETTE,
+    );
     expect(view.svg).toContain('prod &#60;eu&#62; &#38; co');
     expect(view.svg).not.toContain('prod <eu>');
     expect(view.width).toBeGreaterThan(900);

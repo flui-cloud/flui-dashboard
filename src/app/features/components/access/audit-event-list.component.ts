@@ -1,10 +1,6 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { HlmBadgeDirective } from '@spartan-ng/ui-badge-helm';
-import {
-  AuditEvent,
-  AuditOutcome,
-  auditTargetText,
-} from '../../model/audit.model';
+import { AuditEvent, AuditOutcome, auditTargetText } from '../../model/audit.model';
 import { formatWhen } from '../../model/iam.model';
 
 const OUTCOME_CLASS: Record<AuditOutcome, string> = {
@@ -39,26 +35,46 @@ const OUTCOME_CLASS: Record<AuditOutcome, string> = {
                 <td class="py-2 pr-4">
                   <span class="text-foreground">{{ e.email ?? 'platform' }}</span>
                   @if (e.actorKind === 'key' || e.actorKind === 'agent') {
-                    <span hlmBadge variant="outline" class="ml-1.5 text-[10px]">{{ e.actorKind }}</span>
+                    <span hlmBadge variant="outline" class="ml-1.5 text-[10px]">{{
+                      e.actorKind
+                    }}</span>
                   }
                 </td>
               }
               <td class="py-2 pr-4">
                 <span class="font-mono text-xs text-foreground">{{ e.action }}</span>
                 @if (target(e)) {
-                  <div class="font-mono text-[11px] text-muted-foreground break-all">{{ target(e) }}</div>
+                  <div class="font-mono text-[11px] text-muted-foreground break-all">
+                    {{ target(e) }}
+                  </div>
                 }
               </td>
               <td class="py-2 pr-4 whitespace-nowrap">
-                <span hlmBadge variant="outline" [class]="'text-[10px] ' + outcomeClass(e.outcome)">{{ e.outcome }}</span>
+                <span
+                  hlmBadge
+                  variant="outline"
+                  [class]="'text-[10px] ' + outcomeClass(e.outcome)"
+                  >{{ e.outcome }}</span
+                >
                 @if (e.dataAccess) {
-                  <span hlmBadge variant="secondary" class="ml-1.5 text-[10px]" title="Reached application data">data</span>
+                  <span
+                    hlmBadge
+                    variant="secondary"
+                    class="ml-1.5 text-[10px]"
+                    title="Reached application data"
+                    >data</span
+                  >
                 }
               </td>
             </tr>
           } @empty {
             <tr>
-              <td [attr.colspan]="showWho() ? 4 : 3" class="py-4 text-center text-xs text-muted-foreground">{{ emptyText() }}</td>
+              <td
+                [attr.colspan]="showWho() ? 4 : 3"
+                class="py-4 text-center text-xs text-muted-foreground"
+              >
+                {{ emptyText() }}
+              </td>
             </tr>
           }
         </tbody>

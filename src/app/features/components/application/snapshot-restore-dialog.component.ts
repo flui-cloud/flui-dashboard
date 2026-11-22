@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  effect,
-  input,
-  output,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, input, output, signal } from '@angular/core';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideLoader, lucideRotateCcw } from '@ng-icons/lucide';
 import { ApplicationSnapshot } from '../../model/volume-management.models';
@@ -18,11 +11,18 @@ import { ApplicationSnapshot } from '../../model/volume-management.models';
   providers: [provideIcons({ lucideLoader, lucideRotateCcw })],
   template: `
     @if (snapshot(); as snap) {
-      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" (click)="cancelled.emit()">
-        <div class="bg-background rounded-lg border border-border shadow-xl max-w-md w-full p-6" (click)="$event.stopPropagation()">
+      <div
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        (click)="cancelled.emit()"
+      >
+        <div
+          class="bg-background rounded-lg border border-border shadow-xl max-w-md w-full p-6"
+          (click)="$event.stopPropagation()"
+        >
           <h3 class="text-lg font-semibold">Restore snapshot</h3>
           <p class="text-sm text-muted-foreground mt-2">
-            Creates a brand-new PVC with the data from this snapshot. Your live application is NOT affected.
+            Creates a brand-new PVC with the data from this snapshot. Your live application is NOT
+            affected.
             <span class="block mt-1 text-xs font-mono break-all">{{ snap.exportId }}</span>
           </p>
           <label class="flex items-start gap-2 mt-4 text-sm cursor-pointer">

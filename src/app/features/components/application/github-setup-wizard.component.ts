@@ -1,4 +1,13 @@
-import { Component, OnDestroy, OnInit, inject, signal, computed, effect, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnDestroy,
+  OnInit,
+  inject,
+  signal,
+  computed,
+  effect,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -71,14 +80,22 @@ const PAT_DEEP_LINK =
       @if (currentStepIndex() === 0) {
         <div class="space-y-4">
           @if (wizardService.configuredStatus()?.configured) {
-            <div class="flex items-start gap-3 p-4 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20">
-              <ng-icon name="lucideAlertCircle" size="20" class="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+            <div
+              class="flex items-start gap-3 p-4 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20"
+            >
+              <ng-icon
+                name="lucideAlertCircle"
+                size="20"
+                class="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5"
+              />
               <div class="flex-1 min-w-0">
                 <p class="text-sm font-medium text-amber-900 dark:text-amber-200">
                   GitHub is already configured
                 </p>
                 <p class="text-xs text-amber-800 dark:text-amber-300 mt-0.5">
-                  Active: <span class="font-mono">{{ existingLabel() }}</span>. Configuring a new method overwrites the current setup. To remove the integration entirely, click Reset.
+                  Active: <span class="font-mono">{{ existingLabel() }}</span>. Configuring a new
+                  method overwrites the current setup. To remove the integration entirely, click
+                  Reset.
                 </p>
               </div>
               <button
@@ -106,20 +123,29 @@ const PAT_DEEP_LINK =
               [class]="getMethodCardClass('pat')"
               class="relative flex flex-col items-start text-left p-5 rounded-xl border-2 transition-all duration-200 hover:shadow-md"
             >
-              <span class="absolute -top-2.5 right-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+              <span
+                class="absolute -top-2.5 right-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+              >
                 <ng-icon name="lucideStar" size="10" /> Recommended
               </span>
               <div class="flex items-center gap-3 mb-3">
                 <div class="p-2 rounded-lg bg-slate-100 dark:bg-slate-700">
                   <ng-icon name="lucideKey" size="20" class="text-slate-700 dark:text-slate-300" />
                 </div>
-                <span class="font-semibold text-sm text-slate-900 dark:text-white">Personal Access Token</span>
+                <span class="font-semibold text-sm text-slate-900 dark:text-white"
+                  >Personal Access Token</span
+                >
                 @if (wizardService.selectedMethod() === 'pat') {
-                  <ng-icon name="lucideCheckCircle" size="16" class="ml-auto text-blue-600 dark:text-blue-400" />
+                  <ng-icon
+                    name="lucideCheckCircle"
+                    size="16"
+                    class="ml-auto text-blue-600 dark:text-blue-400"
+                  />
                 }
               </div>
               <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                The quickest way in. Each person pastes a classic token that covers both their repositories and container images. Nothing to register on GitHub.
+                The quickest way in. Each person pastes a classic token that covers both their
+                repositories and container images. Nothing to register on GitHub.
               </p>
               <ul class="mt-3 space-y-1">
                 <li class="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
@@ -141,15 +167,24 @@ const PAT_DEEP_LINK =
             >
               <div class="flex items-center gap-3 mb-3">
                 <div class="p-2 rounded-lg bg-slate-100 dark:bg-slate-700">
-                  <ng-icon name="lucideGithub" size="20" class="text-slate-700 dark:text-slate-300" />
+                  <ng-icon
+                    name="lucideGithub"
+                    size="20"
+                    class="text-slate-700 dark:text-slate-300"
+                  />
                 </div>
                 <span class="font-semibold text-sm text-slate-900 dark:text-white">GitHub App</span>
                 @if (wizardService.selectedMethod() === 'github_app') {
-                  <ng-icon name="lucideCheckCircle" size="16" class="ml-auto text-blue-600 dark:text-blue-400" />
+                  <ng-icon
+                    name="lucideCheckCircle"
+                    size="16"
+                    class="ml-auto text-blue-600 dark:text-blue-400"
+                  />
                 }
               </div>
               <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                For teams and organisations: one App shared by everyone, created on GitHub with one click, so nobody keeps a personal token.
+                For teams and organisations: one App shared by everyone, created on GitHub with one
+                click, so nobody keeps a personal token.
               </p>
               <ul class="mt-3 space-y-1">
                 <li class="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
@@ -163,7 +198,6 @@ const PAT_DEEP_LINK =
                 </li>
               </ul>
             </button>
-
           </div>
         </div>
       }
@@ -174,10 +208,12 @@ const PAT_DEEP_LINK =
           <div class="space-y-5">
             @if (!manualMode()) {
               <!-- Manifest flow (default) -->
-              <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div
+                class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800"
+              >
                 <p class="text-xs text-blue-800 dark:text-blue-300">
-                  We'll redirect you to GitHub with the App configuration pre-filled.
-                  Confirm there and you'll come back here with everything connected.
+                  We'll redirect you to GitHub with the App configuration pre-filled. Confirm there
+                  and you'll come back here with everything connected.
                 </p>
               </div>
 
@@ -192,12 +228,19 @@ const PAT_DEEP_LINK =
                   placeholder="flui-acme"
                   class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-                <p class="mt-1 text-xs text-slate-400">Must be unique across GitHub. Pick something descriptive (your company or instance).</p>
+                <p class="mt-1 text-xs text-slate-400">
+                  Must be unique across GitHub. Pick something descriptive (your company or
+                  instance).
+                </p>
               </div>
 
               <div>
-                <label for="github-app-organization" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Create it under an organisation <span class="text-slate-400 font-normal">(optional)</span>
+                <label
+                  for="github-app-organization"
+                  class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+                >
+                  Create it under an organisation
+                  <span class="text-slate-400 font-normal">(optional)</span>
                 </label>
                 <input
                   id="github-app-organization"
@@ -211,7 +254,10 @@ const PAT_DEEP_LINK =
                 @if (organizationProblem(); as problem) {
                   <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ problem }}</p>
                 } @else {
-                  <p class="mt-1 text-xs text-slate-400">Leave empty to create it on your own account. You must be an owner of the organisation.</p>
+                  <p class="mt-1 text-xs text-slate-400">
+                    Leave empty to create it on your own account. You must be an owner of the
+                    organisation.
+                  </p>
                 }
               </div>
 
@@ -227,29 +273,46 @@ const PAT_DEEP_LINK =
                   class="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  Base URL where this Flui API is reachable. The OAuth callback, the manifest callback and (if webhooks are on) the webhook URL are all derived from this.
+                  Base URL where this Flui API is reachable. The OAuth callback, the manifest
+                  callback and (if webhooks are on) the webhook URL are all derived from this.
                 </p>
                 @if (derivedUrls(); as urls) {
-                  <div class="mt-2 p-3 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 space-y-1.5">
-                    <p class="text-xs font-medium text-slate-700 dark:text-slate-300">GitHub will be configured with:</p>
-                    <p class="text-xs font-mono text-slate-600 dark:text-slate-400 break-all">
-                      <span class="text-slate-500 dark:text-slate-500">OAuth callback:</span> {{ urls.callback }}
+                  <div
+                    class="mt-2 p-3 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 space-y-1.5"
+                  >
+                    <p class="text-xs font-medium text-slate-700 dark:text-slate-300">
+                      GitHub will be configured with:
                     </p>
                     <p class="text-xs font-mono text-slate-600 dark:text-slate-400 break-all">
-                      <span class="text-slate-500 dark:text-slate-500">Manifest redirect:</span> {{ urls.redirect }}
+                      <span class="text-slate-500 dark:text-slate-500">OAuth callback:</span>
+                      {{ urls.callback }}
+                    </p>
+                    <p class="text-xs font-mono text-slate-600 dark:text-slate-400 break-all">
+                      <span class="text-slate-500 dark:text-slate-500">Manifest redirect:</span>
+                      {{ urls.redirect }}
                     </p>
                     @if (wizardService.manifestForm().webhooksEnabled) {
                       <p class="text-xs font-mono text-slate-600 dark:text-slate-400 break-all">
-                        <span class="text-slate-500 dark:text-slate-500">Webhook:</span> {{ urls.webhook }}
+                        <span class="text-slate-500 dark:text-slate-500">Webhook:</span>
+                        {{ urls.webhook }}
                       </p>
                     }
                   </div>
                 }
                 @if (isLocalPublicApiUrl()) {
-                  <div class="mt-2 flex items-start gap-2 p-2 rounded border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20">
-                    <ng-icon name="lucideAlertCircle" size="14" class="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                  <div
+                    class="mt-2 flex items-start gap-2 p-2 rounded border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20"
+                  >
+                    <ng-icon
+                      name="lucideAlertCircle"
+                      size="14"
+                      class="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5"
+                    />
                     <p class="text-xs text-amber-800 dark:text-amber-300">
-                      This URL points to localhost — GitHub won't be able to reach the webhook (if enabled) nor complete the user-authorization redirect from a different machine. In development, expose your API through a tunnel and paste the tunnel's public URL here.
+                      This URL points to localhost — GitHub won't be able to reach the webhook (if
+                      enabled) nor complete the user-authorization redirect from a different
+                      machine. In development, expose your API through a tunnel and paste the
+                      tunnel's public URL here.
                     </p>
                   </div>
                 }
@@ -280,7 +343,9 @@ const PAT_DEEP_LINK =
                 <span class="text-sm text-slate-700 dark:text-slate-300">
                   Allow installation on other accounts / organizations
                   <span class="block text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Off (default): only the account that owns the App can install it. Turn on if you need to access repos under accounts or organizations different from the one creating the App.
+                    Off (default): only the account that owns the App can install it. Turn on if you
+                    need to access repos under accounts or organizations different from the one
+                    creating the App.
                   </span>
                 </span>
               </label>
@@ -295,9 +360,12 @@ const PAT_DEEP_LINK =
               </button>
             } @else {
               <!-- Manual mode (existing App) -->
-              <div class="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+              <div
+                class="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800"
+              >
                 <p class="text-xs text-amber-800 dark:text-amber-300">
-                  Paste credentials from your existing GitHub App. Prefer the guided flow above for new installations.
+                  Paste credentials from your existing GitHub App. Prefer the guided flow above for
+                  new installations.
                 </p>
               </div>
 
@@ -366,15 +434,33 @@ const PAT_DEEP_LINK =
             }
 
             @if (wizardService.isConfiguring()) {
-              <div class="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                <ng-icon name="lucideLoader" size="16" class="text-blue-600 dark:text-blue-400 animate-spin" />
-                <p class="text-xs text-blue-700 dark:text-blue-400">{{ manualMode() ? 'Validating credentials with GitHub…' : 'Preparing manifest and redirecting to GitHub…' }}</p>
+              <div
+                class="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800"
+              >
+                <ng-icon
+                  name="lucideLoader"
+                  size="16"
+                  class="text-blue-600 dark:text-blue-400 animate-spin"
+                />
+                <p class="text-xs text-blue-700 dark:text-blue-400">
+                  {{
+                    manualMode()
+                      ? 'Validating credentials with GitHub…'
+                      : 'Preparing manifest and redirecting to GitHub…'
+                  }}
+                </p>
               </div>
             }
 
             @if (wizardService.error()) {
-              <div class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
-                <ng-icon name="lucideAlertCircle" size="16" class="text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+              <div
+                class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800"
+              >
+                <ng-icon
+                  name="lucideAlertCircle"
+                  size="16"
+                  class="text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5"
+                />
                 <p class="text-xs text-red-700 dark:text-red-400">{{ wizardService.error() }}</p>
               </div>
             }
@@ -382,9 +468,13 @@ const PAT_DEEP_LINK =
         } @else {
           <!-- PAT mode -->
           <div class="space-y-5">
-            <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+            <div
+              class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800"
+            >
               <p class="text-xs text-blue-800 dark:text-blue-300 mb-2">
-                Open GitHub with the required scopes pre-selected, generate a classic PAT, then paste it back here. We'll validate it before saving. This single token covers cloning private repos, registering webhooks, and pulling images from GHCR.
+                Open GitHub with the required scopes pre-selected, generate a classic PAT, then
+                paste it back here. We'll validate it before saving. This single token covers
+                cloning private repos, registering webhooks, and pulling images from GHCR.
               </p>
               <a
                 [href]="patDeepLink"
@@ -425,36 +515,73 @@ const PAT_DEEP_LINK =
             @if (wizardService.patValidation(); as v) {
               @if (v.valid && (v.missingScopes?.length ?? 0) === 0) {
                 <div class="flex items-start gap-2 p-3 bg-muted/30 rounded-lg border border-border">
-                  <ng-icon name="lucideCheckCircle" size="16" class="text-[hsl(var(--ok))] flex-shrink-0 mt-0.5" />
+                  <ng-icon
+                    name="lucideCheckCircle"
+                    size="16"
+                    class="text-[hsl(var(--ok))] flex-shrink-0 mt-0.5"
+                  />
                   <div class="text-xs text-muted-foreground">
-                    <p>Authenticated as <strong>&#64;{{ v.login }}</strong>.</p>
-                    <p class="mt-0.5">Scopes: <span class="font-mono">{{ (v.scopes ?? []).join(', ') }}</span></p>
+                    <p>
+                      Authenticated as <strong>&#64;{{ v.login }}</strong
+                      >.
+                    </p>
+                    <p class="mt-0.5">
+                      Scopes: <span class="font-mono">{{ (v.scopes ?? []).join(', ') }}</span>
+                    </p>
                   </div>
                 </div>
               } @else if (v.valid) {
-                <div class="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
-                  <ng-icon name="lucideAlertCircle" size="16" class="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                <div
+                  class="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800"
+                >
+                  <ng-icon
+                    name="lucideAlertCircle"
+                    size="16"
+                    class="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5"
+                  />
                   <div class="text-xs text-amber-800 dark:text-amber-300">
-                    <p>Authenticated as <strong>&#64;{{ v.login }}</strong>, but the token is missing scopes:</p>
+                    <p>
+                      Authenticated as <strong>&#64;{{ v.login }}</strong
+                      >, but the token is missing scopes:
+                    </p>
                     <p class="mt-0.5 font-mono">{{ (v.missingScopes ?? []).join(', ') }}</p>
-                    <p class="mt-1">Re-create the token with these scopes checked, otherwise webhooks / packages won't work.</p>
+                    <p class="mt-1">
+                      Re-create the token with these scopes checked, otherwise webhooks / packages
+                      won't work.
+                    </p>
                   </div>
                 </div>
               } @else {
-                <div class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
-                  <ng-icon name="lucideAlertCircle" size="16" class="text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
-                  <p class="text-xs text-red-700 dark:text-red-400">{{ patErrorLabel(v.error, v.message) }}</p>
+                <div
+                  class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800"
+                >
+                  <ng-icon
+                    name="lucideAlertCircle"
+                    size="16"
+                    class="text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5"
+                  />
+                  <p class="text-xs text-red-700 dark:text-red-400">
+                    {{ patErrorLabel(v.error, v.message) }}
+                  </p>
                 </div>
               }
             }
 
             <p class="text-xs text-slate-500 dark:text-slate-400">
-              Using <strong>classic</strong> PATs. Fine-grained PATs are not supported yet because they can't grant <span class="font-mono">admin:repo_hook</span>, required to register webhooks.
+              Using <strong>classic</strong> PATs. Fine-grained PATs are not supported yet because
+              they can't grant <span class="font-mono">admin:repo_hook</span>, required to register
+              webhooks.
             </p>
 
             @if (wizardService.error() && !wizardService.patValidation()) {
-              <div class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
-                <ng-icon name="lucideAlertCircle" size="16" class="text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+              <div
+                class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800"
+              >
+                <ng-icon
+                  name="lucideAlertCircle"
+                  size="16"
+                  class="text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5"
+                />
                 <p class="text-xs text-red-700 dark:text-red-400">{{ wizardService.error() }}</p>
               </div>
             }
@@ -467,10 +594,13 @@ const PAT_DEEP_LINK =
         <div class="flex flex-col items-center py-8 text-center space-y-4">
           <ng-icon name="lucideCheckCircle" size="24" class="text-[hsl(var(--ok))]" />
           <div>
-            <h3 class="text-base font-semibold text-slate-900 dark:text-white">GitHub integration configured</h3>
+            <h3 class="text-base font-semibold text-slate-900 dark:text-white">
+              GitHub integration configured
+            </h3>
             <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
               @if (wizardService.selectedMethod() === 'github_app') {
-                GitHub App is active. Users can now install it on their accounts or organizations and start importing repositories.
+                GitHub App is active. Users can now install it on their accounts or organizations
+                and start importing repositories.
               } @else {
                 PAT mode is active. Your Personal Access Token is saved and ready to use.
               }

@@ -1,10 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -58,13 +52,8 @@ import { ScalingGroupFormComponent } from './scaling-group-form.component';
         />
       } @else if (row(); as row) {
         <div class="flex items-baseline gap-2.5">
-          <h2 class="m-0 text-xl font-semibold tracking-tight text-foreground">
-            Scaling
-          </h2>
-          <span
-            class="font-mono text-[13px] text-muted-foreground"
-            data-testid="subject"
-          >
+          <h2 class="m-0 text-xl font-semibold tracking-tight text-foreground">Scaling</h2>
+          <span class="font-mono text-[13px] text-muted-foreground" data-testid="subject">
             {{ row.clusterName }} · {{ row.capability.provider }}
           </span>
         </div>
@@ -87,9 +76,7 @@ import { ScalingGroupFormComponent } from './scaling-group-form.component';
                 : 'text-green-600 dark:text-green-500'
             "
           />
-          <span class="text-[13px] leading-relaxed text-foreground">{{
-            stateLine()
-          }}</span>
+          <span class="text-[13px] leading-relaxed text-foreground">{{ stateLine() }}</span>
         </div>
 
         <div class="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
@@ -125,16 +112,10 @@ import { ScalingGroupFormComponent } from './scaling-group-form.component';
           (setUp)="editingGroup.set(true)"
         />
 
-        <app-scaling-decisions-table
-          [decisions]="decisions()"
-          [groupId]="row.groupId"
-        />
+        <app-scaling-decisions-table [decisions]="decisions()" [groupId]="row.groupId" />
 
         @if (editingLimits() && clusterId(); as cid) {
-          <app-scaling-limits-dialog
-            [clusterId]="cid"
-            (closed)="editingLimits.set(false)"
-          />
+          <app-scaling-limits-dialog [clusterId]="cid" (closed)="editingLimits.set(false)" />
         }
 
         @if (editingGroup() && clusterId(); as cid) {
@@ -147,12 +128,9 @@ import { ScalingGroupFormComponent } from './scaling-group-form.component';
           />
         }
       } @else {
-        <p
-          class="m-0 text-sm text-muted-foreground"
-          data-testid="no-such-cluster"
-        >
-          The API has no scaling row for this cluster. Either it is gone, or
-          this build does not serve the route.
+        <p class="m-0 text-sm text-muted-foreground" data-testid="no-such-cluster">
+          The API has no scaling row for this cluster. Either it is gone, or this build does not
+          serve the route.
         </p>
       }
     </div>
@@ -197,16 +175,13 @@ export class ClusterScalingTabComponent {
     stream: ({ params }) => this.api.clusterDecisions(params, 5),
   });
 
-  private readonly loaded = loadedOf<ClusterScalingRow>(
-    this.rowRes,
-    "This cluster's scaling",
-  );
+  private readonly loaded = loadedOf<ClusterScalingRow>(this.rowRes, "This cluster's scaling");
 
   protected readonly loading = computed(() => this.loaded().loading);
   protected readonly failed = computed(() => this.loaded().failed);
   protected readonly row = computed(() => this.loaded().data);
-  protected readonly decisions = computed(
-    () => (this.decisionsRes.hasValue() ? this.decisionsRes.value() : []),
+  protected readonly decisions = computed(() =>
+    this.decisionsRes.hasValue() ? this.decisionsRes.value() : [],
   );
 
   protected onGroupSaved(): void {
@@ -218,11 +193,9 @@ export class ClusterScalingTabComponent {
   /** The limits actually in force: the group's when it has them, the cluster's otherwise. */
   protected readonly limitsNote = computed(() => {
     const bounds = this.row()?.bounds;
-    if (bounds)
-      return `floor ${bounds.min} · target ${bounds.desired} · ceiling ${bounds.max}`;
+    if (bounds) return `floor ${bounds.min} · target ${bounds.desired} · ceiling ${bounds.max}`;
     const status = this.autoscale.status();
-    if (status?.minNodes == null && status?.maxNodes == null)
-      return 'no limits set';
+    if (status?.minNodes == null && status?.maxNodes == null) return 'no limits set';
     return `floor ${status?.minNodes ?? 1} · ceiling ${status?.maxNodes ?? '—'}`;
   });
 
@@ -273,8 +246,7 @@ export class ClusterScalingTabComponent {
         attention: false,
       };
     }
-    const note =
-      row.pendingPods === 0 ? 'everything is running' : 'nowhere to run';
+    const note = row.pendingPods === 0 ? 'everything is running' : 'nowhere to run';
     return {
       value: `${row.pendingPods}`,
       note,
@@ -285,14 +257,9 @@ export class ClusterScalingTabComponent {
   protected readonly spend = computed(() => {
     const row = this.row();
     if (!row) return { value: '—', unit: '', note: '' };
-    const value =
-      row.monthlyEur == null ? '—' : `€${row.monthlyEur.toFixed(2)}`;
-    const cap =
-      row.monthlyCap != null
-        ? `ceiling €${row.monthlyCap.toFixed(0)}/mo · `
-        : '';
-    const unpriced =
-      row.unpricedNodes > 0 ? ` · ${row.unpricedNodes} unpriced` : '';
+    const value = row.monthlyEur == null ? '—' : `€${row.monthlyEur.toFixed(2)}`;
+    const cap = row.monthlyCap != null ? `ceiling €${row.monthlyCap.toFixed(0)}/mo · ` : '';
+    const unpriced = row.unpricedNodes > 0 ? ` · ${row.unpricedNodes} unpriced` : '';
     return {
       value,
       unit: '/mo',

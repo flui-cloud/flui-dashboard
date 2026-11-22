@@ -2,14 +2,9 @@ import {
   expectDeterministicDigest,
   expectValidSurface,
 } from '../../../../testing/surface-test-utils';
-import {
-  GuestHomeSurfaceInput,
-  buildGuestHomeSurface,
-} from './guest-home-surface';
+import { GuestHomeSurfaceInput, buildGuestHomeSurface } from './guest-home-surface';
 
-function input(
-  over: Partial<GuestHomeSurfaceInput> = {},
-): GuestHomeSurfaceInput {
+function input(over: Partial<GuestHomeSurfaceInput> = {}): GuestHomeSurfaceInput {
   return {
     loading: false,
     showcase: [
@@ -32,10 +27,7 @@ function input(
     ],
     exploreText: 'The apps here are real and running.',
     installText: 'This demo is read-only. Install Flui on your own server.',
-    installWays: [
-      'Guided, with your provider API key',
-      'On a server you already have',
-    ],
+    installWays: ['Guided, with your provider API key', 'On a server you already have'],
     ...over,
   };
 }
@@ -47,9 +39,7 @@ const build = (over: Partial<GuestHomeSurfaceInput> = {}) =>
   });
 
 const text = (snapshot: ReturnType<typeof build>, key: string) =>
-  snapshot.scopes
-    .flatMap((s) => s.observations ?? [])
-    .find((o) => o.key === key)?.presentedAs.text;
+  snapshot.scopes.flatMap((s) => s.observations ?? []).find((o) => o.key === key)?.presentedAs.text;
 
 describe('guest home surface', () => {
   it('is a valid snapshot with a deterministic digest', () => {
@@ -59,13 +49,9 @@ describe('guest home surface', () => {
 
   it('says what the page offers and which sections show example data', () => {
     const snapshot = build();
-    expect(text(snapshot, 'flui.guest_home.explore')).toContain(
-      'real and running',
-    );
+    expect(text(snapshot, 'flui.guest_home.explore')).toContain('real and running');
     expect(text(snapshot, 'flui.guest_home.install')).toContain('Install Flui');
-    expect(text(snapshot, 'flui.guest_home.example_data_sections')).toBe(
-      'Backups, Mail',
-    );
+    expect(text(snapshot, 'flui.guest_home.example_data_sections')).toBe('Backups, Mail');
     expect(text(snapshot, 'flui.guest_home.closed_sections')).toBe('Access');
   });
 
@@ -73,18 +59,13 @@ describe('guest home surface', () => {
     const refs = build()
       .scopes.flatMap((s) => s.entities ?? [])
       .map((e) => e.ref);
-    expect(refs).toEqual([
-      'flui://application/app-1',
-      'flui://application/app-9',
-    ]);
+    expect(refs).toEqual(['flui://application/app-1', 'flui://application/app-9']);
   });
 
   it('claims no lists while loading and no space before the first deploy', () => {
     expect(build({ loading: true }).scopes).toHaveSize(1);
-    expect(
-      build({ hasArea: false }).scopes.some(
-        (s) => s.id === 'guest-home:your-space',
-      ),
-    ).toBe(false);
+    expect(build({ hasArea: false }).scopes.some((s) => s.id === 'guest-home:your-space')).toBe(
+      false,
+    );
   });
 });

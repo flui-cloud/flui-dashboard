@@ -1,6 +1,14 @@
 import {
-  Component, input, output, computed, signal, OnDestroy, ElementRef, inject, NgZone,
-  ChangeDetectionStrategy
+  Component,
+  input,
+  output,
+  computed,
+  signal,
+  OnDestroy,
+  ElementRef,
+  inject,
+  NgZone,
+  ChangeDetectionStrategy,
 } from '@angular/core';
 
 import { NgxEchartsDirective, provideEcharts } from 'ngx-echarts';
@@ -17,9 +25,9 @@ import {
 } from '../chart.models';
 
 // Grid pixel offsets — must match the `grid` config in chartOption()
-const GRID_LEFT   = 36;
-const GRID_RIGHT  = 12;
-const GRID_TOP    = 6;
+const GRID_LEFT = 36;
+const GRID_RIGHT = 12;
+const GRID_TOP = 6;
 const GRID_BOTTOM = 28;
 
 /**
@@ -37,11 +45,14 @@ const GRID_BOTTOM = 28;
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="relative w-full select-none" [style.height]="mergedConfig().height">
-
       <!-- Loading overlay -->
       @if (loading()) {
-        <div class="absolute inset-0 flex items-center justify-center bg-white/60 dark:bg-gray-900/60 rounded z-20">
-          <span class="text-xs text-gray-400 dark:text-gray-500 animate-pulse">Loading volume…</span>
+        <div
+          class="absolute inset-0 flex items-center justify-center bg-white/60 dark:bg-gray-900/60 rounded z-20"
+        >
+          <span class="text-xs text-gray-400 dark:text-gray-500 animate-pulse"
+            >Loading volume…</span
+          >
         </div>
       }
 
@@ -84,7 +95,9 @@ const GRID_BOTTOM = 28;
           }
 
           <!-- Hint label -->
-          <div class="absolute top-0.5 right-1 text-[9px] text-gray-300 dark:text-gray-600 pointer-events-none">
+          <div
+            class="absolute top-0.5 right-1 text-[9px] text-gray-300 dark:text-gray-600 pointer-events-none"
+          >
             drag to filter
           </div>
         </div>
@@ -94,17 +107,17 @@ const GRID_BOTTOM = 28;
 })
 export class LogVolumeHistogramComponent implements OnDestroy {
   protected readonly GRID_BOTTOM = GRID_BOTTOM;
-  protected readonly GRID_TOP    = GRID_TOP;
+  protected readonly GRID_TOP = GRID_TOP;
 
   // ── Inputs / Outputs ──────────────────────────────────────────────────────
-  data    = input<LogVolumeData | null>(null);
-  config  = input<LogVolumeHistogramConfig>({});
+  data = input<LogVolumeData | null>(null);
+  config = input<LogVolumeHistogramConfig>({});
   loading = input(false);
 
   rangeSelected = output<LogVolumeRangeSelection>();
 
   // ── DI ───────────────────────────────────────────────────────────────────
-  private readonly _el   = inject(ElementRef<HTMLElement>);
+  private readonly _el = inject(ElementRef<HTMLElement>);
   private readonly _zone = inject(NgZone);
 
   // ── Internal state ────────────────────────────────────────────────────────
@@ -122,18 +135,21 @@ export class LogVolumeHistogramComponent implements OnDestroy {
   }
 
   private detectDarkMode(): boolean {
-    return typeof document !== 'undefined' &&
-      document.documentElement.classList.contains('dark');
+    return typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
   }
 
   // Drag state (raw pixel coords relative to the host element)
-  isDragging    = false;
+  isDragging = false;
   private _dragStartX = 0;
   private _dragCurrentX = 0;
 
   // Derived selection rect (px, relative to the host)
-  get selectionLeft():  number { return Math.min(this._dragStartX,   this._dragCurrentX); }
-  get selectionWidth(): number { return Math.abs(this._dragCurrentX - this._dragStartX); }
+  get selectionLeft(): number {
+    return Math.min(this._dragStartX, this._dragCurrentX);
+  }
+  get selectionWidth(): number {
+    return Math.abs(this._dragCurrentX - this._dragStartX);
+  }
 
   // ── Computed ─────────────────────────────────────────────────────────────
   readonly mergedConfig = computed(() => ({
@@ -144,13 +160,13 @@ export class LogVolumeHistogramComponent implements OnDestroy {
     ...this.config(),
   }));
 
-  readonly currentTheme = computed<ChartTheme>(() =>
-    this.config().theme ?? (this.isDarkSignal() ? 'dark' : 'light')
+  readonly currentTheme = computed<ChartTheme>(
+    () => this.config().theme ?? (this.isDarkSignal() ? 'dark' : 'light'),
   );
 
   readonly isEmpty = computed(() => {
     const d = this.data();
-    return !d || d.series.every(s => s.series.length === 0);
+    return !d || d.series.every((s) => s.series.length === 0);
   });
 
   // ── ECharts option ────────────────────────────────────────────────────────
@@ -175,16 +191,21 @@ export class LogVolumeHistogramComponent implements OnDestroy {
     return {
       animation: cfg.animated,
       grid: {
-        left:   GRID_LEFT,
-        right:  GRID_RIGHT,
-        top:    cfg.showLegend ? 24 : GRID_TOP,
+        left: GRID_LEFT,
+        right: GRID_RIGHT,
+        top: cfg.showLegend ? 24 : GRID_TOP,
         bottom: GRID_BOTTOM,
         containLabel: false,
       },
-      legend: cfg.showLegend ? {
-        top: 0, right: 0, itemWidth: 10, itemHeight: 10,
-        textStyle: { color: isDark ? '#9ca3af' : '#6b7280', fontSize: 10 },
-      } : { show: false },
+      legend: cfg.showLegend
+        ? {
+            top: 0,
+            right: 0,
+            itemWidth: 10,
+            itemHeight: 10,
+            textStyle: { color: isDark ? '#9ca3af' : '#6b7280', fontSize: 10 },
+          }
+        : { show: false },
       tooltip: {
         trigger: 'axis',
         axisPointer: { type: 'shadow' },
@@ -214,7 +235,7 @@ export class LogVolumeHistogramComponent implements OnDestroy {
         axisLabel: {
           color: isDark ? '#6b7280' : '#9ca3af',
           fontSize: 9,
-          formatter: (v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`,
+          formatter: (v: number) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`),
         },
         splitLine: {
           lineStyle: { color: isDark ? '#1f2937' : '#f3f4f6', type: 'dashed' },
@@ -229,9 +250,9 @@ export class LogVolumeHistogramComponent implements OnDestroy {
   // error > warn > info > debug > trace, with any unrecognized levels appended after.
   private buildOrderedSeries(series: LogVolumeLevelSeries[]): LogVolumeLevelSeries[] {
     const LEVEL_ORDER = ['error', 'warn', 'info', 'debug', 'trace'];
-    const ordered = LEVEL_ORDER
-      .map(lvl => series.find(s => s.level === lvl))
-      .filter(Boolean) as LogVolumeLevelSeries[];
+    const ordered = LEVEL_ORDER.map((lvl) => series.find((s) => s.level === lvl)).filter(
+      Boolean,
+    ) as LogVolumeLevelSeries[];
     for (const ls of series) {
       if (!LEVEL_ORDER.includes(ls.level)) ordered.push(ls);
     }
@@ -243,14 +264,15 @@ export class LogVolumeHistogramComponent implements OnDestroy {
     return {
       silent: true,
       itemStyle: { color: 'rgba(59,130,246,0.12)', borderWidth: 0 },
-      data: [[
-        { xAxis: highlight.start.getTime() },
-        { xAxis: highlight.end.getTime()   },
-      ]],
+      data: [[{ xAxis: highlight.start.getTime() }, { xAxis: highlight.end.getTime() }]],
     };
   }
 
-  private buildEchartsSeriesList(orderedSeries: LogVolumeLevelSeries[], timestamps: number[], markArea: object | undefined): any[] {
+  private buildEchartsSeriesList(
+    orderedSeries: LogVolumeLevelSeries[],
+    timestamps: number[],
+    markArea: object | undefined,
+  ): any[] {
     const bucketMap = (ls: LogVolumeLevelSeries) => {
       const m = new Map<number, number>();
       for (const b of ls.series) m.set(b.timestamp * 1000, b.count);
@@ -267,7 +289,7 @@ export class LogVolumeHistogramComponent implements OnDestroy {
         borderRadius: [1, 1, 0, 0],
       },
       emphasis: { focus: 'series' },
-      data: timestamps.map(ts => [ts, bucketMap(ls).get(ts) ?? 0]),
+      data: timestamps.map((ts) => [ts, bucketMap(ls).get(ts) ?? 0]),
       // markArea only on the first series to avoid stacking duplicates
       ...(i === 0 && markArea ? { markArea } : {}),
     }));
@@ -276,8 +298,11 @@ export class LogVolumeHistogramComponent implements OnDestroy {
   private formatTooltip(params: any, isDark: boolean): string {
     const ts = new Date(params[0].value[0]);
     const label = ts.toLocaleString('en-GB', {
-      month: 'short', day: '2-digit',
-      hour: '2-digit', minute: '2-digit', hour12: false,
+      month: 'short',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
     });
     let html = `<div style="font-weight:600;margin-bottom:4px;">${label}</div>`;
     let total = 0;
@@ -314,8 +339,8 @@ export class LogVolumeHistogramComponent implements OnDestroy {
     const x = this.clientXToHostX(e.clientX);
     if (!this.isInsideGrid(x)) return;
     this._zone.run(() => {
-      this.isDragging    = true;
-      this._dragStartX   = x;
+      this.isDragging = true;
+      this._dragStartX = x;
       this._dragCurrentX = x;
     });
   }
@@ -323,7 +348,9 @@ export class LogVolumeHistogramComponent implements OnDestroy {
   onDragMove(e: MouseEvent) {
     if (!this.isDragging) return;
     const x = this.clampToGrid(this.clientXToHostX(e.clientX));
-    this._zone.run(() => { this._dragCurrentX = x; });
+    this._zone.run(() => {
+      this._dragCurrentX = x;
+    });
   }
 
   onDragEnd(e: MouseEvent) {
@@ -337,7 +364,9 @@ export class LogVolumeHistogramComponent implements OnDestroy {
 
   onDragCancel() {
     if (this.isDragging) {
-      this._zone.run(() => { this.isDragging = false; });
+      this._zone.run(() => {
+        this.isDragging = false;
+      });
     }
   }
 
@@ -369,13 +398,15 @@ export class LogVolumeHistogramComponent implements OnDestroy {
     if (!this._chartInstance) return;
     if (Math.abs(x2 - x1) < 4) return; // too small — ignore click
 
-    const msA = this._chartInstance.convertFromPixel({ seriesIndex: 0 }, [x1, 0]) as [number, number] | null;
-    const msB = this._chartInstance.convertFromPixel({ seriesIndex: 0 }, [x2, 0]) as [number, number] | null;
+    const msA = this._chartInstance.convertFromPixel({ seriesIndex: 0 }, [x1, 0]) as
+      [number, number] | null;
+    const msB = this._chartInstance.convertFromPixel({ seriesIndex: 0 }, [x2, 0]) as
+      [number, number] | null;
 
     if (!msA || !msB) return;
 
     const startMs = Math.min(msA[0], msB[0]);
-    const endMs   = Math.max(msA[0], msB[0]);
+    const endMs = Math.max(msA[0], msB[0]);
 
     if (endMs - startMs < 1000) return;
 
@@ -386,10 +417,21 @@ export class LogVolumeHistogramComponent implements OnDestroy {
   private emptyOption(isDark: boolean): EChartsOption {
     return {
       grid: { left: GRID_LEFT, right: GRID_RIGHT, top: GRID_TOP, bottom: GRID_BOTTOM },
-      xAxis: { type: 'time', axisLabel: { show: false }, axisLine: { show: false }, axisTick: { show: false }, splitLine: { show: false } },
-      yAxis: { type: 'value', axisLabel: { show: false }, axisLine: { show: false }, axisTick: { show: false }, splitLine: { show: false } },
+      xAxis: {
+        type: 'time',
+        axisLabel: { show: false },
+        axisLine: { show: false },
+        axisTick: { show: false },
+        splitLine: { show: false },
+      },
+      yAxis: {
+        type: 'value',
+        axisLabel: { show: false },
+        axisLine: { show: false },
+        axisTick: { show: false },
+        splitLine: { show: false },
+      },
       series: [],
     };
   }
-
 }

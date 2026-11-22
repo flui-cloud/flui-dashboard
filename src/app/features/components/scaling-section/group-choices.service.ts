@@ -23,12 +23,8 @@ export class GroupChoicesService {
   private readonly wizard = inject(ProviderWizardService);
   private readonly pricing = inject(PricingService);
 
-  private readonly regionsByProvider = signal<Record<string, ProviderRegion[]>>(
-    {},
-  );
-  private readonly machinesByProvider = signal<
-    Record<string, ServerTypeOption[]>
-  >({});
+  private readonly regionsByProvider = signal<Record<string, ProviderRegion[]>>({});
+  private readonly machinesByProvider = signal<Record<string, ServerTypeOption[]>>({});
 
   /** Silent by design: a catalogue that will not load leaves a free field, not an error. */
   async load(provider: string): Promise<void> {
@@ -51,16 +47,11 @@ export class GroupChoicesService {
    * can be reached from. Null where no catalogue was read — the caller then
    * falls back to a free field rather than offering an empty list.
    */
-  regionChoices(
-    provider: string,
-    reachable: string[] | null,
-  ): ListChoice[] | null {
+  regionChoices(provider: string, reachable: string[] | null): ListChoice[] | null {
     const regions = this.regionsByProvider()[provider];
     if (!regions?.length) return reachable?.length ? bare(reachable) : null;
 
-    const within = reachable
-      ? regions.filter((region) => reachable.includes(region.id))
-      : regions;
+    const within = reachable ? regions.filter((region) => reachable.includes(region.id)) : regions;
 
     return within.map((region) => ({
       value: region.id,
@@ -85,15 +76,12 @@ export class GroupChoicesService {
 
     const offeredHere = (machine: ServerTypeOption) =>
       !regions.length ||
-      regions.some((region) =>
-        (machine.availableRegionIds ?? []).includes(region),
-      );
+      regions.some((region) => (machine.availableRegionIds ?? []).includes(region));
 
     return [...machines]
       .sort(
         (a, b) =>
-          Number(offeredHere(b)) - Number(offeredHere(a)) ||
-          a.pricePerHour - b.pricePerHour,
+          Number(offeredHere(b)) - Number(offeredHere(a)) || a.pricePerHour - b.pricePerHour,
       )
       .map((machine) => ({
         value: machine.name,
@@ -118,9 +106,7 @@ export class GroupChoicesService {
       : machines;
     if (!eligible.length) return null;
     return Math.min(
-      ...eligible.map((machine) =>
-        this.pricing.calculateMonthlyPrice(machine.pricePerHour),
-      ),
+      ...eligible.map((machine) => this.pricing.calculateMonthlyPrice(machine.pricePerHour)),
     );
   }
 

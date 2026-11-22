@@ -91,9 +91,7 @@ export function parentBackupPath(path: string): string {
   return i < 0 ? '' : path.slice(0, i);
 }
 
-export function backupPathCrumbs(
-  path: string,
-): { label: string; path: string }[] {
+export function backupPathCrumbs(path: string): { label: string; path: string }[] {
   const segments = path.split('/').filter(Boolean);
   return segments.map((label, i) => ({
     label,

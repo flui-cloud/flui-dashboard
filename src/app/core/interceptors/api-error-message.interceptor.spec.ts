@@ -3,15 +3,20 @@ import { readableMessage } from './api-error-message.interceptor';
 
 describe('readableMessage', () => {
   const failure = (status: number, error: unknown) =>
-    new HttpErrorResponse({ status, statusText: 'OK', url: 'https://api.example.test/api/v1/x', error });
+    new HttpErrorResponse({
+      status,
+      statusText: 'OK',
+      url: 'https://api.example.test/api/v1/x',
+      error,
+    });
 
   it('says what the API said', () => {
-    expect(readableMessage(failure(403, { message: 'This part of Flui is not included in the trial.' }))).toBe(
-      'This part of Flui is not included in the trial.',
-    );
-    expect(readableMessage(failure(400, { message: ['name is too long', 'port must be a number'] }))).toBe(
-      'name is too long; port must be a number',
-    );
+    expect(
+      readableMessage(failure(403, { message: 'This part of Flui is not included in the trial.' })),
+    ).toBe('This part of Flui is not included in the trial.');
+    expect(
+      readableMessage(failure(400, { message: ['name is too long', 'port must be a number'] })),
+    ).toBe('name is too long; port must be a number');
   });
 
   it('never shows the address or the status line', () => {

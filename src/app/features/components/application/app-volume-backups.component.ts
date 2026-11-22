@@ -10,17 +10,10 @@ import {
   untracked,
 } from '@angular/core';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideArchive,
-  lucideCircleAlert,
-  lucideRefreshCw,
-} from '@ng-icons/lucide';
+import { lucideArchive, lucideCircleAlert, lucideRefreshCw } from '@ng-icons/lucide';
 import { ApplicationService } from '../../service/application.service';
 import { VolumeBackupsService } from '../../service/volume-backups.service';
-import {
-  VolumeBackup,
-  offClusterBackups,
-} from '../../model/volume-backup.models';
+import { VolumeBackup, offClusterBackups } from '../../model/volume-backup.models';
 import { AssistantOperationProgressComponent } from '../assistant/assistant-operation-progress.component';
 import {
   RestoreTarget,
@@ -65,10 +58,7 @@ interface RunningOperation extends VolumeRestoreStarted {
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 class="text-lg font-semibold flex items-center gap-2">
-              <ng-icon
-                name="lucideArchive"
-                class="h-5 w-5 text-indigo-600 dark:text-indigo-400"
-              />
+              <ng-icon name="lucideArchive" class="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
               Volume backups
             </h2>
             <p class="text-sm text-muted-foreground mt-0.5">
@@ -82,12 +72,11 @@ interface RunningOperation extends VolumeRestoreStarted {
             </p>
             @if (showHelp()) {
               <p class="text-xs text-muted-foreground mt-1 max-w-2xl">
-                Each backup stores only what changed since the one before, so
-                "Added" is what it cost in storage and "Size" is what a restore
-                writes back. A whole restore lands in a new volume beside the
-                app and leaves the running app alone; you switch to it when
-                ready. Scheduled backups follow the policy's retention; manual
-                ones stay until you delete them.
+                Each backup stores only what changed since the one before, so "Added" is what it
+                cost in storage and "Size" is what a restore writes back. A whole restore lands in a
+                new volume beside the app and leaves the running app alone; you switch to it when
+                ready. Scheduled backups follow the policy's retention; manual ones stay until you
+                delete them.
               </p>
             }
           </div>
@@ -96,11 +85,7 @@ interface RunningOperation extends VolumeRestoreStarted {
             [disabled]="loading()"
             class="inline-flex items-center gap-2 px-3 py-1.5 text-sm border border-border rounded-md hover:bg-muted disabled:opacity-50"
           >
-            <ng-icon
-              name="lucideRefreshCw"
-              class="h-3.5 w-3.5"
-              [class.animate-spin]="loading()"
-            />
+            <ng-icon name="lucideRefreshCw" class="h-3.5 w-3.5" [class.animate-spin]="loading()" />
             Refresh
           </button>
         </div>
@@ -194,9 +179,7 @@ export class AppVolumeBackupsComponent {
       .sort((a, b) => a.name.localeCompare(b.name));
   });
 
-  protected readonly busyIds = computed(
-    () => new Set(this.operations().map((o) => o.backupId)),
-  );
+  protected readonly busyIds = computed(() => new Set(this.operations().map((o) => o.backupId)));
   protected readonly deletingIds = computed(
     () =>
       new Set(
@@ -226,9 +209,7 @@ export class AppVolumeBackupsComponent {
     try {
       this.all.set(await this.api.list(id));
     } catch (err) {
-      this.error.set(
-        this.api.errorMessage(err, 'Could not load the volume backups'),
-      );
+      this.error.set(this.api.errorMessage(err, 'Could not load the volume backups'));
     } finally {
       this.loading.set(false);
     }
@@ -265,11 +246,7 @@ export class AppVolumeBackupsComponent {
     this.working.set(true);
     this.dialogError.set(null);
     try {
-      const res = await this.api.restore(
-        id,
-        b.id,
-        target ? { targetApplicationId: target } : {},
-      );
+      const res = await this.api.restore(id, b.id, target ? { targetApplicationId: target } : {});
       const name = target
         ? (this.targets().find((t) => t.id === target)?.name ?? 'another app')
         : null;
@@ -286,9 +263,7 @@ export class AppVolumeBackupsComponent {
       );
       this.pendingRestore.set(null);
     } catch (err) {
-      this.dialogError.set(
-        this.api.errorMessage(err, 'Could not start the restore'),
-      );
+      this.dialogError.set(this.api.errorMessage(err, 'Could not start the restore'));
     } finally {
       this.working.set(false);
     }
@@ -314,9 +289,7 @@ export class AppVolumeBackupsComponent {
       if (this.browsing()?.id === b.id) this.browsing.set(null);
       this.pendingDelete.set(null);
     } catch (err) {
-      this.dialogError.set(
-        this.api.errorMessage(err, 'Could not delete the backup'),
-      );
+      this.dialogError.set(this.api.errorMessage(err, 'Could not delete the backup'));
     } finally {
       this.working.set(false);
     }
@@ -327,24 +300,17 @@ export class AppVolumeBackupsComponent {
     kind: RunningOperation['kind'],
     backupId: string,
   ): void {
-    this.operations.update((list) => [
-      ...list,
-      { ...started, kind, backupId },
-    ]);
+    this.operations.update((list) => [...list, { ...started, kind, backupId }]);
   }
 
   protected onSettled(op: RunningOperation, status: string): void {
     if (op.kind === 'delete' && status === 'COMPLETED') {
-      this.operations.update((list) =>
-        list.filter((o) => o.operationId !== op.operationId),
-      );
+      this.operations.update((list) => list.filter((o) => o.operationId !== op.operationId));
       void this.load();
       return;
     }
     this.operations.update((list) =>
-      list.map((o) =>
-        o.operationId === op.operationId ? { ...o, backupId: '' } : o,
-      ),
+      list.map((o) => (o.operationId === op.operationId ? { ...o, backupId: '' } : o)),
     );
     if (
       op.kind === 'restore' &&

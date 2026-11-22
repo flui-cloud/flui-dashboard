@@ -46,7 +46,12 @@ export function clusterCapacity(
       const requested = server.capacity!.requestedMemMi;
       const apps_ = blocks.reduce((s, b) => s + b.mi, 0);
       if (requested > apps_) {
-        blocks.push({ appId: null, label: 'System and other', mi: requested - apps_, tone: 'pending' });
+        blocks.push({
+          appId: null,
+          label: 'System and other',
+          mi: requested - apps_,
+          tone: 'pending',
+        });
       }
       return {
         server,
@@ -107,15 +112,20 @@ export function requestPath(t: TopologyResponseDto, appId: string): RequestPath 
   const gateway: PathHop = {
     step: '01 · Gateway',
     title: routes.length === 1 ? 'Route' : `${routes.length} routes`,
-    lines: [measured ? `${rpsText(rps)} req/s` : 'Traffic not measured',
-      measured ? `${worstError.toFixed(1)}% server errors` : ''].filter(Boolean),
+    lines: [
+      measured ? `${rpsText(rps)} req/s` : 'Traffic not measured',
+      measured ? `${worstError.toFixed(1)}% server errors` : '',
+    ].filter(Boolean),
     check: worstError >= FAILING_ERROR_PCT ? 'fail' : 'ok',
     checkText: worstError >= FAILING_ERROR_PCT ? 'Answering with errors' : 'Serving',
   };
   const service: PathHop = {
     step: '02 · App',
     title: app.displayName,
-    lines: [`${app.exposure} · ${app.workloadKind}`, `${app.replicaCount} replica${app.replicaCount === 1 ? '' : 's'}`],
+    lines: [
+      `${app.exposure} · ${app.workloadKind}`,
+      `${app.replicaCount} replica${app.replicaCount === 1 ? '' : 's'}`,
+    ],
     ...appCheck(app),
   };
   const placed = app.replicas.map((r) => server.get(r.serverId));
@@ -124,7 +134,9 @@ export function requestPath(t: TopologyResponseDto, appId: string): RequestPath 
     title: `${app.replicas.length} server${app.replicas.length === 1 ? '' : 's'}`,
     lines: app.replicas.map((r) => `${server.get(r.serverId)?.nodeName ?? r.serverId} ×${r.count}`),
     check: placed.every((s) => s?.status === 'healthy') ? 'ok' : 'warn',
-    checkText: placed.every((s) => s?.status === 'healthy') ? 'All healthy' : 'A server is not healthy',
+    checkText: placed.every((s) => s?.status === 'healthy')
+      ? 'All healthy'
+      : 'A server is not healthy',
   };
   const data = t.links
     .filter((l) => l.from.appId === app.id && l.to.appId)
@@ -133,11 +145,19 @@ export function requestPath(t: TopologyResponseDto, appId: string): RequestPath 
     .map<PathHop>((a, i) => ({
       step: i === 0 ? '04 · Talks to' : '',
       title: a.displayName,
-      lines: [t.links.find((l) => l.from.appId === app.id && l.to.appId === a.id)?.label ?? '', a.exposure].filter(Boolean),
+      lines: [
+        t.links.find((l) => l.from.appId === app.id && l.to.appId === a.id)?.label ?? '',
+        a.exposure,
+      ].filter(Boolean),
       ...appCheck(a),
     }));
 
-  return { app, hosts: routes.map((l) => l.routeHost ?? '').filter(Boolean), hops: [gateway, service, pods], data };
+  return {
+    app,
+    hosts: routes.map((l) => l.routeHost ?? '').filter(Boolean),
+    hops: [gateway, service, pods],
+    data,
+  };
 }
 
 function rpsText(rps: number): string {

@@ -1,4 +1,11 @@
-import { Component, computed, inject, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  OnInit,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { RouterLink } from '@angular/router';
@@ -38,8 +45,8 @@ interface NodeRowMeta {
     RouterLink,
     RemoveWorkerDialogComponent,
     ResizeNodeDialogComponent,
-    ByosConnectNodeDialogComponent
-],
+    ByosConnectNodeDialogComponent,
+  ],
   providers: [
     provideIcons({
       lucideServer,
@@ -68,7 +75,11 @@ interface NodeRowMeta {
               title="Refresh"
               class="inline-flex items-center p-1.5 border border-border rounded-md text-muted-foreground hover:bg-muted transition-colors disabled:opacity-50"
             >
-              <ng-icon name="lucideRefreshCw" class="h-3.5 w-3.5" [class.animate-spin]="nodesIsLoading()" />
+              <ng-icon
+                name="lucideRefreshCw"
+                class="h-3.5 w-3.5"
+                [class.animate-spin]="nodesIsLoading()"
+              />
             </button>
             @if (isByos()) {
               <button
@@ -96,7 +107,7 @@ interface NodeRowMeta {
 
         @if (nodesIsLoading() && clusterNodes().length === 0) {
           <div class="animate-pulse flex flex-col gap-2">
-            @for (i of [1,2,3,4]; track i) {
+            @for (i of [1, 2, 3, 4]; track i) {
               <div class="flex items-center gap-3 p-3 rounded-lg border border-border">
                 <div class="h-8 w-8 rounded-full skeleton flex-shrink-0"></div>
                 <div class="flex-1 space-y-1.5">
@@ -110,11 +121,15 @@ interface NodeRowMeta {
         }
 
         @if (nodesError() && !nodesIsLoading() && clusterNodes().length === 0) {
-          <div class="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-4">
+          <div
+            class="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-4"
+          >
             <div class="flex items-center gap-3">
               <ng-icon name="lucideCircleAlert" class="h-5 w-5 status-error" />
               <div class="flex-1">
-                <p class="text-sm font-medium text-red-900 dark:text-red-200">Failed to load nodes</p>
+                <p class="text-sm font-medium text-red-900 dark:text-red-200">
+                  Failed to load nodes
+                </p>
                 <p class="text-sm text-red-700 dark:text-red-300 mt-1">{{ nodesError() }}</p>
               </div>
             </div>
@@ -125,9 +140,7 @@ interface NodeRowMeta {
           <div class="text-center py-12">
             <ng-icon name="lucideServer" class="h-12 w-12 text-muted-foreground mx-auto mb-3" />
             <p class="text-sm font-semibold text-foreground">No nodes found</p>
-            <p class="text-sm text-sub mt-1">
-              This cluster doesn't have any nodes yet.
-            </p>
+            <p class="text-sm text-sub mt-1">This cluster doesn't have any nodes yet.</p>
           </div>
         }
 
@@ -217,20 +230,18 @@ export class ClusterNodesTabComponent implements OnInit {
    * the API that would resize it, so that stays with `flui env scale-node`.
    */
   protected canResize = computed(
-    () =>
-      !this.isByos() &&
-      this.cluster()?.clusterType === ClusterType.WORKLOAD,
+    () => !this.isByos() && this.cluster()?.clusterType === ClusterType.WORKLOAD,
   );
 
   protected isByos = computed(() => this.clusterService.isByosCluster());
 
   protected nodeRows = computed<NodeRowMeta[]>(() => {
     const nodes = this.clusterNodes();
-    const workerNodes = nodes.filter(n => !this.isMasterNode(n));
+    const workerNodes = nodes.filter((n) => !this.isMasterNode(n));
     const minNodes = this.cluster()?.minNodes;
     const atMin = minNodes != null && workerNodes.length <= minNodes;
 
-    return nodes.map(node => {
+    return nodes.map((node) => {
       const isMaster = this.isMasterNode(node);
       const status = (node.status || '').toString().toLowerCase();
       const isBusy = status === 'deleting' || status === 'error';
@@ -246,8 +257,8 @@ export class ClusterNodesTabComponent implements OnInit {
     });
   });
 
-  protected workerCount = computed(() =>
-    this.clusterNodes().filter(n => !this.isMasterNode(n)).length
+  protected workerCount = computed(
+    () => this.clusterNodes().filter((n) => !this.isMasterNode(n)).length,
   );
 
   protected maxNodes = computed<number | null>(() => {

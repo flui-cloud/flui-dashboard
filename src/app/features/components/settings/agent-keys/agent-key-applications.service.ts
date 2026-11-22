@@ -32,26 +32,21 @@ export class AgentKeyApplicationsService {
         if (!clusters.length) return of([] as SelectableApplication[]);
         return forkJoin(
           clusters.map((cluster) =>
-            this.appsApi
-              .applicationsControllerListGroupedByCluster(cluster.id)
-              .pipe(
-                map((groups) =>
-                  groups.flatMap((group) =>
-                    group.components.map((component) => ({
-                      id: component.id,
-                      name:
-                        group.components.length > 1
-                          ? `${group.name} — ${component.name}`
-                          : group.name,
-                      clusterName: cluster.name,
-                      category:
-                        group.category === 'system'
-                          ? ('system' as const)
-                          : ('user' as const),
-                    })),
-                  ),
+            this.appsApi.applicationsControllerListGroupedByCluster(cluster.id).pipe(
+              map((groups) =>
+                groups.flatMap((group) =>
+                  group.components.map((component) => ({
+                    id: component.id,
+                    name:
+                      group.components.length > 1
+                        ? `${group.name} — ${component.name}`
+                        : group.name,
+                    clusterName: cluster.name,
+                    category: group.category === 'system' ? ('system' as const) : ('user' as const),
+                  })),
                 ),
               ),
+            ),
           ),
         ).pipe(map((perCluster) => perCluster.flat()));
       }),

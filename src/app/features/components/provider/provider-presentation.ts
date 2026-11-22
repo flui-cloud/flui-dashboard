@@ -59,7 +59,10 @@ export function credentialSchema(provider: ProviderDefinitionDto): CredentialSch
 
 /** What the provider asks for, as its own form declares it before the older capability flag. */
 export function credentialKind(provider: ProviderDefinitionDto): string | undefined {
-  return credentialSchema(provider)?.type ?? (provider.capabilities?.credentialType as string | undefined);
+  return (
+    credentialSchema(provider)?.type ??
+    (provider.capabilities?.credentialType as string | undefined)
+  );
 }
 
 export function credentialKindLabel(kind: string | undefined): string {

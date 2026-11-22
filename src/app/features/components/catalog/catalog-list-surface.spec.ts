@@ -29,14 +29,34 @@ function input(over: Partial<CatalogListSurfaceInput> = {}): CatalogListSurfaceI
       {
         kind: 'DATABASE',
         label: 'Databases',
-        rows: [{ slug: 'postgres', name: 'PostgreSQL', category: 'database', installedCount: 2, updateAvailable: true }],
+        rows: [
+          {
+            slug: 'postgres',
+            name: 'PostgreSQL',
+            category: 'database',
+            installedCount: 2,
+            updateAvailable: true,
+          },
+        ],
       },
       {
         kind: 'APPLICATION',
         label: 'Applications',
         rows: [
-          { slug: 'immich', name: 'Immich', category: 'photos', installedCount: 0, updateAvailable: false },
-          { slug: 'gitea', name: 'Gitea', category: 'devtools', installedCount: 1, updateAvailable: false },
+          {
+            slug: 'immich',
+            name: 'Immich',
+            category: 'photos',
+            installedCount: 0,
+            updateAvailable: false,
+          },
+          {
+            slug: 'gitea',
+            name: 'Gitea',
+            category: 'devtools',
+            installedCount: 1,
+            updateAvailable: false,
+          },
         ],
       },
     ],
@@ -89,7 +109,11 @@ describe('catalog list surface producer', () => {
     expect(obsOf(snapshot, 'catalog', 'flui.catalog.total')!.presentedAs.value).toBe(108);
     expect(obsOf(snapshot, 'catalog', 'flui.catalog.shown')!.presentedAs.value).toBe(3);
     expect(obsOf(snapshot, 'catalog', 'flui.catalog.tags_active')!.presentedAs.value).toBe(2);
-    expect(scope(snapshot, 'catalog:APPLICATION')!.completeness).toEqual({ shown: 2, total: 2, filtered: true });
+    expect(scope(snapshot, 'catalog:APPLICATION')!.completeness).toEqual({
+      shown: 2,
+      total: 2,
+      filtered: true,
+    });
     // The rows are the two applications on the screen, not the 108 the fetch returned.
     expect(snapshot.scopes.filter((s) => s.kind === 'region').length).toBe(3);
   });
@@ -109,7 +133,9 @@ describe('catalog list surface producer', () => {
   });
 
   it('marks "No apps match your filters" empty without claiming an error', () => {
-    expect(scope(snapshotOf({ groups: [], shownCount: 0, hasQuery: true }), 'catalog')!.state).toEqual({
+    expect(
+      scope(snapshotOf({ groups: [], shownCount: 0, hasQuery: true }), 'catalog')!.state,
+    ).toEqual({
       loading: false,
       empty: true,
     });
@@ -117,14 +143,22 @@ describe('catalog list surface producer', () => {
 
   it('carries the badges a card really shows: how many are installed, and whether one is stale', () => {
     const row = scope(snapshotOf(), 'catalog:DATABASE:postgres')!;
-    expect(row.observations!.find((o) => o.key === 'flui.catalog_app.installed')!.presentedAs.value).toBe(2);
-    expect(row.observations!.find((o) => o.key === 'flui.catalog_app.update_available')!.presentedAs.value).toBe(true);
+    expect(
+      row.observations!.find((o) => o.key === 'flui.catalog_app.installed')!.presentedAs.value,
+    ).toBe(2);
+    expect(
+      row.observations!.find((o) => o.key === 'flui.catalog_app.update_available')!.presentedAs
+        .value,
+    ).toBe(true);
   });
 
   it('never observes the typed query or the individual tags — only that filters are on', () => {
     const json = JSON.stringify(snapshotOf({ hasQuery: true, activeTagCount: 3 }));
     expect(json).not.toContain('query');
-    expect(obsOf(JSON.parse(json) as SurfaceSnapshot, 'catalog', 'flui.catalog.searching')!.presentedAs.value).toBe(true);
+    expect(
+      obsOf(JSON.parse(json) as SurfaceSnapshot, 'catalog', 'flui.catalog.searching')!.presentedAs
+        .value,
+    ).toBe(true);
   });
 
   it('caps a very long group and says so on the snapshot too', () => {
@@ -139,7 +173,11 @@ describe('catalog list surface producer', () => {
       groups: [{ kind: 'TOOL', label: 'Tools', rows }],
       shownCount: 40,
     });
-    expect(scope(snapshot, 'catalog:TOOL')!.completeness).toEqual({ shown: 25, total: 40, truncated: true });
+    expect(scope(snapshot, 'catalog:TOOL')!.completeness).toEqual({
+      shown: 25,
+      total: 40,
+      truncated: true,
+    });
     expect(snapshot.surface.truncated).toBe(true);
     expectValidSurface(snapshot);
   });
@@ -147,7 +185,10 @@ describe('catalog list surface producer', () => {
   it('bumps the revision on real change, and validateSurfaceSemantics accepts it against the previous', () => {
     const tracker = new CatalogListSurfaceRevision();
     const before = input();
-    const first = buildCatalogListSurface(before, { revision: tracker.next(presentedContent(before)), generatedAt: GENERATED_AT });
+    const first = buildCatalogListSurface(before, {
+      revision: tracker.next(presentedContent(before)),
+      generatedAt: GENERATED_AT,
+    });
     const after = input({ activeCategory: 'database' });
     const second = buildCatalogListSurface(after, {
       revision: tracker.next(presentedContent(after)),
@@ -164,7 +205,10 @@ describe('catalog list surface producer', () => {
 
   it('flags a snapshot whose revision does not advance on the previous one', () => {
     const first = snapshotOf();
-    const stale = { ...snapshotOf(), surface: { ...snapshotOf().surface, revision: first.surface.revision } };
+    const stale = {
+      ...snapshotOf(),
+      surface: { ...snapshotOf().surface, revision: first.surface.revision },
+    };
     expect(validateSurfaceSemantics(stale, { previousSnapshot: first })).toEqual([
       jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' }),
     ]);

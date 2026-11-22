@@ -41,7 +41,7 @@ export class ClusterAppsMetricsService {
   readonly ranked = computed<AppConsumption[]>(() =>
     this.appsSignal()
       .map((app) => this.toConsumption(app))
-      .sort((a, b) => (b.cpuCores ?? 0) - (a.cpuCores ?? 0))
+      .sort((a, b) => (b.cpuCores ?? 0) - (a.cpuCores ?? 0)),
   );
 
   readonly topConsumers = computed(() => this.ranked().slice(0, 5));
@@ -58,7 +58,7 @@ export class ClusterAppsMetricsService {
       this.loadingSignal.set(true);
       this.errorSignal.set(null);
       const response = await firstValueFrom(
-        this.metricsApi.applicationMetricsControllerGetClusterAppsMetrics(clusterId)
+        this.metricsApi.applicationMetricsControllerGetClusterAppsMetrics(clusterId),
       );
       if (this.pendingFor !== clusterId) return;
       this.appsSignal.set(response.applications ?? []);

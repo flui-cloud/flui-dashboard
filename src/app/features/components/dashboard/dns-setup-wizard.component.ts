@@ -1,4 +1,12 @@
-import { Component, inject, output, OnInit, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  inject,
+  output,
+  OnInit,
+  signal,
+  computed,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
   lucideX,
@@ -38,9 +46,16 @@ import { DnsWizardDoneStepComponent } from './dns-wizard-done-step.component';
   providers: [
     DnsSetupWizardService,
     provideIcons({
-      lucideX, lucideArrowRight, lucideArrowLeft,
-      lucideShieldCheck, lucideLoader, lucideFileText,
-      lucideCopy, lucideCheck, lucideExternalLink, lucideSettings,
+      lucideX,
+      lucideArrowRight,
+      lucideArrowLeft,
+      lucideShieldCheck,
+      lucideLoader,
+      lucideFileText,
+      lucideCopy,
+      lucideCheck,
+      lucideExternalLink,
+      lucideSettings,
     }),
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -62,7 +77,9 @@ import { DnsWizardDoneStepComponent } from './dns-wizard-done-step.component';
           <!-- Header -->
           <div class="flex items-center justify-between px-6 py-4 border-b border-border">
             <div class="flex items-center gap-2.5">
-              <div class="h-8 w-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+              <div
+                class="h-8 w-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center"
+              >
                 <ng-icon name="lucideShieldCheck" class="h-4 w-4 text-emerald-500" />
               </div>
               <div>
@@ -86,12 +103,16 @@ import { DnsWizardDoneStepComponent } from './dns-wizard-done-step.component';
           <div class="px-6 py-5 min-h-[180px] max-h-[420px] flex flex-col overflow-y-auto gap-4">
             <!-- Success header -->
             <div class="flex items-center gap-3">
-              <div class="h-10 w-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center flex-shrink-0">
+              <div
+                class="h-10 w-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center flex-shrink-0"
+              >
                 <ng-icon name="lucideShieldCheck" class="h-5 w-5 text-emerald-500" />
               </div>
               <div>
                 <p class="text-sm font-semibold text-foreground">Everything is live</p>
-                <p class="text-xs text-muted-foreground mt-0.5">All apps are publicly accessible with active TLS certificates.</p>
+                <p class="text-xs text-muted-foreground mt-0.5">
+                  All apps are publicly accessible with active TLS certificates.
+                </p>
               </div>
             </div>
 
@@ -99,10 +120,15 @@ import { DnsWizardDoneStepComponent } from './dns-wizard-done-step.component';
             <div class="flex flex-col gap-0 rounded-lg border border-border overflow-hidden">
               @for (app of recapApps(); track app.label) {
                 <div class="flex items-center gap-3 px-4 py-3 border-b border-border last:border-0">
-                  <ng-icon name="lucideShieldCheck" class="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                  <ng-icon
+                    name="lucideShieldCheck"
+                    class="h-4 w-4 text-emerald-500 flex-shrink-0"
+                  />
                   <div class="flex-1 min-w-0">
                     <p class="text-xs font-semibold text-foreground">{{ app.label }}</p>
-                    <p class="text-xs text-muted-foreground font-mono truncate">https://{{ app.domain }}</p>
+                    <p class="text-xs text-muted-foreground font-mono truncate">
+                      https://{{ app.domain }}
+                    </p>
                   </div>
                   <a
                     href="https://{{ app.domain }}"
@@ -120,7 +146,8 @@ import { DnsWizardDoneStepComponent } from './dns-wizard-done-step.component';
 
             <div class="rounded-md bg-muted/60 px-4 py-2.5">
               <p class="text-xs text-muted-foreground">
-                Use <span class="font-medium text-foreground">Reconfigure</span> to change domains, certificate providers, or add new endpoints.
+                Use <span class="font-medium text-foreground">Reconfigure</span> to change domains,
+                certificate providers, or add new endpoints.
               </p>
             </div>
           </div>
@@ -143,7 +170,6 @@ import { DnsWizardDoneStepComponent } from './dns-wizard-done-step.component';
               Close
             </button>
           </div>
-
         } @else {
           <!-- ── WIZARD MODE ── -->
           <!-- Header -->
@@ -154,7 +180,9 @@ import { DnsWizardDoneStepComponent } from './dns-wizard-done-step.component';
               </div>
               <div>
                 <h2 class="font-semibold text-foreground text-sm">Set up public access</h2>
-                <p class="text-xs text-muted-foreground">Step {{ wiz.stepIndex() + 1 }} of {{ wiz.totalSteps() }}</p>
+                <p class="text-xs text-muted-foreground">
+                  Step {{ wiz.stepIndex() + 1 }} of {{ wiz.totalSteps() }}
+                </p>
               </div>
             </div>
             <button
@@ -178,13 +206,27 @@ import { DnsWizardDoneStepComponent } from './dns-wizard-done-step.component';
           <div class="px-6 py-5 min-h-[180px] max-h-[420px] flex flex-col">
             <div class="flex flex-col flex-1 overflow-y-auto">
               @switch (wiz.currentStep()) {
-                @case ('mode')      { <app-dns-wizard-mode-step /> }
-                @case ('zone')      { <app-dns-wizard-zone-step /> }
-                @case ('names')     { <app-dns-wizard-names-step /> }
-                @case ('issuer')    { <app-dns-wizard-issuer-step /> }
-                @case ('endpoints-config') { <app-dns-wizard-endpoints-config-step /> }
-                @case ('endpoints') { <app-dns-wizard-endpoints-step /> }
-                @case ('done')      { <app-dns-wizard-done-step [clusterId]="clusterId() ?? ''" /> }
+                @case ('mode') {
+                  <app-dns-wizard-mode-step />
+                }
+                @case ('zone') {
+                  <app-dns-wizard-zone-step />
+                }
+                @case ('names') {
+                  <app-dns-wizard-names-step />
+                }
+                @case ('issuer') {
+                  <app-dns-wizard-issuer-step />
+                }
+                @case ('endpoints-config') {
+                  <app-dns-wizard-endpoints-config-step />
+                }
+                @case ('endpoints') {
+                  <app-dns-wizard-endpoints-step />
+                }
+                @case ('done') {
+                  <app-dns-wizard-done-step [clusterId]="clusterId() ?? ''" />
+                }
               }
             </div>
           </div>
@@ -200,10 +242,14 @@ import { DnsWizardDoneStepComponent } from './dns-wizard-done-step.component';
                 (click)="$event.stopPropagation()"
               >
                 <!-- Popup header -->
-                <div class="flex items-center justify-between px-4 py-3 border-b border-border flex-shrink-0">
+                <div
+                  class="flex items-center justify-between px-4 py-3 border-b border-border flex-shrink-0"
+                >
                   <div class="flex items-center gap-2">
                     <ng-icon name="lucideFileText" class="h-4 w-4 text-destructive" />
-                    <span class="text-sm font-semibold text-foreground">{{ wiz.activeAppError()!.label }} — Details</span>
+                    <span class="text-sm font-semibold text-foreground"
+                      >{{ wiz.activeAppError()!.label }} — Details</span
+                    >
                   </div>
                   <div class="flex items-center gap-1">
                     @if (wiz.activeAppError()!.certMessage || wiz.activeAppError()!.errorMessage) {
@@ -213,7 +259,10 @@ import { DnsWizardDoneStepComponent } from './dns-wizard-done-step.component';
                         title="Copy message"
                         class="p-1.5 rounded text-muted-foreground hover:text-foreground transition-colors"
                       >
-                        <ng-icon [name]="wiz.appErrorCopied() ? 'lucideCheck' : 'lucideCopy'" class="h-3.5 w-3.5" />
+                        <ng-icon
+                          [name]="wiz.appErrorCopied() ? 'lucideCheck' : 'lucideCopy'"
+                          class="h-3.5 w-3.5"
+                        />
                       </button>
                     }
                     <button
@@ -227,10 +276,17 @@ import { DnsWizardDoneStepComponent } from './dns-wizard-done-step.component';
                 </div>
                 <!-- Popup body -->
                 <div class="overflow-y-auto p-4 flex-1">
-                  @let msg = wiz.activeAppError()!.certMessage || wiz.activeAppError()!.errorMessage;
+                  @let msg =
+                    wiz.activeAppError()!.certMessage || wiz.activeAppError()!.errorMessage;
                   @if (msg) {
-                    <div class="rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/15 px-3 py-2">
-                      <p class="text-xs text-red-700 dark:text-red-300 font-mono leading-relaxed break-all">{{ msg }}</p>
+                    <div
+                      class="rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/15 px-3 py-2"
+                    >
+                      <p
+                        class="text-xs text-red-700 dark:text-red-300 font-mono leading-relaxed break-all"
+                      >
+                        {{ msg }}
+                      </p>
                     </div>
                   }
                 </div>

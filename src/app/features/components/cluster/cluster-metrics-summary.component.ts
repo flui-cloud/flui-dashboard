@@ -1,5 +1,9 @@
 import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/core';
-import { StatTileComponent, StatTileData, NODE_SERIES_COLORS } from '../../../shared/components/charts';
+import {
+  StatTileComponent,
+  StatTileData,
+  NODE_SERIES_COLORS,
+} from '../../../shared/components/charts';
 import { ClusterMonitoringService } from '../../service/cluster-monitoring.service';
 import { ClusterMetricsHistoryService } from '../../service/cluster-metrics-history.service';
 import { ClusterAutoscaleService } from '../../service/cluster-autoscale.service';
@@ -25,9 +29,13 @@ const points = (value: number) => `${value.toFixed(1)}%`;
       }
     </div>
   `,
-  styles: [`
-    :host { display: block; }
-  `],
+  styles: [
+    `
+      :host {
+        display: block;
+      }
+    `,
+  ],
 })
 export class ClusterMetricsSummaryComponent {
   private readonly monitoring = inject(ClusterMonitoringService);
@@ -95,7 +103,9 @@ export class ClusterMetricsSummaryComponent {
         value: loadCores ? (runQueue / loadCores).toFixed(2) : '\u2014',
         spark: [],
         color: NODE_SERIES_COLORS[3],
-        footnote: loadCores ? `${runQueue.toFixed(2)} run queue \u00b7 ${loadCores} cores` : 'not reported',
+        footnote: loadCores
+          ? `${runQueue.toFixed(2)} run queue \u00b7 ${loadCores} cores`
+          : 'not reported',
         current: null,
       }),
       this.tile({

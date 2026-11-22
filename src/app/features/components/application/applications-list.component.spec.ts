@@ -80,7 +80,15 @@ describe('ApplicationsListComponent', () => {
     navigate = jasmine.createSpy('navigate');
     coverage.set({
       generatedAt: '',
-      summary: { applications: 3, holdingData: 1, protected: 0, pending: 0, toVerify: 0, unprotected: 1, alarms: 1 },
+      summary: {
+        applications: 3,
+        holdingData: 1,
+        protected: 0,
+        pending: 0,
+        toVerify: 0,
+        unprotected: 1,
+        alarms: 1,
+      },
       applications: [
         {
           applicationId: 'store',
@@ -125,11 +133,21 @@ describe('ApplicationsListComponent', () => {
             loadClusters: jasmine.createSpy('loadClusters').and.resolveTo(),
           },
         },
-        { provide: ProvidersService, useValue: { getProviderById: () => ({ displayName: 'Hetzner' }) } },
-        { provide: ProjectsService, useValue: { projects: signal([]), loadProjects: jasmine.createSpy('loadProjects') } },
+        {
+          provide: ProvidersService,
+          useValue: { getProviderById: () => ({ displayName: 'Hetzner' }) },
+        },
+        {
+          provide: ProjectsService,
+          useValue: { projects: signal([]), loadProjects: jasmine.createSpy('loadProjects') },
+        },
         {
           provide: FleetService,
-          useValue: { coverage, coverageState, loadCoverage: jasmine.createSpy('loadCoverage').and.resolveTo() },
+          useValue: {
+            coverage,
+            coverageState,
+            loadCoverage: jasmine.createSpy('loadCoverage').and.resolveTo(),
+          },
         },
         {
           provide: ApplicationMetricsService,
@@ -152,7 +170,12 @@ describe('ApplicationsListComponent', () => {
         { provide: CurrentSurfaceService, useValue: { set: () => undefined } },
         {
           provide: SandboxService,
-          useValue: { whyFor: () => '', visitor: signal(false), inSandbox: signal(false), hasArea: signal(false) },
+          useValue: {
+            whyFor: () => '',
+            visitor: signal(false),
+            inSandbox: signal(false),
+            hasArea: signal(false),
+          },
         },
         {
           provide: ActivatedRoute,
@@ -183,15 +206,17 @@ describe('ApplicationsListComponent', () => {
   it('lists the failed app first with its reason, and says how many apps on how many clusters', () => {
     expect(rowIds()[0]).toBe('app-row-g-broken');
     expect(text()).toContain('Failed · image not found');
-    expect(fixture.nativeElement.querySelector('[data-testid="apps-summary"]').textContent).toContain(
-      '5 applications on 1 cluster',
-    );
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="apps-summary"]').textContent,
+    ).toContain('5 applications on 1 cluster');
   });
 
   it('shows ready replicas from the readings and the endpoint as a link', () => {
     const web = fixture.nativeElement.querySelector('[data-testid="app-row-g-web"]');
     expect(web.querySelector('[data-testid="app-row-ready"]').textContent.trim()).toBe('1 / 1');
-    expect(web.querySelector('[data-testid="app-row-endpoint"]').getAttribute('href')).toBe('https://web.example.com');
+    expect(web.querySelector('[data-testid="app-row-endpoint"]').getAttribute('href')).toBe(
+      'https://web.example.com',
+    );
     expect(web.querySelector('[data-testid="app-row-origin"]').textContent.trim()).toBe('Image');
   });
 
@@ -211,15 +236,19 @@ describe('ApplicationsListComponent', () => {
   it('leaves the backup column at a dash when the backup read did not answer', () => {
     coverageState.set('error');
     fixture.detectChanges();
-    const cells = Array.from(fixture.nativeElement.querySelectorAll('[data-testid="app-row-backup"]')).map((el) =>
-      (el as HTMLElement).textContent?.trim(),
-    );
+    const cells = Array.from(
+      fixture.nativeElement.querySelectorAll('[data-testid="app-row-backup"]'),
+    ).map((el) => (el as HTMLElement).textContent?.trim());
     expect(cells.every((c) => c === '—')).toBeTrue();
     coverageState.set('ready');
   });
 
   it('marks tools and narrows to them from the Tools chip or the old tools address', async () => {
-    expect(fixture.nativeElement.querySelector('[data-testid="app-row-g-kuma"] [data-testid="app-row-tool"]')).not.toBeNull();
+    expect(
+      fixture.nativeElement.querySelector(
+        '[data-testid="app-row-g-kuma"] [data-testid="app-row-tool"]',
+      ),
+    ).not.toBeNull();
     fixture.nativeElement.querySelector('[data-testid="apps-type-tool"]').click();
     fixture.detectChanges();
     expect(rowIds()).toEqual(['app-row-g-kuma']);
@@ -236,12 +265,16 @@ describe('ApplicationsListComponent', () => {
     expect(row).not.toBeNull();
     expect(rowIds()).toEqual([]);
     expect(row.querySelector('[data-testid="app-row-part-of"]').textContent).toContain('umami');
-    expect(fixture.nativeElement.querySelector('[data-testid="apps-summary"]').textContent).toContain('1 data store on 1 cluster');
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="apps-summary"]').textContent,
+    ).toContain('1 data store on 1 cluster');
 
     row.click();
     expect(navigate).toHaveBeenCalledWith(['/apps/applications', 'umami-db']);
     row.querySelector('[data-testid="app-row-part-of"] button').click();
-    expect(navigate).toHaveBeenCalledWith(['/apps/recap', 'g-umami'], { queryParams: { from: 'data' } });
+    expect(navigate).toHaveBeenCalledWith(['/apps/recap', 'g-umami'], {
+      queryParams: { from: 'data' },
+    });
   });
 
   it('offers the same Add menu on every list but System', async () => {

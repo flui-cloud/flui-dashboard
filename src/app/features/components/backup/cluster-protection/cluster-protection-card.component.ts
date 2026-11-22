@@ -44,7 +44,10 @@ const OUTCOME_TONE: Record<string, string> = {
     ReadOnlySectionDirective,
   ],
   template: `
-    <div class="rounded-lg border border-border bg-card p-4 space-y-3" data-testid="cluster-protection">
+    <div
+      class="rounded-lg border border-border bg-card p-4 space-y-3"
+      data-testid="cluster-protection"
+    >
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div class="flex items-center gap-2">
@@ -52,9 +55,11 @@ const OUTCOME_TONE: Record<string, string> = {
             @if (view(); as v) {
               <span
                 class="rounded-full border px-2 py-0.5 text-[11px]"
-                [class]="v.protected
-                  ? 'border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400'
-                  : 'border-border bg-muted text-muted-foreground'"
+                [class]="
+                  v.protected
+                    ? 'border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400'
+                    : 'border-border bg-muted text-muted-foreground'
+                "
               >
                 {{ v.protected ? 'Every app protected' : 'Not protected' }}
               </span>
@@ -199,8 +204,8 @@ const OUTCOME_TONE: Record<string, string> = {
         >
           <h3 class="text-lg font-semibold">Stop protecting new apps?</h3>
           <p class="text-sm text-muted-foreground">
-            Apps installed on {{ clusterName() }} from now on get no backup
-            unless someone adds one. The backups already set up keep running.
+            Apps installed on {{ clusterName() }} from now on get no backup unless someone adds one.
+            The backups already set up keep running.
           </p>
           <div class="flex gap-2">
             <button

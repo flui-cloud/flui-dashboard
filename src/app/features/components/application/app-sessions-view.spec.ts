@@ -91,7 +91,9 @@ describe('app-sessions-view', () => {
 
   it('names the application, the pooler hop and the pod', () => {
     expect(whoOf(sessionFixture({ clientApp: { id: 'a', name: 'talk-api' } }))).toBe('talk-api');
-    expect(whoOf(sessionFixture({ kind: 'pooler', via: 'pooler' }))).toBe('10.42.0.15 · via pooler');
+    expect(whoOf(sessionFixture({ kind: 'pooler', via: 'pooler' }))).toBe(
+      '10.42.0.15 · via pooler',
+    );
     expect(whoOf(sessionFixture({ kind: 'local', via: 'socket', clientAddr: null }))).toBe(
       'Inside the database pod',
     );
@@ -99,16 +101,18 @@ describe('app-sessions-view', () => {
 
   it('falls back to the name the client gave itself, without the host the pooler appends', () => {
     expect(whoOf(sessionFixture({ applicationName: 'holder' }))).toBe('holder');
-    expect(whoOf(sessionFixture({ via: 'pooler', applicationName: 'waiter - 10.42.0.140:47134' }))).toBe(
-      'waiter · via pooler',
-    );
+    expect(
+      whoOf(sessionFixture({ via: 'pooler', applicationName: 'waiter - 10.42.0.140:47134' })),
+    ).toBe('waiter · via pooler');
   });
 
   it('calls a blocked session waiting, and says on what', () => {
     const s = sessionFixture({ blockedBy: [4], waitEventType: 'Lock', waitEvent: 'tuple' });
     expect(stateLabel(s)).toBe('waiting for a lock');
     expect(waitingOn(s)).toBe('session 4');
-    expect(waitingOn(sessionFixture({ waitEventType: 'Client', waitEvent: 'ClientRead' }))).toBeNull();
+    expect(
+      waitingOn(sessionFixture({ waitEventType: 'Client', waitEvent: 'ClientRead' })),
+    ).toBeNull();
   });
 
   it('reads ages plainly', () => {
@@ -124,8 +128,12 @@ describe('app-sessions-view', () => {
 
   it('words each confirmation for what it does', () => {
     expect(confirmCopy(null)).toBeNull();
-    expect(confirmCopy({ kind: 'session', session: sessionFixture(), action: 'cancel' })?.variant).toBe('warning');
-    expect(confirmCopy({ kind: 'session', session: sessionFixture(), action: 'terminate' })?.variant).toBe('danger');
+    expect(
+      confirmCopy({ kind: 'session', session: sessionFixture(), action: 'cancel' })?.variant,
+    ).toBe('warning');
+    expect(
+      confirmCopy({ kind: 'session', session: sessionFixture(), action: 'terminate' })?.variant,
+    ).toBe('danger');
     const client = confirmCopy({
       kind: 'client',
       client: {

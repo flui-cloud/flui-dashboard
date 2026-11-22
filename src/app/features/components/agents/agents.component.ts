@@ -66,8 +66,7 @@ import {
         <div class="space-y-1">
           <h1 class="text-2xl font-semibold tracking-tight text-foreground">Agents</h1>
           <p class="m-0 text-sm text-muted-foreground">
-            What your agents are asking to do, what they may already do, and what
-            they have done.
+            What your agents are asking to do, what they may already do, and what they have done.
           </p>
         </div>
         <a
@@ -88,17 +87,23 @@ import {
         class="flex items-start gap-3.5 rounded-lg border border-primary/20 bg-primary/[0.07] px-4 py-3.5"
         data-testid="ceiling"
       >
-        <span class="shrink-0 pt-0.5 font-mono text-[11px] font-semibold tracking-widest text-accent-foreground">
+        <span
+          class="shrink-0 pt-0.5 font-mono text-[11px] font-semibold tracking-widest text-accent-foreground"
+        >
           CEILING
         </span>
         <p class="m-0 text-sm text-muted-foreground">
-          <span class="font-semibold text-foreground">An agent can never do more than you can.</span>
+          <span class="font-semibold text-foreground"
+            >An agent can never do more than you can.</span
+          >
           {{ ceiling() }}
         </p>
       </div>
 
       @if (loadError(); as e) {
-        <div class="flex items-start gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <div
+          class="flex items-start gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+        >
           <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-4 w-4 shrink-0" />
           <span>{{ e }}</span>
         </div>
@@ -132,8 +137,8 @@ import {
           </div>
         } @else if (answered()) {
           <p class="m-0 text-sm text-muted-foreground" data-testid="already-answered">
-            The request you followed here was already answered ({{ answered()?.status }}).
-            The agent finds out by retrying the call it was stopped on.
+            The request you followed here was already answered ({{ answered()?.status }}). The agent
+            finds out by retrying the call it was stopped on.
           </p>
         }
 
@@ -147,8 +152,8 @@ import {
             />
           } @empty {
             <p class="m-0 text-sm text-muted-foreground" data-testid="no-requests">
-              Nothing is waiting on you. An agent that meets something it may not
-              do on its own raises it here and carries on with the rest.
+              Nothing is waiting on you. An agent that meets something it may not do on its own
+              raises it here and carries on with the rest.
             </p>
           }
         }
@@ -184,7 +189,9 @@ import {
         </div>
 
         @if (activityError(); as e) {
-          <div class="flex items-start gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          <div
+            class="flex items-start gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+          >
             <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-4 w-4 shrink-0" />
             <span data-testid="activity-error-banner">{{ e }}</span>
           </div>
@@ -302,16 +309,18 @@ export class AgentsComponent implements OnInit, OnDestroy {
     const target = this.followed();
     const input: AgentsSurfaceInput = {
       ceiling: this.ceiling(),
-      waitingRows: this.waiting().map(
-        (proposal): AgentRequestRow => ({ proposal, agentName: this.agentName(proposal.keyId) }),
-      ),
+      waitingRows: this.waiting().map((proposal): AgentRequestRow => ({
+        proposal,
+        agentName: this.agentName(proposal.keyId),
+      })),
       loadingWaiting: this.loading(),
       followedProposalId: target,
       followedAnsweredStatus: this.answered()?.status ?? null,
       expiredCount: expiredCount(this.proposals()),
-      grantRows: standingConcessions(this.concessions()).map(
-        (concession): AgentGrantRow => ({ concession, agentName: this.agentName(concession.keyId) }),
-      ),
+      grantRows: standingConcessions(this.concessions()).map((concession): AgentGrantRow => ({
+        concession,
+        agentName: this.agentName(concession.keyId),
+      })),
       activityTotal: this.activity().total,
       activityScope: this.activity().scope,
       activityShownCount: this.activity().entries.length,
@@ -356,9 +365,7 @@ export class AgentsComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.skill.set(null);
-        this.skillError.set(
-          'The instructions for agents could not be read from this instance.',
-        );
+        this.skillError.set('The instructions for agents could not be read from this instance.');
       },
     });
   }
@@ -378,9 +385,7 @@ export class AgentsComponent implements OnInit, OnDestroy {
       error: (err: unknown) => {
         this.proposals.set([]);
         this.loading.set(false);
-        this.loadError.set(
-          messageOf(err, 'What your agents are asking for could not be read.'),
-        );
+        this.loadError.set(messageOf(err, 'What your agents are asking for could not be read.'));
       },
     });
   }
@@ -391,8 +396,7 @@ export class AgentsComponent implements OnInit, OnDestroy {
       error: (err: unknown) => {
         this.concessions.set([]);
         this.loadError.set(
-          this.loadError() ??
-            messageOf(err, 'What your agents may already do could not be read.'),
+          this.loadError() ?? messageOf(err, 'What your agents may already do could not be read.'),
         );
       },
     });
@@ -416,9 +420,7 @@ export class AgentsComponent implements OnInit, OnDestroy {
         this.activityError.set(null);
       },
       error: (err: unknown) =>
-        this.activityError.set(
-          messageOf(err, 'What your agents have done could not be read.'),
-        ),
+        this.activityError.set(messageOf(err, 'What your agents have done could not be read.')),
     });
     this.cycle.activityIdentities().subscribe({
       next: (page) => this.actingIdentities.set(page.identities),
@@ -463,10 +465,7 @@ export class AgentsComponent implements OnInit, OnDestroy {
         this.running.set([]);
         this.loadingRunning.set(false);
         this.revokeError.set(
-          messageOf(
-            err,
-            'What is still running under this permission could not be read.',
-          ),
+          messageOf(err, 'What is still running under this permission could not be read.'),
         );
       },
     });
@@ -491,17 +490,14 @@ export class AgentsComponent implements OnInit, OnDestroy {
       },
       error: (err: unknown) => {
         this.revoking.set(null);
-        this.revokeError.set(
-          messageOf(err, 'That permission could not be revoked.'),
-        );
+        this.revokeError.set(messageOf(err, 'That permission could not be revoked.'));
       },
     });
   }
 }
 
 function messageOf(err: unknown, fallback: string): string {
-  const message = (err as { error?: { message?: unknown } } | null)?.error
-    ?.message;
+  const message = (err as { error?: { message?: unknown } } | null)?.error?.message;
   if (typeof message === 'string' && message.trim()) return message;
   if (Array.isArray(message) && typeof message[0] === 'string') return message[0];
   return fallback;

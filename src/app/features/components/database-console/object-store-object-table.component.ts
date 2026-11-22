@@ -1,9 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  inject,
-  output,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, output } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCheck,
@@ -20,12 +15,7 @@ import {
 } from '@ng-icons/lucide';
 import { S3ObjectEntry } from '../../model/object-store-console.models';
 import { ObjectStoreConsoleStateService } from './object-store-console-state.service';
-import {
-  folderName,
-  formatDate,
-  formatSize,
-  objectName,
-} from './object-store-format';
+import { folderName, formatDate, formatSize, objectName } from './object-store-format';
 
 @Component({
   selector: 'app-object-store-object-table',
@@ -57,10 +47,7 @@ import {
         {{ s.selectedBucket() }}
       </button>
       @for (seg of s.breadcrumb(); track seg.prefix) {
-        <ng-icon
-          name="lucideChevronRight"
-          class="h-3.5 w-3.5 text-muted-foreground"
-        />
+        <ng-icon name="lucideChevronRight" class="h-3.5 w-3.5 text-muted-foreground" />
         <button
           type="button"
           (click)="s.navigate(seg.prefix)"
@@ -109,14 +96,8 @@ import {
         <tbody>
           @if (s.loading()) {
             <tr>
-              <td
-                colspan="4"
-                class="px-3 py-6 text-center text-muted-foreground"
-              >
-                <ng-icon
-                  name="lucideLoader"
-                  class="inline h-4 w-4 animate-spin"
-                />
+              <td colspan="4" class="px-3 py-6 text-center text-muted-foreground">
+                <ng-icon name="lucideLoader" class="inline h-4 w-4 animate-spin" />
               </td>
             </tr>
           } @else {
@@ -150,10 +131,7 @@ import {
               <tr class="border-t border-border hover:bg-muted/40">
                 <td class="px-3 py-2">
                   <span class="flex items-center gap-2 text-foreground">
-                    <ng-icon
-                      name="lucideFile"
-                      class="h-4 w-4 text-muted-foreground"
-                    />
+                    <ng-icon name="lucideFile" class="h-4 w-4 text-muted-foreground" />
                     {{ objectLabel(o) }}
                   </span>
                 </td>
@@ -188,9 +166,7 @@ import {
                       title="Copy key"
                     >
                       <ng-icon
-                        [name]="
-                          s.copiedKey() === o.key ? 'lucideCheck' : 'lucideCopy'
-                        "
+                        [name]="s.copiedKey() === o.key ? 'lucideCheck' : 'lucideCopy'"
                         class="h-4 w-4"
                       />
                     </button>
@@ -211,10 +187,7 @@ import {
               (s.listing()?.objects?.length ?? 0) === 0
             ) {
               <tr>
-                <td
-                  colspan="4"
-                  class="px-3 py-10 text-center text-sm text-muted-foreground"
-                >
+                <td colspan="4" class="px-3 py-10 text-center text-sm text-muted-foreground">
                   This folder is empty. Drag files here, or use Upload.
                 </td>
               </tr>

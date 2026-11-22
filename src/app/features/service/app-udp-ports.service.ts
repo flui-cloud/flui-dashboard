@@ -3,12 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { AppConfigService } from '../../core/services/app-config.service';
 
-export type UdpPortState =
-  | 'open'
-  | 'pending'
-  | 'closed'
-  | 'unmanaged'
-  | 'not-published';
+export type UdpPortState = 'open' | 'pending' | 'closed' | 'unmanaged' | 'not-published';
 
 export interface UdpPortStatus {
   name: string;

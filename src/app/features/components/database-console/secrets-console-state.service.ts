@@ -217,9 +217,7 @@ export class SecretsConsoleStateService {
 
   save(data: Record<string, string>, newLeaf: string): void {
     const id = this.appId();
-    const path = this.isNew()
-      ? joinPath(this.prefix(), newLeaf.trim())
-      : this.selectedPath();
+    const path = this.isNew() ? joinPath(this.prefix(), newLeaf.trim()) : this.selectedPath();
     if (!id || !path) return;
     this.saving.set(true);
     this.saveOk.set(false);
@@ -269,8 +267,7 @@ export class SecretsConsoleStateService {
         readOnly: this.readOnly(),
       })
       .subscribe({
-        next: () =>
-          this.openSecret(this.selectedPath().split('/').pop() ?? '', version),
+        next: () => this.openSecret(this.selectedPath().split('/').pop() ?? '', version),
         error: (e) => this.editError.set(consoleError(e)),
       });
   }

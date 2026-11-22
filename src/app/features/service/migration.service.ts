@@ -189,7 +189,11 @@ export class MigrationService {
   cutover(type: MigrationType, id: string): Promise<unknown> {
     return firstValueFrom(this.http.post(this.url(`${this.resource[type]}/${id}/cutover`), {}));
   }
-  destroySource(type: 'app' | 'full', id: string, opts: { closeBridge?: boolean } = {}): Promise<unknown> {
+  destroySource(
+    type: 'app' | 'full',
+    id: string,
+    opts: { closeBridge?: boolean } = {},
+  ): Promise<unknown> {
     return firstValueFrom(
       this.http.post(
         this.url(`${this.resource[type]}/${id}/destroy-source`),
@@ -203,18 +207,12 @@ export class MigrationService {
 
   /** All migrations across the three planes, type-tagged, newest first. */
   async listAll(): Promise<MigrationRow[]> {
-    const [app, db, full] = await Promise.all([
-      this.listApp(),
-      this.listDb(),
-      this.listFull(),
-    ]);
+    const [app, db, full] = await Promise.all([this.listApp(), this.listDb(), this.listFull()]);
     const rows: MigrationRow[] = [
       ...app.map((m) => ({ type: 'app' as const, ...m })),
       ...db.map((m) => ({ type: 'db' as const, ...m })),
       ...full.map((m) => ({ type: 'full' as const, ...m })),
     ];
-    return rows.sort((a, b) =>
-      (b.createdAt ?? '').localeCompare(a.createdAt ?? ''),
-    );
+    return rows.sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
   }
 }

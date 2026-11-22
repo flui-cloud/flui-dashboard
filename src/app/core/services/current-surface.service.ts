@@ -45,7 +45,7 @@ export class CurrentSurfaceService {
         console.error(
           `[CurrentSurfaceService] "${snapshot.surface.id}" replaced "${previous.surface.id}" ` +
             'without an intervening clear — two producer pages appear to be mounted at once. ' +
-            'This registry holds one slot and was never designed for that; see this file\'s own doc comment.',
+            "This registry holds one slot and was never designed for that; see this file's own doc comment.",
         );
       }
     }

@@ -1,10 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  effect,
-  inject,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, effect, inject } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideLoader } from '@ng-icons/lucide';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -20,7 +14,9 @@ import { PlatformUpdateService } from '../../service/platform-update.service';
   host: { class: 'contents' },
   template: `
     @if (restarting()) {
-      <div class="fixed inset-0 z-[60] flex items-center justify-center bg-black/55 p-4 backdrop-blur-[2px]">
+      <div
+        class="fixed inset-0 z-[60] flex items-center justify-center bg-black/55 p-4 backdrop-blur-[2px]"
+      >
         <div class="w-full max-w-md card-surface p-6 shadow-2xl">
           <div class="flex items-center gap-3">
             <div class="step-icon bg-primary/10 text-primary">
@@ -31,8 +27,11 @@ import { PlatformUpdateService } from '../../service/platform-update.service';
               <p class="text-xs text-muted-foreground mt-0.5">
                 flui-api is starting on {{ updates.operation()?.targetVersion }}
                 @if (migrations() > 0) {
-                  and applying {{ migrations() }} database migration{{ migrations() === 1 ? '' : 's' }}
-                }.
+                  and applying {{ migrations() }} database migration{{
+                    migrations() === 1 ? '' : 's'
+                  }}
+                }
+                .
               </p>
             </div>
           </div>

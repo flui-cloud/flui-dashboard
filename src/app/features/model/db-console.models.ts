@@ -1,12 +1,7 @@
 import { DbEngine } from './db-engine';
 
 export type { DbEngine, DbEngineFamily, DbEngineDescriptor } from './db-engine';
-export {
-  DB_ENGINES,
-  engineDescriptor,
-  databaseEngineOf,
-  isQueryableDatabase,
-} from './db-engine';
+export { DB_ENGINES, engineDescriptor, databaseEngineOf, isQueryableDatabase } from './db-engine';
 
 export interface SqlColumn {
   name: string;

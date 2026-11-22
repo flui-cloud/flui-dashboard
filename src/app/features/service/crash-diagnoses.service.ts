@@ -3,11 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { ApplicationsService } from '../../core/api/api/applications.service';
 import { Configuration } from '../../core/api/configuration';
-import {
-  CrashDiagnosis,
-  isRecent,
-  isUnresolved,
-} from '../model/crash-diagnosis.models';
+import { CrashDiagnosis, isRecent, isUnresolved } from '../model/crash-diagnosis.models';
 
 @Injectable({ providedIn: 'root' })
 export class CrashDiagnosesService {
@@ -37,7 +33,7 @@ export class CrashDiagnosesService {
   readonly unresolved = computed(() => this.diagnosesData().filter(isUnresolved));
 
   readonly unresolvedRecent = computed(() =>
-    this.diagnosesData().filter(d => isUnresolved(d) && isRecent(d, 30)),
+    this.diagnosesData().filter((d) => isUnresolved(d) && isRecent(d, 30)),
   );
 
   async loadList(appId: string, opts: { limit?: number; offset?: number } = {}): Promise<void> {
@@ -55,7 +51,7 @@ export class CrashDiagnosesService {
       if (offset === 0) {
         this.diagnosesData.set(list);
       } else {
-        this.diagnosesData.update(prev => [...prev, ...list]);
+        this.diagnosesData.update((prev) => [...prev, ...list]);
       }
       this.totalLoadedData.set(this.diagnosesData().length);
     } catch (err: unknown) {
@@ -67,9 +63,7 @@ export class CrashDiagnosesService {
 
   async loadOne(appId: string, id: string): Promise<CrashDiagnosis | null> {
     try {
-      const result = await firstValueFrom(
-        this.api.crashDiagnosesControllerGetOne(appId, id),
-      );
+      const result = await firstValueFrom(this.api.crashDiagnosesControllerGetOne(appId, id));
       const d = result as CrashDiagnosis;
       this.selectedData.set(d);
       this.upsert(d);
@@ -83,9 +77,7 @@ export class CrashDiagnosesService {
   async dismiss(appId: string, id: string): Promise<boolean> {
     this.dismissingIdData.set(id);
     try {
-      const result = await firstValueFrom(
-        this.api.crashDiagnosesControllerDismiss(appId, id),
-      );
+      const result = await firstValueFrom(this.api.crashDiagnosesControllerDismiss(appId, id));
       const updated = result as CrashDiagnosis;
       if (updated?.id) {
         this.upsert(updated);
@@ -150,8 +142,8 @@ export class CrashDiagnosesService {
   }
 
   private upsert(d: CrashDiagnosis): void {
-    this.diagnosesData.update(list => {
-      const idx = list.findIndex(x => x.id === d.id);
+    this.diagnosesData.update((list) => {
+      const idx = list.findIndex((x) => x.id === d.id);
       if (idx === -1) return [d, ...list];
       const copy = list.slice();
       copy[idx] = d;
@@ -161,8 +153,8 @@ export class CrashDiagnosesService {
 
   private patchResolvedNow(id: string): void {
     const nowIso = new Date().toISOString();
-    this.diagnosesData.update(list =>
-      list.map(d => (d.id === id ? { ...d, resolvedAt: nowIso } : d)),
+    this.diagnosesData.update((list) =>
+      list.map((d) => (d.id === id ? { ...d, resolvedAt: nowIso } : d)),
     );
   }
 

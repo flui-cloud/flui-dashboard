@@ -59,13 +59,24 @@ function group(over: Partial<AppGroupView> = {}, components = [app()]): AppGroup
   };
 }
 
-function metrics(appId: string, ready: number, desired: number, cpu: number | null, mem: number | null): AppMetricsDto {
+function metrics(
+  appId: string,
+  ready: number,
+  desired: number,
+  cpu: number | null,
+  mem: number | null,
+): AppMetricsDto {
   return {
     app_id: appId,
     app_name: appId,
     namespace: 'user-x',
     cpu: { usage_cores: null, requests_cores: null, limits_cores: null, utilization_percent: cpu },
-    memory: { usage_bytes: null, requests_bytes: null, limits_bytes: null, utilization_percent: mem },
+    memory: {
+      usage_bytes: null,
+      requests_bytes: null,
+      limits_bytes: null,
+      utilization_percent: mem,
+    },
     network: {} as AppMetricsDto['network'],
     status: {
       replicas_desired: desired,
@@ -122,7 +133,11 @@ describe('applications list rows', () => {
       group({ url: 'https://whoami.example.com/' }),
       ctx({ usage: new Map([['a1', metrics('a1', 1, 1, 6, 22)]]) }),
     );
-    expect(row.subtitle).toEqual({ text: 'whoami.example.com', tone: 'info', href: 'https://whoami.example.com/' });
+    expect(row.subtitle).toEqual({
+      text: 'whoami.example.com',
+      tone: 'info',
+      href: 'https://whoami.example.com/',
+    });
     expect(row.ready).toEqual(jasmine.objectContaining({ text: '1 / 1', tone: 'ok' }));
     expect(row.cpu).toBe(6);
     expect(row.memory).toBe(22);
@@ -131,8 +146,14 @@ describe('applications list rows', () => {
   });
 
   it('puts the recorded failure reason in the subtitle of a failed app and marks it for attention', () => {
-    const failed = app({ status: 'failed', reconciliationError: 'ImagePullBackOff: not found\nmore detail' });
-    const row = buildListRow(group({ status: 'failed' as AppGroupView['status'] }, [failed]), ctx());
+    const failed = app({
+      status: 'failed',
+      reconciliationError: 'ImagePullBackOff: not found\nmore detail',
+    });
+    const row = buildListRow(
+      group({ status: 'failed' as AppGroupView['status'] }, [failed]),
+      ctx(),
+    );
     expect(row.subtitle.text).toBe('Failed · ImagePullBackOff: not found');
     expect(row.subtitle.tone).toBe('danger');
     expect(row.attention).toBeTrue();
@@ -157,12 +178,22 @@ describe('applications list rows', () => {
     const web = app({ id: 'w', slug: 'umami-web' });
     const db = app({ id: 'd', slug: 'umami-db', kind: 'DATABASE', catalogVersion: '2.1' });
     const bundle = group(
-      { type: 'composed' as AppGroupView['type'], name: 'Umami', catalogSlug: 'umami', primaryComponentId: 'd' },
+      {
+        type: 'composed' as AppGroupView['type'],
+        name: 'Umami',
+        catalogSlug: 'umami',
+        primaryComponentId: 'd',
+      },
       [web, db],
     );
     const row = buildListRow(
       bundle,
-      ctx({ usage: new Map([['w', metrics('w', 1, 1, 10, 40)], ['d', metrics('d', 1, 1, 30, 20)]]) }),
+      ctx({
+        usage: new Map([
+          ['w', metrics('w', 1, 1, 10, 40)],
+          ['d', metrics('d', 1, 1, 30, 20)],
+        ]),
+      }),
     );
     expect(row.ready.text).toBe('2 / 2');
     expect(row.cpu).toBe(30);
@@ -174,24 +205,39 @@ describe('applications list rows', () => {
   it('reads the backup column from the fleet coverage, and only an alarm counts as no backup', () => {
     const cov = (c: AppCoverageRow) => ctx({ coverage: new Map([['a1', c]]) });
     expect(buildListRow(group(), cov(coverage('a1'))).backup.label).toBe('Backed up');
-    const alarm = buildListRow(group(), cov(coverage('a1', { coverage: 'unprotected', alarm: true })));
+    const alarm = buildListRow(
+      group(),
+      cov(coverage('a1', { coverage: 'unprotected', alarm: true })),
+    );
     expect(alarm.backup).toEqual(jasmine.objectContaining({ label: 'No backup', tone: 'warn' }));
     expect(alarm.noBackup).toBeTrue();
-    expect(buildListRow(group(), cov(coverage('a1', { holdsData: false }))).backup.label).toBe('No data');
-    expect(buildListRow(group(), cov(coverage('a1', { coverage: 'pending' }))).backup.label).toBe('First backup due');
+    expect(buildListRow(group(), cov(coverage('a1', { holdsData: false }))).backup.label).toBe(
+      'No data',
+    );
+    expect(buildListRow(group(), cov(coverage('a1', { coverage: 'pending' }))).backup.label).toBe(
+      'First backup due',
+    );
     expect(buildListRow(group(), ctx({ coverage: null })).backup.label).toBe('—');
   });
 
   it('names the origin instead of internal abbreviations', () => {
     expect(originOf(app())).toBe('Image');
-    expect(originOf(app({ sourceType: 'git_build', sourceConfig: { repositoryId: 'r1' } }))).toBe('GitHub');
-    expect(originOf(app({ sourceType: 'git_build', sourceConfig: { gitUrl: 'https://gitlab.com/x/y' } }))).toBe('Git');
+    expect(originOf(app({ sourceType: 'git_build', sourceConfig: { repositoryId: 'r1' } }))).toBe(
+      'GitHub',
+    );
+    expect(
+      originOf(
+        app({ sourceType: 'git_build', sourceConfig: { gitUrl: 'https://gitlab.com/x/y' } }),
+      ),
+    ).toBe('Git');
     expect(originOf(app({ catalogSlug: 'umami' }))).toBe('Catalog');
   });
 
   it('falls back to the last operation error for the reason', () => {
     expect(
-      failureReason(app({ lastOperation: { errorMessage: 'Build failed' } as Application['lastOperation'] })),
+      failureReason(
+        app({ lastOperation: { errorMessage: 'Build failed' } as Application['lastOperation'] }),
+      ),
     ).toBe('Build failed');
     expect(failureReason(app())).toBeNull();
   });
@@ -204,7 +250,9 @@ describe('applications list rows', () => {
     );
     const noBackup = buildListRow(
       group({ id: 'nb' }),
-      ctx({ coverage: new Map([['a1', coverage('a1', { coverage: 'unprotected', alarm: true })]]) }),
+      ctx({
+        coverage: new Map([['a1', coverage('a1', { coverage: 'unprotected', alarm: true })]]),
+      }),
     );
     expect(sortRows([ok, noBackup, bad]).map((r) => r.id)).toEqual(['bad', 'nb', 'ok']);
     const counts = viewCounts([ok, noBackup, bad]);

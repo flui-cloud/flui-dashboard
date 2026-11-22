@@ -1,4 +1,8 @@
-import type { Observation, ObservationSource, SemanticScopeSnapshot } from '@flui-cloud/semantic-surface';
+import type {
+  Observation,
+  ObservationSource,
+  SemanticScopeSnapshot,
+} from '@flui-cloud/semantic-surface';
 
 /**
  * Shared primitives for Semantic Surface producers across this repo — see
@@ -42,7 +46,11 @@ export function valueObservation(
   return { key, presentedAs: { value, ...(unit ? { unit } : {}) }, source };
 }
 
-export function boolObservation(key: string, value: boolean, source: ObservationSource): Observation {
+export function boolObservation(
+  key: string,
+  value: boolean,
+  source: ObservationSource,
+): Observation {
   return { key, presentedAs: { value }, source };
 }
 
@@ -125,7 +133,15 @@ export function buildSurfaceList(input: SurfaceListInput): SurfaceListResult {
     kind: 'region',
     ...(row.label ? { label: row.label } : {}),
     ...(row.ref
-      ? { entities: [{ ref: row.ref, ...(row.label ? { label: row.label } : {}), role: row.role ?? 'related' }] }
+      ? {
+          entities: [
+            {
+              ref: row.ref,
+              ...(row.label ? { label: row.label } : {}),
+              role: row.role ?? 'related',
+            },
+          ],
+        }
       : {}),
     ...(row.observations?.length ? { observations: row.observations } : {}),
   }));

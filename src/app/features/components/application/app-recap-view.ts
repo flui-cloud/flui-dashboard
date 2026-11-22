@@ -42,7 +42,9 @@ export function scheduleText(cron: string | null | undefined): string {
     const at = `${pad(+hour)}:${pad(+min)} UTC`;
     if (dow === '*') return `daily ${at}`;
     if (num(dow)) {
-      const day = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][+dow % 7];
+      const day = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][
+        +dow % 7
+      ];
       return `${day}s ${at}`;
     }
   }
@@ -69,17 +71,24 @@ export function shortDate(iso: string | null | undefined): string {
 }
 
 /** What the recorded endpoint and certificate state say, in one phrase. */
-export function endpointHealth(app: Application | null | undefined, tls: boolean | null): { label: string; tone: Tone } {
+export function endpointHealth(
+  app: Application | null | undefined,
+  tls: boolean | null,
+): { label: string; tone: Tone } {
   if (!app) return { label: '', tone: 'muted' };
   const cert = app.endpointCertificateStatus;
   if (app.endpointStatus === 'ERROR') return { label: 'DNS or routing error', tone: 'danger' };
   if (cert === 'failed') return { label: 'Certificate failed', tone: 'danger' };
   if (cert === 'expired') return { label: 'Certificate expired', tone: 'danger' };
-  if (app.endpointStatus && app.endpointStatus !== 'IN_SYNC') return { label: 'Publishing the endpoint', tone: 'info' };
-  if (cert === 'pending' || cert === 'issuing') return { label: 'DNS ok · certificate being issued', tone: 'info' };
+  if (app.endpointStatus && app.endpointStatus !== 'IN_SYNC')
+    return { label: 'Publishing the endpoint', tone: 'info' };
+  if (cert === 'pending' || cert === 'issuing')
+    return { label: 'DNS ok · certificate being issued', tone: 'info' };
   if (cert === 'valid') return { label: 'DNS and certificate ok', tone: 'ok' };
   if (tls === false) return { label: 'DNS ok · no TLS', tone: 'muted' };
-  return app.endpointStatus === 'IN_SYNC' ? { label: 'DNS ok', tone: 'ok' } : { label: '', tone: 'muted' };
+  return app.endpointStatus === 'IN_SYNC'
+    ? { label: 'DNS ok', tone: 'ok' }
+    : { label: '', tone: 'muted' };
 }
 
 export function replicasFact(metrics: AppMetricsDto | null | undefined): RecapFact {
@@ -92,23 +101,37 @@ export function replicasFact(metrics: AppMetricsDto | null | undefined): RecapFa
   return {
     key: 'Replicas',
     value: `${s.replicas_ready} / ${s.replicas_desired} ready`,
-    sub: restarts == null ? 'Restarts not reported' : `${plural(restarts, 'restart')} in the last hour`,
+    sub:
+      restarts == null
+        ? 'Restarts not reported'
+        : `${plural(restarts, 'restart')} in the last hour`,
     tone: restarts ? 'warn' : tone,
   };
 }
 
-function usagePart(label: string, percent: number | null | undefined, limit: number | null | undefined, usage: number | null | undefined): string {
+function usagePart(
+  label: string,
+  percent: number | null | undefined,
+  limit: number | null | undefined,
+  usage: number | null | undefined,
+): string {
   if (percent != null) return `${label} ${Math.round(percent)}%`;
   if (usage != null && limit == null) return `${label} no limit`;
   return `${label} —`;
 }
 
 export function availabilityFact(
-  availability: { highlyAvailable: boolean; reasons: Array<{ message: string }> } | null | undefined,
+  availability:
+    { highlyAvailable: boolean; reasons: Array<{ message: string }> } | null | undefined,
 ): RecapFact {
   if (!availability) return { key: 'Losing a worker', value: '—', sub: 'Not known', tone: 'muted' };
   if (availability.highlyAvailable) {
-    return { key: 'Losing a worker', value: 'Keeps answering', sub: 'Copies on more than one node', tone: 'ok' };
+    return {
+      key: 'Losing a worker',
+      value: 'Keeps answering',
+      sub: 'Copies on more than one node',
+      tone: 'ok',
+    };
   }
   return {
     key: 'Losing a worker',
@@ -146,7 +169,8 @@ export function imageTag(imageRef: string | null | undefined): string {
 }
 
 export function releaseFact(release: ApplicationReleaseDto | null | undefined): RecapFact {
-  if (!release) return { key: 'Latest release', value: '—', sub: 'No release recorded', tone: 'muted' };
+  if (!release)
+    return { key: 'Latest release', value: '—', sub: 'No release recorded', tone: 'muted' };
   const status = RELEASE_LABEL[release.status] ?? { label: release.status, tone: 'muted' as Tone };
   const tag = imageTag(release.imageRef);
   return {
@@ -171,7 +195,10 @@ export interface BackupBand {
 }
 
 /** The backup state of one application as the fleet rule judges it, with the facts of the policy behind it. */
-export function backupBand(protection: AppProtection | null | undefined, now = Date.now()): BackupBand | null {
+export function backupBand(
+  protection: AppProtection | null | undefined,
+  now = Date.now(),
+): BackupBand | null {
   const c = protection?.coverage;
   if (!c) return null;
   const policy = c.policy;
@@ -181,7 +208,9 @@ export function backupBand(protection: AppProtection | null | undefined, now = D
     label: '',
     tone: 'muted',
     policy: policy ? `${policy.name} · ${scheduleText(policy.schedule)}` : null,
-    last: c.lastSuccessAt ? [relativeTime(c.lastSuccessAt, now), sizeText].filter(Boolean).join(' · ') : null,
+    last: c.lastSuccessAt
+      ? [relativeTime(c.lastSuccessAt, now), sizeText].filter(Boolean).join(' · ')
+      : null,
     next: policy?.nextRunAt ? untilTime(policy.nextRunAt, now) : null,
     kept: policy?.retentionDays ? plural(policy.retentionDays, 'day') : null,
     detail: null,
@@ -190,7 +219,12 @@ export function backupBand(protection: AppProtection | null | undefined, now = D
     holdsData: c.holdsData,
   };
   if (!c.holdsData && c.coverage !== 'protected') {
-    return { ...base, label: 'Nothing to back up', tone: 'muted', detail: 'Keeps no data of its own: redeploying brings it back.' };
+    return {
+      ...base,
+      label: 'Nothing to back up',
+      tone: 'muted',
+      detail: 'Keeps no data of its own: redeploying brings it back.',
+    };
   }
   switch (c.coverage) {
     case 'protected':
@@ -198,11 +232,27 @@ export function backupBand(protection: AppProtection | null | undefined, now = D
     case 'pending':
       return { ...base, label: 'First backup due', tone: 'info' };
     case 'to_verify':
-      return { ...base, label: 'To verify', tone: 'warn', detail: 'A label-selector policy covers it; Flui cannot check which apps it reaches.' };
+      return {
+        ...base,
+        label: 'To verify',
+        tone: 'warn',
+        detail: 'A label-selector policy covers it; Flui cannot check which apps it reaches.',
+      };
     case 'not_backed_up_by_choice':
-      return { ...base, label: 'Not backed up by choice', tone: 'muted', detail: c.decision?.note ?? null, protectPath: null };
+      return {
+        ...base,
+        label: 'Not backed up by choice',
+        tone: 'muted',
+        detail: c.decision?.note ?? null,
+        protectPath: null,
+      };
     default:
-      return { ...base, label: 'Not backed up', tone: 'warn', detail: UNPROTECTED_DETAIL[c.reason] ?? 'No recent backup protects its data.' };
+      return {
+        ...base,
+        label: 'Not backed up',
+        tone: 'warn',
+        detail: UNPROTECTED_DETAIL[c.reason] ?? 'No recent backup protects its data.',
+      };
   }
 }
 
@@ -222,7 +272,10 @@ function sentence(text: string): string {
 }
 
 /** Why an app holding data is not protected: what protecting its cluster ran into, else the coverage reason. */
-export function unprotectedWhy(pendingReason: string | null | undefined, reason: string): string | null {
+export function unprotectedWhy(
+  pendingReason: string | null | undefined,
+  reason: string,
+): string | null {
   return pendingReason ? sentence(pendingReason) : (UNPROTECTED_DETAIL[reason] ?? null);
 }
 
@@ -235,7 +288,8 @@ export function routeOf(path: string): { path: string; query: Record<string, str
 type EventMetadata = Record<string, any> | undefined;
 
 function scaleText(m: EventMetadata): string {
-  if (m?.['before']?.replicas === undefined || m?.['after']?.replicas === undefined) return 'Scaled replicas';
+  if (m?.['before']?.replicas === undefined || m?.['after']?.replicas === undefined)
+    return 'Scaled replicas';
   return `Scaled from ${m['before'].replicas} to ${m['after'].replicas} replicas`;
 }
 
@@ -244,8 +298,10 @@ function resourceUpdateText(m: EventMetadata): string {
     return `Memory limit raised ${m['previousMemoryLimit']} → ${m['newMemoryLimit']}`;
   }
   const parts: string[] = [];
-  if (m?.['after']?.cpu?.limit) parts.push(`CPU limit ${m['before']?.cpu?.limit ?? '?'} → ${m['after'].cpu.limit}`);
-  if (m?.['after']?.memory?.limit) parts.push(`Memory limit ${m['before']?.memory?.limit ?? '?'} → ${m['after'].memory.limit}`);
+  if (m?.['after']?.cpu?.limit)
+    parts.push(`CPU limit ${m['before']?.cpu?.limit ?? '?'} → ${m['after'].cpu.limit}`);
+  if (m?.['after']?.memory?.limit)
+    parts.push(`Memory limit ${m['before']?.memory?.limit ?? '?'} → ${m['after'].memory.limit}`);
   return parts.length ? parts.join(', ') : 'Resources updated';
 }
 
@@ -263,9 +319,13 @@ export function appEventText(event: AppAuditEventSummaryDto): string {
     case 'restart':
       return 'Rolling restart triggered';
     case 'stop':
-      return m?.['previousReplicas'] === undefined ? 'Application stopped' : `Stopped (was ${m['previousReplicas']} replicas)`;
+      return m?.['previousReplicas'] === undefined
+        ? 'Application stopped'
+        : `Stopped (was ${m['previousReplicas']} replicas)`;
     case 'start':
-      return m?.['restoredReplicas'] === undefined ? 'Application started' : `Started (restored ${m['restoredReplicas']} replicas)`;
+      return m?.['restoredReplicas'] === undefined
+        ? 'Application started'
+        : `Started (restored ${m['restoredReplicas']} replicas)`;
     case 'config_update':
       return 'Configuration variables updated';
     case 'created':
@@ -326,6 +386,9 @@ export function barWidth(percent: number | null): number {
 
 export function componentBackupDetail(band: BackupBand): string {
   if (band.protectPath) return band.detail ?? '';
-  const parts = [band.last ? `last ${band.last}` : null, band.next ? `next ${band.next}` : null].filter(Boolean);
+  const parts = [
+    band.last ? `last ${band.last}` : null,
+    band.next ? `next ${band.next}` : null,
+  ].filter(Boolean);
   return parts.length ? parts.join(' · ') : (band.detail ?? '');
 }

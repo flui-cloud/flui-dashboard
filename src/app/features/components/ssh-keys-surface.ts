@@ -82,7 +82,10 @@ export function presentedContent(input: SshKeysSurfaceInput): PresentedContent {
     label: 'SSH Keys',
   };
 
-  const rows = input.keys.map((key) => ({ key, row: rowOf(key, input.selectedKeyIds.has(key.id)) }));
+  const rows = input.keys.map((key) => ({
+    key,
+    row: rowOf(key, input.selectedKeyIds.has(key.id)),
+  }));
 
   const { scopes: listScopes } = buildSurfaceList({
     listId: LIST_ID,
@@ -90,9 +93,7 @@ export function presentedContent(input: SshKeysSurfaceInput): PresentedContent {
     label: 'Keys',
     totalCount: input.keys.length,
     rows: rows.map((r) => r.row),
-    listObservations: [
-      textObservation('flui.ssh_keys.sort_order', input.dateSort, 'ui'),
-    ],
+    listObservations: [textObservation('flui.ssh_keys.sort_order', input.dateSort, 'ui')],
   });
   listScopes[0] = {
     ...listScopes[0],

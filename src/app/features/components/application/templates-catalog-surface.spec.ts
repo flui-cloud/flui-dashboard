@@ -49,7 +49,10 @@ function input(over: Partial<TemplatesCatalogSurfaceInput> = {}): TemplatesCatal
 }
 
 function snapshotOf(over: Partial<TemplatesCatalogSurfaceInput> = {}): SurfaceSnapshot {
-  return buildTemplatesCatalogSurface(input(over), { revision: 1, generatedAt: '2026-08-20T09:13:00.000Z' });
+  return buildTemplatesCatalogSurface(input(over), {
+    revision: 1,
+    generatedAt: '2026-08-20T09:13:00.000Z',
+  });
 }
 
 const pageScope = (snapshot: SurfaceSnapshot) => snapshot.scopes.find((s) => s.kind === 'page')!;
@@ -67,18 +70,24 @@ describe('templates catalog surface producer', () => {
 
   it('bumps the revision on real change, and validateSurfaceSemantics accepts it against the previous snapshot', () => {
     const tracker = new TemplatesCatalogSurfaceRevision();
-    const first = buildTemplatesCatalogSurface(input(), { revision: tracker.next(presentedContent(input())), generatedAt: '2026-08-20T09:13:00.000Z' });
-    const second = buildTemplatesCatalogSurface(
-      input({ isLoading: true }),
-      { revision: tracker.next(presentedContent(input({ isLoading: true }))), generatedAt: '2026-08-20T09:14:00.000Z' },
-    );
+    const first = buildTemplatesCatalogSurface(input(), {
+      revision: tracker.next(presentedContent(input())),
+      generatedAt: '2026-08-20T09:13:00.000Z',
+    });
+    const second = buildTemplatesCatalogSurface(input({ isLoading: true }), {
+      revision: tracker.next(presentedContent(input({ isLoading: true }))),
+      generatedAt: '2026-08-20T09:14:00.000Z',
+    });
     expect(second.surface.revision).toBe(first.surface.revision + 1);
     expect(validateSurfaceSemantics(second, { previousSnapshot: first })).toEqual([]);
   });
 
   it('flags a snapshot whose revision does not advance on the previous one', () => {
     const first = snapshotOf();
-    const stale = { ...snapshotOf(), surface: { ...snapshotOf().surface, revision: first.surface.revision } };
+    const stale = {
+      ...snapshotOf(),
+      surface: { ...snapshotOf().surface, revision: first.surface.revision },
+    };
     const issues = validateSurfaceSemantics(stale, { previousSnapshot: first });
     expect(issues).toEqual([
       jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' }),
@@ -86,7 +95,10 @@ describe('templates catalog surface producer', () => {
   });
 
   it('with no deep-link highlight, every row is related and attention names only the page', () => {
-    const tpls = [template({ framework: 'nextjs' }), template({ framework: 'nestjs', displayName: 'NestJS' })];
+    const tpls = [
+      template({ framework: 'nextjs' }),
+      template({ framework: 'nestjs', displayName: 'NestJS' }),
+    ];
     const snapshot = snapshotOf({ allTemplates: tpls, filteredTemplates: tpls });
     expect(snapshot.attention).toEqual([{ scopeId: 'templates-catalog', reason: 'route' }]);
     for (const row of rowScopes(snapshot)) {
@@ -95,10 +107,21 @@ describe('templates catalog surface producer', () => {
   });
 
   it('a deep-link highlight that is actually rendered becomes the one selected row, and attention', () => {
-    const tpls = [template({ framework: 'nextjs' }), template({ framework: 'nestjs', displayName: 'NestJS' })];
-    const snapshot = snapshotOf({ allTemplates: tpls, filteredTemplates: tpls, highlightedFramework: 'nestjs' });
+    const tpls = [
+      template({ framework: 'nextjs' }),
+      template({ framework: 'nestjs', displayName: 'NestJS' }),
+    ];
+    const snapshot = snapshotOf({
+      allTemplates: tpls,
+      filteredTemplates: tpls,
+      highlightedFramework: 'nestjs',
+    });
     expect(snapshot.attention).toEqual([
-      { scopeId: 'templates-catalog:list', entityRef: templateEntityRef('nestjs'), reason: 'selection' },
+      {
+        scopeId: 'templates-catalog:list',
+        entityRef: templateEntityRef('nestjs'),
+        reason: 'selection',
+      },
     ]);
     const nest = rowScopes(snapshot).find((s) => s.id.endsWith(':nestjs'))!;
     const next = rowScopes(snapshot).find((s) => s.id.endsWith(':nextjs'))!;
@@ -119,32 +142,46 @@ describe('templates catalog surface producer', () => {
   });
 
   it('presents the UI-effective category (override applied), not necessarily the raw API category', () => {
-    const tpl = template({ framework: 'nextjs', category: 'fullstack' as TemplateResponseDto['category'] });
+    const tpl = template({
+      framework: 'nextjs',
+      category: 'fullstack' as TemplateResponseDto['category'],
+    });
     const snapshot = snapshotOf({
       allTemplates: [tpl],
       filteredTemplates: [tpl],
       categoryOf: () => 'frontend', // the UI's own override (nextjs is bucketed under Frontend)
     });
     const row = rowScopes(snapshot)[0];
-    expect(row.observations?.find((o) => o.key === 'flui.template.category')?.presentedAs.text).toBe('frontend');
+    expect(
+      row.observations?.find((o) => o.key === 'flui.template.category')?.presentedAs.text,
+    ).toBe('frontend');
   });
 
   it('distinguishes loading, error and empty on the list scope', () => {
-    expect(listScope(snapshotOf({ isLoading: true, filteredTemplates: [] })).state)
-      .toEqual({ loading: true, empty: false });
-    expect(listScope(snapshotOf({ hasLoadError: true, filteredTemplates: [] })).state)
-      .toEqual({ loading: false, error: true, empty: true });
+    expect(listScope(snapshotOf({ isLoading: true, filteredTemplates: [] })).state).toEqual({
+      loading: true,
+      empty: false,
+    });
+    expect(listScope(snapshotOf({ hasLoadError: true, filteredTemplates: [] })).state).toEqual({
+      loading: false,
+      error: true,
+      empty: true,
+    });
   });
 
   it('caps row scopes at the budget and declares truncation honestly', () => {
-    const many = Array.from({ length: 35 }, (_, i) => template({ framework: `fw-${i}`, displayName: `FW ${i}` }));
+    const many = Array.from({ length: 35 }, (_, i) =>
+      template({ framework: `fw-${i}`, displayName: `FW ${i}` }),
+    );
     const snapshot = snapshotOf({ allTemplates: many, filteredTemplates: many });
     expect(rowScopes(snapshot).length).toBe(30);
     expect(listScope(snapshot).completeness).toEqual({ shown: 30, total: 35, truncated: true });
   });
 
   it('redacts: no repo URL ever reaches the snapshot', () => {
-    const tpl = template({ repoUrl: 'https://github.com/flui-cloud/super-secret-internal-template' });
+    const tpl = template({
+      repoUrl: 'https://github.com/flui-cloud/super-secret-internal-template',
+    });
     const json = JSON.stringify(snapshotOf({ allTemplates: [tpl], filteredTemplates: [tpl] }));
     expect(json).not.toContain('https://github.com');
     expect(json).not.toContain('super-secret-internal-template');

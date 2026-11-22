@@ -14,21 +14,31 @@ export type CoverageStatus = FirewallResponseDto.CoverageStatusEnum;
 
 export function getCoverageStatusLabel(status: CoverageStatus): string {
   switch (status) {
-    case 'FULL':      return 'All Nodes Ready';
-    case 'PARTIAL':   return 'Partial Coverage';
-    case 'ORPHANED':  return 'Orphaned';
-    case 'UNKNOWN':   return 'Unknown';
-    default:          return 'Unknown';
+    case 'FULL':
+      return 'All Nodes Ready';
+    case 'PARTIAL':
+      return 'Partial Coverage';
+    case 'ORPHANED':
+      return 'Orphaned';
+    case 'UNKNOWN':
+      return 'Unknown';
+    default:
+      return 'Unknown';
   }
 }
 
 export function getCoverageStatusColor(status: CoverageStatus): string {
   switch (status) {
-    case 'FULL':      return 'green';
-    case 'PARTIAL':   return 'yellow';
-    case 'ORPHANED':  return 'red';
-    case 'UNKNOWN':   return 'gray';
-    default:          return 'gray';
+    case 'FULL':
+      return 'green';
+    case 'PARTIAL':
+      return 'yellow';
+    case 'ORPHANED':
+      return 'red';
+    case 'UNKNOWN':
+      return 'gray';
+    default:
+      return 'gray';
   }
 }
 
@@ -37,11 +47,11 @@ export function getCoverageStatusColor(status: CoverageStatus): string {
  * Represents the current state of firewall reconciliation
  */
 export enum ReconciliationStatus {
-  PENDING = 'PENDING',           // Firewall created, never reconciled
-  IN_SYNC = 'IN_SYNC',          // Desired and applied states match
-  DRIFT = 'DRIFT',              // Desired differs from applied
-  RECONCILING = 'RECONCILING',  // Reconciliation in progress
-  ERROR = 'ERROR'               // Last reconciliation failed
+  PENDING = 'PENDING', // Firewall created, never reconciled
+  IN_SYNC = 'IN_SYNC', // Desired and applied states match
+  DRIFT = 'DRIFT', // Desired differs from applied
+  RECONCILING = 'RECONCILING', // Reconciliation in progress
+  ERROR = 'ERROR', // Last reconciliation failed
 }
 
 /**
@@ -107,7 +117,7 @@ export interface FirewallStats {
 export enum ClusterType {
   CONTROL = 'control',
   WORKLOAD = 'workload',
-  OBSERVABILITY = 'observability'
+  OBSERVABILITY = 'observability',
 }
 
 /**
@@ -121,62 +131,62 @@ export const CONTROL_DEFAULT_RULES: FirewallRuleFormData[] = [
     direction: 'in',
     protocol: 'tcp',
     port: '22',
-    sourceIps: ['0.0.0.0/0']
+    sourceIps: ['0.0.0.0/0'],
   },
   {
     description: 'Grafana Dashboard',
     direction: 'in',
     protocol: 'tcp',
     port: '30300',
-    sourceIps: ['0.0.0.0/0']
+    sourceIps: ['0.0.0.0/0'],
   },
   {
     description: 'Prometheus Metrics',
     direction: 'in',
     protocol: 'tcp',
     port: '30900',
-    sourceIps: ['0.0.0.0/0']
+    sourceIps: ['0.0.0.0/0'],
   },
   {
     description: 'PostgreSQL Database',
     direction: 'in',
     protocol: 'tcp',
     port: '30432',
-    sourceIps: ['0.0.0.0/0']
+    sourceIps: ['0.0.0.0/0'],
   },
   {
     description: 'Redis Cache',
     direction: 'in',
     protocol: 'tcp',
     port: '30379',
-    sourceIps: ['0.0.0.0/0']
+    sourceIps: ['0.0.0.0/0'],
   },
   {
     description: 'Loki Logs',
     direction: 'in',
     protocol: 'tcp',
     port: '30100',
-    sourceIps: ['0.0.0.0/0']
+    sourceIps: ['0.0.0.0/0'],
   },
   {
     description: 'Health Check Endpoint',
     direction: 'in',
     protocol: 'tcp',
     port: '30080',
-    sourceIps: ['0.0.0.0/0']
+    sourceIps: ['0.0.0.0/0'],
   },
   {
     description: 'Allow All Outbound',
     direction: 'out',
     protocol: 'tcp',
-    destinationIps: ['0.0.0.0/0', '::/0']
+    destinationIps: ['0.0.0.0/0', '::/0'],
   },
   {
     description: 'Allow UDP Outbound',
     direction: 'out',
     protocol: 'udp',
-    destinationIps: ['0.0.0.0/0', '::/0']
-  }
+    destinationIps: ['0.0.0.0/0', '::/0'],
+  },
 ];
 
 /**
@@ -200,34 +210,34 @@ export const WORKLOAD_DEFAULT_RULES: FirewallRuleFormData[] = [
     direction: 'in',
     protocol: 'tcp',
     port: '22',
-    sourceIps: []
+    sourceIps: [],
   },
   {
     description: 'HTTP (ACME / redirect)',
     direction: 'in',
     protocol: 'tcp',
     port: '80',
-    sourceIps: ['0.0.0.0/0', '::/0']
+    sourceIps: ['0.0.0.0/0', '::/0'],
   },
   {
     description: 'HTTPS (Traefik)',
     direction: 'in',
     protocol: 'tcp',
     port: '443',
-    sourceIps: ['0.0.0.0/0', '::/0']
+    sourceIps: ['0.0.0.0/0', '::/0'],
   },
   {
     description: 'Allow All Outbound',
     direction: 'out',
     protocol: 'tcp',
-    destinationIps: ['0.0.0.0/0', '::/0']
+    destinationIps: ['0.0.0.0/0', '::/0'],
   },
   {
     description: 'Allow UDP Outbound',
     direction: 'out',
     protocol: 'udp',
-    destinationIps: ['0.0.0.0/0', '::/0']
-  }
+    destinationIps: ['0.0.0.0/0', '::/0'],
+  },
 ];
 
 /**
@@ -250,13 +260,13 @@ export function getDefaultRulesForClusterType(type: ClusterType): FirewallRuleFo
  */
 export function applySourceCidrsToRules(
   rules: FirewallRuleFormData[],
-  sourceCidrs: string[]
+  sourceCidrs: string[],
 ): FirewallRuleFormData[] {
-  return rules.map(rule => {
+  return rules.map((rule) => {
     if (rule.direction === 'in' && sourceCidrs.length > 0) {
       return {
         ...rule,
-        sourceIps: sourceCidrs
+        sourceIps: sourceCidrs,
       };
     }
     return rule;
@@ -273,7 +283,7 @@ export function convertRuleResponseToFormData(rule: FirewallRuleResponseDto): Fi
     protocol: rule.protocol as 'tcp' | 'udp' | 'icmp',
     port: rule.port,
     sourceIps: rule.sourceIps || [],
-    destinationIps: rule.destinationIps || []
+    destinationIps: rule.destinationIps || [],
   };
 }
 
@@ -284,7 +294,7 @@ export function convertRuleFormDataToResponse(rule: FirewallRuleFormData): Firew
   const response: FirewallRuleResponseDto = {
     description: rule.description,
     direction: rule.direction as FirewallRuleResponseDto.DirectionEnum,
-    protocol: rule.protocol as FirewallRuleResponseDto.ProtocolEnum
+    protocol: rule.protocol as FirewallRuleResponseDto.ProtocolEnum,
   };
 
   if (rule.port) {
@@ -368,13 +378,16 @@ export function getDriftIndicator(hasDrift: boolean, status: ReconciliationStatu
 export function calculateFirewallStats(firewalls: FirewallResponseDto[]): FirewallStats {
   return {
     total: firewalls.length,
-    inSync: firewalls.filter(f => f.reconciliationStatus === ReconciliationStatus.IN_SYNC).length,
-    drift: firewalls.filter(f => f.reconciliationStatus === ReconciliationStatus.DRIFT).length,
-    pending: firewalls.filter(f => f.reconciliationStatus === ReconciliationStatus.PENDING).length,
-    error: firewalls.filter(f => f.reconciliationStatus === ReconciliationStatus.ERROR).length,
-    reconciling: firewalls.filter(f => f.reconciliationStatus === ReconciliationStatus.RECONCILING).length,
-    partial: firewalls.filter(f => f.coverageStatus === 'PARTIAL').length,
-    orphaned: firewalls.filter(f => f.coverageStatus === 'ORPHANED').length
+    inSync: firewalls.filter((f) => f.reconciliationStatus === ReconciliationStatus.IN_SYNC).length,
+    drift: firewalls.filter((f) => f.reconciliationStatus === ReconciliationStatus.DRIFT).length,
+    pending: firewalls.filter((f) => f.reconciliationStatus === ReconciliationStatus.PENDING)
+      .length,
+    error: firewalls.filter((f) => f.reconciliationStatus === ReconciliationStatus.ERROR).length,
+    reconciling: firewalls.filter(
+      (f) => f.reconciliationStatus === ReconciliationStatus.RECONCILING,
+    ).length,
+    partial: firewalls.filter((f) => f.coverageStatus === 'PARTIAL').length,
+    orphaned: firewalls.filter((f) => f.coverageStatus === 'ORPHANED').length,
   };
 }
 
@@ -395,7 +408,7 @@ export function isValidCidr(cidr: string): boolean {
     const maskNum = Number(mask);
 
     // Validate octets (0-255)
-    if (octets.some(octet => octet < 0 || octet > 255)) {
+    if (octets.some((octet) => octet < 0 || octet > 255)) {
       return false;
     }
 
@@ -448,7 +461,7 @@ export function validateFirewallRule(rule: FirewallRuleFormData): string[] {
 
   // CIDR validation
   if (rule.direction === 'in' && rule.sourceIps) {
-    rule.sourceIps.forEach(cidr => {
+    rule.sourceIps.forEach((cidr) => {
       if (!isValidCidr(cidr)) {
         errors.push(`Invalid source CIDR format: ${cidr}`);
       }
@@ -456,7 +469,7 @@ export function validateFirewallRule(rule: FirewallRuleFormData): string[] {
   }
 
   if (rule.direction === 'out' && rule.destinationIps) {
-    rule.destinationIps.forEach(cidr => {
+    rule.destinationIps.forEach((cidr) => {
       if (!isValidCidr(cidr)) {
         errors.push(`Invalid destination CIDR format: ${cidr}`);
       }
@@ -467,13 +480,7 @@ export function validateFirewallRule(rule: FirewallRuleFormData): string[] {
 }
 
 export type HostFirewallLayerState =
-  | 'not-applicable'
-  | 'off'
-  | 'pending'
-  | 'applied'
-  | 'blocked'
-  | 'failed'
-  | 'removing';
+  'not-applicable' | 'off' | 'pending' | 'applied' | 'blocked' | 'failed' | 'removing';
 
 /** `hostLayer` of GET /firewalls/cluster/:clusterId, until the client is regenerated. */
 export interface HostFirewallLayer {

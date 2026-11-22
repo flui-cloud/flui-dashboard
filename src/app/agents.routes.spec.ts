@@ -37,7 +37,9 @@ describe('where a person answers an agent', () => {
 
   it('every path it serves loads a component', () => {
     for (const route of agentsRoutes) {
-      expect(route.loadComponent).withContext(route.path ?? '').toBeDefined();
+      expect(route.loadComponent)
+        .withContext(route.path ?? '')
+        .toBeDefined();
     }
   });
 });

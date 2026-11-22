@@ -8,11 +8,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideLoader,
-  lucideTriangleAlert,
-  lucideX,
-} from '@ng-icons/lucide';
+import { lucideLoader, lucideTriangleAlert, lucideX } from '@ng-icons/lucide';
 import { ApplicationService } from '../../service/application.service';
 import { ApplicationKindEnum } from '../../model/application.models';
 import { ClusterService } from '../../service/cluster.service';
@@ -72,9 +68,11 @@ import {
                     type="button"
                     (click)="setType(t)"
                     class="rounded px-3 py-1 text-sm font-medium"
-                    [class]="type() === t
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:bg-muted'"
+                    [class]="
+                      type() === t
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:bg-muted'
+                    "
                   >
                     {{ typeLabel(t) }}
                   </button>
@@ -272,7 +270,9 @@ import {
                   class="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm"
                 >
                   <option value="scaled-down">Scaled-down — stage the app at zero replicas</option>
-                  <option value="live-fenced">Live-fenced — stage at full replicas, read-only DB</option>
+                  <option value="live-fenced">
+                    Live-fenced — stage at full replicas, read-only DB
+                  </option>
                 </select>
                 @if (staging() === 'live-fenced') {
                   <p class="mt-2 text-xs text-amber-600 dark:text-amber-400">
@@ -347,9 +347,7 @@ export class MigrationLaunchModalComponent {
   readonly clusters = this.clusterService.clusters;
 
   readonly srcApps = computed(() =>
-    this.applicationService
-      .applications()
-      .filter((a) => a.clusterId === this.srcCluster()),
+    this.applicationService.applications().filter((a) => a.clusterId === this.srcCluster()),
   );
   readonly dbApps = computed(() =>
     this.srcApps().filter((a) => a.kind === ApplicationKindEnum.Database),
@@ -431,8 +429,7 @@ export class MigrationLaunchModalComponent {
             mode,
             cutover,
             displayName: restore ? this.displayName().trim() : undefined,
-            recoveryTargetTime:
-              restore && local ? new Date(local).toISOString() : undefined,
+            recoveryTargetTime: restore && local ? new Date(local).toISOString() : undefined,
           });
           break;
         }

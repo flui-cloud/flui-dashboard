@@ -44,9 +44,7 @@ import { AgentCycleService } from '../../service/agent-cycle.service';
           >
             {{ headline() }}
           </h3>
-          <span class="badge badge-pending" data-testid="request-asked">
-            Asked {{ asked() }}
-          </span>
+          <span class="badge badge-pending" data-testid="request-asked"> Asked {{ asked() }} </span>
         </div>
 
         @if (proposal().consequence) {
@@ -72,25 +70,41 @@ import { AgentCycleService } from '../../service/agent-cycle.service';
           data-testid="request-facts"
         >
           <div class="flex flex-col gap-0.5 bg-card px-3 py-2.5">
-            <dt class="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Action</dt>
+            <dt class="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+              Action
+            </dt>
             <dd class="m-0 font-mono text-sm font-medium text-foreground">{{ verb() }}</dd>
           </div>
           <div class="flex flex-col gap-0.5 bg-card px-3 py-2.5">
-            <dt class="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Route</dt>
-            <dd class="m-0 break-all font-mono text-sm font-medium text-foreground">{{ pattern() }}</dd>
+            <dt class="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+              Route
+            </dt>
+            <dd class="m-0 break-all font-mono text-sm font-medium text-foreground">
+              {{ pattern() }}
+            </dd>
           </div>
           @for (bound of bindings(); track bound.label) {
             <div class="flex flex-col gap-0.5 bg-card px-3 py-2.5">
-              <dt class="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{{ bound.label }}</dt>
-              <dd class="m-0 break-all font-mono text-sm font-medium text-foreground">{{ bound.value }}</dd>
+              <dt class="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                {{ bound.label }}
+              </dt>
+              <dd class="m-0 break-all font-mono text-sm font-medium text-foreground">
+                {{ bound.value }}
+              </dd>
             </div>
           }
           @for (fact of facts(); track fact.label) {
             <div class="flex flex-col gap-0.5 bg-card px-3 py-2.5" data-testid="estimate-fact">
-              <dt class="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{{ fact.label }}</dt>
+              <dt class="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                {{ fact.label }}
+              </dt>
               <dd
                 class="m-0 break-all font-mono text-sm font-medium tabular-nums"
-                [class]="fact.money ? 'text-orange-700 dark:text-orange-400 font-semibold' : 'text-foreground'"
+                [class]="
+                  fact.money
+                    ? 'text-orange-700 dark:text-orange-400 font-semibold'
+                    : 'text-foreground'
+                "
               >
                 {{ fact.value }}
               </dd>
@@ -115,18 +129,18 @@ import { AgentCycleService } from '../../service/agent-cycle.service';
             data-testid="grants-line"
           >
             Allow always grants exactly this:
-            <code class="font-mono text-[12.5px] font-medium">{{ proposal().sentence }}</code
-            >. No other action, no other resource.
+            <code class="font-mono text-[12.5px] font-medium">{{ proposal().sentence }}</code>. No
+            other action, no other resource.
           </p>
         } @else if (proposal().asksEveryTime) {
           <p class="m-0 text-[13px] text-muted-foreground" data-testid="every-time-note">
-            Removing something, or widening what a key may do, is allowed one call
-            at a time: there is no "always" for it.
+            Removing something, or widening what a key may do, is allowed one call at a time: there
+            is no "always" for it.
           </p>
         } @else {
           <p class="m-0 text-[13px] text-muted-foreground" data-testid="no-always-note">
-            This request did not state its own boundary, so there is no standing
-            permission it could be turned into. It can be allowed this once.
+            This request did not state its own boundary, so there is no standing permission it could
+            be turned into. It can be allowed this once.
           </p>
         }
 
@@ -193,8 +207,7 @@ import { AgentCycleService } from '../../service/agent-cycle.service';
           <pre
             class="m-0 max-h-72 overflow-auto rounded-md bg-muted/60 px-3 py-2.5 font-mono text-xs leading-relaxed text-muted-foreground"
             data-testid="estimate-body"
-            >{{ estimateJson() }}</pre
-          >
+            >{{ estimateJson() }}</pre>
         }
       </div>
     </article>
@@ -219,18 +232,14 @@ export class AgentRequestCardComponent implements OnInit {
 
   protected readonly offersAlways = computed(() => offersAlways(this.proposal()));
 
-  protected readonly agentLabel = computed(
-    () => this.agentName() ?? 'A credential of yours',
-  );
+  protected readonly agentLabel = computed(() => this.agentName() ?? 'A credential of yours');
 
   protected readonly asked = computed(() =>
     formatTimeSince(this.proposal().createdAt).toLowerCase(),
   );
 
   protected readonly verb = computed(() => splitAction(this.proposal().action).verb);
-  protected readonly pattern = computed(
-    () => splitAction(this.proposal().action).pattern,
-  );
+  protected readonly pattern = computed(() => splitAction(this.proposal().action).pattern);
 
   protected readonly bindings = computed(() =>
     Object.entries(this.proposal().binding ?? {}).map(([label, value]) => ({
@@ -245,9 +254,7 @@ export class AgentRequestCardComponent implements OnInit {
     return this.fetched();
   });
 
-  protected readonly facts = computed<EstimateFact[]>(() =>
-    estimateFacts(this.estimateBody()),
-  );
+  protected readonly facts = computed<EstimateFact[]>(() => estimateFacts(this.estimateBody()));
 
   protected readonly estimateJson = computed(() => {
     const body = this.estimateBody();

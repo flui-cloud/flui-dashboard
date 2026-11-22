@@ -35,10 +35,7 @@ import { joinPath } from './secrets-format';
   template: `
     <div class="w-full shrink-0 rounded-xl border border-border bg-card lg:w-80">
       <div class="flex items-center gap-2 border-b border-border px-3 py-2.5">
-        <ng-icon
-          name="lucideSearch"
-          class="h-4 w-4 shrink-0 text-muted-foreground"
-        />
+        <ng-icon name="lucideSearch" class="h-4 w-4 shrink-0 text-muted-foreground" />
         <input
           type="text"
           [(ngModel)]="filter"
@@ -56,9 +53,7 @@ import { joinPath } from './secrets-format';
           <ng-icon name="lucidePlus" class="h-3.5 w-3.5" /> Secret
         </button>
       </div>
-      <div
-        class="flex flex-wrap items-center gap-1 border-b border-border px-3 py-2 text-xs"
-      >
+      <div class="flex flex-wrap items-center gap-1 border-b border-border px-3 py-2 text-xs">
         <button
           type="button"
           (click)="goTo('')"
@@ -67,10 +62,7 @@ import { joinPath } from './secrets-format';
           {{ s.server()?.mount || 'secret' }}
         </button>
         @for (seg of crumbs(); track $index) {
-          <ng-icon
-            name="lucideChevronRight"
-            class="h-3 w-3 text-muted-foreground"
-          />
+          <ng-icon name="lucideChevronRight" class="h-3 w-3 text-muted-foreground" />
           <button
             type="button"
             (click)="goTo(crumbPrefix($index))"
@@ -94,13 +86,9 @@ import { joinPath } from './secrets-format';
             @for (e of filteredEntries(); track e.name) {
               <button
                 type="button"
-                (click)="
-                  e.isFolder ? s.enterFolder(e.name) : s.openSecret(e.name)
-                "
+                (click)="e.isFolder ? s.enterFolder(e.name) : s.openSecret(e.name)"
                 class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm hover:bg-muted"
-                [class.bg-muted]="
-                  !e.isFolder && s.selectedPath() === join(s.prefix(), e.name)
-                "
+                [class.bg-muted]="!e.isFolder && s.selectedPath() === join(s.prefix(), e.name)"
               >
                 <ng-icon
                   [name]="e.isFolder ? 'lucideFolder' : 'lucideKeyRound'"
@@ -150,7 +138,9 @@ export class SecretsTreeComponent {
     return this.s.prefix().split('/').filter(Boolean);
   }
   crumbPrefix(index: number): string {
-    return this.crumbs().slice(0, index + 1).join('/');
+    return this.crumbs()
+      .slice(0, index + 1)
+      .join('/');
   }
   goTo(prefix: string): void {
     this.s.navigate(prefix);

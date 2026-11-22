@@ -11,12 +11,7 @@ export interface InstallUrlResponse {
 }
 
 export type CredentialStatus =
-  | 'MISSING'
-  | 'VALID'
-  | 'EXPIRING_SOON'
-  | 'EXPIRED'
-  | 'INVALID'
-  | 'UNKNOWN_EXPIRY';
+  'MISSING' | 'VALID' | 'EXPIRING_SOON' | 'EXPIRED' | 'INVALID' | 'UNKNOWN_EXPIRY';
 
 export interface PackagesPatStatus {
   configured: boolean;
@@ -58,27 +53,22 @@ export class GithubAppOAuthService {
   }
 
   async getInstallUrl(): Promise<InstallUrlResponse> {
-    return firstValueFrom(
-      this.http.get<InstallUrlResponse>(`${this.base()}/install-url`),
-    );
+    return firstValueFrom(this.http.get<InstallUrlResponse>(`${this.base()}/install-url`));
   }
 
   async claim(claim: string): Promise<{ login: string; installationId: string | null }> {
     return firstValueFrom(
-      this.http.post<{ login: string; installationId: string | null }>(`${this.base()}/claim`, { claim }),
+      this.http.post<{ login: string; installationId: string | null }>(`${this.base()}/claim`, {
+        claim,
+      }),
     );
   }
 
   async getPackagesPatStatus(): Promise<PackagesPatStatus> {
-    return firstValueFrom(
-      this.http.get<PackagesPatStatus>(`${this.base()}/packages-pat/status`),
-    );
+    return firstValueFrom(this.http.get<PackagesPatStatus>(`${this.base()}/packages-pat/status`));
   }
 
-  async savePackagesPat(
-    token: string,
-    expiresAt: string,
-  ): Promise<PackagesPatStatus> {
+  async savePackagesPat(token: string, expiresAt: string): Promise<PackagesPatStatus> {
     return firstValueFrom(
       this.http.post<PackagesPatStatus>(`${this.base()}/packages-pat`, {
         token,
@@ -87,31 +77,20 @@ export class GithubAppOAuthService {
     );
   }
 
-  async rotatePackagesPat(
-    token: string,
-    expiresAt: string,
-  ): Promise<PackagesPatStatus> {
+  async rotatePackagesPat(token: string, expiresAt: string): Promise<PackagesPatStatus> {
     return firstValueFrom(
-      this.http.put<PackagesPatStatus>(
-        `${this.base()}/packages-pat/rotate`,
-        { token, expiresAt },
-      ),
+      this.http.put<PackagesPatStatus>(`${this.base()}/packages-pat/rotate`, { token, expiresAt }),
     );
   }
 
   async updatePackagesPatExpiry(expiresAt: string): Promise<PackagesPatStatus> {
     return firstValueFrom(
-      this.http.patch<PackagesPatStatus>(
-        `${this.base()}/packages-pat/expiry`,
-        { expiresAt },
-      ),
+      this.http.patch<PackagesPatStatus>(`${this.base()}/packages-pat/expiry`, { expiresAt }),
     );
   }
 
   async deletePackagesPat(): Promise<void> {
-    await firstValueFrom(
-      this.http.delete<{ ok: true }>(`${this.base()}/packages-pat`),
-    );
+    await firstValueFrom(this.http.delete<{ ok: true }>(`${this.base()}/packages-pat`));
   }
 
   async getCredentialsStatus(): Promise<CredentialsStatusResponse> {

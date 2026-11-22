@@ -18,7 +18,11 @@ export interface ServicesView {
 
 type Svg = { svg: string; width: number; height: number };
 
-const TONE_KEY: Record<string, keyof ExportPalette> = { healthy: 'ok', degraded: 'warn', error: 'err' };
+const TONE_KEY: Record<string, keyof ExportPalette> = {
+  healthy: 'ok',
+  degraded: 'warn',
+  error: 'err',
+};
 const toneColor = (palette: ExportPalette, tone: string) => palette[TONE_KEY[tone] ?? 'muted'];
 const dash = (dashed: boolean, pattern = '6 4') => (dashed ? ` stroke-dasharray="${pattern}"` : '');
 
@@ -73,7 +77,10 @@ function edgesSvg(view: ServicesView, p: ExportPalette): string[] {
 function stripSvg(strip: PlacementStrip | null, p: ExportPalette): string[] {
   if (!strip) return [];
   const mid = CHIP_H / 2;
-  const lines = strip.lines.map((line) => `<path d="${line}" fill="none" stroke="${p.muted}" stroke-opacity="0.55"${dash(true, '2 4')}/>`);
+  const lines = strip.lines.map(
+    (line) =>
+      `<path d="${line}" fill="none" stroke="${p.muted}" stroke-opacity="0.55"${dash(true, '2 4')}/>`,
+  );
   const chips = strip.chips.map(
     (c) =>
       `<rect x="${c.x}" y="${c.y}" width="${CHIP_W}" height="${CHIP_H}" rx="${mid}" fill="${p.card}" stroke="${p.border}"${dash(true, '4 3')}/>` +
@@ -110,7 +117,9 @@ function pillSvg(n: GraphNode, at: Point, focused: boolean, p: ExportPalette): s
   const pill = n.kind === 'pill';
   const textX = pill ? at.x + 30 : at.x + n.width / 2;
   const anchor = pill ? '' : ' text-anchor="middle"';
-  const dot = pill ? `<circle cx="${at.x + 18}" cy="${at.y + n.height / 2}" r="4" fill="${toneColor(p, n.tone)}"/>` : '';
+  const dot = pill
+    ? `<circle cx="${at.x + 18}" cy="${at.y + n.height / 2}" r="4" fill="${toneColor(p, n.tone)}"/>`
+    : '';
   return (
     `<rect x="${at.x}" y="${at.y}" width="${n.width}" height="${n.height}" rx="${n.height / 2}" fill="${p.card}" stroke="${focused ? p.brand : p.border}"${dash(n.dashed)}/>` +
     dot +
@@ -123,9 +132,10 @@ function cardSvg(n: GraphNode, at: Point, focused: boolean, p: ExportPalette): s
   const halo = n.center
     ? `<rect x="${at.x - 6}" y="${at.y - 6}" width="${n.width + 12}" height="${n.height + 12}" rx="14" fill="none" stroke="${p.brand}" stroke-opacity="0.15" stroke-width="6"/>`
     : '';
-  const replicas = n.replicas > 1
-    ? `<text x="${at.x + 30}" y="${cy + 4}" text-anchor="middle" font-size="10" font-weight="700" fill="${p.fg}">×${n.replicas}</text>`
-    : '';
+  const replicas =
+    n.replicas > 1
+      ? `<text x="${at.x + 30}" y="${cy + 4}" text-anchor="middle" font-size="10" font-weight="700" fill="${p.fg}">×${n.replicas}</text>`
+      : '';
   const problems = n.problems
     ? `<circle cx="${at.x + n.width - 18}" cy="${cy}" r="8" fill="${p.err}" fill-opacity="0.15"/><text x="${at.x + n.width - 18}" y="${cy + 3.5}" text-anchor="middle" font-size="10" fill="${p.err}">${n.problems}</text>`
     : '';

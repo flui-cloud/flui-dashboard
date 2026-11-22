@@ -84,9 +84,7 @@ describe('reading what a key can do', () => {
     );
 
     expect(surface.shape).toBe('grouped');
-    expect(surface.headline).toBe(
-      'Deploy and operate applications and Read logs and health',
-    );
+    expect(surface.headline).toBe('Deploy and operate applications and Read logs and health');
     expect(surface.caution).toBeNull();
     expect(understatesItself(surface)).toBe(false);
   });
@@ -95,12 +93,7 @@ describe('reading what a key can do', () => {
     const surface = readKeySurface(
       key({
         name: 'minted before the group changed',
-        scopes: [
-          'mcp:catalog:read',
-          'mcp:app:read',
-          'mcp:spec:validate',
-          'mcp:app:write',
-        ],
+        scopes: ['mcp:catalog:read', 'mcp:app:read', 'mcp:spec:validate', 'mcp:app:write'],
         groups: ['apps:look'] as never,
         ungroupedScopes: ['mcp:app:write'],
       }),
@@ -148,9 +141,7 @@ describe('reading what a key can do', () => {
     );
 
     expect(surface.extras).toEqual([{ scope: 'mcp:mail:read', carriedBy: [] }]);
-    expect(surface.caution).toContain(
-      'mcp:mail:read, which no group on this instance describes',
-    );
+    expect(surface.caution).toContain('mcp:mail:read, which no group on this instance describes');
   });
 
   it('reads an unscoped key as the widest one on the screen, not the emptiest', () => {
@@ -174,9 +165,7 @@ describe('reading what a key can do', () => {
       CATALOGUE,
     );
 
-    expect(surface.groups).toEqual([
-      { key: 'backups:look', label: 'backups:look', summary: '' },
-    ]);
+    expect(surface.groups).toEqual([{ key: 'backups:look', label: 'backups:look', summary: '' }]);
     expect(surface.headline).toBe('backups:look');
   });
 

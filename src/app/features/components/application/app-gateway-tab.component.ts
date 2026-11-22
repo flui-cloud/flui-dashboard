@@ -50,8 +50,7 @@ import { isAddressOrCidr } from '../../../shared/utils/cidr-validator';
         <div>
           <h2 class="text-lg font-semibold">Gateway</h2>
           <p class="text-sm text-muted-foreground">
-            Routes into this app and their edge policies: SSO, rate limit, IP
-            filter.
+            Routes into this app and their edge policies: SSO, rate limit, IP filter.
           </p>
         </div>
         <div class="flex items-center gap-2">
@@ -90,23 +89,17 @@ import { isAddressOrCidr } from '../../../shared/utils/cidr-validator';
         </div>
       } @else if (routes().length === 0) {
         <div class="card-inner p-8 text-center">
-          <ng-icon
-            name="lucideNetwork"
-            class="h-8 w-8 mx-auto text-muted-foreground"
-          />
+          <ng-icon name="lucideNetwork" class="h-8 w-8 mx-auto text-muted-foreground" />
           <p class="mt-2 text-sm font-medium">No routes yet</p>
           <p class="text-sm text-muted-foreground">
-            Add a route to expose this application on a hostname with edge
-            policies.
+            Add a route to expose this application on a hostname with edge policies.
           </p>
         </div>
       } @else {
         <div class="card-inner overflow-x-auto">
           <table class="w-full text-sm">
             <thead>
-              <tr
-                class="text-left text-muted-foreground border-b border-border"
-              >
+              <tr class="text-left text-muted-foreground border-b border-border">
                 <th class="py-2 px-3 font-medium w-8"></th>
                 <th class="py-2 px-3 font-medium">Host</th>
                 <th class="py-2 px-3 font-medium">Path</th>
@@ -145,11 +138,7 @@ import { isAddressOrCidr } from '../../../shared/utils/cidr-validator';
                           : 'bg-muted text-muted-foreground'
                       "
                     >
-                      {{
-                        route.tlsEnabled
-                          ? 'https'
-                          : route.certificateStatus || 'http'
-                      }}
+                      {{ route.tlsEnabled ? 'https' : route.certificateStatus || 'http' }}
                     </span>
                   </td>
                   <td class="py-2 px-3">
@@ -159,20 +148,14 @@ import { isAddressOrCidr } from '../../../shared/utils/cidr-validator';
                           class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
                         >
                           <ng-icon name="lucideLock" class="h-3 w-3" />
-                          SSO{{
-                            route.auth?.minRole
-                              ? ' · ' + route.auth?.minRole
-                              : ''
-                          }}
+                          SSO{{ route.auth?.minRole ? ' · ' + route.auth?.minRole : '' }}
                         </span>
                       }
                       @if (route.rateLimit?.average) {
                         <span
                           class="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300"
                         >
-                          {{ route.rateLimit?.average }} req/{{
-                            route.rateLimit?.period || '1s'
-                          }}
+                          {{ route.rateLimit?.average }} req/{{ route.rateLimit?.period || '1s' }}
                         </span>
                       }
                       @if (route.allowIps?.length) {
@@ -183,21 +166,14 @@ import { isAddressOrCidr } from '../../../shared/utils/cidr-validator';
                         </span>
                       }
                       @if (
-                        !route.auth?.sso &&
-                        !route.rateLimit?.average &&
-                        !route.allowIps?.length
+                        !route.auth?.sso && !route.rateLimit?.average && !route.allowIps?.length
                       ) {
-                        <span class="text-xs text-muted-foreground"
-                          >public · no policies</span
-                        >
+                        <span class="text-xs text-muted-foreground">public · no policies</span>
                       }
                     </div>
                   </td>
                   <td class="py-2 px-3">
-                    <span
-                      class="text-xs px-2 py-0.5 rounded-full"
-                      [class]="statusClass(route)"
-                    >
+                    <span class="text-xs px-2 py-0.5 rounded-full" [class]="statusClass(route)">
                       {{ statusLabel(route) }}
                     </span>
                   </td>
@@ -237,12 +213,8 @@ import { isAddressOrCidr } from '../../../shared/utils/cidr-validator';
                       }
                       <div class="grid gap-4 md:grid-cols-3">
                         <!-- Authentication -->
-                        <div
-                          class="rounded-md border border-border bg-background p-4 space-y-3"
-                        >
-                          <h4
-                            class="text-sm font-semibold flex items-center gap-2"
-                          >
+                        <div class="rounded-md border border-border bg-background p-4 space-y-3">
+                          <h4 class="text-sm font-semibold flex items-center gap-2">
                             <ng-icon name="lucideLock" class="h-4 w-4" />
                             Authentication
                           </h4>
@@ -255,9 +227,7 @@ import { isAddressOrCidr } from '../../../shared/utils/cidr-validator';
                             Require Flui SSO login
                           </label>
                           <label class="block space-y-1">
-                            <span class="text-xs text-muted-foreground"
-                              >Minimum role</span
-                            >
+                            <span class="text-xs text-muted-foreground">Minimum role</span>
                             <select
                               class="w-full h-9 px-3 rounded-md border border-input bg-background text-sm disabled:opacity-50"
                               [disabled]="!fSso()"
@@ -273,9 +243,7 @@ import { isAddressOrCidr } from '../../../shared/utils/cidr-validator';
                         </div>
 
                         <!-- Rate limit -->
-                        <div
-                          class="rounded-md border border-border bg-background p-4 space-y-3"
-                        >
+                        <div class="rounded-md border border-border bg-background p-4 space-y-3">
                           <h4 class="text-sm font-semibold">Rate limit</h4>
                           <label class="block space-y-1">
                             <span class="text-xs text-muted-foreground"
@@ -291,9 +259,7 @@ import { isAddressOrCidr } from '../../../shared/utils/cidr-validator';
                           </label>
                           <div class="grid grid-cols-2 gap-2">
                             <label class="block space-y-1">
-                              <span class="text-xs text-muted-foreground"
-                                >Burst</span
-                              >
+                              <span class="text-xs text-muted-foreground">Burst</span>
                               <input
                                 type="number"
                                 min="0"
@@ -303,9 +269,7 @@ import { isAddressOrCidr } from '../../../shared/utils/cidr-validator';
                               />
                             </label>
                             <label class="block space-y-1">
-                              <span class="text-xs text-muted-foreground"
-                                >Period</span
-                              >
+                              <span class="text-xs text-muted-foreground">Period</span>
                               <select
                                 class="w-full h-9 px-3 rounded-md border border-input bg-background text-sm"
                                 [ngModel]="fPeriod()"
@@ -320,15 +284,12 @@ import { isAddressOrCidr } from '../../../shared/utils/cidr-validator';
                         </div>
 
                         <!-- IP filtering -->
-                        <div
-                          class="rounded-md border border-border bg-background p-4 space-y-3"
-                        >
+                        <div class="rounded-md border border-border bg-background p-4 space-y-3">
                           <h4 class="text-sm font-semibold">IP filtering</h4>
                           <label class="block space-y-1">
                             <span class="text-xs text-muted-foreground">
-                              Allowed CIDR ranges, one per line (empty = allow
-                              all). Anyone else gets a plain "Forbidden" page
-                              (403).
+                              Allowed CIDR ranges, one per line (empty = allow all). Anyone else
+                              gets a plain "Forbidden" page (403).
                             </span>
                             <textarea
                               rows="4"
@@ -349,8 +310,7 @@ import { isAddressOrCidr } from '../../../shared/utils/cidr-validator';
 
                       <div class="flex items-center justify-between mt-4">
                         <p class="text-xs text-muted-foreground">
-                          Changes are applied to the cluster in the background
-                          after saving.
+                          Changes are applied to the cluster in the background after saving.
                         </p>
                         <button
                           type="button"
@@ -359,10 +319,7 @@ import { isAddressOrCidr } from '../../../shared/utils/cidr-validator';
                           (click)="savePolicies(route)"
                         >
                           @if (saving()) {
-                            <ng-icon
-                              name="lucideLoader"
-                              class="h-4 w-4 animate-spin"
-                            />
+                            <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
                           }
                           Save policies
                         </button>
@@ -379,9 +336,7 @@ import { isAddressOrCidr } from '../../../shared/utils/cidr-validator';
 
     <!-- Add route dialog -->
     @if (addOpen()) {
-      <div
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      >
+      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
         <div
           class="bg-background rounded-lg border border-border shadow-xl max-w-md w-full p-6 space-y-4"
         >
@@ -396,8 +351,8 @@ import { isAddressOrCidr } from '../../../shared/utils/cidr-validator';
               (ngModelChange)="fHost.set($event)"
             />
             <span class="text-xs text-muted-foreground">
-              If the domain belongs to a cluster DNS zone, the record is created
-              automatically; otherwise point your DNS at the cluster.
+              If the domain belongs to a cluster DNS zone, the record is created automatically;
+              otherwise point your DNS at the cluster.
             </span>
           </label>
 
@@ -412,11 +367,7 @@ import { isAddressOrCidr } from '../../../shared/utils/cidr-validator';
           </label>
 
           <label class="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              [ngModel]="fTls()"
-              (ngModelChange)="fTls.set($event)"
-            />
+            <input type="checkbox" [ngModel]="fTls()" (ngModelChange)="fTls.set($event)" />
             Issue a TLS certificate (HTTPS)
           </label>
 
@@ -450,17 +401,14 @@ import { isAddressOrCidr } from '../../../shared/utils/cidr-validator';
 
     <!-- Delete confirm -->
     @if (pendingDelete()) {
-      <div
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      >
+      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
         <div
           class="bg-background rounded-lg border border-border shadow-xl max-w-md w-full p-6 space-y-4"
         >
           <h3 class="text-base font-semibold">Remove route</h3>
           <p class="text-sm text-muted-foreground">
-            Remove "{{ pendingDelete()?.host }}"? Its DNS record, TLS
-            certificate and edge policies are cleaned up and the hostname stops
-            serving this app.
+            Remove "{{ pendingDelete()?.host }}"? Its DNS record, TLS certificate and edge policies
+            are cleaned up and the hostname stops serving this app.
           </p>
           <div class="flex justify-end gap-2">
             <button
@@ -555,9 +503,7 @@ export class AppGatewayTabComponent implements OnInit, OnDestroy {
     const average = Number(this.fAverage()) || 0;
     const burst = Number(this.fBurst()) || 0;
     const updated = await this.gatewayService.setPolicy(id, route.endpointId, {
-      auth: this.fSso()
-        ? { sso: true, minRole: this.fMinRole() || undefined }
-        : null,
+      auth: this.fSso() ? { sso: true, minRole: this.fMinRole() || undefined } : null,
       rateLimit:
         average > 0
           ? {

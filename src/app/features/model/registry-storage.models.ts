@@ -1,8 +1,5 @@
 export type RegistryBucketProvider =
-  | 'scaleway_object_storage'
-  | 'ovh_object_storage'
-  | 'generic_s3'
-  | 'minio';
+  'scaleway_object_storage' | 'ovh_object_storage' | 'generic_s3' | 'minio';
 
 export interface RegistryApplicationUsage {
   applicationId: string;

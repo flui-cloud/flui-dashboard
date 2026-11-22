@@ -1,11 +1,7 @@
 import { Component, input, ChangeDetectionStrategy } from '@angular/core';
 import { HlmBadgeDirective } from '@spartan-ng/ui-badge-helm';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideShieldCheck,
-  lucideCircleAlert,
-  lucideServerOff,
-} from '@ng-icons/lucide';
+import { lucideShieldCheck, lucideCircleAlert, lucideServerOff } from '@ng-icons/lucide';
 import { InstanceOwnership } from '../../model/instance.models';
 
 @Component({

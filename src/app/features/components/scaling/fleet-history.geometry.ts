@@ -37,10 +37,7 @@ export function niceStep(rough: number): number {
   return factor * magnitude;
 }
 
-export function fleetDomain(
-  pointTimes: number[],
-  decisionStamps: number[],
-): Domain {
+export function fleetDomain(pointTimes: number[], decisionStamps: number[]): Domain {
   const first = pointTimes.length ? pointTimes[0] : 0;
   const last = pointTimes.length ? pointTimes.at(-1)! : 1;
   const start = Math.min(first, ...decisionStamps);
@@ -87,7 +84,9 @@ export function spendScale(values: number[], cap: number | null): Scale {
 /** The moment under a horizontal position on the plot: the inverse of `xAt`, held to the plot. */
 export function stampAt(x: number, domain: Domain, plot: PlotBox): number {
   const clamped = Math.min(Math.max(x, plot.left), plot.right);
-  return domain.start + ((clamped - plot.left) / (plot.right - plot.left)) * (domain.end - domain.start);
+  return (
+    domain.start + ((clamped - plot.left) / (plot.right - plot.left)) * (domain.end - domain.start)
+  );
 }
 
 /**
@@ -109,11 +108,7 @@ export function draggedStretch(
 
 export function xAt(stamp: number, domain: Domain, plot: PlotBox): number {
   const t = Math.min(Math.max(stamp, domain.start), domain.end);
-  return (
-    plot.left +
-    ((t - domain.start) / (domain.end - domain.start)) *
-      (plot.right - plot.left)
-  );
+  return plot.left + ((t - domain.start) / (domain.end - domain.start)) * (plot.right - plot.left);
 }
 
 export function yAt(value: number, yMax: number, plot: PlotBox): number {
@@ -121,12 +116,7 @@ export function yAt(value: number, yMax: number, plot: PlotBox): number {
   return plot.bottom - (value / span) * (plot.bottom - plot.top);
 }
 
-export function stepPoints(
-  values: number[],
-  xs: number[],
-  yMax: number,
-  plot: PlotBox,
-): string[] {
+export function stepPoints(values: number[], xs: number[], yMax: number, plot: PlotBox): string[] {
   const out: string[] = [];
   values.forEach((v, i) => {
     const x = xs[i];
@@ -139,12 +129,7 @@ export function stepPoints(
   return out;
 }
 
-export function linePath(
-  values: number[],
-  xs: number[],
-  yMax: number,
-  plot: PlotBox,
-): string {
+export function linePath(values: number[], xs: number[], yMax: number, plot: PlotBox): string {
   const v = stepPoints(values, xs, yMax, plot);
   const rest = v
     .slice(1)
@@ -172,9 +157,7 @@ export function areaPath(
 
 export function tickIndexes(count: number): number[] {
   const last = count - 1;
-  return [
-    ...new Set([0, Math.round(last / 3), Math.round((2 * last) / 3), last]),
-  ];
+  return [...new Set([0, Math.round(last / 3), Math.round((2 * last) / 3), last])];
 }
 
 export function tickAnchor(

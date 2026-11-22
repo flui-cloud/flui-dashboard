@@ -1,9 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  input,
-  output
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideChevronLeft,
@@ -109,10 +104,16 @@ import { DocumentCollection, DocumentDatabase } from '../../model/document-conso
                           />
                           <span class="min-w-0 flex-1 truncate text-xs">{{ c.name }}</span>
                           @if (c.type === 'view') {
-                            <span class="shrink-0 rounded bg-muted px-1 text-[10px] uppercase text-muted-foreground">view</span>
+                            <span
+                              class="shrink-0 rounded bg-muted px-1 text-[10px] uppercase text-muted-foreground"
+                              >view</span
+                            >
                           }
                           @if (c.estimatedCount !== undefined) {
-                            <span class="shrink-0 text-[10px] tabular-nums text-muted-foreground/70">{{ formatCount(c.estimatedCount) }}</span>
+                            <span
+                              class="shrink-0 text-[10px] tabular-nums text-muted-foreground/70"
+                              >{{ formatCount(c.estimatedCount) }}</span
+                            >
                           }
                         </button>
                       </li>

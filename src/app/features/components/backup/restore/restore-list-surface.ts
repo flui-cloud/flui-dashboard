@@ -30,7 +30,11 @@ export interface RestoreListSurfaceContext {
   appVersion?: string;
 }
 
-function textObservation(key: string, value: string | undefined | null, source: ObservationSource): Observation | null {
+function textObservation(
+  key: string,
+  value: string | undefined | null,
+  source: ObservationSource,
+): Observation | null {
   return value ? { key, presentedAs: { text: value }, source } : null;
 }
 
@@ -43,7 +47,11 @@ function rowObservations(r: RestoreJob): Observation[] {
 }
 
 function rowScope(r: RestoreJob): SemanticScopeSnapshot {
-  const entity: EntityReference = { ref: restoreJobEntityRef(r.id), label: r.createdAt, role: 'related' };
+  const entity: EntityReference = {
+    ref: restoreJobEntityRef(r.id),
+    label: r.createdAt,
+    role: 'related',
+  };
   return {
     id: `${LIST_ID}:${r.id}`,
     parentId: LIST_ID,

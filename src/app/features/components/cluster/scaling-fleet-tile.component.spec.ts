@@ -29,23 +29,30 @@ describe('the nodes tile moves the group floor', () => {
 
   const build = async (r: ClusterScalingRow, acts = false): Promise<void> => {
     api = {
-      setFloor: jasmine.createSpy('setFloor').and.returnValue(
-        of({ acts: { acts, says: 'This group adds nodes on its own.' } }),
-      ),
+      setFloor: jasmine
+        .createSpy('setFloor')
+        .and.returnValue(of({ acts: { acts, says: 'This group adds nodes on its own.' } })),
       preview: jasmine.createSpy('preview').and.returnValue(
         of({
           chosen: { shape: 'cx23', region: 'fsn1', hourlyEur: 0.006 },
           giveBack: { nodeId: 'n-2', node: 'prod-worker-1', onItsOwn: false },
         }),
       ),
-      approvePurchase: jasmine.createSpy('approvePurchase').and.returnValue(of({ did: 'Ordered a cx23.' })),
-      approveRemoval: jasmine.createSpy('approveRemoval').and.returnValue(of({ did: 'Draining prod-worker-1.' })),
+      approvePurchase: jasmine
+        .createSpy('approvePurchase')
+        .and.returnValue(of({ did: 'Ordered a cx23.' })),
+      approveRemoval: jasmine
+        .createSpy('approveRemoval')
+        .and.returnValue(of({ did: 'Draining prod-worker-1.' })),
     };
     await TestBed.configureTestingModule({
       imports: [ScalingFleetTileComponent],
       providers: [
         { provide: ScalingApiService, useValue: api },
-        { provide: ToastService, useValue: { showSuccess: () => undefined, showError: () => undefined } },
+        {
+          provide: ToastService,
+          useValue: { showSuccess: () => undefined, showError: () => undefined },
+        },
       ],
     }).compileComponents();
     fixture = TestBed.createComponent(ScalingFleetTileComponent);
@@ -86,7 +93,9 @@ describe('the nodes tile moves the group floor', () => {
   it('says in the tile why a removal was refused', async () => {
     await build(row());
     api.approveRemoval.and.returnValue(
-      throwError(() => ({ error: { message: 'Nothing was removed: A node joined at 21:18 UTC.' } })),
+      throwError(() => ({
+        error: { message: 'Nothing was removed: A node joined at 21:18 UTC.' },
+      })),
     );
     await click('tile-fleet-minus');
     await click('tile-fleet-confirm-yes');
@@ -130,7 +139,12 @@ describe('the nodes tile moves the group floor', () => {
   });
 
   it('keeps both buttons off where Flui cannot add nodes', async () => {
-    await build(row({ groupId: null, capability: { provider: 'byos', canProvision: false, hasCatalogue: false, billing: 'none' } }));
+    await build(
+      row({
+        groupId: null,
+        capability: { provider: 'byos', canProvision: false, hasCatalogue: false, billing: 'none' },
+      }),
+    );
     expect(find('tile-fleet-plus')!.disabled).toBeTrue();
     expect(find('tile-fleet-minus')!.disabled).toBeTrue();
   });

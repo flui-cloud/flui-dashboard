@@ -7,7 +7,8 @@ export const FAILING_ERROR_PCT = 5;
 /** Above this many nodes a level collapses to the one above it. */
 export const MAX_NODES = 40;
 
-export type GraphNodeKind = 'internet' | 'cluster' | 'pill' | 'stack' | 'app' | 'platform' | 'region';
+export type GraphNodeKind =
+  'internet' | 'cluster' | 'pill' | 'stack' | 'app' | 'platform' | 'region';
 
 export interface GraphNode {
   id: string;
@@ -76,9 +77,26 @@ export const INTERNET = 'internet';
 export function node(kind: GraphNodeKind, id: string, over: Partial<GraphNode>): GraphNode {
   const [width, height] = SIZE[kind];
   return {
-    id, kind, label: '', sub: '', tone: 'healthy', width, height, focus: null, drill: null,
-    dashed: false, dots: [], replicas: 0, category: null, problems: 0,
-    ingress: null, ingressFailing: false, center: false, parent: null, muted: false, ...over,
+    id,
+    kind,
+    label: '',
+    sub: '',
+    tone: 'healthy',
+    width,
+    height,
+    focus: null,
+    drill: null,
+    dashed: false,
+    dots: [],
+    replicas: 0,
+    category: null,
+    problems: 0,
+    ingress: null,
+    ingressFailing: false,
+    center: false,
+    parent: null,
+    muted: false,
+    ...over,
   };
 }
 
@@ -168,14 +186,19 @@ export function bundleAcross(
   });
 }
 
-
 export function appNode(a: TopologyAppDto, sub: string, center = false): GraphNode {
   return node('app', a.id, {
     label: a.displayName,
     sub,
     tone: toneOf(a.status),
     focus: { type: 'app', id: a.id },
-    drill: { view: 'services', level: 'app', app: a.id, cluster: a.clusterId, focus: { type: 'app', id: a.id } },
+    drill: {
+      view: 'services',
+      level: 'app',
+      app: a.id,
+      cluster: a.clusterId,
+      focus: { type: 'app', id: a.id },
+    },
     replicas: a.replicaCount,
     category: a.category,
     center,

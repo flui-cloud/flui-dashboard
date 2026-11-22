@@ -39,7 +39,7 @@ export class DashboardService {
     () =>
       this.clusterService.listIsLoading() ||
       this.applicationService.loading() ||
-      this.providersService.isLoading()
+      this.providersService.isLoading(),
   );
 
   // Cluster aggregates
@@ -48,19 +48,19 @@ export class DashboardService {
   readonly totalClusters = computed(() => this.clusterService.clusters().length);
 
   readonly activeClusters = computed(
-    () => this.clusterService.clusters().filter((c) => c.status === ClusterStatus.ACTIVE).length
+    () => this.clusterService.clusters().filter((c) => c.status === ClusterStatus.ACTIVE).length,
   );
 
   readonly unhealthyClusters = computed(
-    () => this.clusterService.clusters().filter((c) => c.status === ClusterStatus.ERROR).length
+    () => this.clusterService.clusters().filter((c) => c.status === ClusterStatus.ERROR).length,
   );
 
   readonly totalNodes = computed(() =>
-    this.clusterService.clusters().reduce((sum, c) => sum + (c.nodeCount ?? 0), 0)
+    this.clusterService.clusters().reduce((sum, c) => sum + (c.nodeCount ?? 0), 0),
   );
 
   readonly clustersInOperation = computed(() =>
-    this.clusterService.clusters().filter((c) => OPERATION_STATUSES.has(c.status))
+    this.clusterService.clusters().filter((c) => OPERATION_STATUSES.has(c.status)),
   );
 
   readonly hasActiveOperations = computed(() => this.clustersInOperation().length > 0);

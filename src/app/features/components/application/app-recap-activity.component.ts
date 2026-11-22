@@ -17,16 +17,21 @@ import { TONE_DOT, shortDate } from './app-recap-view';
           [routerLink]="['/apps/applications', appId(), 'revisions']"
           [queryParams]="recapPath() ? { returnTo: recapPath() } : null"
           class="text-xs font-medium text-primary hover:underline"
-        >{{ linkLabel() }}</a>
+          >{{ linkLabel() }}</a
+        >
       </div>
       @if (events().length === 0) {
-        <p class="mt-3 text-sm text-muted-foreground">{{ loaded() ? 'No events recorded yet.' : 'Loading…' }}</p>
+        <p class="mt-3 text-sm text-muted-foreground">
+          {{ loaded() ? 'No events recorded yet.' : 'Loading…' }}
+        </p>
       } @else {
         <ul class="mt-3 space-y-2.5">
           @for (e of events(); track e.id) {
             <li class="flex items-start gap-2.5 text-sm">
               <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full" [class]="dot[e.tone]"></span>
-              <span class="w-20 shrink-0 font-mono text-xs text-muted-foreground">{{ shortDate(e.at) }}</span>
+              <span class="w-20 shrink-0 font-mono text-xs text-muted-foreground">{{
+                shortDate(e.at)
+              }}</span>
               <span class="min-w-0 text-foreground">{{ e.text }}</span>
             </li>
           }

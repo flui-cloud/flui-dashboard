@@ -4,7 +4,11 @@ import { InstallPromptService } from '../../../core/services/install-prompt.serv
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideChevronDown, lucideGitBranch, lucidePlus, lucideStore } from '@ng-icons/lucide';
 import { BrnMenuTriggerDirective } from '@spartan-ng/brain/menu';
-import { HlmMenuComponent, HlmMenuItemDirective, HlmMenuItemIconDirective } from '@spartan-ng/ui-menu-helm';
+import {
+  HlmMenuComponent,
+  HlmMenuItemDirective,
+  HlmMenuItemIconDirective,
+} from '@spartan-ng/ui-menu-helm';
 
 export type AddScope = 'applications' | 'data' | null;
 
@@ -19,7 +23,13 @@ export function catalogQueryFor(scope: AddScope): Record<string, string> {
   selector: 'app-add-workload-menu',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgIcon, BrnMenuTriggerDirective, HlmMenuComponent, HlmMenuItemDirective, HlmMenuItemIconDirective],
+  imports: [
+    NgIcon,
+    BrnMenuTriggerDirective,
+    HlmMenuComponent,
+    HlmMenuItemDirective,
+    HlmMenuItemIconDirective,
+  ],
   providers: [provideIcons({ lucideChevronDown, lucideGitBranch, lucidePlus, lucideStore })],
   host: { class: 'inline-flex' },
   template: `

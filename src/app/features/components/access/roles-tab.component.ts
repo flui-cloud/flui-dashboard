@@ -1,8 +1,5 @@
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
-import {
-  HlmCardDirective,
-  HlmCardContentDirective,
-} from '@spartan-ng/ui-card-helm';
+import { HlmCardDirective, HlmCardContentDirective } from '@spartan-ng/ui-card-helm';
 import { HlmBadgeDirective } from '@spartan-ng/ui-badge-helm';
 import { IamService } from '../../service/iam.service';
 
@@ -37,12 +34,12 @@ import { IamService } from '../../service/iam.service';
       }
     </div>
     <p class="mt-4 text-xs text-muted-foreground">
-      Built-in roles are read-only. Custom roles are not available at launch.
-      Viewer, Operator, Maintainer and Owner are a ladder — each one carries
-      everything the one before it carries, and adds to it;
+      Built-in roles are read-only. Custom roles are not available at launch. Viewer, Operator,
+      Maintainer and Owner are a ladder — each one carries everything the one before it carries, and
+      adds to it;
       <span class="font-medium">Owner</span> is conferred only by another owner.
-      <span class="font-medium">Platform operator</span> sits outside the ladder:
-      it runs the installation without reaching any application data.
+      <span class="font-medium">Platform operator</span> sits outside the ladder: it runs the
+      installation without reaching any application data.
     </p>
   `,
 })

@@ -3,8 +3,14 @@ import { Component, signal, inject, ChangeDetectionStrategy } from '@angular/cor
 import { FormsModule } from '@angular/forms';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
-  lucideSearch, lucideRefreshCw, lucideChevronDown,
-  lucideDownload, lucideX, lucideAlertCircle, lucideActivity, lucideCalendar,
+  lucideSearch,
+  lucideRefreshCw,
+  lucideChevronDown,
+  lucideDownload,
+  lucideX,
+  lucideAlertCircle,
+  lucideActivity,
+  lucideCalendar,
   lucideTriangleAlert,
 } from '@ng-icons/lucide';
 
@@ -24,18 +30,29 @@ import type { LogVolumeRangeSelection } from '../../../shared/components/charts/
 @Component({
   selector: 'app-logs-viewer',
   standalone: true,
-  imports: [FormsModule, NgIconComponent, LogDateRangePickerComponent, LogVolumeHistogramComponent, LogTableComponent],
+  imports: [
+    FormsModule,
+    NgIconComponent,
+    LogDateRangePickerComponent,
+    LogVolumeHistogramComponent,
+    LogTableComponent,
+  ],
   providers: [
     provideIcons({
-      lucideSearch, lucideRefreshCw, lucideChevronDown,
-      lucideDownload, lucideX, lucideAlertCircle, lucideActivity, lucideCalendar,
+      lucideSearch,
+      lucideRefreshCw,
+      lucideChevronDown,
+      lucideDownload,
+      lucideX,
+      lucideAlertCircle,
+      lucideActivity,
+      lucideCalendar,
       lucideTriangleAlert,
     }),
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="flex flex-col gap-0 min-h-0">
-
       @if (maskMode.enabled()) {
         <div
           data-testid="mask-mode-log-banner"
@@ -47,12 +64,18 @@ import type { LogVolumeRangeSelection } from '../../../shared/components/charts/
       }
 
       <!-- ── Log Volume Distribution ─────────────────────────────────────── -->
-      <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-t-lg p-4">
+      <div
+        class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-t-lg p-4"
+      >
         <div class="flex items-center justify-between mb-3">
-          <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+          <span
+            class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+          >
             Log Volume Distribution
           </span>
-          <span class="text-xs text-gray-400 dark:text-gray-500">{{ logs.selectedRangeLabel() }}</span>
+          <span class="text-xs text-gray-400 dark:text-gray-500">{{
+            logs.selectedRangeLabel()
+          }}</span>
         </div>
 
         <!-- Level summary pills -->
@@ -61,13 +84,17 @@ import type { LogVolumeRangeSelection } from '../../../shared/components/charts/
             <button
               (click)="logs.toggleLevel(lvl)"
               class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-all"
-              [class]="logs.levelActive()[lvl]
-                ? getLevelPillActive(lvl)
-                : 'border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 bg-transparent opacity-40'"
+              [class]="
+                logs.levelActive()[lvl]
+                  ? getLevelPillActive(lvl)
+                  : 'border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 bg-transparent opacity-40'
+              "
             >
               <span class="w-2 h-2 rounded-full" [class]="getLevelDot(lvl)"></span>
               {{ lvl.toUpperCase() }}
-              <span class="font-mono tabular-nums">{{ logs.volumeLevelTotals()[lvl] ?? logs.levelCounts()[lvl] ?? 0 }}</span>
+              <span class="font-mono tabular-nums">{{
+                logs.volumeLevelTotals()[lvl] ?? logs.levelCounts()[lvl] ?? 0
+              }}</span>
             </button>
           }
         </div>
@@ -82,12 +109,16 @@ import type { LogVolumeRangeSelection } from '../../../shared/components/charts/
       </div>
 
       <!-- ── Toolbar ──────────────────────────────────────────────────────── -->
-      <div class="bg-white dark:bg-gray-900 border-x border-gray-200 dark:border-gray-700 px-4 py-2.5 flex items-center gap-3 flex-wrap">
-
+      <div
+        class="bg-white dark:bg-gray-900 border-x border-gray-200 dark:border-gray-700 px-4 py-2.5 flex items-center gap-3 flex-wrap"
+      >
         <!-- Search -->
         <div class="relative flex-[2] min-w-72 flex gap-1.5">
           <div class="relative flex-1">
-            <ng-icon name="lucideSearch" class="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+            <ng-icon
+              name="lucideSearch"
+              class="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400"
+            />
             <input
               type="text"
               [ngModel]="searchInput()"
@@ -133,16 +164,20 @@ import type { LogVolumeRangeSelection } from '../../../shared/components/charts/
               type="button"
               (click)="customRangeOpen.set(!customRangeOpen())"
               class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded border transition-colors"
-              [class]="logs.customRangeLabel()
-                ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
-                : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'"
+              [class]="
+                logs.customRangeLabel()
+                  ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
+                  : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+              "
             >
               <ng-icon name="lucideCalendar" class="h-3.5 w-3.5" />
               {{ logs.customRangeLabel() || 'Select date range' }}
             </button>
 
             @if (customRangeOpen()) {
-              <div class="absolute top-full left-0 mt-1 z-50 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl w-80">
+              <div
+                class="absolute top-full left-0 mt-1 z-50 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl w-80"
+              >
                 <app-log-date-range-picker
                   (rangeSelected)="onCustomRangeSelected($event)"
                   (cancelled)="customRangeOpen.set(false)"
@@ -160,15 +195,24 @@ import type { LogVolumeRangeSelection } from '../../../shared/components/charts/
         </span>
 
         <!-- Refresh -->
-        <button (click)="logs.refresh()" title="Refresh"
-          class="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-          <ng-icon name="lucideRefreshCw" class="h-3.5 w-3.5 text-gray-500"
-            [class.animate-spin]="logs.loading()" />
+        <button
+          (click)="logs.refresh()"
+          title="Refresh"
+          class="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        >
+          <ng-icon
+            name="lucideRefreshCw"
+            class="h-3.5 w-3.5 text-gray-500"
+            [class.animate-spin]="logs.loading()"
+          />
         </button>
 
         <!-- Download -->
-        <button (click)="downloadLogs()" title="Download logs"
-          class="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <button
+          (click)="downloadLogs()"
+          title="Download logs"
+          class="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        >
           <ng-icon name="lucideDownload" class="h-3.5 w-3.5 text-gray-500" />
         </button>
       </div>
@@ -188,10 +232,10 @@ export class AppLogsViewerComponent {
   protected readonly maskMode = inject(MaskModeService);
   private readonly appService = inject(ApplicationService);
 
-  readonly allLevels  = ALL_LOG_LEVELS;
+  readonly allLevels = ALL_LOG_LEVELS;
   readonly timeRanges = LOG_TIME_RANGES;
 
-  readonly searchInput     = signal('');
+  readonly searchInput = signal('');
   readonly customRangeOpen = signal(false);
 
   private readonly _brushHighlight = signal<{ start: Date; end: Date } | null>(null);
@@ -218,7 +262,7 @@ export class AppLogsViewerComponent {
     this._brushHighlight.set({ start: range.start, end: range.end });
     this.logs.setBrushRange({
       start: range.start.toISOString(),
-      end:   range.end.toISOString(),
+      end: range.end.toISOString(),
     });
   }
 
@@ -232,13 +276,16 @@ export class AppLogsViewerComponent {
   }
 
   downloadLogs() {
-    const lines = this.logs.filteredLogs().map(
-      l => `${l.timestamp} [${(l.level ?? 'unknown').toUpperCase()}] ${l.pod ?? ''} - ${l.message}`
-    );
+    const lines = this.logs
+      .filteredLogs()
+      .map(
+        (l) =>
+          `${l.timestamp} [${(l.level ?? 'unknown').toUpperCase()}] ${l.pod ?? ''} - ${l.message}`,
+      );
     const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href     = url;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
     a.download = `logs-${this.appService.selectedApplication()?.slug ?? 'app'}-${Date.now()}.txt`;
     a.click();
     URL.revokeObjectURL(url);
@@ -248,23 +295,35 @@ export class AppLogsViewerComponent {
 
   getLevelDot(level: string): string {
     switch (level.toLowerCase()) {
-      case 'error': return 'bg-red-500';
-      case 'warn':  return 'bg-amber-400';
-      case 'info':  return 'bg-blue-500';
-      case 'debug': return 'bg-gray-400';
-      case 'trace': return 'bg-purple-400';
-      default:      return 'bg-gray-300';
+      case 'error':
+        return 'bg-red-500';
+      case 'warn':
+        return 'bg-amber-400';
+      case 'info':
+        return 'bg-blue-500';
+      case 'debug':
+        return 'bg-gray-400';
+      case 'trace':
+        return 'bg-purple-400';
+      default:
+        return 'bg-gray-300';
     }
   }
 
   getLevelPillActive(level: string): string {
     switch (level.toLowerCase()) {
-      case 'error': return 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400';
-      case 'warn':  return 'border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400';
-      case 'info':  return 'border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400';
-      case 'debug': return 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400';
-      case 'trace': return 'border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400';
-      default:      return 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-500';
+      case 'error':
+        return 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400';
+      case 'warn':
+        return 'border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400';
+      case 'info':
+        return 'border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400';
+      case 'debug':
+        return 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400';
+      case 'trace':
+        return 'border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400';
+      default:
+        return 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-500';
     }
   }
 }

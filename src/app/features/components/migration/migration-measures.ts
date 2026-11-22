@@ -19,9 +19,7 @@ export function measuresLine(row: MigrationRow): string | null {
   const parts: string[] = [];
   if (row.type !== 'app' && row.writePauseMs != null) {
     const until =
-      row.type === 'full' && row.writePauseEndedBy
-        ? UNTIL[row.writePauseEndedBy] ?? ''
-        : '';
+      row.type === 'full' && row.writePauseEndedBy ? (UNTIL[row.writePauseEndedBy] ?? '') : '';
     parts.push(`Writes paused ${seconds(row.writePauseMs)}${until}`);
   }
   if (row.type !== 'db' && row.interruptionMs != null) {

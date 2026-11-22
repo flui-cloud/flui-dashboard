@@ -7,11 +7,7 @@ import { DisclosureComponent } from './disclosure.component';
   imports: [DisclosureComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <app-disclosure
-      label="Bounds"
-      summary="1 floor · 3 target · 5 ceiling"
-      testid="bounds"
-    >
+    <app-disclosure label="Bounds" summary="1 floor · 3 target · 5 ceiling" testid="bounds">
       <p>the three inputs</p>
     </app-disclosure>
   `,
@@ -57,8 +53,6 @@ describe('a section that is one line until somebody needs it', () => {
     fixture.detectChanges();
 
     expect(toggle.getAttribute('aria-expanded')).toBe('true');
-    expect(toggle.getAttribute('aria-controls')).toBe(
-      find('bounds')!.getAttribute('id'),
-    );
+    expect(toggle.getAttribute('aria-controls')).toBe(find('bounds')!.getAttribute('id'));
   });
 });

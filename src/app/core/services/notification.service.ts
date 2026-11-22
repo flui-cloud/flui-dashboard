@@ -61,7 +61,7 @@ export class NotificationService implements OnDestroy {
 
   private readonly _notifications = signal<AppNotification[]>(this.loadFromStorage());
   readonly notifications = this._notifications.asReadonly();
-  readonly unreadCount = computed(() => this._notifications().filter(n => !n.read).length);
+  readonly unreadCount = computed(() => this._notifications().filter((n) => !n.read).length);
   readonly hasUnread = computed(() => this.unreadCount() > 0);
 
   // Action registry: key → handler fn
@@ -88,7 +88,7 @@ export class NotificationService implements OnDestroy {
   }
 
   bootstrapWebSocketListeners(): void {
-    this.runtimeWs.onGlobalBuildCompleted(e => {
+    this.runtimeWs.onGlobalBuildCompleted((e) => {
       const appName = this.runtimeWs.getAppName(e.appId);
       this.add({
         title: appName ? `${appName}: build completed` : 'Build completed',
@@ -100,7 +100,7 @@ export class NotificationService implements OnDestroy {
       });
     });
 
-    this.runtimeWs.onGlobalBuildFailed(e => {
+    this.runtimeWs.onGlobalBuildFailed((e) => {
       const appName = this.runtimeWs.getAppName(e.appId);
       this.add({
         title: appName ? `${appName}: build failed` : 'Build failed',
@@ -112,7 +112,7 @@ export class NotificationService implements OnDestroy {
       });
     });
 
-    this.runtimeWs.onGlobalCompleted(e => {
+    this.runtimeWs.onGlobalCompleted((e) => {
       const appName = this.runtimeWs.getAppName(e.appId) ?? e.runtimeSnapshot?.deploymentName;
       this.add({
         title: appName ? `${appName}: rollout completed` : 'Application rollout completed',
@@ -124,7 +124,7 @@ export class NotificationService implements OnDestroy {
       });
     });
 
-    this.runtimeWs.onGlobalFailed(e => {
+    this.runtimeWs.onGlobalFailed((e) => {
       const appName = this.runtimeWs.getAppName(e.appId);
       this.add({
         title: appName ? `${appName}: rollout failed` : 'Application rollout failed',
@@ -136,7 +136,7 @@ export class NotificationService implements OnDestroy {
       });
     });
 
-    this.issuerWs.onGlobalConfigured(e => {
+    this.issuerWs.onGlobalConfigured((e) => {
       this.add({
         title: 'SSL issuer configured',
         body: `${e.issuers.length} issuer(s) ready`,
@@ -147,7 +147,7 @@ export class NotificationService implements OnDestroy {
       });
     });
 
-    this.issuerWs.onGlobalFailed(e => {
+    this.issuerWs.onGlobalFailed((e) => {
       this.add({
         title: 'SSL issuer configuration failed',
         body: e.error,
@@ -158,15 +158,16 @@ export class NotificationService implements OnDestroy {
       });
     });
 
-    this.runtimeWs.onGlobalOperationCompleted(e => this.handleOperationCompleted(e));
-    this.runtimeWs.onGlobalOperationFailed(e => this.handleOperationFailed(e));
+    this.runtimeWs.onGlobalOperationCompleted((e) => this.handleOperationCompleted(e));
+    this.runtimeWs.onGlobalOperationFailed((e) => this.handleOperationFailed(e));
 
-    this.runtimeWs.onGlobalDiagnosis(e => {
+    this.runtimeWs.onGlobalDiagnosis((e) => {
       const appName = this.runtimeWs.getAppName(e.applicationId);
       const prefix = appName ? `${appName}: ` : '';
-      const body = e.explanation && e.explanation.length > 220
-        ? e.explanation.slice(0, 220).trimEnd() + '…'
-        : e.explanation;
+      const body =
+        e.explanation && e.explanation.length > 220
+          ? e.explanation.slice(0, 220).trimEnd() + '…'
+          : e.explanation;
       let notificationType: 'error' | 'warning' | 'info';
       if (e.severity === 'critical') notificationType = 'error';
       else if (e.severity === 'warning') notificationType = 'warning';
@@ -207,9 +208,7 @@ export class NotificationService implements OnDestroy {
       const firing = payload.kind === 'fired';
       const where = payload.applicationSlug ? `${payload.applicationSlug}: ` : '';
       this.add({
-        title: firing
-          ? `${where}${payload.alertname}`
-          : `${where}${payload.alertname} resolved`,
+        title: firing ? `${where}${payload.alertname}` : `${where}${payload.alertname} resolved`,
         body: payload.summary,
         link: payload.applicationId
           ? {
@@ -261,43 +260,49 @@ export class NotificationService implements OnDestroy {
   // ── Category helpers ──────────────────────────────────────
 
   hasCategory(category: NotificationCategory): boolean {
-    return this._notifications().some(n => n.category === category);
+    return this._notifications().some((n) => n.category === category);
   }
 
   removeByCategory(category: NotificationCategory): void {
-    this._notifications.update(current => current.filter(n => n.category !== category));
+    this._notifications.update((current) => current.filter((n) => n.category !== category));
   }
 
   // ── CRUD ──────────────────────────────────────────────────
 
-  add(partial: Omit<AppNotification, 'id' | 'read' | 'createdAt'> & { type?: NotificationType }): void {
+  add(
+    partial: Omit<AppNotification, 'id' | 'read' | 'createdAt'> & { type?: NotificationType },
+  ): void {
     const defaultTtl = partial.source === 'websocket' ? WEBSOCKET_TTL : DEFAULT_TTL;
     const notification: AppNotification = {
-      ...{ type: 'info' as NotificationType, source: 'system' as NotificationSource, ttl: defaultTtl },
+      ...{
+        type: 'info' as NotificationType,
+        source: 'system' as NotificationSource,
+        ttl: defaultTtl,
+      },
       ...partial,
       id: this.generateId(),
       read: false,
       createdAt: new Date(),
     };
 
-    this._notifications.update(current => {
+    this._notifications.update((current) => {
       const updated = [notification, ...current];
       return updated.slice(0, MAX_NOTIFICATIONS);
     });
   }
 
   markRead(id: string): void {
-    this._notifications.update(current =>
-      current.map(n => n.id === id ? { ...n, read: true } : n)
+    this._notifications.update((current) =>
+      current.map((n) => (n.id === id ? { ...n, read: true } : n)),
     );
   }
 
   markAllRead(): void {
-    this._notifications.update(current => current.map(n => ({ ...n, read: true })));
+    this._notifications.update((current) => current.map((n) => ({ ...n, read: true })));
   }
 
   remove(id: string): void {
-    this._notifications.update(current => current.filter(n => n.id !== id));
+    this._notifications.update((current) => current.filter((n) => n.id !== id));
   }
 
   clear(): void {
@@ -315,10 +320,12 @@ export class NotificationService implements OnDestroy {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return [];
-      const parsed: AppNotification[] = JSON.parse(raw).map((n: AppNotification & { createdAt: string }) => ({
-        ...n,
-        createdAt: new Date(n.createdAt),
-      }));
+      const parsed: AppNotification[] = JSON.parse(raw).map(
+        (n: AppNotification & { createdAt: string }) => ({
+          ...n,
+          createdAt: new Date(n.createdAt),
+        }),
+      );
       return this.filterExpired(parsed);
     } catch {
       return [];
@@ -326,12 +333,12 @@ export class NotificationService implements OnDestroy {
   }
 
   private applyTtlFilter(): void {
-    this._notifications.update(current => this.filterExpired(current));
+    this._notifications.update((current) => this.filterExpired(current));
   }
 
   private filterExpired(notifications: AppNotification[]): AppNotification[] {
     const now = Date.now();
-    return notifications.filter(n => {
+    return notifications.filter((n) => {
       if (n.ttl === null) return true;
       const ttl = n.ttl ?? DEFAULT_TTL;
       return now - n.createdAt.getTime() < ttl;
@@ -360,7 +367,12 @@ export class NotificationService implements OnDestroy {
     operationType: string;
     imageRef?: string;
     revisionNumber?: number;
-  }): { title: string; body?: string; link: NotificationLink; category: NotificationCategory } | null {
+  }): {
+    title: string;
+    body?: string;
+    link: NotificationLink;
+    category: NotificationCategory;
+  } | null {
     const appName = this.runtimeWs.getAppName(e.appId);
     const appLink: NotificationLink = {
       label: 'View application',
@@ -377,7 +389,12 @@ export class NotificationService implements OnDestroy {
   private deleteCompletedSpec(
     operationType: string,
     appName: string | undefined,
-  ): { title: string; body?: string; link: NotificationLink; category: NotificationCategory } | null {
+  ): {
+    title: string;
+    body?: string;
+    link: NotificationLink;
+    category: NotificationCategory;
+  } | null {
     if (operationType !== 'delete_application' && operationType !== 'delete') return null;
     return {
       title: appName ? `${appName} deleted successfully` : 'Application deleted successfully',
@@ -391,7 +408,12 @@ export class NotificationService implements OnDestroy {
     e: { operationType: string; imageRef?: string; revisionNumber?: number },
     appName: string | undefined,
     appLink: NotificationLink,
-  ): { title: string; body?: string; link: NotificationLink; category: NotificationCategory } | null {
+  ): {
+    title: string;
+    body?: string;
+    link: NotificationLink;
+    category: NotificationCategory;
+  } | null {
     if (e.operationType === 'deploy') {
       return {
         title: appName ? `${appName} deployed successfully` : 'Application deployed successfully',
@@ -416,7 +438,12 @@ export class NotificationService implements OnDestroy {
     operationType: string,
     appName: string | undefined,
     appLink: NotificationLink,
-  ): { title: string; body?: string; link: NotificationLink; category: NotificationCategory } | null {
+  ): {
+    title: string;
+    body?: string;
+    link: NotificationLink;
+    category: NotificationCategory;
+  } | null {
     if (operationType !== 'app_backup_create') return null;
     return {
       title: appName ? `${appName}: backup completed` : 'Backup completed',
@@ -430,7 +457,12 @@ export class NotificationService implements OnDestroy {
     operationType: string,
     appName: string | undefined,
     appLink: NotificationLink,
-  ): { title: string; body?: string; link: NotificationLink; category: NotificationCategory } | null {
+  ): {
+    title: string;
+    body?: string;
+    link: NotificationLink;
+    category: NotificationCategory;
+  } | null {
     if (operationType === 'app_snapshot_create') {
       return {
         title: appName ? `${appName}: snapshot created` : 'Snapshot created',
@@ -474,7 +506,12 @@ export class NotificationService implements OnDestroy {
     appId: string;
     operationType: string;
     error: string;
-  }): { title: string; body?: string; link: NotificationLink; category: NotificationCategory } | null {
+  }): {
+    title: string;
+    body?: string;
+    link: NotificationLink;
+    category: NotificationCategory;
+  } | null {
     const appName = this.runtimeWs.getAppName(e.appId);
     const appLink: NotificationLink = {
       label: 'View application',
@@ -492,7 +529,12 @@ export class NotificationService implements OnDestroy {
     operationType: string,
     error: string,
     appName: string | undefined,
-  ): { title: string; body?: string; link: NotificationLink; category: NotificationCategory } | null {
+  ): {
+    title: string;
+    body?: string;
+    link: NotificationLink;
+    category: NotificationCategory;
+  } | null {
     if (operationType !== 'delete_application' && operationType !== 'delete') return null;
     return {
       title: appName ? `${appName} deletion failed` : 'Application deletion failed',
@@ -507,7 +549,12 @@ export class NotificationService implements OnDestroy {
     error: string,
     appName: string | undefined,
     appLink: NotificationLink,
-  ): { title: string; body?: string; link: NotificationLink; category: NotificationCategory } | null {
+  ): {
+    title: string;
+    body?: string;
+    link: NotificationLink;
+    category: NotificationCategory;
+  } | null {
     if (operationType === 'deploy') {
       return {
         title: appName ? `${appName}: deploy failed` : 'Deploy failed',
@@ -532,7 +579,12 @@ export class NotificationService implements OnDestroy {
     error: string,
     appName: string | undefined,
     appLink: NotificationLink,
-  ): { title: string; body?: string; link: NotificationLink; category: NotificationCategory } | null {
+  ): {
+    title: string;
+    body?: string;
+    link: NotificationLink;
+    category: NotificationCategory;
+  } | null {
     if (operationType?.startsWith('app_snapshot_')) {
       return {
         title: appName ? `${appName}: snapshot operation failed` : 'Snapshot operation failed',
@@ -557,7 +609,12 @@ export class NotificationService implements OnDestroy {
     error: string,
     appName: string | undefined,
     appLink: NotificationLink,
-  ): { title: string; body?: string; link: NotificationLink; category: NotificationCategory } | null {
+  ): {
+    title: string;
+    body?: string;
+    link: NotificationLink;
+    category: NotificationCategory;
+  } | null {
     if (operationType !== 'app_backup_create') return null;
     return {
       title: appName ? `${appName}: backup failed` : 'Backup failed',

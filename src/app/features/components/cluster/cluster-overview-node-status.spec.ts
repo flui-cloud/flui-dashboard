@@ -1,4 +1,8 @@
-import { nodeStatusDot as dot, buildOverviewNodeRows, findNodeMetrics } from './cluster-overview-nodes';
+import {
+  nodeStatusDot as dot,
+  buildOverviewNodeRows,
+  findNodeMetrics,
+} from './cluster-overview-nodes';
 import { InstanceWithLabels } from '../../model/instance.models';
 import { ServerMetricsState } from '../../service/cluster-monitoring.service';
 
@@ -48,8 +52,18 @@ const node = (over: Partial<InstanceWithLabels> & { role?: string }): InstanceWi
   } as InstanceWithLabels;
 };
 
-const metrics = (serverId: string, instance: string, cpu: number, memory: number): ServerMetricsState =>
-  ({ serverId, instance, cpu: { current: cpu }, memory: { current: memory } }) as ServerMetricsState;
+const metrics = (
+  serverId: string,
+  instance: string,
+  cpu: number,
+  memory: number,
+): ServerMetricsState =>
+  ({
+    serverId,
+    instance,
+    cpu: { current: cpu },
+    memory: { current: memory },
+  }) as ServerMetricsState;
 
 describe('cluster overview — node rows', () => {
   it('reads CPU and memory from the metrics of the same node', () => {
@@ -79,7 +93,11 @@ describe('cluster overview — node rows', () => {
   });
 
   it('links to the server only when it has one at a provider', () => {
-    expect(buildOverviewNodeRows([node({})], [])[0].link).toEqual(['/infrastructure/compute', 'hetzner', '42']);
+    expect(buildOverviewNodeRows([node({})], [])[0].link).toEqual([
+      '/infrastructure/compute',
+      'hetzner',
+      '42',
+    ]);
     expect(buildOverviewNodeRows([node({ provider: 'byos' as never })], [])[0].link).toBeNull();
   });
 

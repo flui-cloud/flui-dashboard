@@ -1,4 +1,13 @@
-import { Component, computed, effect, inject, signal, OnInit, viewChild, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+  OnInit,
+  viewChild,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
@@ -24,21 +33,31 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
   imports: [NgIconComponent, FormsModule, ConfirmationDialogComponent],
   providers: [
     provideIcons({
-      lucideShieldPlus, lucideInfo, lucideLoader, lucideAlertTriangle,
-      lucideCircleCheck, lucideCircle, lucideAlertCircle, lucideRefreshCw, lucideServer,
+      lucideShieldPlus,
+      lucideInfo,
+      lucideLoader,
+      lucideAlertTriangle,
+      lucideCircleCheck,
+      lucideCircle,
+      lucideAlertCircle,
+      lucideRefreshCw,
+      lucideServer,
     }),
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-4">
-
       <div class="flex items-start gap-2 text-sm text-muted-foreground">
-        <ng-icon name="lucideInfo" class="h-4 w-4 mt-0.5 flex-shrink-0 text-blue-500 dark:text-blue-400" />
+        <ng-icon
+          name="lucideInfo"
+          class="h-4 w-4 mt-0.5 flex-shrink-0 text-blue-500 dark:text-blue-400"
+        />
         <p>
-          Auth Proxy checks the Flui sign-in for internal apps and routes that require one, so only team members with access reach them. Install it once on each cluster other than the control — no extra config.
+          Auth Proxy checks the Flui sign-in for internal apps and routes that require one, so only
+          team members with access reach them. Install it once on each cluster other than the
+          control — no extra config.
         </p>
       </div>
-
 
       @if (clustersLoading()) {
         <div class="h-9 w-full max-w-sm animate-pulse rounded bg-muted"></div>
@@ -71,7 +90,11 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
               [disabled]="authzService.loading()"
               class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-border text-sm rounded-md hover:bg-muted text-foreground transition-colors disabled:opacity-50 ml-auto"
             >
-              <ng-icon name="lucideRefreshCw" class="h-3.5 w-3.5" [class.animate-spin]="authzService.loading()" />
+              <ng-icon
+                name="lucideRefreshCw"
+                class="h-3.5 w-3.5"
+                [class.animate-spin]="authzService.loading()"
+              />
               Refresh
             </button>
           }
@@ -79,22 +102,33 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
 
         <!-- Status card (full width) -->
         @if (!selectedClusterId()) {
-          <p class="text-sm text-muted-foreground">Select a cluster to view its Auth Proxy status.</p>
+          <p class="text-sm text-muted-foreground">
+            Select a cluster to view its Auth Proxy status.
+          </p>
         } @else if (authzService.loading() && !authzService.install()) {
-          <div class="border border-border rounded-md p-4 flex items-center gap-2 text-sm text-muted-foreground">
+          <div
+            class="border border-border rounded-md p-4 flex items-center gap-2 text-sm text-muted-foreground"
+          >
             <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
             Loading status...
           </div>
         } @else {
           <div class="border border-border rounded-md p-4 space-y-4">
-
             <!-- Header row: title + status + actions -->
             <div class="flex flex-wrap items-center gap-3">
               <div class="flex items-center gap-2 min-w-0">
-                <ng-icon name="lucideShieldPlus" class="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
-                <span class="text-sm font-semibold text-foreground truncate">Internal app protection</span>
+                <ng-icon
+                  name="lucideShieldPlus"
+                  class="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0"
+                />
+                <span class="text-sm font-semibold text-foreground truncate"
+                  >Internal app protection</span
+                >
               </div>
-              <span class="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full" [class]="statusBadgeClass()">
+              <span
+                class="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full"
+                [class]="statusBadgeClass()"
+              >
                 <span class="w-1.5 h-1.5 rounded-full" [class]="statusDotClass()"></span>
                 {{ statusLabel() }}
               </span>
@@ -109,7 +143,9 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
                     @if (authzService.installing()) {
                       <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
                       Installing...
-                    } @else { Install }
+                    } @else {
+                      Install
+                    }
                   </button>
                 }
                 @if (showRetryButton()) {
@@ -121,7 +157,9 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
                     @if (authzService.installing()) {
                       <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
                       Retrying...
-                    } @else { Retry }
+                    } @else {
+                      Retry
+                    }
                   </button>
                 }
                 @if (showUninstallButton()) {
@@ -150,20 +188,29 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
                   <span>{{ authzService.progress() }}%</span>
                 </div>
                 <div class="w-full bg-muted rounded-full h-1.5">
-                  <div class="bg-blue-600 h-1.5 rounded-full transition-all duration-500" [style.width.%]="authzService.progress()"></div>
+                  <div
+                    class="bg-blue-600 h-1.5 rounded-full transition-all duration-500"
+                    [style.width.%]="authzService.progress()"
+                  ></div>
                 </div>
               </div>
             }
 
             <!-- Errors -->
             @if (authzService.error()) {
-              <div class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/60 rounded text-sm text-red-700 dark:text-red-400">
+              <div
+                class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/60 rounded text-sm text-red-700 dark:text-red-400"
+              >
                 <ng-icon name="lucideAlertCircle" class="h-4 w-4 mt-0.5 flex-shrink-0" />
                 {{ authzService.error() }}
               </div>
             }
-            @if (authzService.install()?.status === 'FAILED' && authzService.install()?.errorMessage) {
-              <div class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/60 rounded text-sm text-red-700 dark:text-red-400">
+            @if (
+              authzService.install()?.status === 'FAILED' && authzService.install()?.errorMessage
+            ) {
+              <div
+                class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/60 rounded text-sm text-red-700 dark:text-red-400"
+              >
                 <ng-icon name="lucideAlertCircle" class="h-4 w-4 mt-0.5 flex-shrink-0" />
                 {{ authzService.install()!.errorMessage }}
               </div>
@@ -171,7 +218,6 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
           </div>
         }
       }
-
     </div>
 
     <app-confirmation-dialog
@@ -208,8 +254,10 @@ export class InfrastructureAuthProxyComponent implements OnInit {
 
   protected statusBadgeClass = computed(() => {
     const s = this.authzService.install()?.status;
-    if (s === this.Status.Running) return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400';
-    if (s === this.Status.Failed) return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400';
+    if (s === this.Status.Running)
+      return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400';
+    if (s === this.Status.Failed)
+      return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400';
     if (s === this.Status.Pending || s === this.Status.Installing)
       return 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400';
     return 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400';
@@ -228,13 +276,16 @@ export class InfrastructureAuthProxyComponent implements OnInit {
     return !s || s === this.Status.Uninstalled;
   });
 
-  protected showRetryButton = computed(() => this.authzService.install()?.status === this.Status.Failed);
+  protected showRetryButton = computed(
+    () => this.authzService.install()?.status === this.Status.Failed,
+  );
   protected showUninstallButton = computed(() => {
     const s = this.authzService.install()?.status;
     return s === this.Status.Running || s === this.Status.Failed;
   });
 
-  protected readonly uninstallDialog = viewChild.required<ConfirmationDialogComponent>('uninstallDialog');
+  protected readonly uninstallDialog =
+    viewChild.required<ConfirmationDialogComponent>('uninstallDialog');
 
   constructor() {
     effect(() => {
@@ -248,10 +299,10 @@ export class InfrastructureAuthProxyComponent implements OnInit {
       this.clustersLoading.set(true);
       await this.clusterService.loadClusters();
       this.clustersLoading.set(false);
-  
+
       const queryId = this.route.snapshot.queryParamMap.get('clusterId');
       const list = this.workloadClusters();
-      if (queryId && list.some(c => c.id === queryId)) {
+      if (queryId && list.some((c) => c.id === queryId)) {
         this.selectedClusterId.set(queryId);
       } else if (list.length === 1 && list[0].id) {
         this.selectedClusterId.set(list[0].id);
@@ -287,6 +338,10 @@ export class InfrastructureAuthProxyComponent implements OnInit {
   }
 
   protected formatDate(iso: string): string {
-    return new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+    return new Date(iso).toLocaleDateString(undefined, {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
   }
 }

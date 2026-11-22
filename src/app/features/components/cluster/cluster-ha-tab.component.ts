@@ -8,12 +8,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideCrown,
-  lucidePlug,
-  lucideShieldAlert,
-  lucideShieldCheck,
-} from '@ng-icons/lucide';
+import { lucideCrown, lucidePlug, lucideShieldAlert, lucideShieldCheck } from '@ng-icons/lucide';
 import { ClusterService } from '../../service/cluster.service';
 import {
   ClusterHaMissingRole,
@@ -51,11 +46,7 @@ interface ZoneCard extends ClusterHaZone {
         <div class="card-surface p-4">
           <div class="flex items-center gap-2">
             <ng-icon
-              [name]="
-                v.level === 'three-locations'
-                  ? 'lucideShieldCheck'
-                  : 'lucideShieldAlert'
-              "
+              [name]="v.level === 'three-locations' ? 'lucideShieldCheck' : 'lucideShieldAlert'"
               class="h-4 w-4"
               [class]="
                 v.level === 'three-locations'
@@ -88,22 +79,16 @@ interface ZoneCard extends ClusterHaZone {
             {{ open() ? 'Hide' : 'What it survives' }}
           </button>
           @if (open()) {
-            <ul
-              class="m-0 mt-2 list-none space-y-1 p-0 text-xs"
-              data-testid="ha-survives"
-            >
+            <ul class="m-0 mt-2 list-none space-y-1 p-0 text-xs" data-testid="ha-survives">
               @for (s of v.survives; track s) {
-                <li class="text-emerald-700 dark:text-emerald-400">
-                  Survives {{ s }}
-                </li>
+                <li class="text-emerald-700 dark:text-emerald-400">Survives {{ s }}</li>
               }
               @for (s of v.doesNotSurvive; track s) {
                 <li class="text-muted-foreground">Does not survive {{ s }}</li>
               }
               @if (others().length) {
                 <li class="text-muted-foreground">
-                  If {{ reachedThrough() }} is lost, Flui moves to
-                  {{ others().join(', ') }}.
+                  If {{ reachedThrough() }} is lost, Flui moves to {{ others().join(', ') }}.
                 </li>
               }
             </ul>
@@ -113,10 +98,7 @@ interface ZoneCard extends ClusterHaZone {
         @if (zones().length) {
           <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
             @for (z of zones(); track z.zone) {
-              <div
-                class="card-surface p-4"
-                [attr.data-testid]="'ha-zone-' + z.zone"
-              >
+              <div class="card-surface p-4" [attr.data-testid]="'ha-zone-' + z.zone">
                 <div class="flex items-center justify-between">
                   <span class="text-sm font-medium">{{ z.zone }}</span>
                   <span
@@ -155,11 +137,7 @@ interface ZoneCard extends ClusterHaZone {
                   @if (z.role === 'data') {
                     <li class="text-muted-foreground">
                       Copies of data on
-                      {{
-                        z.dataHosts.length
-                          ? z.dataHosts.join(', ')
-                          : 'no node yet'
-                      }}
+                      {{ z.dataHosts.length ? z.dataHosts.join(', ') : 'no node yet' }}
                     </li>
                   }
                   @for (m of z.missing; track m.role) {
@@ -187,16 +165,12 @@ interface ZoneCard extends ClusterHaZone {
           <div class="card-surface p-4" data-testid="ha-round-trips">
             <div class="flex items-center justify-between">
               <span class="text-label">Between locations</span>
-              <span class="text-xs text-muted-foreground">{{
-                measured()
-              }}</span>
+              <span class="text-xs text-muted-foreground">{{ measured() }}</span>
             </div>
             <div class="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
               @for (t of trips(); track t.from + t.to) {
                 <div class="text-sm">
-                  <span class="text-muted-foreground"
-                    >{{ t.from }} ↔ {{ t.to }}</span
-                  >
+                  <span class="text-muted-foreground">{{ t.from }} ↔ {{ t.to }}</span>
                   <span class="ml-2 font-medium tabular-nums">
                     {{ t.ms === null ? 'no answer' : t.ms.toFixed(1) + ' ms' }}
                   </span>
@@ -210,18 +184,13 @@ interface ZoneCard extends ClusterHaZone {
         }
 
         @if (notice()) {
-          <p
-            class="m-0 text-xs text-muted-foreground"
-            data-testid="ha-add-notice"
-          >
+          <p class="m-0 text-xs text-muted-foreground" data-testid="ha-add-notice">
             {{ notice() }}
           </p>
         }
       </div>
       <app-confirmation-dialog
-        [title]="
-          'Add ' + (pending()?.label ?? '') + ' in ' + (pending()?.zone ?? '')
-        "
+        [title]="'Add ' + (pending()?.label ?? '') + ' in ' + (pending()?.zone ?? '')"
         message="Flui buys a machine in this location and joins it to the cluster with its role. It is billed from then on, and scaling never removes it."
         confirmText="Add it"
         cancelText="Not now"
@@ -248,8 +217,7 @@ export class ClusterHaTabComponent {
     const v = this.view();
     if (!v) return '';
     if (v.unsupported) return v.unsupported;
-    if (v.level === 'three-locations')
-      return 'Survives the loss of a whole location';
+    if (v.level === 'three-locations') return 'Survives the loss of a whole location';
     return 'Standard: does not survive the loss of a location';
   });
 
@@ -263,16 +231,10 @@ export class ClusterHaTabComponent {
     }));
   });
 
-  readonly leader = computed(
-    () => this.view()?.observed?.etcdLeader?.node ?? null,
-  );
-  readonly reachedThrough = computed(
-    () => this.view()?.observed?.reachedThrough ?? null,
-  );
+  readonly leader = computed(() => this.view()?.observed?.etcdLeader?.node ?? null);
+  readonly reachedThrough = computed(() => this.view()?.observed?.reachedThrough ?? null);
   readonly others = computed(() =>
-    (this.view()?.observed?.reachableServers ?? []).filter(
-      (s) => s !== this.reachedThrough(),
-    ),
+    (this.view()?.observed?.reachableServers ?? []).filter((s) => s !== this.reachedThrough()),
   );
   readonly trips = computed(() => this.view()?.observed?.roundTrips ?? []);
 

@@ -38,15 +38,35 @@ const group = (
 
 const CATALOGUE = (grantableKeys: string[]): PermissionGroupDto[] =>
   [
-    ['apps:look', 'apps', 'See applications', ['mcp:catalog:read', 'mcp:app:read', 'mcp:spec:validate']],
-    ['apps:change', 'apps', 'Deploy and operate applications', ['mcp:catalog:read', 'mcp:app:read', 'mcp:spec:validate', 'mcp:app:write', 'mcp:obs:read']],
+    [
+      'apps:look',
+      'apps',
+      'See applications',
+      ['mcp:catalog:read', 'mcp:app:read', 'mcp:spec:validate'],
+    ],
+    [
+      'apps:change',
+      'apps',
+      'Deploy and operate applications',
+      ['mcp:catalog:read', 'mcp:app:read', 'mcp:spec:validate', 'mcp:app:write', 'mcp:obs:read'],
+    ],
     ['apps:destroy', 'apps', 'Delete applications', ['mcp:app:destructive']],
-    ['observability:look', 'observability', 'Read logs and health', ['mcp:app:read', 'mcp:obs:read']],
+    [
+      'observability:look',
+      'observability',
+      'Read logs and health',
+      ['mcp:app:read', 'mcp:obs:read'],
+    ],
     ['backups:look', 'backups', 'See backups', ['mcp:backup:read']],
     ['backups:change', 'backups', 'Run backups', ['mcp:backup:write']],
     ['migrations:look', 'migrations', 'See migrations', ['mcp:migration:read']],
     ['migrations:change', 'migrations', 'Run migrations', ['mcp:migration:write']],
-    ['migrations:destroy', 'migrations', 'Abort and tear down migrations', ['mcp:migration:destructive']],
+    [
+      'migrations:destroy',
+      'migrations',
+      'Abort and tear down migrations',
+      ['mcp:migration:destructive'],
+    ],
     ['mail:look', 'mail', 'See mail delivery', ['mcp:mail:read']],
   ].map(([key, area, label, scopes]) =>
     group(
@@ -112,9 +132,7 @@ describe('the agent keys screen', () => {
       'apiKeysControllerCreateApiKey',
       'apiKeysControllerRevokeApiKey',
     ]);
-    api.apiKeysControllerListPermissionGroups.and.returnValue(
-      of(CATALOGUE(grants)) as never,
-    );
+    api.apiKeysControllerListPermissionGroups.and.returnValue(of(CATALOGUE(grants)) as never);
     api.apiKeysControllerListApiKeys.and.returnValue(of(keys) as never);
     api.apiKeysControllerCreateApiKey.and.returnValue(
       of({
@@ -140,8 +158,7 @@ describe('the agent keys screen', () => {
         {
           provide: AgentSkillService,
           useValue: {
-            skill: () =>
-              skill ? of(skill) : throwError(() => ({ status: 404 })),
+            skill: () => (skill ? of(skill) : throwError(() => ({ status: 404 }))),
           },
         },
         {
@@ -170,12 +187,8 @@ describe('the agent keys screen', () => {
     const refused = all('[data-grantable="false"]');
     expect(refused).toHaveSize(6);
     expect(refused[0].textContent).toContain('Not yours to grant');
-    expect(refused[0].textContent).toContain(
-      'your own permissions do not cover',
-    );
-    expect(text('[data-testid="ceiling"]')).toContain(
-      '4 of the 10 permission groups',
-    );
+    expect(refused[0].textContent).toContain('your own permissions do not cover');
+    expect(text('[data-testid="ceiling"]')).toContain('4 of the 10 permission groups');
   });
 
   it('serves an administrator the same screen, with more switches and no other difference', async () => {
@@ -184,9 +197,7 @@ describe('the agent keys screen', () => {
     expect(all('[data-testid^="group-"]')).toHaveSize(10);
     expect(all('[data-grantable="false"]')).toHaveSize(0);
     expect(text('[data-testid="ceiling"]')).toContain('All 10 permission groups');
-    expect(text('[data-testid="ceiling"]')).toContain(
-      'An agent can never do more than you can',
-    );
+    expect(text('[data-testid="ceiling"]')).toContain('An agent can never do more than you can');
   });
 
   it('will not mint a key with nothing switched on, because that key would be unscoped', async () => {
@@ -255,9 +266,7 @@ describe('the agent keys screen', () => {
   it('never describes a key by the smallest group that fits inside it', async () => {
     await build(GUEST_GRANTS, [OLD_KEY]);
 
-    expect(text('[data-testid="headline-k-old"]')).toBe(
-      'See applications, and more',
-    );
+    expect(text('[data-testid="headline-k-old"]')).toBe('See applications, and more');
     expect(el('[data-testid="beyond-groups"]')).not.toBeNull();
     const caution = text('[data-testid="caution-k-old"]');
     expect(caution).toContain('does more than those names say');
@@ -272,7 +281,9 @@ describe('the agent keys screen', () => {
     fixture.detectChanges();
     expect(api.apiKeysControllerRevokeApiKey).not.toHaveBeenCalled();
 
-    const confirm = all('button').find((b) => b.textContent?.trim() === 'Revoke' && b !== el('[data-testid="revoke-k-old"]'));
+    const confirm = all('button').find(
+      (b) => b.textContent?.trim() === 'Revoke' && b !== el('[data-testid="revoke-k-old"]'),
+    );
     confirm!.click();
     fixture.detectChanges();
 
@@ -303,9 +314,7 @@ describe('the agent keys screen', () => {
 
     (el('[data-testid="revoke-k-old"]') as HTMLButtonElement).click();
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain(
-      'your own session is unaffected',
-    );
+    expect(fixture.nativeElement.textContent).toContain('your own session is unaffected');
   });
 
   it('says when a key was last seen, and does not call silence "never"', async () => {
@@ -353,9 +362,7 @@ describe('the agent keys screen', () => {
       expect(el('[data-testid="skill-content"]')).toBeNull();
       (el('[data-testid="show-skill"]') as HTMLButtonElement).click();
       fixture.detectChanges();
-      expect(text('[data-testid="skill-content"]')).toContain(
-        'Working with Flui',
-      );
+      expect(text('[data-testid="skill-content"]')).toContain('Working with Flui');
     });
 
     it('shows no credential inside the document', async () => {
@@ -374,9 +381,7 @@ describe('the agent keys screen', () => {
 
       expect(el('[data-testid="minted-key"]')).not.toBeNull();
       expect(el('[data-testid="skill-handoff"]')).toBeNull();
-      expect(text('[data-testid="skill-missing"]')).toContain(
-        'operating without them',
-      );
+      expect(text('[data-testid="skill-missing"]')).toContain('operating without them');
     });
   });
 
@@ -405,5 +410,4 @@ describe('the agent keys screen', () => {
       expect(fixture.nativeElement.textContent).toContain('never used');
     });
   });
-
 });

@@ -11,10 +11,7 @@ import {
   UpdateCredentialsExpiryDto,
   UpdateProviderRegionsDto,
 } from '../../core/api';
-import {
-  ProviderStatus,
-  HealthStatus,
-} from '../model/provider.models';
+import { ProviderStatus, HealthStatus } from '../model/provider.models';
 
 @Injectable({ providedIn: 'root' })
 export class ProvidersService {
@@ -25,9 +22,7 @@ export class ProvidersService {
   readonly availableProviders = computed(() => this.providers());
   readonly configuredProviders = computed(() => this.configurations());
   readonly activeProviders = computed(() =>
-    this.configurations().filter(
-      (config) => config.status === ProviderStatus.ACTIVE
-    )
+    this.configurations().filter((config) => config.status === ProviderStatus.ACTIVE),
   );
   readonly isLoading = computed(() => this.loading());
 
@@ -43,7 +38,7 @@ export class ProvidersService {
           console.error('Failed to load providers:', error);
           this.loading.set(false);
           return of([]);
-        })
+        }),
       )
       .subscribe({
         next: (providers) => {
@@ -59,28 +54,24 @@ export class ProvidersService {
 
   loadConfigurations$(): Observable<ProviderConfigurationDto[]> {
     this.loading.set(true);
-    return this.providerManagementService
-      .managementControllerGetUserProviderConfigurations()
-      .pipe(
-        tap((configurations) => {
-          this.configurations.set(configurations);
-          this.loading.set(false);
-        }),
-        catchError((error) => {
-          console.error('Failed to load configurations:', error);
-          this.loading.set(false);
-          return of([]);
-        })
-      );
+    return this.providerManagementService.managementControllerGetUserProviderConfigurations().pipe(
+      tap((configurations) => {
+        this.configurations.set(configurations);
+        this.loading.set(false);
+      }),
+      catchError((error) => {
+        console.error('Failed to load configurations:', error);
+        this.loading.set(false);
+        return of([]);
+      }),
+    );
   }
 
   getProviderById(id: string): ProviderDefinitionDto | undefined {
     return this.providers().find((p) => p.id === id);
   }
 
-  private readonly providerDefs = signal<Record<string, ProviderDefinitionDto>>(
-    {},
-  );
+  private readonly providerDefs = signal<Record<string, ProviderDefinitionDto>>({});
 
   loadProviderDefinition(id: string): void {
     if (!id || this.getProviderById(id) || this.providerDefs()[id]) return;
@@ -98,38 +89,35 @@ export class ProvidersService {
     return this.getProviderById(id) ?? this.providerDefs()[id];
   }
 
-  getConfigurationByProvider(
-    providerId: string
-  ): ProviderConfigurationDto | undefined {
+  getConfigurationByProvider(providerId: string): ProviderConfigurationDto | undefined {
     return this.configurations().find((c) => c.provider === providerId);
   }
 
   validateProvider(
     providerId: string,
-    credentials: ProviderCredentialsDto
+    credentials: ProviderCredentialsDto,
   ): Promise<ValidationResultDto> {
     return new Promise((resolve, reject) => {
       this.providerManagementService
-        .managementControllerValidateProvider(
-          providerId as any,
-          credentials
-        )
+        .managementControllerValidateProvider(providerId as any, credentials)
         .pipe(
           catchError((error) => {
             console.error('Validation failed:', error);
             reject(error);
             return of(null);
-          })
+          }),
         )
         .subscribe({
-          next: (result) => { if (result) resolve(result); },
+          next: (result) => {
+            if (result) resolve(result);
+          },
         });
     });
   }
 
   configureProvider(
     providerId: string,
-    config: { credentials: ProviderCredentialsDto; enabledRegions: string[] }
+    config: { credentials: ProviderCredentialsDto; enabledRegions: string[] },
   ): Promise<ProviderConfigurationDto> {
     return new Promise((resolve, reject) => {
       const configDto: ConfigureProviderDto = {
@@ -140,16 +128,13 @@ export class ProvidersService {
       };
 
       this.providerManagementService
-        .managementControllerConfigureProvider(
-          providerId as any,
-          configDto
-        )
+        .managementControllerConfigureProvider(providerId as any, configDto)
         .pipe(
           catchError((error) => {
             console.error('Failed to configure provider:', error);
             reject(error);
             return of(null);
-          })
+          }),
         )
         .subscribe({
           next: (newConfig) => {
@@ -179,15 +164,13 @@ export class ProvidersService {
             console.error('Failed to toggle provider:', error);
             reject(error);
             return of(null);
-          })
+          }),
         )
         .subscribe({
           next: (updatedConfig) => {
             if (updatedConfig) {
               const currentConfigs = this.configurations();
-              const configIndex = currentConfigs.findIndex(
-                (c) => c.provider === providerId
-              );
+              const configIndex = currentConfigs.findIndex((c) => c.provider === providerId);
 
               if (configIndex >= 0) {
                 currentConfigs[configIndex] = updatedConfig;
@@ -200,30 +183,75 @@ export class ProvidersService {
     });
   }
 
-  rotateCredentials(providerId: string, credentials: ProviderCredentialsDto): Promise<ProviderConfigurationDto> {
+  rotateCredentials(
+    providerId: string,
+    credentials: ProviderCredentialsDto,
+  ): Promise<ProviderConfigurationDto> {
     return new Promise((resolve, reject) => {
       this.providerManagementService
         .managementControllerRotateProviderCredentials(providerId as any, credentials)
-        .pipe(catchError((error) => { reject(error); return of(null); }))
-        .subscribe({ next: (config) => { if (config) { this.updateConfigInState(config); resolve(config); } } });
+        .pipe(
+          catchError((error) => {
+            reject(error);
+            return of(null);
+          }),
+        )
+        .subscribe({
+          next: (config) => {
+            if (config) {
+              this.updateConfigInState(config);
+              resolve(config);
+            }
+          },
+        });
     });
   }
 
-  updateCredentialsExpiry(providerId: string, dto: UpdateCredentialsExpiryDto): Promise<ProviderConfigurationDto> {
+  updateCredentialsExpiry(
+    providerId: string,
+    dto: UpdateCredentialsExpiryDto,
+  ): Promise<ProviderConfigurationDto> {
     return new Promise((resolve, reject) => {
       this.providerManagementService
         .managementControllerUpdateProviderCredentialsExpiry(providerId as any, dto)
-        .pipe(catchError((error) => { reject(error); return of(null); }))
-        .subscribe({ next: (config) => { if (config) { this.updateConfigInState(config); resolve(config); } } });
+        .pipe(
+          catchError((error) => {
+            reject(error);
+            return of(null);
+          }),
+        )
+        .subscribe({
+          next: (config) => {
+            if (config) {
+              this.updateConfigInState(config);
+              resolve(config);
+            }
+          },
+        });
     });
   }
 
-  updateRegions(providerId: string, dto: UpdateProviderRegionsDto): Promise<ProviderConfigurationDto> {
+  updateRegions(
+    providerId: string,
+    dto: UpdateProviderRegionsDto,
+  ): Promise<ProviderConfigurationDto> {
     return new Promise((resolve, reject) => {
       this.providerManagementService
         .managementControllerUpdateProviderRegions(providerId as any, dto)
-        .pipe(catchError((error) => { reject(error); return of(null); }))
-        .subscribe({ next: (config) => { if (config) { this.updateConfigInState(config); resolve(config); } } });
+        .pipe(
+          catchError((error) => {
+            reject(error);
+            return of(null);
+          }),
+        )
+        .subscribe({
+          next: (config) => {
+            if (config) {
+              this.updateConfigInState(config);
+              resolve(config);
+            }
+          },
+        });
     });
   }
 
@@ -248,7 +276,7 @@ export class ProvidersService {
             console.error('Failed to remove provider configuration:', error);
             reject(error);
             return of(null);
-          })
+          }),
         )
         .subscribe({
           next: () => {
@@ -260,9 +288,7 @@ export class ProvidersService {
   }
 
   private dropProviderFromState(providerId: string): void {
-    this.configurations.update((configs) =>
-      configs.filter((c) => c.provider !== providerId)
-    );
+    this.configurations.update((configs) => configs.filter((c) => c.provider !== providerId));
   }
 
   getProviderHealth(providerId: string): Promise<HealthStatus> {
@@ -274,15 +300,13 @@ export class ProvidersService {
             status: healthDto.status as 'healthy' | 'degraded' | 'unhealthy',
             lastCheck: new Date(healthDto.lastCheck),
             responseTime: healthDto.responseTime,
-            errors: healthDto.errorMessage
-              ? [healthDto.errorMessage]
-              : undefined,
+            errors: healthDto.errorMessage ? [healthDto.errorMessage] : undefined,
           })),
           catchError((error) => {
             console.error('Failed to get provider health:', error);
             reject(error);
             return of(null);
-          })
+          }),
         )
         .subscribe({
           next: (healthStatus) => {
@@ -301,7 +325,7 @@ export class ProvidersService {
             console.error('Failed to get provider regions:', error);
             reject(error);
             return of([]);
-          })
+          }),
         )
         .subscribe({
           next: (regions) => resolve(regions),
@@ -312,15 +336,13 @@ export class ProvidersService {
   getProviderInstanceTypes(providerId: string): Promise<any[]> {
     return new Promise((resolve, reject) => {
       this.providerManagementService
-        .managementControllerGetProviderInstanceTypes(
-          providerId as any
-        )
+        .managementControllerGetProviderInstanceTypes(providerId as any)
         .pipe(
           catchError((error) => {
             console.error('Failed to get provider instance types:', error);
             reject(error);
             return of([]);
-          })
+          }),
         )
         .subscribe({
           next: (instanceTypes) => resolve(instanceTypes),

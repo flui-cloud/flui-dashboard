@@ -21,7 +21,8 @@ describe('BackupProgressModalComponent', () => {
   const ops = signal<Record<string, ActiveOperation>>({});
   let clearOperation: jasmine.Spy;
 
-  const q = (id: string): HTMLElement | null => fixture.nativeElement.querySelector(`[data-testid="${id}"]`);
+  const q = (id: string): HTMLElement | null =>
+    fixture.nativeElement.querySelector(`[data-testid="${id}"]`);
 
   beforeEach(async () => {
     ops.set({ 'op-1': running });
@@ -48,11 +49,27 @@ describe('BackupProgressModalComponent', () => {
   it('shows how the run ended and announces it once', () => {
     const settled = jasmine.createSpy('settled');
     fixture.componentInstance.settled.subscribe(settled);
-    ops.set({ 'op-1': { ...running, status: 'completed', partial: true, percentage: 100, detail: 'Left out: data.' } });
+    ops.set({
+      'op-1': {
+        ...running,
+        status: 'completed',
+        partial: true,
+        percentage: 100,
+        detail: 'Left out: data.',
+      },
+    });
     fixture.detectChanges();
     expect(q('progress-partial')!.textContent).toContain('Left out: data.');
     expect(q('progress-close')!.textContent).toContain('Close');
-    ops.set({ 'op-1': { ...running, status: 'completed', partial: true, percentage: 100, detail: 'Left out: data.' } });
+    ops.set({
+      'op-1': {
+        ...running,
+        status: 'completed',
+        partial: true,
+        percentage: 100,
+        detail: 'Left out: data.',
+      },
+    });
     fixture.detectChanges();
     expect(settled).toHaveBeenCalledTimes(1);
   });

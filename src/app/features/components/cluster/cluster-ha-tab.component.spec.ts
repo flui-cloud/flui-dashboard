@@ -2,10 +2,7 @@ import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { ClusterService } from '../../service/cluster.service';
-import {
-  ClusterHaService,
-  ClusterHaView,
-} from '../../service/cluster-ha.service';
+import { ClusterHaService, ClusterHaView } from '../../service/cluster-ha.service';
 import { ClusterHaTabComponent } from './cluster-ha-tab.component';
 
 const threeLocations: ClusterHaView = {
@@ -45,9 +42,7 @@ describe('ClusterHaTabComponent', () => {
   let addNode: jasmine.Spy;
 
   function render(get: () => unknown) {
-    addNode = jasmine
-      .createSpy('addNode')
-      .and.returnValue(of({ operationId: 'op-1' }));
+    addNode = jasmine.createSpy('addNode').and.returnValue(of({ operationId: 'op-1' }));
     TestBed.configureTestingModule({
       imports: [ClusterHaTabComponent],
       providers: [
@@ -91,9 +86,7 @@ describe('ClusterHaTabComponent', () => {
     fixture.detectChanges();
     const list = el.querySelector('[data-testid="ha-survives"]')!;
     expect(list.textContent).toContain('Survives the loss of a whole location');
-    expect(list.textContent).toContain(
-      'If master is lost, Flui moves to w1, w3.',
-    );
+    expect(list.textContent).toContain('If master is lost, Flui moves to w1, w3.');
   });
 
   it('names what a location still needs on a standard cluster', () => {
@@ -102,15 +95,13 @@ describe('ClusterHaTabComponent', () => {
         ...threeLocations,
         level: 'standard',
         observed: undefined,
-        missing: [
-          { role: 'server', zone: 'hel1', why: 'One server in each location.' },
-        ],
+        missing: [{ role: 'server', zone: 'hel1', why: 'One server in each location.' }],
       }),
     );
     expect(el.textContent).toContain('Standard');
-    expect(
-      el.querySelector('[data-testid="ha-zone-hel1"]')!.textContent,
-    ).toContain('Needs a server');
+    expect(el.querySelector('[data-testid="ha-zone-hel1"]')!.textContent).toContain(
+      'Needs a server',
+    );
     expect(el.querySelector('[data-testid="ha-round-trips"]')).toBeNull();
   });
 
@@ -120,24 +111,18 @@ describe('ClusterHaTabComponent', () => {
         ...threeLocations,
         level: 'standard',
         observed: undefined,
-        missing: [
-          { role: 'server', zone: 'hel1', why: 'One server in each location.' },
-        ],
+        missing: [{ role: 'server', zone: 'hel1', why: 'One server in each location.' }],
       }),
     );
-    (
-      el.querySelector(
-        '[data-testid="ha-add-server-hel1"]',
-      ) as HTMLButtonElement
-    ).click();
+    (el.querySelector('[data-testid="ha-add-server-hel1"]') as HTMLButtonElement).click();
     fixture.detectChanges();
     expect(addNode).not.toHaveBeenCalled();
     fixture.componentInstance.add();
     fixture.detectChanges();
     expect(addNode).toHaveBeenCalledWith('c1', 'server', 'hel1');
-    expect(
-      el.querySelector('[data-testid="ha-add-notice"]')!.textContent,
-    ).toContain('Adding a server in hel1');
+    expect(el.querySelector('[data-testid="ha-add-notice"]')!.textContent).toContain(
+      'Adding a server in hel1',
+    );
   });
 
   it('says so when the cluster cannot be read', () => {

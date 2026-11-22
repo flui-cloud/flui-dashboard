@@ -98,9 +98,7 @@ export class AuthService {
       void this.oidc.login();
       return;
     }
-    return this.local.login(email!, password!).pipe(
-      tap(() => this._isAuthenticated.set(true)),
-    );
+    return this.local.login(email!, password!).pipe(tap(() => this._isAuthenticated.set(true)));
   }
 
   logout(): Observable<void> {

@@ -48,9 +48,7 @@ import { BbInstancePickerModalComponent } from './bb-instance-picker-modal.compo
       <div class="rounded-xl border border-border bg-card p-5">
         <div class="flex items-center gap-2">
           <ng-icon name="lucideDatabase" class="h-4 w-4 text-primary" />
-          <h3 class="text-sm font-semibold text-foreground">
-            Connection
-          </h3>
+          <h3 class="text-sm font-semibold text-foreground">Connection</h3>
         </div>
 
         @if (loading()) {
@@ -59,7 +57,9 @@ import { BbInstancePickerModalComponent } from './bb-instance-picker-modal.compo
             Loading link status…
           </div>
         } @else if (error()) {
-          <div class="mt-3 flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-xs text-destructive">
+          <div
+            class="mt-3 flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-xs text-destructive"
+          >
             <ng-icon name="lucideCircleAlert" class="h-3.5 w-3.5 mt-0.5" />
             <div>{{ error() }}</div>
           </div>
@@ -86,13 +86,15 @@ import { BbInstancePickerModalComponent } from './bb-instance-picker-modal.compo
               <span class="font-mono font-medium text-foreground">
                 {{ install()?.connectedSlug ?? bbRef() }}
               </span>
-              <span class="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground">
+              <span
+                class="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground"
+              >
                 {{ install()!.connectedInstallId!.slice(0, 8) }}
               </span>
             </div>
             <p class="text-xs text-muted-foreground">
-              Credentials are wired via the database's internal Secret. Changing the
-              target will rolling-restart this client.
+              Credentials are wired via the database's internal Secret. Changing the target will
+              rolling-restart this client.
             </p>
             <div class="flex flex-wrap items-center gap-2 pt-1">
               <button

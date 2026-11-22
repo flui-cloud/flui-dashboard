@@ -25,7 +25,7 @@ export class ClusterVariablesService {
     this.errorData.set(null);
     try {
       const result = await firstValueFrom(
-        this.api.variablesControllerListClusterVariables(clusterId, namespace, 'all', 'all')
+        this.api.variablesControllerListClusterVariables(clusterId, namespace, 'all', 'all'),
       );
       this.variableSets.set(result ?? []);
     } catch (err: unknown) {
@@ -35,12 +35,17 @@ export class ClusterVariablesService {
     }
   }
 
-  async loadSet(clusterId: string, namespace: string, name: string, type: 'plain' | 'sensitive' = 'plain'): Promise<void> {
+  async loadSet(
+    clusterId: string,
+    namespace: string,
+    name: string,
+    type: 'plain' | 'sensitive' = 'plain',
+  ): Promise<void> {
     this.loadingData.set(true);
     this.errorData.set(null);
     try {
       const result = await firstValueFrom(
-        this.api.variablesControllerGetClusterVariables(clusterId, namespace, name, type)
+        this.api.variablesControllerGetClusterVariables(clusterId, namespace, name, type),
       );
       this.selectedSetData.set(result ?? null);
     } catch (err: unknown) {
@@ -55,13 +60,19 @@ export class ClusterVariablesService {
     namespace: string,
     name: string,
     data: Record<string, string>,
-    type: 'plain' | 'sensitive'
+    type: 'plain' | 'sensitive',
   ): Promise<AppVariablesResponseDto | null> {
     this.savingData.set(true);
     this.errorData.set(null);
     try {
       const result = await firstValueFrom(
-        this.api.variablesControllerUpsertClusterVariables(clusterId, namespace, name, { data }, type)
+        this.api.variablesControllerUpsertClusterVariables(
+          clusterId,
+          namespace,
+          name,
+          { data },
+          type,
+        ),
       );
       this.selectedSetData.set(result ?? null);
       await this.loadSets(clusterId, namespace);

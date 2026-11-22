@@ -62,8 +62,8 @@ export interface GaugeChartConfig extends BaseChartConfig {
   unit?: string;
   /** Severity thresholds for color coding */
   thresholds?: {
-    warning: number;  // Value above which shows warning color
-    danger: number;   // Value above which shows danger color
+    warning: number; // Value above which shows warning color
+    danger: number; // Value above which shows danger color
   };
   /** Fixed severity (overrides threshold-based color) */
   severity?: MetricSeverity;
@@ -97,13 +97,15 @@ export const DEFAULT_CHART_COLORS: ChartColorScheme = {
     warning: ['#f59e0b', '#fbbf24'],
     danger: ['#ef4444', '#f87171'],
     info: ['#3b82f6', '#60a5fa'],
-  }
+  },
 };
 
 /**
  * Default configuration values
  */
-export const DEFAULT_GAUGE_CONFIG: Required<Omit<GaugeChartConfig, 'theme' | 'thresholds' | 'severity' | 'valueFormatter'>> = {
+export const DEFAULT_GAUGE_CONFIG: Required<
+  Omit<GaugeChartConfig, 'theme' | 'thresholds' | 'severity' | 'valueFormatter'>
+> = {
   min: 0,
   max: 100,
   height: '240px',
@@ -134,8 +136,8 @@ export interface TimeSeriesSeries {
   name: string;
   data: TimeSeriesDataPoint[];
   color?: string;
-  showArea?: boolean;  // Fill area under line
-  smooth?: boolean;    // Smooth curve vs angular line
+  showArea?: boolean; // Fill area under line
+  smooth?: boolean; // Smooth curve vs angular line
 }
 
 /**
@@ -186,7 +188,12 @@ export interface TimeSeriesChartData {
 /**
  * Default time series configuration
  */
-export const DEFAULT_TIMESERIES_CONFIG: Required<Omit<TimeSeriesChartConfig, 'theme' | 'yMin' | 'yMax' | 'valueFormatter' | 'timeFormatter' | 'thresholds'>> = {
+export const DEFAULT_TIMESERIES_CONFIG: Required<
+  Omit<
+    TimeSeriesChartConfig,
+    'theme' | 'yMin' | 'yMax' | 'valueFormatter' | 'timeFormatter' | 'thresholds'
+  >
+> = {
   height: '300px',
   animated: true,
   responsive: true,
@@ -235,7 +242,9 @@ export interface MultiStatCardData {
 /**
  * Default multi-stat configuration
  */
-export const DEFAULT_MULTISTAT_CONFIG: Required<Omit<MultiStatCardConfig, 'theme' | 'showSparkline'>> = {
+export const DEFAULT_MULTISTAT_CONFIG: Required<
+  Omit<MultiStatCardConfig, 'theme' | 'showSparkline'>
+> = {
   height: 'auto',
   animated: true,
   responsive: true,
@@ -254,8 +263,8 @@ export type TimelineStatus = 'up' | 'down' | 'degraded' | 'maintenance';
 export interface TimelineEvent {
   timestamp: Date | number;
   status: TimelineStatus;
-  duration?: number;  // Duration in milliseconds
-  message?: string;   // Incident description
+  duration?: number; // Duration in milliseconds
+  message?: string; // Incident description
 }
 
 /**
@@ -337,7 +346,9 @@ export interface ProportionDonutData {
 /**
  * Default proportion donut configuration
  */
-export const DEFAULT_DONUT_CONFIG: Required<Omit<ProportionDonutConfig, 'theme' | 'valueFormatter' | 'roseType'>> = {
+export const DEFAULT_DONUT_CONFIG: Required<
+  Omit<ProportionDonutConfig, 'theme' | 'valueFormatter' | 'roseType'>
+> = {
   height: '380px',
   animated: true,
   responsive: true,
@@ -440,8 +451,8 @@ export interface LogVolumeHistogramConfig extends BaseChartConfig {
 
 export const LOG_LEVEL_COLORS: Record<string, string> = {
   error: '#ef4444',
-  warn:  '#f59e0b',
-  info:  '#3b82f6',
+  warn: '#f59e0b',
+  info: '#3b82f6',
   debug: '#6b7280',
   trace: '#8b5cf6',
 };

@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  input,
-  output,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideLoader, lucideTriangleAlert, lucideX } from '@ng-icons/lucide';
 import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
@@ -15,10 +8,7 @@ import {
   HlmCardHeaderDirective,
   HlmCardTitleDirective,
 } from '@spartan-ng/ui-card-helm';
-import {
-  AgentConcession,
-  ConcessionOperation,
-} from '../../model/agent-cycle.models';
+import { AgentConcession, ConcessionOperation } from '../../model/agent-cycle.models';
 
 @Component({
   selector: 'app-agent-revoke-dialog',
@@ -35,17 +25,27 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm" (click)="dismissed.emit()">
-      <div class="fixed left-[50%] top-[50%] z-50 w-full max-w-lg translate-x-[-50%] translate-y-[-50%] p-4">
+      <div
+        class="fixed left-[50%] top-[50%] z-50 w-full max-w-lg translate-x-[-50%] translate-y-[-50%] p-4"
+      >
         <div hlmCard (click)="$event.stopPropagation()" data-testid="revoke-dialog">
           <div hlmCardHeader>
             <div class="flex items-start justify-between gap-3">
               <div class="flex items-center gap-3">
-                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10">
+                <div
+                  class="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10"
+                >
                   <ng-icon name="lucideTriangleAlert" class="h-5 w-5 text-destructive" />
                 </div>
                 <h2 hlmCardTitle class="text-lg">Take this permission back</h2>
               </div>
-              <button hlmBtn variant="ghost" size="sm" class="h-8 w-8 p-0" (click)="dismissed.emit()">
+              <button
+                hlmBtn
+                variant="ghost"
+                size="sm"
+                class="h-8 w-8 p-0"
+                (click)="dismissed.emit()"
+              >
                 <ng-icon name="lucideX" class="h-4 w-4" />
               </button>
             </div>
@@ -54,9 +54,11 @@ import {
           <div hlmCardContent class="space-y-4">
             <p class="m-0 text-sm text-muted-foreground">
               Your agent will stop being able to
-              <code class="font-mono text-[12.5px] font-medium text-foreground">{{ concession().sentence }}</code>
-              without asking. Nothing else changes: this was a pause removed, not a
-              permission granted, so nothing is taken away from you.
+              <code class="font-mono text-[12.5px] font-medium text-foreground">{{
+                concession().sentence
+              }}</code>
+              without asking. Nothing else changes: this was a pause removed, not a permission
+              granted, so nothing is taken away from you.
             </p>
 
             @if (loading()) {
@@ -77,14 +79,16 @@ import {
                 @if (running().length) {
                   <p class="m-0 text-sm text-foreground">
                     <span class="font-medium">{{ running().length }}</span>
-                    {{ running().length === 1 ? 'operation' : 'operations' }} already started
-                    under this permission and will
-                    <span class="font-medium">carry on</span> after you revoke it.
-                    Revoking stops the next departure, not this one.
+                    {{ running().length === 1 ? 'operation' : 'operations' }} already started under
+                    this permission and will <span class="font-medium">carry on</span> after you
+                    revoke it. Revoking stops the next departure, not this one.
                   </p>
                   <ul class="mt-2 space-y-1">
                     @for (op of running(); track op.id) {
-                      <li class="font-mono text-[12.5px] text-muted-foreground" data-testid="running-operation">
+                      <li
+                        class="font-mono text-[12.5px] text-muted-foreground"
+                        data-testid="running-operation"
+                      >
                         {{ op.operationType }}
                         @if (op.resourceName) {
                           · {{ op.resourceName }}
@@ -98,8 +102,8 @@ import {
                   </ul>
                 } @else {
                   <p class="m-0 text-sm text-muted-foreground">
-                    Nothing is running under this permission. Revoking takes effect
-                    immediately and leaves nothing behind.
+                    Nothing is running under this permission. Revoking takes effect immediately and
+                    leaves nothing behind.
                   </p>
                 }
               </div>
@@ -116,8 +120,8 @@ import {
                   <span>
                     Also ask them to stop.
                     <span class="text-muted-foreground">
-                      Honoured at the next step boundary and never mid-step — a
-                      provisioning cut in half leaves paid-for resources behind.
+                      Honoured at the next step boundary and never mid-step — a provisioning cut in
+                      half leaves paid-for resources behind.
                     </span>
                   </span>
                 </label>

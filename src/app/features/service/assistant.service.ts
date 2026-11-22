@@ -107,7 +107,11 @@ export class AssistantChatService {
   ]);
   private readonly _activeId = signal('1');
   private readonly _pendingMessages = signal<AgentMessage[]>([]);
-  private readonly _pendingOpts = signal<{ model?: string; provider?: string; connectionId?: string } | null>(null);
+  private readonly _pendingOpts = signal<{
+    model?: string;
+    provider?: string;
+    connectionId?: string;
+  } | null>(null);
 
   readonly conversations = computed(() => this._conversations());
   readonly activeId = computed(() => this._activeId());
@@ -154,8 +158,7 @@ export class AssistantChatService {
     });
 
     this.api.assistantControllerInfo().subscribe({
-      next: (info: any) =>
-        this.destructiveEnabled.set(!!info?.capabilities?.destructiveEnabled),
+      next: (info: any) => this.destructiveEnabled.set(!!info?.capabilities?.destructiveEnabled),
       error: () => this.destructiveEnabled.set(false),
     });
   }
@@ -339,7 +342,11 @@ export class AssistantChatService {
     return res;
   }
 
-  private _consumeFrame(convId: string, controller: AbortController, event: AgentStreamEvent): boolean {
+  private _consumeFrame(
+    convId: string,
+    controller: AbortController,
+    event: AgentStreamEvent,
+  ): boolean {
     if (this._abort !== controller) return true;
     switch (event.type) {
       case 'delta':
@@ -479,7 +486,8 @@ export class AssistantChatService {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return null;
       const data = JSON.parse(raw) as StoredState;
-      if (!Array.isArray(data.conversations) || !data.conversations.length || !data.activeId) return null;
+      if (!Array.isArray(data.conversations) || !data.conversations.length || !data.activeId)
+        return null;
       const activeExists = data.conversations.some((c) => c.id === data.activeId);
       return {
         conversations: data.conversations,

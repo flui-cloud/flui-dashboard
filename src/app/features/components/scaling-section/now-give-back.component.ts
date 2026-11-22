@@ -36,8 +36,11 @@ import { ScalingGroupStore } from './scaling-group.store';
 
       <div class="mt-3 flex flex-wrap items-center gap-2 pl-6">
         @if (confirming()) {
-          <span class="inline-flex flex-wrap items-center gap-2 rounded-md border border-border bg-card px-2 py-1 text-xs">
-            Set the target from {{ alarm().target }} to {{ alarm().keepNodes }} nodes and keep {{ nodeName() }}?
+          <span
+            class="inline-flex flex-wrap items-center gap-2 rounded-md border border-border bg-card px-2 py-1 text-xs"
+          >
+            Set the target from {{ alarm().target }} to {{ alarm().keepNodes }} nodes and keep
+            {{ nodeName() }}?
             <button
               type="button"
               class="rounded-md bg-primary px-2 py-0.5 font-medium text-primary-foreground disabled:opacity-50"
@@ -47,7 +50,9 @@ import { ScalingGroupStore } from './scaling-group.store';
             >
               {{ saving() ? 'Saving…' : 'Confirm' }}
             </button>
-            <button type="button" class="text-muted-foreground" (click)="confirming.set(false)">Cancel</button>
+            <button type="button" class="text-muted-foreground" (click)="confirming.set(false)">
+              Cancel
+            </button>
           </span>
         } @else {
           <button
@@ -81,7 +86,8 @@ import { ScalingGroupStore } from './scaling-group.store';
                     <a
                       [routerLink]="['/apps/applications', item.applicationId]"
                       class="font-mono text-xs text-primary underline-offset-2 hover:underline"
-                    >{{ item.label }}</a>
+                      >{{ item.label }}</a
+                    >
                   } @else {
                     <span class="font-mono text-xs text-foreground">{{ item.label }}</span>
                   }
@@ -112,7 +118,8 @@ export class ScalingNowGiveBackComponent {
 
   protected readonly headline = computed(() => {
     const a = this.alarm();
-    const cost = a.monthlyEur === null ? '' : ` costs about €${a.monthlyEur.toFixed(2)} a month and`;
+    const cost =
+      a.monthlyEur === null ? '' : ` costs about €${a.monthlyEur.toFixed(2)} a month and`;
     const target = `${a.target} ${a.target === 1 ? 'node' : 'nodes'}`;
     return `${this.nodeName()}${cost} is above the target of ${target}`;
   });

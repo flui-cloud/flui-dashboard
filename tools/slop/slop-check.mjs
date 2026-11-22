@@ -49,7 +49,11 @@ async function walk(dir) {
   return files.flat();
 }
 
-const files = [...(await walk(path.join(root, 'src/app'))), ...(await walk(path.join(root, 'src/theme/console'))), path.join(root, 'src/styles.scss')]
+const files = [
+  ...(await walk(path.join(root, 'src/app'))),
+  ...(await walk(path.join(root, 'src/theme/console'))),
+  path.join(root, 'src/styles.scss'),
+]
   .map((f) => path.relative(root, f))
   .filter((f) => !SKIP.some((re) => re.test(f)));
 
@@ -95,7 +99,9 @@ if (strictHits.length) {
   strictHits.forEach((h) => console.error(`  ${h}`));
 }
 
-const grown = Object.entries(totals).filter(([rule, n]) => baseline[rule] !== undefined && n > baseline[rule]);
+const grown = Object.entries(totals).filter(
+  ([rule, n]) => baseline[rule] !== undefined && n > baseline[rule],
+);
 if (grown.length && !update) {
   failed = true;
   console.error('\nabove baseline:');

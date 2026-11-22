@@ -29,9 +29,7 @@ describe('ProjectPickerComponent', () => {
   });
 
   it('stays out of the way when there is nothing to choose', () => {
-    const fixture = build([
-      { id: 'a', name: 'Personal', slug: 'personal-1', ownerUserId: 'u1' },
-    ]);
+    const fixture = build([{ id: 'a', name: 'Personal', slug: 'personal-1', ownerUserId: 'u1' }]);
     expect(
       (fixture.nativeElement as HTMLElement).querySelector('[data-testid="project-picker"]'),
     ).toBeNull();

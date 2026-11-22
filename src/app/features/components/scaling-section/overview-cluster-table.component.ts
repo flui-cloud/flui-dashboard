@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  input,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -16,15 +9,7 @@ import {
   lucideTriangleAlert,
 } from '@ng-icons/lucide';
 import { ClusterScalingRow } from '../../model/scaling-section.models';
-import {
-  ModeCopy,
-  Reading,
-  ScalingMode,
-  TABLE,
-  age,
-  eurMonth,
-  modeOf,
-} from './overview-format';
+import { ModeCopy, Reading, ScalingMode, TABLE, age, eurMonth, modeOf } from './overview-format';
 import { OverviewReadingComponent } from './overview-reading.component';
 
 interface OverviewRow {
@@ -65,19 +50,12 @@ interface OverviewRow {
               <th scope="col" [class]="t.th">Who can add a node</th>
               <th scope="col" [class]="t.thNum">Nodes</th>
               <th scope="col" [class]="t.thNum">Spend</th>
-              <th
-                scope="col"
-                [class]="t.th + ' pr-4'"
-                aria-label="Actions"
-              ></th>
+              <th scope="col" [class]="t.th + ' pr-4'" aria-label="Actions"></th>
             </tr>
           </thead>
 
           @for (row of displayed(); track row.id) {
-            <tbody
-              [class]="t.row + ' last:border-0'"
-              [attr.data-testid]="'cluster-' + row.id"
-            >
+            <tbody [class]="t.row + ' last:border-0'" [attr.data-testid]="'cluster-' + row.id">
               <tr
                 [attr.data-testid]="'row-' + row.id"
                 [attr.data-attention]="row.needsPerson ? 'yes' : 'no'"
@@ -146,9 +124,7 @@ interface OverviewRow {
               @if (row.needsPerson || row.alarmAge) {
                 <tr>
                   <td colspan="5" class="px-4 pb-2 pt-0">
-                    <p
-                      class="m-0 flex flex-wrap items-baseline gap-x-2 text-[13px] leading-snug"
-                    >
+                    <p class="m-0 flex flex-wrap items-baseline gap-x-2 text-[13px] leading-snug">
                       <ng-icon
                         name="lucideTriangleAlert"
                         class="status-degraded h-3.5 w-3.5 shrink-0 translate-y-0.5"
@@ -166,13 +142,10 @@ interface OverviewRow {
                       <span
                         class="font-medium text-foreground"
                         [attr.data-testid]="'needs-person-' + row.id"
-                        >Needs a person<span
-                          class="ml-2 font-normal text-muted-foreground"
-                          >{{
-                            row.needsPerson ??
-                              'An alarm is open, and it stands until this group decides something else.'
-                          }}</span
-                        ></span
+                        >Needs a person<span class="ml-2 font-normal text-muted-foreground">{{
+                          row.needsPerson ??
+                            'An alarm is open, and it stands until this group decides something else.'
+                        }}</span></span
                       >
                     </p>
                   </td>
@@ -184,10 +157,7 @@ interface OverviewRow {
                   <td colspan="5" class="px-4 pb-3 pt-0">
                     <p
                       [id]="'setup-panel-' + row.id"
-                      [class]="
-                        t.note +
-                        ' max-w-prose rounded-md border border-border p-3'
-                      "
+                      [class]="t.note + ' max-w-prose rounded-md border border-border p-3'"
                       [attr.data-testid]="'setup-panel-' + row.id"
                     >
                       {{ row.setupCopy }}
@@ -232,9 +202,7 @@ export class OverviewClusterTableComponent {
     initialValue: null,
   });
 
-  private readonly cameFrom = computed(
-    () => this.params()?.get('cluster') ?? null,
-  );
+  private readonly cameFrom = computed(() => this.params()?.get('cluster') ?? null);
 
   protected readonly legend = computed<ModeCopy[]>(() => {
     const seen = new Map<string, ModeCopy>();
@@ -254,11 +222,7 @@ export class OverviewClusterTableComponent {
     this.setupOpen.update((open) => (open === clusterId ? null : clusterId));
   }
 
-  private view(
-    row: ClusterScalingRow,
-    now: number,
-    came: string | null,
-  ): OverviewRow {
+  private view(row: ClusterScalingRow, now: number, came: string | null): OverviewRow {
     const mode = modeOf(row.capability, row);
     return {
       id: row.clusterId,
@@ -297,8 +261,7 @@ export class OverviewClusterTableComponent {
     }
 
     const cap = row.monthlyCap;
-    const against =
-      cap === null ? 'no spending ceiling' : `ceiling €${cap.toFixed(2)}`;
+    const against = cap === null ? 'no spending ceiling' : `ceiling €${cap.toFixed(2)}`;
     return {
       value: eurMonth(row.monthlyEur),
       sub: row.unpricedNodes ? `at least · ${against}` : against,

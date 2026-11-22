@@ -23,7 +23,11 @@ export const KAFKA_EXAMPLES: KafkaExample[] = [
   { label: 'topics list', text: 'topics list' },
   { label: 'cluster info', text: 'cluster info' },
   { label: 'groups list', text: 'groups list' },
-  { label: 'create topic', text: 'topic create my-topic --partitions 3 --replication 1', write: true },
+  {
+    label: 'create topic',
+    text: 'topic create my-topic --partitions 3 --replication 1',
+    write: true,
+  },
   { label: 'produce', text: 'produce my-topic key "hello"', write: true },
   { label: 'consume tail', text: 'consume my-topic --from-end 20' },
 ];
@@ -126,9 +130,7 @@ export class KafkaConsoleStateService {
     if (!id || !command) return;
     this.runError.set('');
     this.running.set(true);
-    this.api
-      .run(id, { command, readOnly: forceWrite ? false : this.readOnly() })
-      .subscribe({
+    this.api.run(id, { command, readOnly: forceWrite ? false : this.readOnly() }).subscribe({
       next: (r) => {
         this.result.set(r);
         this.running.set(false);

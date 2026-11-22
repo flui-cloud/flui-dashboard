@@ -4,7 +4,7 @@ import {
   OnInit,
   inject,
   signal,
-  viewChild
+  viewChild,
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -28,10 +28,7 @@ import {
   lucideTriangleAlert,
   lucideUpload,
 } from '@ng-icons/lucide';
-import {
-  S3ObjectEntry,
-  ShareRecord,
-} from '../../model/object-store-console.models';
+import { S3ObjectEntry, ShareRecord } from '../../model/object-store-console.models';
 import { ObjectStoreConsoleStateService } from './object-store-console-state.service';
 import { ObjectStoreObjectTableComponent } from './object-store-object-table.component';
 import { ObjectStoreSharesComponent } from './object-store-shares.component';
@@ -109,9 +106,7 @@ import { ObjectStoreSharesComponent } from './object-store-shares.component';
           class="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
         >
           <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-4 w-4 shrink-0" />
-          <span>{{
-            s.errorMsg() || 'Failed to connect to the object store.'
-          }}</span>
+          <span>{{ s.errorMsg() || 'Failed to connect to the object store.' }}</span>
         </div>
       } @else {
         <div class="mb-3 flex flex-wrap items-center gap-2">
@@ -150,10 +145,7 @@ import { ObjectStoreSharesComponent } from './object-store-shares.component';
                 [class.border-border]="!p.public"
                 [class.text-muted-foreground]="!p.public"
               >
-                <ng-icon
-                  [name]="p.public ? 'lucideGlobe' : 'lucideLock'"
-                  class="h-3.5 w-3.5"
-                />
+                <ng-icon [name]="p.public ? 'lucideGlobe' : 'lucideLock'" class="h-3.5 w-3.5" />
                 {{ p.public ? 'Public' : 'Private' }}
               </button>
             }
@@ -166,12 +158,7 @@ import { ObjectStoreSharesComponent } from './object-store-shares.component';
               [class.opacity-50]="!s.selectedBucket() || s.busy()"
             >
               <ng-icon name="lucideUpload" class="h-3.5 w-3.5" /> Upload
-              <input
-                type="file"
-                multiple
-                class="hidden"
-                (change)="onFilesPicked($event)"
-              />
+              <input type="file" multiple class="hidden" (change)="onFilesPicked($event)" />
             </label>
             <button
               type="button"
@@ -216,10 +203,9 @@ export class ObjectStoreConsolePageComponent implements OnInit {
   protected readonly s = inject(ObjectStoreConsoleStateService);
   private readonly route = inject(ActivatedRoute);
 
-  readonly applicationId = toSignal(
-    this.route.paramMap.pipe(map((p) => p.get('applicationId'))),
-    { initialValue: this.route.snapshot.paramMap.get('applicationId') },
-  );
+  readonly applicationId = toSignal(this.route.paramMap.pipe(map((p) => p.get('applicationId'))), {
+    initialValue: this.route.snapshot.paramMap.get('applicationId'),
+  });
 
   private readonly confirmDialog = viewChild.required<ConfirmationDialogComponent>('confirmDialog');
   private readonly inputDialog = viewChild.required<InputDialogComponent>('inputDialog');
@@ -303,25 +289,18 @@ export class ObjectStoreConsolePageComponent implements OnInit {
   }
 
   protected createBucket(): void {
-    this.askInput(
-      'New bucket',
-      'Lowercase letters, digits and hyphens.',
-      'my-bucket',
-      (name) => this.s.createBucket(name),
+    this.askInput('New bucket', 'Lowercase letters, digits and hyphens.', 'my-bucket', (name) =>
+      this.s.createBucket(name),
     );
   }
 
   protected createFolder(): void {
-    this.askInput('New folder', '', 'folder-name', (name) =>
-      this.s.createFolder(name),
-    );
+    this.askInput('New folder', '', 'folder-name', (name) => this.s.createFolder(name));
   }
 
   protected onDeleteObject(o: S3ObjectEntry): void {
-    this.askConfirm(
-      'Delete object',
-      `Delete "${o.key}"? This cannot be undone.`,
-      () => this.s.deleteObject(o),
+    this.askConfirm('Delete object', `Delete "${o.key}"? This cannot be undone.`, () =>
+      this.s.deleteObject(o),
     );
   }
 

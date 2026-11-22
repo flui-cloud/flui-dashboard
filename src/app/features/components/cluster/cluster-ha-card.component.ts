@@ -10,10 +10,7 @@ import {
 import { RouterLink } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideShieldCheck, lucideShieldAlert } from '@ng-icons/lucide';
-import {
-  ClusterHaService,
-  ClusterHaView,
-} from '../../service/cluster-ha.service';
+import { ClusterHaService, ClusterHaView } from '../../service/cluster-ha.service';
 
 const LEVEL: Record<ClusterHaView['level'], string> = {
   standard: 'Standard',
@@ -33,18 +30,11 @@ const ROLE: Record<ClusterHaView['missing'][number]['role'], string> = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (view(); as v) {
-      <div
-        class="card-surface p-4 flex flex-col h-full"
-        data-testid="cluster-ha-card"
-      >
+      <div class="card-surface p-4 flex flex-col h-full" data-testid="cluster-ha-card">
         <div class="flex items-center justify-between mb-3">
           <div class="flex items-center gap-1.5 text-label">
             <ng-icon
-              [name]="
-                v.level === 'standard'
-                  ? 'lucideShieldAlert'
-                  : 'lucideShieldCheck'
-              "
+              [name]="v.level === 'standard' ? 'lucideShieldAlert' : 'lucideShieldCheck'"
               class="h-3.5 w-3.5"
             />
             High availability
@@ -62,10 +52,7 @@ const ROLE: Record<ClusterHaView['missing'][number]['role'], string> = {
         </div>
         <p class="m-0 text-sm">{{ headline() }}</p>
         @if (v.topology) {
-          <p
-            class="m-0 mt-1 text-xs text-muted-foreground"
-            data-testid="cluster-ha-zones"
-          >
+          <p class="m-0 mt-1 text-xs text-muted-foreground" data-testid="cluster-ha-zones">
             {{ zonesLine() }}
           </p>
         }
@@ -92,9 +79,7 @@ const ROLE: Record<ClusterHaView['missing'][number]['role'], string> = {
         @if (open()) {
           <ul class="mt-2 space-y-1 text-xs" data-testid="cluster-ha-details">
             @for (s of v.survives; track s) {
-              <li class="text-emerald-700 dark:text-emerald-400">
-                Survives {{ s }}
-              </li>
+              <li class="text-emerald-700 dark:text-emerald-400">Survives {{ s }}</li>
             }
             @for (s of v.doesNotSurvive; track s) {
               <li class="text-muted-foreground">Does not survive {{ s }}</li>
@@ -125,8 +110,7 @@ export class ClusterHaCardComponent {
     const v = this.view();
     if (!v) return '';
     if (v.unsupported) return v.unsupported;
-    if (v.level === 'three-locations')
-      return 'Survives the loss of a whole location.';
+    if (v.level === 'three-locations') return 'Survives the loss of a whole location.';
     const needs = v.missing.map((m) => ROLE[m.role] + ' in ' + m.zone);
     return `To survive a location it still needs ${needs.join(', ')}.`;
   });

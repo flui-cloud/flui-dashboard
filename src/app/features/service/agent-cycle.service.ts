@@ -36,16 +36,13 @@ export class AgentCycleService {
   }
 
   proposal(id: string): Observable<AgentProposal> {
-    return this.http.get<AgentProposal>(
-      `${this.base}/proposals/${encodeURIComponent(id)}`,
-    );
+    return this.http.get<AgentProposal>(`${this.base}/proposals/${encodeURIComponent(id)}`);
   }
 
   decide(id: string, decision: ProposalDecision): Observable<DecideResult> {
-    return this.http.post<DecideResult>(
-      `${this.base}/proposals/${encodeURIComponent(id)}/decide`,
-      { decision },
-    );
+    return this.http.post<DecideResult>(`${this.base}/proposals/${encodeURIComponent(id)}/decide`, {
+      decision,
+    });
   }
 
   listConcessions(): Observable<AgentConcession[]> {
@@ -66,9 +63,7 @@ export class AgentCycleService {
   }
 
   estimate(estimateRef: string): Observable<unknown> {
-    const path = estimateRef.startsWith('/')
-      ? estimateRef
-      : `/${estimateRef}`;
+    const path = estimateRef.startsWith('/') ? estimateRef : `/${estimateRef}`;
     return this.http.get<unknown>(`${this.root}${path}`);
   }
 
@@ -79,9 +74,7 @@ export class AgentCycleService {
   }
 
   activityIdentities(): Observable<AgentIdentityActivityPage> {
-    return this.http.get<AgentIdentityActivityPage>(
-      `${this.base}/activity/identities`,
-    );
+    return this.http.get<AgentIdentityActivityPage>(`${this.base}/activity/identities`);
   }
 
   agentIdentities(): Observable<AgentIdentity[]> {

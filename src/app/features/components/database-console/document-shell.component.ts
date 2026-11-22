@@ -7,15 +7,10 @@ import {
   input,
   signal,
   viewChild,
-  output
+  output,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideChevronDown,
-  lucideEraser,
-  lucideLoader,
-  lucideTerminal,
-} from '@ng-icons/lucide';
+import { lucideChevronDown, lucideEraser, lucideLoader, lucideTerminal } from '@ng-icons/lucide';
 import { DocumentConsoleService } from '../../service/document-console.service';
 import { DocShellResult } from '../../model/document-console.models';
 import { JsonViewerComponent } from './json-viewer.component';
@@ -60,15 +55,8 @@ const HELP_TEXT = [
   selector: 'app-document-shell',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    NgIcon,
-    JsonViewerComponent,
-    MongoShellInputComponent,
-    GateNoticeComponent,
-  ],
-  providers: [
-    provideIcons({ lucideChevronDown, lucideEraser, lucideLoader, lucideTerminal }),
-  ],
+  imports: [NgIcon, JsonViewerComponent, MongoShellInputComponent, GateNoticeComponent],
+  providers: [provideIcons({ lucideChevronDown, lucideEraser, lucideLoader, lucideTerminal })],
   template: `
     @if (!expanded()) {
       <button
@@ -84,10 +72,15 @@ const HELP_TEXT = [
       </button>
     } @else {
       <div class="flex h-72 flex-col overflow-hidden rounded-lg border border-border bg-card">
-        <div class="flex shrink-0 items-center gap-2 border-b border-border bg-muted/40 px-3 py-1.5 text-xs">
+        <div
+          class="flex shrink-0 items-center gap-2 border-b border-border bg-muted/40 px-3 py-1.5 text-xs"
+        >
           <ng-icon name="lucideTerminal" class="h-4 w-4 text-primary" />
           <span class="font-medium">Mongo shell</span>
-          <span class="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">{{ db() }}</span>
+          <span
+            class="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground"
+            >{{ db() }}</span
+          >
           <div class="ml-auto flex items-center gap-2">
             <label
               class="flex items-center gap-1 text-[11px] text-muted-foreground"
@@ -134,12 +127,17 @@ const HELP_TEXT = [
                   <span class="whitespace-pre-wrap break-all">{{ e.error }}</span>
                 </div>
               } @else if (e.status === 'note') {
-                <div class="mt-0.5 whitespace-pre-wrap pl-4 text-muted-foreground">{{ e.note }}</div>
+                <div class="mt-0.5 whitespace-pre-wrap pl-4 text-muted-foreground">
+                  {{ e.note }}
+                </div>
               } @else {
                 <div class="mt-1 pl-4">
                   @if (e.header) {
                     <div class="mb-1 text-[11px] text-muted-foreground">
-                      {{ e.header }}@if (e.durationMs !== undefined) { · {{ e.durationMs }}ms }
+                      {{ e.header }}
+                      @if (e.durationMs !== undefined) {
+                        · {{ e.durationMs }}ms
+                      }
                     </div>
                   }
                   @if (e.scalar !== undefined) {
@@ -374,8 +372,7 @@ export class DocumentShellComponent {
     if (typeof v === 'number') return v;
     if (v && typeof v === 'object') {
       const o = v as Record<string, string>;
-      const raw =
-        o['$numberInt'] ?? o['$numberLong'] ?? o['$numberDouble'] ?? o['$numberDecimal'];
+      const raw = o['$numberInt'] ?? o['$numberLong'] ?? o['$numberDouble'] ?? o['$numberDecimal'];
       if (raw !== undefined) return Number(raw);
     }
     return 0;

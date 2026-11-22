@@ -37,8 +37,7 @@ export interface UpdateScheduledJobRequest {
   enabled?: boolean;
 }
 
-export type ScheduledJobRunStatus =
-  'Running' | 'Succeeded' | 'Failed' | 'Unknown';
+export type ScheduledJobRunStatus = 'Running' | 'Succeeded' | 'Failed' | 'Unknown';
 
 export interface ScheduledJobRun {
   jobName: string;

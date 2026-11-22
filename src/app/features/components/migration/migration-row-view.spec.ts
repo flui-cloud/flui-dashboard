@@ -1,4 +1,11 @@
-import { formatWhen, shortId, sourceLabel, statusBadgeClass, statusLabel, typeLabel } from './migration-row-view';
+import {
+  formatWhen,
+  shortId,
+  sourceLabel,
+  statusBadgeClass,
+  statusLabel,
+  typeLabel,
+} from './migration-row-view';
 import type { MigrationRow } from '../../service/migration.service';
 
 describe('migration row view helpers', () => {

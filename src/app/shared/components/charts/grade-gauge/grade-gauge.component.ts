@@ -1,4 +1,11 @@
-import { Component, input, computed, signal, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  input,
+  computed,
+  signal,
+  OnDestroy,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { NgxEchartsDirective, provideEcharts } from 'ngx-echarts';
 import type { EChartsOption } from 'echarts';
@@ -8,7 +15,7 @@ import {
   DEFAULT_GAUGE_CONFIG,
   DEFAULT_CHART_COLORS,
   MetricSeverity,
-  ChartTheme
+  ChartTheme,
 } from '../chart.models';
 
 /**
@@ -31,11 +38,7 @@ import {
   providers: [provideEcharts()],
   template: `
     <div class="grade-gauge-container" [style.height]="config().height">
-      <div echarts
-           [options]="chartOption()"
-           [theme]="currentTheme()"
-           class="w-full h-full">
-      </div>
+      <div echarts [options]="chartOption()" [theme]="currentTheme()" class="w-full h-full"></div>
 
       @if (config().showTitle && data().subtitle) {
         <div class="text-center -mt-4">
@@ -45,21 +48,21 @@ import {
 
       @if (showTrend()) {
         <div class="text-center mt-1">
-          <span class="text-xs" [class]="trendClass()">
-            {{ trendIcon() }} {{ trendText() }}
-          </span>
+          <span class="text-xs" [class]="trendClass()"> {{ trendIcon() }} {{ trendText() }} </span>
         </div>
       }
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.Eager,
-  styles: [`
-    .grade-gauge-container {
-      display: flex;
-      flex-direction: column;
-      width: 100%;
-    }
-  `]
+  styles: [
+    `
+      .grade-gauge-container {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+      }
+    `,
+  ],
 })
 export class GradeGaugeComponent implements OnDestroy {
   // Inputs
@@ -83,18 +86,17 @@ export class GradeGaugeComponent implements OnDestroy {
   }
 
   private detectDarkMode(): boolean {
-    return typeof document !== 'undefined' &&
-      document.documentElement.classList.contains('dark');
+    return typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
   }
 
   // Computed configurations
   private readonly mergedConfig = computed(() => ({
     ...DEFAULT_GAUGE_CONFIG,
-    ...this.config()
+    ...this.config(),
   }));
 
-  currentTheme = computed<ChartTheme>(() =>
-    this.config().theme ?? (this.isDarkSignal() ? 'dark' : 'light')
+  currentTheme = computed<ChartTheme>(
+    () => this.config().theme ?? (this.isDarkSignal() ? 'dark' : 'light'),
   );
 
   // Computed values
@@ -130,9 +132,10 @@ export class GradeGaugeComponent implements OnDestroy {
     const severity = this.severity();
     const colors = DEFAULT_CHART_COLORS;
 
-    const gradient = severity === 'neutral'
-      ? [colors.neutral[0], colors.neutral[1]]
-      : colors.gradient?.[severity] || [colors[severity][0], colors[severity][1]];
+    const gradient =
+      severity === 'neutral'
+        ? [colors.neutral[0], colors.neutral[1]]
+        : colors.gradient?.[severity] || [colors[severity][0], colors[severity][1]];
 
     return {
       type: 'linear' as const,
@@ -142,8 +145,8 @@ export class GradeGaugeComponent implements OnDestroy {
       y2: 0,
       colorStops: [
         { offset: 0, color: gradient[0] },
-        { offset: 1, color: gradient[1] }
-      ]
+        { offset: 1, color: gradient[1] },
+      ],
     };
   });
 
@@ -208,7 +211,7 @@ export class GradeGaugeComponent implements OnDestroy {
           min: cfg.min,
           max: cfg.max,
           pointer: {
-            show: false
+            show: false,
           },
           progress: {
             show: true,
@@ -216,23 +219,23 @@ export class GradeGaugeComponent implements OnDestroy {
             roundCap: true,
             width: 18,
             itemStyle: {
-              color: this.gaugeColor()
-            }
+              color: this.gaugeColor(),
+            },
           },
           axisLine: {
             lineStyle: {
               width: 18,
-              color: [[1, isDark ? '#374151' : '#e5e7eb']]
-            }
+              color: [[1, isDark ? '#374151' : '#e5e7eb']],
+            },
           },
           splitLine: {
-            show: false
+            show: false,
           },
           axisTick: {
-            show: false
+            show: false,
           },
           axisLabel: {
-            show: false
+            show: false,
           },
           data: [{ value, name: title }],
           title: {
@@ -240,7 +243,7 @@ export class GradeGaugeComponent implements OnDestroy {
             offsetCenter: [0, '30%'],
             fontSize: 14,
             color: isDark ? '#9ca3af' : '#6b7280',
-            fontWeight: 500
+            fontWeight: 500,
           },
           detail: {
             show: cfg.showValue,
@@ -249,11 +252,11 @@ export class GradeGaugeComponent implements OnDestroy {
             fontSize: 32,
             fontWeight: 'bold',
             color: isDark ? '#f9fafb' : '#111827',
-            offsetCenter: [0, 0]
-          }
-        }
+            offsetCenter: [0, 0],
+          },
+        },
       ],
-      animation: cfg.animated
+      animation: cfg.animated,
     };
   });
 }

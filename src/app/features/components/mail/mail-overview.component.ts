@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, effect, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnDestroy,
+  OnInit,
+  computed,
+  effect,
+  inject,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -238,10 +246,12 @@ import {
               }
 
               @if (o.unregisteredDomains.length) {
-                <p class="mt-3 rounded-md bg-amber-50 p-2 text-xs text-amber-800 dark:bg-amber-500/10 dark:text-amber-400">
+                <p
+                  class="mt-3 rounded-md bg-amber-50 p-2 text-xs text-amber-800 dark:bg-amber-500/10 dark:text-amber-400"
+                >
                   Mail is going out from
-                  <span class="font-medium">{{ o.unregisteredDomains.join(', ') }}</span
-                  >, which is not registered here — so nothing has checked its records.
+                  <span class="font-medium">{{ o.unregisteredDomains.join(', ') }}</span>, which is
+                  not registered here — so nothing has checked its records.
                 </p>
               }
             </section>
@@ -275,8 +285,10 @@ import {
                               </div>
                             }
                             @if (row.lastError) {
-                              <div class="truncate font-mono text-[11px] text-red-600 dark:text-red-400"
-                                   [title]="row.lastError">
+                              <div
+                                class="truncate font-mono text-[11px] text-red-600 dark:text-red-400"
+                                [title]="row.lastError"
+                              >
                                 {{ row.lastError }}
                               </div>
                             }

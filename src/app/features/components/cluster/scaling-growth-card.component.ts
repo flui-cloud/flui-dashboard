@@ -1,10 +1,4 @@
-import {
-  Component,
-  computed,
-  input,
-  output,
-  ChangeDetectionStrategy,
-} from '@angular/core';
+import { Component, computed, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { ClusterScalingRow } from '../../model/scaling-section.models';
 
 /**
@@ -20,17 +14,18 @@ import { ClusterScalingRow } from '../../model/scaling-section.models';
   template: `
     <div class="card-surface p-5 flex flex-col gap-3" data-testid="growth-card">
       <div class="flex flex-wrap items-center gap-2">
-        <h3 class="m-0 text-sm font-semibold text-foreground">
-          How this cluster grows
-        </h3>
+        <h3 class="m-0 text-sm font-semibold text-foreground">How this cluster grows</h3>
         @if (row()?.mode; as mode) {
           <span
             class="rounded-md px-2 py-0.5 text-xs font-semibold"
-            [class]="mode.attention
-              ? 'bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200'
-              : 'bg-primary/10 text-primary'"
+            [class]="
+              mode.attention
+                ? 'bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200'
+                : 'bg-primary/10 text-primary'
+            "
             data-testid="growth-mode"
-          >{{ mode.label }}</span>
+            >{{ mode.label }}</span
+          >
         }
       </div>
 
@@ -120,13 +115,8 @@ export class ScalingGrowthCardComponent {
         : 'Flui raises an alarm when an app has nowhere to run, and names the machine that would fit. It cannot add one here.';
     }
 
-    const ceiling = row.bounds
-      ? `up to ${row.bounds.max} nodes`
-      : 'within its limits';
-    const cap =
-      row.monthlyCap != null
-        ? ` and €${row.monthlyCap.toFixed(0)} a month`
-        : '';
+    const ceiling = row.bounds ? `up to ${row.bounds.max} nodes` : 'within its limits';
+    const cap = row.monthlyCap != null ? ` and €${row.monthlyCap.toFixed(0)} a month` : '';
     return `Flui adds a node when an app has nowhere to run, ${ceiling}${cap}, without asking you, and removes one when the work fits without it. Each node added is a server billed by the provider.`;
   });
 }

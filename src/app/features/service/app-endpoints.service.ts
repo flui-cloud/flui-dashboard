@@ -8,7 +8,15 @@ import { CertificateStatus, DnsReconciliationStatus } from '../model/dns.models'
 import { internalHostingErrorMessage } from '../model/app-exposure';
 
 export interface EndpointSync {
-  certificate: 'not-required' | 'shared' | 'valid' | 'retried' | 'requested' | 'issuing' | 'waiting' | 'failed';
+  certificate:
+    | 'not-required'
+    | 'shared'
+    | 'valid'
+    | 'retried'
+    | 'requested'
+    | 'issuing'
+    | 'waiting'
+    | 'failed';
   certificateRetried: boolean;
   actions: string[];
   says: string;
@@ -27,9 +35,9 @@ export class AppEndpointsService {
   readonly error = this.errorData.asReadonly();
   readonly hasEndpoints = computed(() => this.endpointsData().length > 0);
   readonly syncedCount = computed(
-    () => this.endpointsData().filter(
-      e => e.reconciliationStatus === DnsReconciliationStatus.IN_SYNC
-    ).length
+    () =>
+      this.endpointsData().filter((e) => e.reconciliationStatus === DnsReconciliationStatus.IN_SYNC)
+        .length,
   );
 
   async loadEndpoints(clusterId: string): Promise<void> {
@@ -37,7 +45,7 @@ export class AppEndpointsService {
     this.errorData.set(null);
     try {
       const result = await firstValueFrom(
-        this.apiService.appEndpointControllerListEndpoints(clusterId)
+        this.apiService.appEndpointControllerListEndpoints(clusterId),
       );
       this.endpointsData.set(result ?? []);
     } catch (err: unknown) {
@@ -49,15 +57,15 @@ export class AppEndpointsService {
 
   async createEndpoint(
     clusterId: string,
-    dto: CreateAppEndpointDto
+    dto: CreateAppEndpointDto,
   ): Promise<AppEndpointResponseDto | null> {
     this.loadingData.set(true);
     this.errorData.set(null);
     try {
       const endpoint = await firstValueFrom(
-        this.apiService.appEndpointControllerCreateEndpoint(clusterId, dto)
+        this.apiService.appEndpointControllerCreateEndpoint(clusterId, dto),
       );
-      this.endpointsData.update(list => [...list, endpoint]);
+      this.endpointsData.update((list) => [...list, endpoint]);
       return endpoint;
     } catch (err: unknown) {
       this.errorData.set(this.extractErrorMessage(err, 'Failed to create endpoint'));
@@ -69,12 +77,12 @@ export class AppEndpointsService {
 
   async updateEndpoint(
     id: string,
-    dto: UpdateAppEndpointDto
+    dto: UpdateAppEndpointDto,
   ): Promise<AppEndpointResponseDto | null> {
     this.errorData.set(null);
     try {
       const updated = await firstValueFrom(
-        this.apiService.appEndpointControllerUpdateEndpoint(id, dto)
+        this.apiService.appEndpointControllerUpdateEndpoint(id, dto),
       );
       this.updateEndpointInList(updated);
       return updated;
@@ -87,9 +95,7 @@ export class AppEndpointsService {
   async reconcileEndpoint(id: string): Promise<AppEndpointResponseDto | null> {
     this.errorData.set(null);
     try {
-      const result = await firstValueFrom(
-        this.apiService.appEndpointControllerReconcile(id)
-      );
+      const result = await firstValueFrom(this.apiService.appEndpointControllerReconcile(id));
       this.updateEndpointInList(result);
       return result;
     } catch (err: unknown) {
@@ -100,14 +106,12 @@ export class AppEndpointsService {
 
   async syncEndpoint(id: string): Promise<EndpointSync | null> {
     const result = await this.reconcileEndpoint(id);
-    return (result as AppEndpointResponseDto & { sync?: EndpointSync } | null)?.sync ?? null;
+    return (result as (AppEndpointResponseDto & { sync?: EndpointSync }) | null)?.sync ?? null;
   }
 
   async getEndpointStatus(id: string): Promise<AppEndpointResponseDto | null> {
     try {
-      const result = await firstValueFrom(
-        this.apiService.appEndpointControllerGetStatus(id)
-      );
+      const result = await firstValueFrom(this.apiService.appEndpointControllerGetStatus(id));
       this.updateEndpointInList(result);
       return result;
     } catch {
@@ -119,7 +123,7 @@ export class AppEndpointsService {
     this.errorData.set(null);
     try {
       await firstValueFrom(this.apiService.appEndpointControllerDeleteEndpoint(id));
-      this.endpointsData.update(list => list.filter(e => e.id !== id));
+      this.endpointsData.update((list) => list.filter((e) => e.id !== id));
       return true;
     } catch (err: unknown) {
       this.errorData.set(this.extractErrorMessage(err, 'Failed to delete endpoint'));
@@ -132,7 +136,7 @@ export class AppEndpointsService {
     const interval = 5000;
 
     while (Date.now() - start < timeoutMs) {
-      await new Promise(resolve => setTimeout(resolve, interval));
+      await new Promise((resolve) => setTimeout(resolve, interval));
       const status = await this.getEndpointStatus(id);
       if (!status) break;
       if (
@@ -161,7 +165,7 @@ export class AppEndpointsService {
     const interval = 8000;
 
     while (Date.now() - start < timeoutMs) {
-      await new Promise(resolve => setTimeout(resolve, interval));
+      await new Promise((resolve) => setTimeout(resolve, interval));
       const ep = await this.getEndpointStatus(id);
       if (!ep) break;
       const certStatus = ep.certificateStatus ?? null;
@@ -177,9 +181,7 @@ export class AppEndpointsService {
   }
 
   private updateEndpointInList(updated: AppEndpointResponseDto): void {
-    this.endpointsData.update(list =>
-      list.map(e => (e.id === updated.id ? updated : e))
-    );
+    this.endpointsData.update((list) => list.map((e) => (e.id === updated.id ? updated : e)));
   }
 
   private extractErrorMessage(err: unknown, fallback: string): string {

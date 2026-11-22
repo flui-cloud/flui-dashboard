@@ -63,12 +63,18 @@ describe('applying the live stream to the snapshot', () => {
       data: { clusterId: 'c-eu', server: { ...t.servers[0], id: 's-9' } },
     });
     expect(added.servers.map((s) => s.id)).toContain('s-9');
-    const removed = applyTopologyEvent(added, { event: 'server.removed', data: { serverId: 's-9' } });
+    const removed = applyTopologyEvent(added, {
+      event: 'server.removed',
+      data: { serverId: 's-9' },
+    });
     expect(removed.servers.map((s) => s.id)).not.toContain('s-9');
   });
 
   it('replaces the links when they change', () => {
-    const next = applyTopologyEvent(t, { event: 'links.changed', data: { links: [], clusterLinks: [] } });
+    const next = applyTopologyEvent(t, {
+      event: 'links.changed',
+      data: { links: [], clusterLinks: [] },
+    });
     expect(next.links).toEqual([]);
   });
 

@@ -1,10 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { CacheConsoleService } from '../../service/cache-console.service';
-import {
-  CacheEntry,
-  CacheServerInfo,
-} from '../../model/cache-console.models';
+import { CacheEntry, CacheServerInfo } from '../../model/cache-console.models';
 import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog.component';
 import { consoleError } from './cache-format';
 

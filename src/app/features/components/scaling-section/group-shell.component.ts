@@ -1,17 +1,6 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  effect,
-  inject,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import {
-  ActivatedRoute,
-  RouterLink,
-  RouterLinkActive,
-  RouterOutlet,
-} from '@angular/router';
+import { ActivatedRoute, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideArrowLeft,
@@ -25,10 +14,7 @@ import { GroupDraftStore } from './group-draft.store';
 import { LookOnlyDirective } from '../../../shared/directives/look-only.directive';
 import { SandboxService } from '../../../core/services/sandbox.service';
 import { ScalingGroupStore } from './scaling-group.store';
-import {
-  SectionFailureComponent,
-  SectionSkeletonComponent,
-} from './section-states.component';
+import { SectionFailureComponent, SectionSkeletonComponent } from './section-states.component';
 
 interface TabMarker {
   count: number;
@@ -93,25 +79,15 @@ interface ShellTab {
           />
         </div>
       } @else if (failed()) {
-        <app-section-failure
-          [message]="failed() ?? ''"
-          testid="group"
-          (retry)="store.reload()"
-        />
+        <app-section-failure [message]="failed() ?? ''" testid="group" (retry)="store.reload()" />
       } @else {
         @if (group(); as g) {
           <header class="space-y-2" data-testid="group-header">
             <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
-              <h1
-                class="m-0 text-xl font-semibold text-foreground"
-                data-testid="group-name"
-              >
+              <h1 class="m-0 text-xl font-semibold text-foreground" data-testid="group-name">
                 {{ g.name }}
               </h1>
-              <span
-                class="font-mono text-[13px] text-muted-foreground"
-                data-testid="group-cluster"
-              >
+              <span class="font-mono text-[13px] text-muted-foreground" data-testid="group-cluster">
                 {{ g.clusterName }}
               </span>
               <span
@@ -122,20 +98,14 @@ interface ShellTab {
               </span>
             </div>
 
-            <p
-              class="m-0 text-[13px] text-muted-foreground"
-              data-testid="group-line"
-            >
+            <p class="m-0 text-[13px] text-muted-foreground" data-testid="group-line">
               {{ line() }}
             </p>
 
             @if (!g.capability.hasCatalogue) {
-              <p
-                class="m-0 text-[13px] text-muted-foreground"
-                data-testid="no-market-note"
-              >
-                No Market tab: {{ g.provider }} publishes no prices, so this
-                group asks for a requirement instead.
+              <p class="m-0 text-[13px] text-muted-foreground" data-testid="no-market-note">
+                No Market tab: {{ g.provider }} publishes no prices, so this group asks for a
+                requirement instead.
               </p>
             }
           </header>
@@ -194,26 +164,14 @@ interface ShellTab {
             <router-outlet />
           </div>
         } @else {
-          <section
-            class="card-surface space-y-2 p-6"
-            data-testid="no-such-group"
-          >
-            <h1 class="m-0 text-lg font-semibold text-foreground">
-              No such group
-            </h1>
+          <section class="card-surface space-y-2 p-6" data-testid="no-such-group">
+            <h1 class="m-0 text-lg font-semibold text-foreground">No such group</h1>
             <p class="m-0 max-w-prose text-sm text-muted-foreground">
               Nothing is configured under
-              <span class="font-mono text-foreground">{{
-                groupId() ?? '—'
-              }}</span
-              >. A cluster without one will not grow, and will raise no alarm
-              when it should have.
+              <span class="font-mono text-foreground">{{ groupId() ?? '—' }}</span>. A cluster
+              without one will not grow, and will raise no alarm when it should have.
             </p>
-            <a
-              routerLink="/scaling"
-              class="card-link w-fit"
-              data-testid="no-such-group-back"
-            >
+            <a routerLink="/scaling" class="card-link w-fit" data-testid="no-such-group-back">
               Back to all clusters
             </a>
           </section>
@@ -241,9 +199,7 @@ export class ScalingGroupShellComponent {
   protected readonly loading = computed(() => this.store.group().loading);
   protected readonly failed = computed(() => this.store.group().failed);
 
-  protected readonly group = computed<SectionGroup | null>(
-    () => this.store.group().data,
-  );
+  protected readonly group = computed<SectionGroup | null>(() => this.store.group().data);
 
   /** What this group does, and nothing else. */
   protected readonly line = computed(() => {
@@ -303,15 +259,11 @@ export class ScalingGroupShellComponent {
   private nowMarker(g: SectionGroup): TabMarker | null {
     const preview = this.store.preview().data;
     const nodes = this.store.row().data?.nodes ?? null;
-    const blocked = g.standingOrders.filter(
-      (o) => o.drainable !== null && !o.drainable.ok,
-    ).length;
+    const blocked = g.standingOrders.filter((o) => o.drainable !== null && !o.drainable.ok).length;
 
     const why: string[] = [];
     if (preview?.pending && !preview.chosen) {
-      why.push(
-        'an app has nowhere to run and no machine fits, so this only alerts',
-      );
+      why.push('an app has nowhere to run and no machine fits, so this only alerts');
     }
     if (nodes !== null && nodes < g.bounds.min) {
       why.push(`the fleet is ${nodes} where the floor is ${g.bounds.min}`);

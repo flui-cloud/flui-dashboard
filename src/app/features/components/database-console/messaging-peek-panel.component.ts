@@ -14,9 +14,7 @@ import { formatPayload, isJsonPayload } from './messaging-format';
   providers: [provideIcons({ lucideEye, lucideLoader })],
   template: `
     <div class="rounded-md border border-border p-3">
-      <div
-        class="mb-2 flex items-center gap-2 text-sm font-medium text-foreground"
-      >
+      <div class="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
         <ng-icon name="lucideEye" class="h-4 w-4 text-muted-foreground" />
         Peek messages
         <span class="font-normal text-muted-foreground">· non-destructive</span>
@@ -48,17 +46,11 @@ import { formatPayload, isJsonPayload } from './messaging-format';
         <p class="text-xs text-destructive">{{ s.peekError() }}</p>
       }
       @if (s.peekMessages().length) {
-        <div
-          class="max-h-72 overflow-y-auto overflow-x-hidden rounded-md border border-border"
-        >
+        <div class="max-h-72 overflow-y-auto overflow-x-hidden rounded-md border border-border">
           @for (m of s.peekMessages(); track m.seq) {
             <div class="border-b border-border px-2 py-1.5 last:border-0">
-              <div
-                class="flex items-center justify-between gap-2 text-xs text-muted-foreground"
-              >
-                <span class="truncate font-mono"
-                  >#{{ m.seq }} · {{ m.subject }}</span
-                >
+              <div class="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                <span class="truncate font-mono">#{{ m.seq }} · {{ m.subject }}</span>
                 <span class="flex shrink-0 items-center gap-1.5">
                   @if (isJson(m)) {
                     <span
@@ -71,20 +63,15 @@ import { formatPayload, isJsonPayload } from './messaging-format';
               </div>
               <pre
                 class="mt-1 max-h-48 overflow-auto whitespace-pre-wrap break-words rounded bg-muted/40 p-1.5 font-mono text-xs text-foreground"
-                >{{ payload(m) }}</pre
-              >
+                >{{ payload(m) }}</pre>
               @if (m.encoding === 'base64') {
-                <span class="text-[10px] text-muted-foreground"
-                  >(base64 — binary payload)</span
-                >
+                <span class="text-[10px] text-muted-foreground">(base64 — binary payload)</span>
               }
             </div>
           }
         </div>
       } @else if (s.peeked()) {
-        <p class="text-xs text-muted-foreground">
-          No messages in this stream.
-        </p>
+        <p class="text-xs text-muted-foreground">No messages in this stream.</p>
       }
     </div>
   `,

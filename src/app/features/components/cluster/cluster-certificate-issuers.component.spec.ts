@@ -15,9 +15,7 @@ describe('deleting the standard issuers of a cluster', () => {
           provide: ClusterDnsZoneService,
           useValue: {
             getIssuers: () =>
-              Promise.resolve([
-                { name: 'letsencrypt-production', ready: true, email: 'a@b.c' },
-              ]),
+              Promise.resolve([{ name: 'letsencrypt-production', ready: true, email: 'a@b.c' }]),
             deleteIssuersByType: () => Promise.resolve(true),
             error: () => null,
           },
@@ -53,16 +51,12 @@ describe('deleting the standard issuers of a cluster', () => {
 
   it('offers no delete control to one who may not — the route asks cluster:manage', async () => {
     await mount(false);
-    expect(fixture.nativeElement.textContent).toContain(
-      'letsencrypt-production',
-    );
+    expect(fixture.nativeElement.textContent).toContain('letsencrypt-production');
     expect(deleteButton()).toBeNull();
   });
 
   it('still shows the issuers themselves, which are only a read', async () => {
     await mount(false);
-    expect(fixture.nativeElement.textContent).toContain(
-      'Standard Certificate Issuers',
-    );
+    expect(fixture.nativeElement.textContent).toContain('Standard Certificate Issuers');
   });
 });

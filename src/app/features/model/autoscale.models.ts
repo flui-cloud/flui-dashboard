@@ -1,7 +1,4 @@
-export type AutoscaleWarningLevel =
-  | 'NONE'
-  | 'WARN_NEEDS_AUTOSCALE'
-  | 'DANGER_NEEDS_SCALE';
+export type AutoscaleWarningLevel = 'NONE' | 'WARN_NEEDS_AUTOSCALE' | 'DANGER_NEEDS_SCALE';
 
 export interface AutoscaleEffectiveThresholds {
   scaleUpMemoryPct: number;
@@ -17,11 +14,7 @@ export interface AutoscaleStatus {
   clusterId: string;
   autoscalingEnabled: boolean;
   /** Whether a node really arrives on its own — the flag above says nothing about it. */
-  actuation?:
-    | 'automatic'
-    | 'not_driven'
-    | 'alert_only_sized'
-    | 'alert_only_unsized';
+  actuation?: 'automatic' | 'not_driven' | 'alert_only_sized' | 'alert_only_unsized';
   minNodes: number | null;
   maxNodes: number | null;
   currentNodes: number;

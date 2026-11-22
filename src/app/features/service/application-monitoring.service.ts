@@ -36,7 +36,9 @@ export class ApplicationMonitoringService {
 
   // Computed convenience signals
   readonly cpuUtilization = computed(() => this.currentMetrics()?.cpu?.utilization_percent ?? null);
-  readonly memoryUtilization = computed(() => this.currentMetrics()?.memory?.utilization_percent ?? null);
+  readonly memoryUtilization = computed(
+    () => this.currentMetrics()?.memory?.utilization_percent ?? null,
+  );
   readonly networkIn = computed(() => this.currentMetrics()?.network?.receive_bytes_rate ?? null);
   readonly networkOut = computed(() => this.currentMetrics()?.network?.transmit_bytes_rate ?? null);
   readonly statusMetrics = computed(() => this.currentMetrics()?.status ?? null);
@@ -79,7 +81,7 @@ export class ApplicationMonitoringService {
     }
     if (this.isPollingPaused()) {
       this.consecutiveErrorCount.set(0);
-      this.manualRefreshCountSignal.update(count => count + 1);
+      this.manualRefreshCountSignal.update((count) => count + 1);
     }
     await this.loadMetrics(true);
   }
@@ -89,7 +91,7 @@ export class ApplicationMonitoringService {
     if (!appId) return;
     try {
       const response = await firstValueFrom(
-        this.metricsApi.applicationMetricsControllerGetAppMetrics(appId)
+        this.metricsApi.applicationMetricsControllerGetAppMetrics(appId),
       );
       this.updateMetrics(response.metrics);
       this.currentAppId = appId;
@@ -109,7 +111,7 @@ export class ApplicationMonitoringService {
       this.errorSignal.set(null);
 
       const response = await firstValueFrom(
-        this.metricsApi.applicationMetricsControllerGetAppMetrics(this.currentAppId)
+        this.metricsApi.applicationMetricsControllerGetAppMetrics(this.currentAppId),
       );
 
       this.updateMetrics(response.metrics);
@@ -130,7 +132,7 @@ export class ApplicationMonitoringService {
         if (newCount >= this.MAX_CONSECUTIVE_ERRORS) {
           this.isPollingPaused.set(true);
           this.errorSignal.set(
-            'API failed multiple times. Auto-refresh paused. Click "Retry" to resume.'
+            'API failed multiple times. Auto-refresh paused. Click "Retry" to resume.',
           );
         } else {
           this.errorSignal.set('Failed to load metrics. Will retry automatically...');

@@ -12,12 +12,7 @@ import { FormsModule } from '@angular/forms';
 import { of } from 'rxjs';
 import { catchError, map, startWith, switchMap } from 'rxjs/operators';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideCircleAlert,
-  lucideLayers,
-  lucideLoader,
-  lucideUsers,
-} from '@ng-icons/lucide';
+import { lucideCircleAlert, lucideLayers, lucideLoader, lucideUsers } from '@ng-icons/lucide';
 import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
 import { ClusterOption } from '../../model/iam.model';
 import {
@@ -99,7 +94,11 @@ const FAILED_REACH: ReachState = {
             <button
               type="button"
               class="rounded-lg border p-3 text-left transition-colors"
-              [class]="nature() === option ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'"
+              [class]="
+                nature() === option
+                  ? 'border-primary bg-primary/5'
+                  : 'border-border hover:bg-muted/50'
+              "
               [attr.aria-pressed]="nature() === option"
               [attr.data-testid]="'nature-' + option"
               (click)="nature.set(option)"
@@ -125,9 +124,8 @@ const FAILED_REACH: ReachState = {
             labelClass="text-[12px] font-normal text-muted-foreground"
             testid="axes-why"
           >
-            An application belongs to a project and runs on a cluster. It
-            receives every note whose region contains it, down either axis —
-            neither is nested inside the other.
+            An application belongs to a project and runs on a cluster. It receives every note whose
+            region contains it, down either axis — neither is nested inside the other.
           </app-explain>
         </legend>
 
@@ -297,12 +295,11 @@ const FAILED_REACH: ReachState = {
             labelClass="text-[12px] font-normal text-muted-foreground"
             testid="honest-why"
           >
-            A note ages. Leaning it on a live fact, or on a signature with a
-            shelf life, is what lets it ask to be revisited instead of advising
-            something that stopped being true. <strong>Nothing</strong> means it
-            is prose and says so; <strong>a signature</strong> lapses after the
-            days you give it; <strong>a live fact</strong> is compared against
-            the platform and falls on its own.
+            A note ages. Leaning it on a live fact, or on a signature with a shelf life, is what
+            lets it ask to be revisited instead of advising something that stopped being true.
+            <strong>Nothing</strong> means it is prose and says so;
+            <strong>a signature</strong> lapses after the days you give it;
+            <strong>a live fact</strong> is compared against the platform and falls on its own.
           </app-explain>
         </legend>
 
@@ -327,9 +324,8 @@ const FAILED_REACH: ReachState = {
             labelClass="text-[11px] text-muted-foreground"
             testid="no-probe-here"
           >
-            A note about the whole installation cannot be compared with
-            anything: it is either an intention, or it belongs at a narrower
-            level.
+            A note about the whole installation cannot be compared with anything: it is either an
+            intention, or it belongs at a narrower level.
           </app-explain>
         }
 
@@ -380,9 +376,7 @@ const FAILED_REACH: ReachState = {
                   >
                     {{ param.name }}
                     @if (!param.required) {
-                      <span class="font-normal text-muted-foreground">
-                        — optional
-                      </span>
+                      <span class="font-normal text-muted-foreground"> — optional </span>
                     }
                   </label>
                   @if (param.oneOf; as choices) {
@@ -418,8 +412,7 @@ const FAILED_REACH: ReachState = {
                 labelClass="text-[11px] text-muted-foreground"
                 testid="undeclared-params"
               >
-                Name the parameters yourself — the API will say if one is
-                missing.
+                Name the parameters yourself — the API will say if one is missing.
               </app-explain>
               @for (row of paramRows(); track $index) {
                 <div class="flex gap-2">
@@ -591,7 +584,13 @@ const FAILED_REACH: ReachState = {
           }
           Write the note
         </button>
-        <button hlmBtn type="button" variant="ghost" (click)="dismissed.emit()" data-testid="cancel">
+        <button
+          hlmBtn
+          type="button"
+          variant="ghost"
+          (click)="dismissed.emit()"
+          data-testid="cancel"
+        >
           Cancel
         </button>
       </div>
@@ -637,9 +636,9 @@ export class ContextNoteFormComponent {
   protected readonly probeOp = signal<ProbeOp>('equals');
   protected readonly probeExpected = signal('');
   protected readonly validForDays = signal(90);
-  protected readonly paramRows = signal<Array<{ name: string; value: string }>>(
-    [{ name: '', value: '' }],
-  );
+  protected readonly paramRows = signal<Array<{ name: string; value: string }>>([
+    { name: '', value: '' },
+  ]);
 
   protected readonly paramAnswers = signal<Record<string, string>>({});
 
@@ -655,9 +654,7 @@ export class ContextNoteFormComponent {
     provider: this.provider().trim(),
   }));
 
-  protected readonly prospective = computed(() =>
-    prospectiveScope(this.level()),
-  );
+  protected readonly prospective = computed(() => prospectiveScope(this.level()));
 
   private readonly reachKey = computed(() => {
     const scope = this.prospective();
@@ -671,11 +668,7 @@ export class ContextNoteFormComponent {
         if (!key) return of(IDLE_REACH);
         const [scopeType, scopeRef, nature] = key.split('|');
         return this.api
-          .reach(
-            scopeType as EntryReach['scopeType'],
-            nature as EntryNature,
-            scopeRef || undefined,
-          )
+          .reach(scopeType as EntryReach['scopeType'], nature as EntryNature, scopeRef || undefined)
           .pipe(
             map((line) => ({ line, loading: false, error: null }) as ReachState),
             catchError(() => of(FAILED_REACH)),
@@ -699,9 +692,7 @@ export class ContextNoteFormComponent {
     this.probes().find((p) => p.id === this.probeId()),
   );
 
-  protected readonly probeDescription = computed(
-    () => this.chosenProbe()?.describes ?? '',
-  );
+  protected readonly probeDescription = computed(() => this.chosenProbe()?.describes ?? '');
 
   protected readonly declaredParams = computed(() => this.chosenProbe()?.takes);
 
@@ -777,7 +768,6 @@ export class ContextNoteFormComponent {
     const draft = this.draft();
     if (draft && this.ready()) this.save.emit(draft);
   }
-
 }
 
 function split(value: string): string[] {

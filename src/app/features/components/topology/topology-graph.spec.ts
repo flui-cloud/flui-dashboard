@@ -1,4 +1,11 @@
-import { MAX_NODES, isFailing, litBy, neighbourhood, projectLit, topologyGraph } from './topology-graph';
+import {
+  MAX_NODES,
+  isFailing,
+  litBy,
+  neighbourhood,
+  projectLit,
+  topologyGraph,
+} from './topology-graph';
 import { graphDigest } from './topology-layout';
 import { DEFAULT_TOPOLOGY_STATE, TopologyViewState } from './topology-state';
 import { topologyFixture } from './topology.fixture';
@@ -12,8 +19,16 @@ const state = (over: Partial<TopologyViewState>): TopologyViewState => ({
 function withCrossLink() {
   const t = topologyFixture();
   t.links.push({
-    id: 'a-web-asia>a-db', from: { kind: 'app', appId: 'a-web-asia' }, to: { kind: 'app', appId: 'a-db' },
-    source: 'env-reference', label: ':5432', crossCluster: true, viaTunnel: false, routeHost: null, routePath: null, targetPort: null,
+    id: 'a-web-asia>a-db',
+    from: { kind: 'app', appId: 'a-web-asia' },
+    to: { kind: 'app', appId: 'a-db' },
+    source: 'env-reference',
+    label: ':5432',
+    crossCluster: true,
+    viaTunnel: false,
+    routeHost: null,
+    routePath: null,
+    targetPort: null,
     traffic: { measured: false, rps: null, errorPct: null },
   });
   return t;
@@ -22,14 +37,18 @@ function withCrossLink() {
 /** A fleet with more apps than one map can hold, all quiet and unlinked. */
 function large<T extends ReturnType<typeof topologyFixture>>(t: T): T {
   const base = t.apps.find((a) => a.id === 'a-tools')!;
-  for (let i = 0; i < MAX_NODES; i++) t.apps.push({ ...base, id: `quiet-${i}`, stackId: 'app:a-tools' });
+  for (let i = 0; i < MAX_NODES; i++)
+    t.apps.push({ ...base, id: `quiet-${i}`, stackId: 'app:a-tools' });
   return t;
 }
 
 describe('the service map graph', () => {
   it('draws a small fleet as every app, each inside the box of its cluster', () => {
     const g = topologyGraph(withCrossLink(), state({ level: 'fleet' }));
-    expect(g.nodes.filter((n) => n.kind === 'region').map((n) => n.id)).toEqual(['region:c-eu', 'region:c-asia']);
+    expect(g.nodes.filter((n) => n.kind === 'region').map((n) => n.id)).toEqual([
+      'region:c-eu',
+      'region:c-asia',
+    ]);
     expect(g.nodes.filter((n) => n.kind === 'app').map((n) => [n.id, n.parent])).toEqual([
       ['a-web', 'region:c-eu'],
       ['a-db', 'region:c-eu'],
@@ -37,7 +56,11 @@ describe('the service map graph', () => {
       ['a-web-asia', 'region:c-asia'],
     ]);
     expect(g.nodes[0].id).toBe('internet');
-    expect(g.edges.map((e) => `${e.from}>${e.to}`).sort()).toEqual(['a-web-asia>a-db', 'a-web>a-db', 'internet>a-web']);
+    expect(g.edges.map((e) => `${e.from}>${e.to}`).sort()).toEqual([
+      'a-web-asia>a-db',
+      'a-web>a-db',
+      'internet>a-web',
+    ]);
     expect(g.nodes.find((n) => n.id === 'region:c-asia')?.dashed).toBeTrue();
   });
 
@@ -55,7 +78,10 @@ describe('the service map graph', () => {
       ['region:p-shop', 'Shop'],
       ['region:no-project', 'No project'],
     ]);
-    expect(g.nodes.filter((n) => n.parent === 'region:p-shop').map((n) => n.id)).toEqual(['a-web', 'a-db']);
+    expect(g.nodes.filter((n) => n.parent === 'region:p-shop').map((n) => n.id)).toEqual([
+      'a-web',
+      'a-db',
+    ]);
     expect(g.nodes.find((n) => n.id === 'a-web-asia')?.sub).toBe('edge-asia');
   });
 
@@ -66,9 +92,17 @@ describe('the service map graph', () => {
   });
 
   it('draws a selected project alone when boxed by server, without the servers it does not use', () => {
-    const g = topologyGraph(withCrossLink(), state({ level: 'fleet', boxBy: 'server', project: 'p-shop' }));
-    expect(g.nodes.filter((n) => n.kind === 'region').map((n) => n.id)).toEqual(['server:s-1', 'server:s-2']);
-    expect(g.nodes.some((n) => n.id.startsWith('a-tools') || n.id.startsWith('a-web-asia'))).toBeFalse();
+    const g = topologyGraph(
+      withCrossLink(),
+      state({ level: 'fleet', boxBy: 'server', project: 'p-shop' }),
+    );
+    expect(g.nodes.filter((n) => n.kind === 'region').map((n) => n.id)).toEqual([
+      'server:s-1',
+      'server:s-2',
+    ]);
+    expect(
+      g.nodes.some((n) => n.id.startsWith('a-tools') || n.id.startsWith('a-web-asia')),
+    ).toBeFalse();
   });
 
   it('keeps lit, for a project filter, its apps and where they run', () => {
@@ -81,7 +115,8 @@ describe('the service map graph', () => {
   });
 
   describe('boxed by server', () => {
-    const byServer = (t = withCrossLink()) => topologyGraph(t, state({ level: 'fleet', boxBy: 'server' }));
+    const byServer = (t = withCrossLink()) =>
+      topologyGraph(t, state({ level: 'fleet', boxBy: 'server' }));
 
     it('opens boxed by cluster unless asked', () => {
       expect(DEFAULT_TOPOLOGY_STATE.boxBy).toBe('cluster');
@@ -89,23 +124,33 @@ describe('the service map graph', () => {
 
     it('draws a box per server, named by its cluster, place and size', () => {
       const g = byServer();
-      expect(g.nodes.filter((n) => n.kind === 'region').map((n) => [n.id, n.label, n.sub])).toEqual([
-        ['server:s-1', 'eu-worker-1', 'prod-eu · fsn1 · cpx41'],
-        ['server:s-2', 'eu-arm-1', 'prod-eu · nbg1 · cax31'],
-        ['server:node:c-asia:abc', 'asia-1', 'edge-asia · contabo'],
-      ]);
+      expect(g.nodes.filter((n) => n.kind === 'region').map((n) => [n.id, n.label, n.sub])).toEqual(
+        [
+          ['server:s-1', 'eu-worker-1', 'prod-eu · fsn1 · cpx41'],
+          ['server:s-2', 'eu-arm-1', 'prod-eu · nbg1 · cax31'],
+          ['server:node:c-asia:abc', 'asia-1', 'edge-asia · contabo'],
+        ],
+      );
     });
 
     it('draws an app once on every server that runs a copy of it, with the copies there', () => {
       const g = byServer();
-      expect(g.nodes.filter((n) => n.focus?.type === 'app' && n.focus.id === 'a-web').map((n) => [n.id, n.parent, n.replicas])).toEqual([
+      expect(
+        g.nodes
+          .filter((n) => n.focus?.type === 'app' && n.focus.id === 'a-web')
+          .map((n) => [n.id, n.parent, n.replicas]),
+      ).toEqual([
         ['a-web@s-1', 'server:s-1', 2],
         ['a-web@s-2', 'server:s-2', 1],
       ]);
     });
 
     it('reaches every copy of an app with its links', () => {
-      expect(byServer().edges.map((e) => `${e.from}>${e.to}`).sort()).toEqual([
+      expect(
+        byServer()
+          .edges.map((e) => `${e.from}>${e.to}`)
+          .sort(),
+      ).toEqual([
         'a-web-asia@node:c-asia:abc>a-db@s-1',
         'a-web@s-1>a-db@s-1',
         'a-web@s-2>a-db@s-1',
@@ -123,13 +168,17 @@ describe('the service map graph', () => {
 
     it('lights every copy of a selected app', () => {
       const lit = litBy(byServer(), { type: 'app', id: 'a-web' });
-      expect(['a-web@s-1', 'a-web@s-2', 'a-db@s-1', 'internet'].every((id) => lit?.nodes.has(id))).toBeTrue();
+      expect(
+        ['a-web@s-1', 'a-web@s-2', 'a-db@s-1', 'internet'].every((id) => lit?.nodes.has(id)),
+      ).toBeTrue();
     });
 
     it('keeps lit, for a project filter, every copy and the servers holding them', () => {
       const t = withCrossLink();
       const lit = projectLit(t, byServer(t), 'p-shop');
-      expect(['a-web@s-2', 'server:s-2', 'a-db@s-1', 'server:s-1'].every((id) => lit.has(id))).toBeTrue();
+      expect(
+        ['a-web@s-2', 'server:s-2', 'a-db@s-1', 'server:s-1'].every((id) => lit.has(id)),
+      ).toBeTrue();
       expect(lit.has('a-tools@s-1')).toBeFalse();
     });
   });
@@ -139,16 +188,40 @@ describe('the service map graph', () => {
     function withPlatform() {
       const t = withCrossLink();
       const base = t.apps.find((a) => a.id === 'a-tools')!;
-      const platform = (id: string, displayName: string, status = 'running') => ({
-        ...base, id, displayName, clusterId: 'c-asia', kind: 'system', projectId: null, stackId: `app:${id}`, status,
-      } as typeof base);
-      t.apps.push(platform('flui-system/flui-api', 'Flui API'), platform('flui-system/postgres', 'PostgreSQL'), platform('flui-control/loki', 'Loki', 'warning'));
-      const link = (id: string, from: string | null, to: string) => ({
-        id, from: from ? { kind: 'app', appId: from } : { kind: 'internet' }, to: { kind: 'app', appId: to },
-        source: from ? 'env-reference' : 'gateway-route', label: ':5432', crossCluster: false, viaTunnel: false,
-        routeHost: null, routePath: null, targetPort: null, traffic: { measured: true, rps: 2, errorPct: 0 },
-      } as (typeof t.links)[number]);
-      t.links.push(link('in-api', null, 'flui-system/flui-api'), link('api-db', 'flui-system/flui-api', 'flui-system/postgres'));
+      const platform = (id: string, displayName: string, status = 'running') =>
+        ({
+          ...base,
+          id,
+          displayName,
+          clusterId: 'c-asia',
+          kind: 'system',
+          projectId: null,
+          stackId: `app:${id}`,
+          status,
+        }) as typeof base;
+      t.apps.push(
+        platform('flui-system/flui-api', 'Flui API'),
+        platform('flui-system/postgres', 'PostgreSQL'),
+        platform('flui-control/loki', 'Loki', 'warning'),
+      );
+      const link = (id: string, from: string | null, to: string) =>
+        ({
+          id,
+          from: from ? { kind: 'app', appId: from } : { kind: 'internet' },
+          to: { kind: 'app', appId: to },
+          source: from ? 'env-reference' : 'gateway-route',
+          label: ':5432',
+          crossCluster: false,
+          viaTunnel: false,
+          routeHost: null,
+          routePath: null,
+          targetPort: null,
+          traffic: { measured: true, rps: 2, errorPct: 0 },
+        }) as (typeof t.links)[number];
+      t.links.push(
+        link('in-api', null, 'flui-system/flui-api'),
+        link('api-db', 'flui-system/flui-api', 'flui-system/postgres'),
+      );
       return t;
     }
 
@@ -156,11 +229,21 @@ describe('the service map graph', () => {
       const g = topologyGraph(withPlatform(), state({ level: 'fleet' }));
       expect(g.nodes.some((n) => n.id.startsWith('flui-'))).toBeFalse();
       const platform = g.nodes.find((n) => n.id === 'platform:c-asia')!;
-      expect(platform).toEqual(jasmine.objectContaining({
-        kind: 'platform', label: 'Flui platform', sub: '3 apps', parent: 'region:c-asia', muted: true, tone: 'degraded', problems: 1,
-      }));
+      expect(platform).toEqual(
+        jasmine.objectContaining({
+          kind: 'platform',
+          label: 'Flui platform',
+          sub: '3 apps',
+          parent: 'region:c-asia',
+          muted: true,
+          tone: 'degraded',
+          problems: 1,
+        }),
+      );
       expect(platform.focus).toEqual({ type: 'platform', id: 'c-asia' });
-      expect(platform.drill).toEqual(jasmine.objectContaining({ level: 'cluster', cluster: 'c-asia' }));
+      expect(platform.drill).toEqual(
+        jasmine.objectContaining({ level: 'cluster', cluster: 'c-asia' }),
+      );
     });
 
     it('routes their links to the platform node and drops the ones among them', () => {
@@ -195,12 +278,25 @@ describe('the service map graph', () => {
     it('still draws each of them at the cluster level', () => {
       const t = withPlatform();
       t.stacks.push(
-        ...t.apps.filter((a) => a.kind === 'system').map((a) => ({
-          id: a.stackId, clusterId: a.clusterId, name: a.displayName, type: 'standalone', primaryAppId: a.id, appIds: [a.id], status: a.status,
-        } as (typeof t.stacks)[number])),
+        ...t.apps
+          .filter((a) => a.kind === 'system')
+          .map(
+            (a) =>
+              ({
+                id: a.stackId,
+                clusterId: a.clusterId,
+                name: a.displayName,
+                type: 'standalone',
+                primaryAppId: a.id,
+                appIds: [a.id],
+                status: a.status,
+              }) as (typeof t.stacks)[number],
+          ),
       );
       const g = topologyGraph(t, state({ level: 'cluster', cluster: 'c-asia' }));
-      expect(g.nodes.map((n) => n.label)).toEqual(jasmine.arrayContaining(['Flui API', 'PostgreSQL', 'Loki']));
+      expect(g.nodes.map((n) => n.label)).toEqual(
+        jasmine.arrayContaining(['Flui API', 'PostgreSQL', 'Loki']),
+      );
       expect(g.nodes.some((n) => n.kind === 'platform')).toBeFalse();
     });
   });
@@ -221,7 +317,10 @@ describe('the service map graph', () => {
   });
 
   it('narrows a large fleet by app to its problems and their neighbours when asked to, in their cluster boxes', () => {
-    const g = topologyGraph(large(withCrossLink()), state({ level: 'fleet', fleetBy: 'apps', problems: true }));
+    const g = topologyGraph(
+      large(withCrossLink()),
+      state({ level: 'fleet', fleetBy: 'apps', problems: true }),
+    );
     expect(g.filtered).toBeTrue();
     expect(g.filterable).toBeFalsy();
     expect(g.nodes.some((n) => n.id.startsWith('quiet-'))).toBeFalse();
@@ -266,16 +365,26 @@ describe('the service map graph', () => {
   });
 
   it('draws a stack as its apps and their neighbours, with the Internet entering', () => {
-    const g = topologyGraph(withCrossLink(), state({ level: 'stack', cluster: 'c-eu', focus: { type: 'stack', id: 'i-shop' } }));
-    expect(g.nodes.map((n) => n.id).sort()).toEqual(['a-db', 'a-web', 'a-web-asia', 'internet'].sort());
+    const g = topologyGraph(
+      withCrossLink(),
+      state({ level: 'stack', cluster: 'c-eu', focus: { type: 'stack', id: 'i-shop' } }),
+    );
+    expect(g.nodes.map((n) => n.id).sort()).toEqual(
+      ['a-db', 'a-web', 'a-web-asia', 'internet'].sort(),
+    );
     const ingress = g.edges.find((e) => e.from === 'internet')!;
-    expect(ingress).toEqual(jasmine.objectContaining({ to: 'a-web', measured: true, failing: true, label: 'HTTPS' }));
+    expect(ingress).toEqual(
+      jasmine.objectContaining({ to: 'a-web', measured: true, failing: true, label: 'HTTPS' }),
+    );
     expect(g.edges.find((e) => e.to === 'a-db' && e.from === 'a-web')?.measured).toBeFalse();
   });
 
   it('animates nothing that is not measured', () => {
     for (const level of ['fleet', 'cluster', 'stack'] as const) {
-      const g = topologyGraph(withCrossLink(), state({ level, cluster: 'c-eu', focus: { type: 'stack', id: 'i-shop' } }));
+      const g = topologyGraph(
+        withCrossLink(),
+        state({ level, cluster: 'c-eu', focus: { type: 'stack', id: 'i-shop' } }),
+      );
       for (const edge of g.edges.filter((e) => e.measured)) expect(edge.rps).not.toBeNull();
     }
   });
@@ -283,7 +392,9 @@ describe('the service map graph', () => {
   it('calls a bundle failing by its traffic, not by one bad route among many', () => {
     const t = topologyFixture();
     t.links.push({
-      ...t.links[0], id: 'internet>a-tools', to: { kind: 'app', appId: 'a-tools' },
+      ...t.links[0],
+      id: 'internet>a-tools',
+      to: { kind: 'app', appId: 'a-tools' },
       traffic: { measured: true, rps: 2000, errorPct: 0 },
     });
     const fleet = topologyGraph(large(t), state({ level: 'fleet', fleetBy: 'clusters' }));
@@ -313,7 +424,10 @@ describe('the service map graph', () => {
   });
 
   it('draws the crowded level in full when asked to', () => {
-    const g = topologyGraph(crowded(false), state({ level: 'cluster', cluster: 'c-eu', all: true }));
+    const g = topologyGraph(
+      crowded(false),
+      state({ level: 'cluster', cluster: 'c-eu', all: true }),
+    );
     expect(g.filtered).toBeFalsy();
     expect(g.nodes.length).toBeGreaterThan(MAX_NODES);
   });
@@ -325,7 +439,10 @@ describe('the service map graph', () => {
   });
 
   it('keeps lit what a selection touches, and nothing else', () => {
-    const g = topologyGraph(withCrossLink(), state({ level: 'stack', cluster: 'c-eu', focus: { type: 'stack', id: 'i-shop' } }));
+    const g = topologyGraph(
+      withCrossLink(),
+      state({ level: 'stack', cluster: 'c-eu', focus: { type: 'stack', id: 'i-shop' } }),
+    );
     const lit = litBy(g, { type: 'app', id: 'a-db' })!;
     expect([...lit.nodes].sort()).toEqual(['a-db', 'a-web', 'a-web-asia']);
     expect(litBy(g, null)).toBeNull();
@@ -339,17 +456,28 @@ describe('the service map graph', () => {
 
   describe('centred on one app', () => {
     it('draws its direct neighbours across clusters, and the Internet only when it reaches the app itself', () => {
-      const g = topologyGraph(withCrossLink(), state({ level: 'app', app: 'a-db', cluster: 'c-eu' }));
+      const g = topologyGraph(
+        withCrossLink(),
+        state({ level: 'app', app: 'a-db', cluster: 'c-eu' }),
+      );
       expect(g.level).toBe('app');
       expect(g.nodes.map((n) => n.id).sort()).toEqual(['a-db', 'a-web', 'a-web-asia']);
       expect(g.nodes.find((n) => n.id === 'a-db')?.center).toBeTrue();
       expect(g.nodes.find((n) => n.id === 'a-web-asia')?.sub).toBe('edge-asia');
-      expect(g.edges.map((e) => `${e.from}>${e.to}`).sort()).toEqual(['a-web-asia>a-db', 'a-web>a-db']);
+      expect(g.edges.map((e) => `${e.from}>${e.to}`).sort()).toEqual([
+        'a-web-asia>a-db',
+        'a-web>a-db',
+      ]);
     });
 
     it('takes one more step on request, and the Internet is never a way through', () => {
       const t = withCrossLink();
-      expect([...neighbourhood(t, 'a-db', 2)].sort()).toEqual(['a-db', 'a-web', 'a-web-asia', 'internet']);
+      expect([...neighbourhood(t, 'a-db', 2)].sort()).toEqual([
+        'a-db',
+        'a-web',
+        'a-web-asia',
+        'internet',
+      ]);
       expect([...neighbourhood(t, 'a-web', 2)]).not.toContain('a-tools');
       const g = topologyGraph(t, state({ level: 'app', app: 'a-db', hops: 2 }));
       expect(g.nodes[0].id).toBe('internet');
@@ -357,14 +485,19 @@ describe('the service map graph', () => {
     });
 
     it('drills from any app node to the map centred on it', () => {
-      const g = topologyGraph(topologyFixture(), state({ level: 'stack', cluster: 'c-eu', focus: { type: 'stack', id: 'i-shop' } }));
+      const g = topologyGraph(
+        topologyFixture(),
+        state({ level: 'stack', cluster: 'c-eu', focus: { type: 'stack', id: 'i-shop' } }),
+      );
       expect(g.nodes.find((n) => n.id === 'a-db')?.drill).toEqual(
         jasmine.objectContaining({ level: 'app', app: 'a-db', cluster: 'c-eu' }),
       );
     });
 
     it('falls back to the fleet when the app is gone', () => {
-      expect(topologyGraph(topologyFixture(), state({ level: 'app', app: 'gone' })).level).toBe('fleet');
+      expect(topologyGraph(topologyFixture(), state({ level: 'app', app: 'gone' })).level).toBe(
+        'fleet',
+      );
     });
   });
 });

@@ -16,9 +16,7 @@ import { bucketLabel } from './mail-format';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [NgxEchartsDirective],
-  template: `
-    <div echarts [options]="options()" [theme]="theme()" class="h-56 w-full"></div>
-  `,
+  template: ` <div echarts [options]="options()" [theme]="theme()" class="h-56 w-full"></div> `,
 })
 export class MailVolumeChartComponent implements OnDestroy {
   readonly points = input.required<MailVolumePoint[]>();
@@ -72,9 +70,21 @@ export class MailVolumeChartComponent implements OnDestroy {
         axisLabel: { color: ink, fontSize: 11 },
       },
       series: [
-        bar('Delivered', points.map((p) => p.delivered), this.dark() ? '#3987e5' : '#2f72c9'),
-        bar('Failed', points.map((p) => p.failed), this.dark() ? '#d95926' : '#c04a1d'),
-        bar('Pending', points.map((p) => p.pending), this.dark() ? '#4a4943' : '#c9c7bc'),
+        bar(
+          'Delivered',
+          points.map((p) => p.delivered),
+          this.dark() ? '#3987e5' : '#2f72c9',
+        ),
+        bar(
+          'Failed',
+          points.map((p) => p.failed),
+          this.dark() ? '#d95926' : '#c04a1d',
+        ),
+        bar(
+          'Pending',
+          points.map((p) => p.pending),
+          this.dark() ? '#4a4943' : '#c9c7bc',
+        ),
       ],
     };
   });

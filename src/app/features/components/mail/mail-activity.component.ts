@@ -1,12 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideLoader,
-  lucideRotateCcw,
-  lucideSearch,
-  lucideTriangleAlert,
-} from '@ng-icons/lucide';
+import { lucideLoader, lucideRotateCcw, lucideSearch, lucideTriangleAlert } from '@ng-icons/lucide';
 import { MailSectionNavComponent } from './mail-section-nav.component';
 import { MailConsoleService } from '../../service/mail-console.service';
 import { MailDeliveryEvent, MailEventKind } from '../../model/mail-console.models';
@@ -37,9 +32,7 @@ const KIND_CLASS: Record<string, string> = {
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [FormsModule, NgIcon, MailSectionNavComponent],
-  providers: [
-    provideIcons({ lucideLoader, lucideRotateCcw, lucideSearch, lucideTriangleAlert }),
-  ],
+  providers: [provideIcons({ lucideLoader, lucideRotateCcw, lucideSearch, lucideTriangleAlert })],
   template: `
     <div class="p-4 md:p-6">
       <app-mail-section-nav>
@@ -50,11 +43,7 @@ const KIND_CLASS: Record<string, string> = {
           [disabled]="loading()"
           class="inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-2.5 text-xs text-muted-foreground hover:bg-muted disabled:opacity-60"
         >
-          <ng-icon
-            name="lucideRotateCcw"
-            class="h-3.5 w-3.5"
-            [class.animate-spin]="loading()"
-          />
+          <ng-icon name="lucideRotateCcw" class="h-3.5 w-3.5" [class.animate-spin]="loading()" />
           Refresh
         </button>
       </app-mail-section-nav>
@@ -149,8 +138,10 @@ const KIND_CLASS: Record<string, string> = {
                   <td class="px-4 py-2">
                     <div class="max-w-md truncate text-foreground">{{ e.subject ?? '—' }}</div>
                     @if (e.reason) {
-                      <div class="max-w-md truncate font-mono text-[11px] text-red-600 dark:text-red-400"
-                           [title]="e.reason">
+                      <div
+                        class="max-w-md truncate font-mono text-[11px] text-red-600 dark:text-red-400"
+                        [title]="e.reason"
+                      >
                         {{ e.code ? e.code + ' ' : '' }}{{ e.reason }}
                       </div>
                     }

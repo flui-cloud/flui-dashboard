@@ -1,4 +1,14 @@
-import { Component, OnChanges, SimpleChanges, computed, effect, inject, signal, input, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnChanges,
+  SimpleChanges,
+  computed,
+  effect,
+  inject,
+  signal,
+  input,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { RouterModule } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
@@ -39,16 +49,21 @@ type ReleaseStatus = ApplicationReleaseDto.StatusEnum;
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (release(); as r) {
-      <div
-        class="rounded-lg border px-4 py-3"
-        [class]="containerClass(r.status)"
-      >
+      <div class="rounded-lg border px-4 py-3" [class]="containerClass(r.status)">
         <div class="flex items-start gap-3">
-          <ng-icon [name]="iconFor(r.status)" class="h-5 w-5 flex-shrink-0 mt-0.5" [class]="iconClass(r.status)" [class.animate-spin]="r.status === 'IN_PROGRESS'" />
+          <ng-icon
+            [name]="iconFor(r.status)"
+            class="h-5 w-5 flex-shrink-0 mt-0.5"
+            [class]="iconClass(r.status)"
+            [class.animate-spin]="r.status === 'IN_PROGRESS'"
+          />
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 flex-wrap">
               <span class="text-sm font-semibold">{{ titleFor(r.status) }}</span>
-              <span class="text-xs px-2 py-0.5 rounded-full font-medium" [class]="badgeClass(r.status)">
+              <span
+                class="text-xs px-2 py-0.5 rounded-full font-medium"
+                [class]="badgeClass(r.status)"
+              >
                 {{ statusLabel(r.status) }}
               </span>
               @if (r.startedAt) {
@@ -62,7 +77,10 @@ type ReleaseStatus = ApplicationReleaseDto.StatusEnum;
             @if (r.imageRef || r.previousImageRef) {
               <div class="mt-2 flex items-center gap-2 text-xs font-mono flex-wrap min-w-0">
                 @if (r.previousImageRef && r.previousImageRef !== r.imageRef) {
-                  <span class="text-gray-500 dark:text-gray-400 truncate" [title]="r.previousImageRef">
+                  <span
+                    class="text-gray-500 dark:text-gray-400 truncate"
+                    [title]="r.previousImageRef"
+                  >
                     {{ shortImage(r.previousImageRef) }}
                   </span>
                   <ng-icon name="lucideArrowRight" class="h-3 w-3 text-gray-400 flex-shrink-0" />
@@ -77,7 +95,9 @@ type ReleaseStatus = ApplicationReleaseDto.StatusEnum;
 
             <!-- Failure reason -->
             @if (r.status === 'FAILED' && r.failureReason) {
-              <p class="mt-2 text-xs whitespace-pre-wrap break-words text-red-700 dark:text-red-300">
+              <p
+                class="mt-2 text-xs whitespace-pre-wrap break-words text-red-700 dark:text-red-300"
+              >
                 {{ r.failureReason }}
               </p>
             }
@@ -177,41 +197,58 @@ export class AppLatestReleaseCardComponent implements OnChanges {
 
   iconClass(status: ReleaseStatus): string {
     switch (status) {
-      case 'FAILED': return 'text-red-600 dark:text-red-400';
-      case 'IN_PROGRESS': return 'text-blue-600 dark:text-blue-400';
-      case 'ROLLED_BACK': return 'text-amber-600 dark:text-amber-400';
+      case 'FAILED':
+        return 'text-red-600 dark:text-red-400';
+      case 'IN_PROGRESS':
+        return 'text-blue-600 dark:text-blue-400';
+      case 'ROLLED_BACK':
+        return 'text-amber-600 dark:text-amber-400';
       case 'SUCCEEDED':
-      default: return 'text-green-600 dark:text-green-400';
+      default:
+        return 'text-green-600 dark:text-green-400';
     }
   }
 
   iconFor(status: ReleaseStatus): string {
     switch (status) {
-      case 'FAILED': return 'lucideTriangleAlert';
-      case 'IN_PROGRESS': return 'lucideLoader';
-      case 'ROLLED_BACK': return 'lucideRotateCcw';
+      case 'FAILED':
+        return 'lucideTriangleAlert';
+      case 'IN_PROGRESS':
+        return 'lucideLoader';
+      case 'ROLLED_BACK':
+        return 'lucideRotateCcw';
       case 'SUCCEEDED':
-      default: return 'lucideCheckCircle';
+      default:
+        return 'lucideCheckCircle';
     }
   }
 
   titleFor(status: ReleaseStatus): string {
     switch (status) {
-      case 'FAILED': return 'Last release failed';
-      case 'IN_PROGRESS': return 'Release in progress';
-      case 'ROLLED_BACK': return 'Rolled back';
+      case 'FAILED':
+        return 'Last release failed';
+      case 'IN_PROGRESS':
+        return 'Release in progress';
+      case 'ROLLED_BACK':
+        return 'Rolled back';
       case 'SUCCEEDED':
-      default: return 'Latest release';
+      default:
+        return 'Latest release';
     }
   }
 
   statusLabel(status: ReleaseStatus): string {
     switch (status) {
-      case 'IN_PROGRESS': return 'In progress';
-      case 'SUCCEEDED': return 'Succeeded';
-      case 'FAILED': return 'Failed';
-      case 'ROLLED_BACK': return 'Rolled back';
-      default: return status;
+      case 'IN_PROGRESS':
+        return 'In progress';
+      case 'SUCCEEDED':
+        return 'Succeeded';
+      case 'FAILED':
+        return 'Failed';
+      case 'ROLLED_BACK':
+        return 'Rolled back';
+      default:
+        return status;
     }
   }
 
@@ -243,7 +280,10 @@ export class AppLatestReleaseCardComponent implements OnChanges {
 
   formatDate(iso: string): string {
     const d = new Date(iso);
-    return d.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })
-      + ' ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+    return (
+      d.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }) +
+      ' ' +
+      d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
+    );
   }
 }

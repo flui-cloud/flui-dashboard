@@ -22,9 +22,12 @@ export const LOG_TIME_RANGES = [
   { label: 'Custom', value: 'custom', minutes: 0 },
 ] as const;
 
-export type LogTimeRangeValue = typeof LOG_TIME_RANGES[number]['value'];
+export type LogTimeRangeValue = (typeof LOG_TIME_RANGES)[number]['value'];
 
-export interface LogCustomRange { start: string; end: string; }
+export interface LogCustomRange {
+  start: string;
+  end: string;
+}
 
 export interface LogQueryParams {
   appId: string;
@@ -39,21 +42,21 @@ export interface LogQueryParams {
 
 function rangeToStep(start: string, end: string): string {
   const hours = (new Date(end).getTime() - new Date(start).getTime()) / 3_600_000;
-  if (hours <= 1)   return '5m';
-  if (hours <= 6)   return '15m';
-  if (hours <= 24)  return '1h';
-  if (hours <= 72)  return '1h';
+  if (hours <= 1) return '5m';
+  if (hours <= 6) return '15m';
+  if (hours <= 24) return '1h';
+  if (hours <= 72) return '1h';
   if (hours <= 168) return '1h';
   return '1d';
 }
 
 function presetToIso(rangeValue: LogTimeRangeValue): LogCustomRange {
   const now = new Date();
-  const range = LOG_TIME_RANGES.find(r => r.value === rangeValue);
+  const range = LOG_TIME_RANGES.find((r) => r.value === rangeValue);
   const minutes = range?.minutes ?? 60;
   return {
     start: new Date(now.getTime() - minutes * 60_000).toISOString(),
-    end:   now.toISOString(),
+    end: now.toISOString(),
   };
 }
 
@@ -68,19 +71,19 @@ export class ApplicationLogsService {
   }
 
   // ── Remote data ──────────────────────────────────────────────────────────
-  private readonly _logs          = signal<AppLogEntryDto[]>([]);
-  private readonly _volume        = signal<AppLogVolumeResponseDto | null>(null);
-  private readonly _loading       = signal(false);
+  private readonly _logs = signal<AppLogEntryDto[]>([]);
+  private readonly _volume = signal<AppLogVolumeResponseDto | null>(null);
+  private readonly _loading = signal(false);
   private readonly _volumeLoading = signal(false);
-  private readonly _error         = signal<string | null>(null);
-  private readonly _queriedAt     = signal<string | null>(null);
+  private readonly _error = signal<string | null>(null);
+  private readonly _queriedAt = signal<string | null>(null);
 
-  readonly logs          = this._logs.asReadonly();
-  readonly volume        = this._volume.asReadonly();
-  readonly loading       = this._loading.asReadonly();
+  readonly logs = this._logs.asReadonly();
+  readonly volume = this._volume.asReadonly();
+  readonly loading = this._loading.asReadonly();
   readonly volumeLoading = this._volumeLoading.asReadonly();
-  readonly error         = this._error.asReadonly();
-  readonly queriedAt     = this._queriedAt.asReadonly();
+  readonly error = this._error.asReadonly();
+  readonly queriedAt = this._queriedAt.asReadonly();
 
   readonly levelCounts = computed(() => {
     const counts: Partial<Record<string, number>> = {};
@@ -103,10 +106,10 @@ export class ApplicationLogsService {
   });
 
   // ── Query state ───────────────────────────────────────────────────────────
-  private readonly _appContext  = signal<{ appId: string } | null>(null);
-  private readonly _search      = signal('');
+  private readonly _appContext = signal<{ appId: string } | null>(null);
+  private readonly _search = signal('');
   private readonly _levelActive = signal<Record<string, boolean>>(
-    Object.fromEntries(ALL_LOG_LEVELS.map(l => [l, true]))
+    Object.fromEntries(ALL_LOG_LEVELS.map((l) => [l, true])),
   );
 
   /**
@@ -115,7 +118,7 @@ export class ApplicationLogsService {
    * Never overwritten by a brush drag.
    */
   private readonly _selectedRange = signal<LogTimeRangeValue>('1h');
-  private readonly _customRange   = signal<LogCustomRange | null>(null);
+  private readonly _customRange = signal<LogCustomRange | null>(null);
 
   /**
    * The "inner" range: set only by a brush drag on the histogram.
@@ -128,21 +131,26 @@ export class ApplicationLogsService {
   // ── Public readonly state ─────────────────────────────────────────────────
 
   readonly selectedRange = this._selectedRange.asReadonly();
-  readonly customRange   = this._customRange.asReadonly();
-  readonly brushRange    = this._brushRange.asReadonly();
-  readonly search        = this._search.asReadonly();
-  readonly levelActive   = this._levelActive.asReadonly();
+  readonly customRange = this._customRange.asReadonly();
+  readonly brushRange = this._brushRange.asReadonly();
+  readonly search = this._search.asReadonly();
+  readonly levelActive = this._levelActive.asReadonly();
 
   readonly selectedRangeLabel = computed(
-    () => LOG_TIME_RANGES.find(r => r.value === this._selectedRange())?.label ?? ''
+    () => LOG_TIME_RANGES.find((r) => r.value === this._selectedRange())?.label ?? '',
   );
 
   readonly customRangeLabel = computed(() => {
     const r = this._customRange();
     if (!r) return null;
-    const fmt = (iso: string) => new Date(iso).toLocaleString('en-GB', {
-      day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false,
-    });
+    const fmt = (iso: string) =>
+      new Date(iso).toLocaleString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      });
     return `${fmt(r.start)} → ${fmt(r.end)}`;
   });
 
@@ -160,7 +168,7 @@ export class ApplicationLogsService {
 
   readonly filteredLogs = computed(() => {
     const active = this._levelActive();
-    return this._logs().filter(l => {
+    return this._logs().filter((l) => {
       const lvl = (l.level ?? 'unknown').toLowerCase();
       return !!active[lvl];
     });
@@ -199,7 +207,7 @@ export class ApplicationLogsService {
   }
 
   toggleLevel(level: string) {
-    this._levelActive.update(m => ({ ...m, [level]: !m[level] }));
+    this._levelActive.update((m) => ({ ...m, [level]: !m[level] }));
     // Push the level filter down to Loki and re-query: the list is capped at 500 most-recent
     // lines (often dominated by INFO), so rare levels (e.g. a handful of ERRORs) fall outside
     // that window — a client-side filter alone would show an empty list despite the badge count.
@@ -214,10 +222,7 @@ export class ApplicationLogsService {
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
-  init(
-    ctx: { appId: string },
-    range?: LogCustomRange,
-  ) {
+  init(ctx: { appId: string }, range?: LogCustomRange) {
     this._appContext.set(ctx);
     if (range) {
       this._selectedRange.set('custom');
@@ -237,7 +242,7 @@ export class ApplicationLogsService {
     this._customRange.set(null);
     this._brushRange.set(null);
     this._search.set('');
-    this._levelActive.set(Object.fromEntries(ALL_LOG_LEVELS.map(l => [l, true])));
+    this._levelActive.set(Object.fromEntries(ALL_LOG_LEVELS.map((l) => [l, true])));
   }
 
   /** Public refresh (e.g. manual refresh button) — reloads logs on current range */
@@ -252,7 +257,7 @@ export class ApplicationLogsService {
     const ctx = this._appContext();
     if (!ctx) return;
     const vRange = this.volumeIsoRange();
-    const step   = rangeToStep(vRange.start, vRange.end);
+    const step = rangeToStep(vRange.start, vRange.end);
     // Volume (badges/histogram) always covers the full range & all levels — load it first.
     this._loadVolume(ctx.appId, vRange.start, vRange.end, step);
     this._refreshLogs();
@@ -263,11 +268,21 @@ export class ApplicationLogsService {
     const ctx = this._appContext();
     if (!ctx) return;
     const levels = this._activeLevels();
-    if (levels.length === 0) { this._logs.set([]); return; }
+    if (levels.length === 0) {
+      this._logs.set([]);
+      return;
+    }
     // All levels on → no filter; a strict subset → push it to Loki so rare levels are fetched.
     const level = levels.length === ALL_LOG_LEVELS.length ? undefined : levels.join('|');
     const lRange = this.logsIsoRange();
-    this._loadLogs({ ...ctx, tail: 500, start: lRange.start, end: lRange.end, search: this._search() || undefined, level });
+    this._loadLogs({
+      ...ctx,
+      tail: 500,
+      start: lRange.start,
+      end: lRange.end,
+      search: this._search() || undefined,
+      level,
+    });
   }
 
   private async _loadLogs(params: LogQueryParams): Promise<void> {
@@ -323,9 +338,7 @@ export class ApplicationLogsService {
     return `${this.basePath}/api/v1/observability/applications/${encodeURIComponent(appId)}/logs`;
   }
 
-  private queryParams(
-    values: Record<string, string | number | undefined>,
-  ): HttpParams {
+  private queryParams(values: Record<string, string | number | undefined>): HttpParams {
     let params = new HttpParams();
     for (const [key, value] of Object.entries(values)) {
       if (value !== undefined && value !== '') {

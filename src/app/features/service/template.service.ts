@@ -24,7 +24,7 @@ export class TemplateService {
   readonly selectedTemplate = computed(() => {
     const fw = this.selectedFramework();
     if (!fw) return null;
-    return this.templatesList().find(t => t.framework === fw) ?? null;
+    return this.templatesList().find((t) => t.framework === fw) ?? null;
   });
 
   async loadTemplates(): Promise<void> {
@@ -32,9 +32,7 @@ export class TemplateService {
     this.error.set(null);
 
     try {
-      const templates = await firstValueFrom(
-        this.templatesApi.templatesControllerListTemplates()
-      );
+      const templates = await firstValueFrom(this.templatesApi.templatesControllerListTemplates());
       this.templatesList.set(templates);
     } catch (error: any) {
       const errorMessage = error?.error?.message || error?.message || 'Failed to load templates';
@@ -51,11 +49,10 @@ export class TemplateService {
    */
   async useTemplate(framework: string, dto: UseTemplateDto): Promise<UseTemplateResponseDto> {
     try {
-      return await firstValueFrom(
-        this.templatesApi.templatesControllerUseTemplate(framework, dto)
-      );
+      return await firstValueFrom(this.templatesApi.templatesControllerUseTemplate(framework, dto));
     } catch (error: any) {
-      const msg = error?.error?.message || error?.message || 'Failed to create repository from template';
+      const msg =
+        error?.error?.message || error?.message || 'Failed to create repository from template';
       this.error.set(msg);
       throw error;
     }

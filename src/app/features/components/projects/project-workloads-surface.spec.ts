@@ -110,7 +110,14 @@ describe('project workloads surface producer', () => {
 
   it('gives the unassigned section no project entity — those workloads belong to no project', () => {
     const snapshot = snapshotOf({
-      sections: [section({ projectId: null, name: 'Unassigned', slug: undefined, groups: [group({ id: 'grp-9' })] })],
+      sections: [
+        section({
+          projectId: null,
+          name: 'Unassigned',
+          slug: undefined,
+          groups: [group({ id: 'grp-9' })],
+        }),
+      ],
     });
     const list = scope(snapshot, 'project-workloads:section:__unassigned')!;
     expect(list.entities).toBeUndefined();
@@ -121,32 +128,43 @@ describe('project workloads surface producer', () => {
   });
 
   it('claims no rows for a collapsed section, and says why instead of pretending it is empty', () => {
-    const snapshot = snapshotOf({ sections: [section({ collapsed: true, groups: [group(), group({ id: 'grp-2' })] })] });
+    const snapshot = snapshotOf({
+      sections: [section({ collapsed: true, groups: [group(), group({ id: 'grp-2' })] })],
+    });
     const list = scope(snapshot, 'project-workloads:section:p-1')!;
     expect(list.completeness).toEqual({ shown: 0, total: 2, filtered: true });
     expect(list.state).toEqual({ loading: false, empty: false });
     expect(
-      list.observations!.find((o) => o.key === 'flui.project_workloads.section_collapsed')!.presentedAs.value,
+      list.observations!.find((o) => o.key === 'flui.project_workloads.section_collapsed')!
+        .presentedAs.value,
     ).toBe(true);
     expect(scope(snapshot, 'project-workloads:section:p-1:grp-1')).toBeUndefined();
   });
 
   it('carries the summary line the header prints, and the section slug beside it', () => {
     const list = scope(snapshotOf(), 'project-workloads:section:p-1')!;
-    expect(list.observations!.find((o) => o.key === 'flui.project_workloads.section_summary')!.presentedAs.text).toBe(
-      '1 application',
+    expect(
+      list.observations!.find((o) => o.key === 'flui.project_workloads.section_summary')!
+        .presentedAs.text,
+    ).toBe('1 application');
+    expect(list.observations!.find((o) => o.key === 'flui.project.slug')!.presentedAs.text).toBe(
+      'acme',
     );
-    expect(list.observations!.find((o) => o.key === 'flui.project.slug')!.presentedAs.text).toBe('acme');
   });
 
   it('counts system workloads as a filter, because the page hides them unless asked', () => {
     expect(scope(snapshotOf(), 'project-workloads:section:p-1')!.completeness!.filtered).toBe(true);
-    expect(scope(snapshotOf({ includeSystem: true }), 'project-workloads:section:p-1')!.completeness!.filtered).toBeUndefined();
+    expect(
+      scope(snapshotOf({ includeSystem: true }), 'project-workloads:section:p-1')!.completeness!
+        .filtered,
+    ).toBeUndefined();
   });
 
   it('never observes the search term itself, only that one is active', () => {
     const snapshot = snapshotOf({ hasSearch: true });
-    expect(obsOf(snapshot, 'project-workloads', 'flui.project_workloads.searching')!.presentedAs.value).toBe(true);
+    expect(
+      obsOf(snapshot, 'project-workloads', 'flui.project_workloads.searching')!.presentedAs.value,
+    ).toBe(true);
     expect(JSON.stringify(snapshot)).not.toContain('search_term');
   });
 
@@ -156,8 +174,14 @@ describe('project workloads surface producer', () => {
     expect(snapshotOf({ createOpen: true }).attention).toEqual([
       { scopeId: 'project-workloads:create', reason: 'active-view' },
     ]);
-    expect(snapshotOf({ createOpen: true, editing: { id: 'p-1', name: 'Acme' } }).attention).toEqual([
-      { scopeId: 'project-workloads:edit', entityRef: projectEntityRef('p-1'), reason: 'selection' },
+    expect(
+      snapshotOf({ createOpen: true, editing: { id: 'p-1', name: 'Acme' } }).attention,
+    ).toEqual([
+      {
+        scopeId: 'project-workloads:edit',
+        entityRef: projectEntityRef('p-1'),
+        reason: 'selection',
+      },
     ]);
     expect(
       snapshotOf({
@@ -166,7 +190,11 @@ describe('project workloads surface producer', () => {
         pendingAppDelete: { id: 'app-4', name: 'demo-api' },
       }).attention,
     ).toEqual([
-      { scopeId: 'project-workloads:delete-workload', entityRef: applicationEntityRef('app-4'), reason: 'overlay' },
+      {
+        scopeId: 'project-workloads:delete-workload',
+        entityRef: applicationEntityRef('app-4'),
+        reason: 'overlay',
+      },
     ]);
     expect(
       snapshotOf({
@@ -176,7 +204,11 @@ describe('project workloads surface producer', () => {
         pendingProjectDelete: { id: 'p-1', name: 'Acme' },
       }).attention,
     ).toEqual([
-      { scopeId: 'project-workloads:delete-project', entityRef: projectEntityRef('p-1'), reason: 'overlay' },
+      {
+        scopeId: 'project-workloads:delete-project',
+        entityRef: projectEntityRef('p-1'),
+        reason: 'overlay',
+      },
     ]);
   });
 
@@ -186,7 +218,9 @@ describe('project workloads surface producer', () => {
         projectId: `p-${i}`,
         name: `Project ${i}`,
         slug: `project-${i}`,
-        groups: Array.from({ length: 14 }, (__, j) => group({ id: `grp-${i}-${j}`, name: `app-${i}-${j}` })),
+        groups: Array.from({ length: 14 }, (__, j) =>
+          group({ id: `grp-${i}-${j}`, name: `app-${i}-${j}` }),
+        ),
       }),
     );
     const snapshot = snapshotOf({ sections: many, projectCount: 20 });
@@ -197,8 +231,14 @@ describe('project workloads surface producer', () => {
       filtered: true,
       truncated: true,
     });
-    expect(obsOf(snapshot, 'project-workloads', 'flui.project_workloads.sections_shown')!.presentedAs.value).toBe(12);
-    expect(obsOf(snapshot, 'project-workloads', 'flui.project_workloads.sections_total')!.presentedAs.value).toBe(20);
+    expect(
+      obsOf(snapshot, 'project-workloads', 'flui.project_workloads.sections_shown')!.presentedAs
+        .value,
+    ).toBe(12);
+    expect(
+      obsOf(snapshot, 'project-workloads', 'flui.project_workloads.sections_total')!.presentedAs
+        .value,
+    ).toBe(20);
     expect(snapshot.surface.truncated).toBe(true);
     expectValidSurface(snapshot);
   });
@@ -247,7 +287,10 @@ describe('project workloads surface producer', () => {
 
   it('flags a snapshot whose revision does not advance on the previous one', () => {
     const first = snapshotOf();
-    const stale = { ...snapshotOf(), surface: { ...snapshotOf().surface, revision: first.surface.revision } };
+    const stale = {
+      ...snapshotOf(),
+      surface: { ...snapshotOf().surface, revision: first.surface.revision },
+    };
     expect(validateSurfaceSemantics(stale, { previousSnapshot: first })).toEqual([
       jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' }),
     ]);

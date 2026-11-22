@@ -56,7 +56,10 @@ export class AppVersioningService {
     });
   });
 
-  async loadAvailableVersions(appId: string, limit: number = this.DEFAULT_PAGE_SIZE): Promise<void> {
+  async loadAvailableVersions(
+    appId: string,
+    limit: number = this.DEFAULT_PAGE_SIZE,
+  ): Promise<void> {
     this.loadingSig.set(true);
     this.errorSig.set(null);
     try {

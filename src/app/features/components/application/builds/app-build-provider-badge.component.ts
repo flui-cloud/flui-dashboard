@@ -16,15 +16,35 @@ const BASE = 'inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-
 function metaFor(provider: Provider): ProviderMeta {
   switch (provider) {
     case 'GITHUB_ACTIONS':
-      return { label: 'GitHub Actions', icon: 'lucideGithub', cssClass: `${BASE} bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400` };
+      return {
+        label: 'GitHub Actions',
+        icon: 'lucideGithub',
+        cssClass: `${BASE} bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400`,
+      };
     case 'IN_CLUSTER_AGENT':
-      return { label: 'Flui In-Cluster', icon: 'lucideHammer', cssClass: `${BASE} bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400` };
+      return {
+        label: 'Flui In-Cluster',
+        icon: 'lucideHammer',
+        cssClass: `${BASE} bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400`,
+      };
     case 'RAILPACK':
-      return { label: 'Railpack', icon: 'lucideBox', cssClass: `${BASE} bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400` };
+      return {
+        label: 'Railpack',
+        icon: 'lucideBox',
+        cssClass: `${BASE} bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400`,
+      };
     case 'DOCKERFILE':
-      return { label: 'Dockerfile', icon: 'lucideFileCode', cssClass: `${BASE} bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300` };
+      return {
+        label: 'Dockerfile',
+        icon: 'lucideFileCode',
+        cssClass: `${BASE} bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300`,
+      };
     default:
-      return { label: provider, icon: 'lucideHammer', cssClass: `${BASE} bg-muted text-muted-foreground` };
+      return {
+        label: provider,
+        icon: 'lucideHammer',
+        cssClass: `${BASE} bg-muted text-muted-foreground`,
+      };
   }
 }
 

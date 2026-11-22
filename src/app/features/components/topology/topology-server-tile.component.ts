@@ -17,31 +17,63 @@ import { percent } from './topology-format';
           <span class="flex min-w-0 flex-1 flex-col gap-2 p-3">
             <span class="flex items-start justify-between gap-2">
               <span class="min-w-0">
-                <span class="block truncate font-mono text-sm font-semibold text-foreground" [title]="tile().server.nodeName">{{ tile().label }}</span>
+                <span
+                  class="block truncate font-mono text-sm font-semibold text-foreground"
+                  [title]="tile().server.nodeName"
+                  >{{ tile().label }}</span
+                >
                 <span class="text-sub block truncate">{{ subtitle() }}</span>
               </span>
-              <span class="flex-none rounded-md px-1.5 py-0.5 font-mono text-xs font-semibold"
-                    [style.background]="look().background" [style.color]="look().color">{{ tile().valueText }}</span>
+              <span
+                class="flex-none rounded-md px-1.5 py-0.5 font-mono text-xs font-semibold"
+                [style.background]="look().background"
+                [style.color]="look().color"
+                >{{ tile().valueText }}</span
+              >
             </span>
-            <span class="grid grid-cols-[3.25rem_minmax(0,1fr)_2.5rem] items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
+            <span
+              class="grid grid-cols-[3.25rem_minmax(0,1fr)_2.5rem] items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground"
+            >
               <span>Memory</span>
-              <span class="block h-1.5 rounded-full bg-muted"><span class="block h-1.5 rounded-full" [style.width.%]="mem() ?? 0" [style.background]="barColor(mem())"></span></span>
+              <span class="block h-1.5 rounded-full bg-muted"
+                ><span
+                  class="block h-1.5 rounded-full"
+                  [style.width.%]="mem() ?? 0"
+                  [style.background]="barColor(mem())"
+                ></span
+              ></span>
               <span class="text-right font-mono text-foreground">{{ pct(mem()) }}</span>
               <span>CPU</span>
-              <span class="block h-1.5 rounded-full bg-muted"><span class="block h-1.5 rounded-full" [style.width.%]="cpu() ?? 0" [style.background]="barColor(cpu())"></span></span>
+              <span class="block h-1.5 rounded-full bg-muted"
+                ><span
+                  class="block h-1.5 rounded-full"
+                  [style.width.%]="cpu() ?? 0"
+                  [style.background]="barColor(cpu())"
+                ></span
+              ></span>
               <span class="text-right font-mono text-foreground">{{ pct(cpu()) }}</span>
             </span>
             <span class="flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
-              <span>{{ tile().server.podCount }} replica{{ tile().server.podCount === 1 ? '' : 's' }}</span>
+              <span
+                >{{ tile().server.podCount }} replica{{
+                  tile().server.podCount === 1 ? '' : 's'
+                }}</span
+              >
               <span class="truncate">{{ network() }}</span>
             </span>
           </span>
         </span>
       }
       @case ('medium') {
-        <span class="flex h-full flex-col justify-between rounded-md border p-2 text-left font-mono text-[11px] font-medium leading-tight"
-              [style.background]="look().background" [style.color]="look().color" [style.border-color]="look().border">
-          <span class="line-clamp-2 break-words" [title]="tile().server.nodeName">{{ wrapped() }}</span>
+        <span
+          class="flex h-full flex-col justify-between rounded-md border p-2 text-left font-mono text-[11px] font-medium leading-tight"
+          [style.background]="look().background"
+          [style.color]="look().color"
+          [style.border-color]="look().border"
+        >
+          <span class="line-clamp-2 break-words" [title]="tile().server.nodeName">{{
+            wrapped()
+          }}</span>
           <span class="flex items-center justify-between">
             <span>{{ tile().valueText }}</span>
             @if (tile().server.architecture === 'arm') {
@@ -51,21 +83,30 @@ import { percent } from './topology-format';
         </span>
       }
       @default {
-        <span class="flex h-full flex-col justify-between rounded-md border p-1.5 text-left font-mono text-[10px] font-medium leading-tight"
-              [style.background]="look().background" [style.color]="look().color" [style.border-color]="look().border">
+        <span
+          class="flex h-full flex-col justify-between rounded-md border p-1.5 text-left font-mono text-[10px] font-medium leading-tight"
+          [style.background]="look().background"
+          [style.color]="look().color"
+          [style.border-color]="look().border"
+        >
           <span class="truncate" [title]="tile().server.nodeName">{{ tile().label }}</span>
           <span class="flex items-center justify-between">
             <span class="opacity-90">{{ tile().valueText }}</span>
             @if (tile().server.architecture === 'arm') {
-              <span class="rounded-sm px-0.5 text-[8px] uppercase opacity-90 ring-1 ring-current">arm</span>
+              <span class="rounded-sm px-0.5 text-[8px] uppercase opacity-90 ring-1 ring-current"
+                >arm</span
+              >
             }
           </span>
         </span>
       }
     }
     @if (tile().replicas) {
-      <span class="absolute -right-2 -top-2 flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold"
-            style="background: hsl(var(--brand)); color: hsl(var(--primary-foreground)); box-shadow: 0 0 0 2px hsl(var(--card))">{{ tile().replicas }}</span>
+      <span
+        class="absolute -right-2 -top-2 flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold"
+        style="background: hsl(var(--brand)); color: hsl(var(--primary-foreground)); box-shadow: 0 0 0 2px hsl(var(--card))"
+        >{{ tile().replicas }}</span
+      >
     }
   `,
 })
@@ -82,7 +123,9 @@ export class TopologyServerTileComponent {
   protected readonly subtitle = computed(() => {
     const s = this.tile().server;
     const role = s.role === 'control-plane' ? 'control plane' : 'worker';
-    return [role, s.serverType, s.architecture === 'arm' ? 'arm' : s.architecture].filter(Boolean).join(' · ');
+    return [role, s.serverType, s.architecture === 'arm' ? 'arm' : s.architecture]
+      .filter(Boolean)
+      .join(' · ');
   });
 
   /** The stripe carries the colour mode; for network it is the network's own colour. */

@@ -61,7 +61,7 @@ describe('ClusterMetricsHistoryService', () => {
         { in: 17_265, out: 50_667 },
         { in: 21_880, out: 64_522 },
         { in: 50_894, out: 160_806 },
-      ])
+      ]),
     );
 
     expect(service.averages().network).toEqual([38_021, 67_932, 86_402, 211_700]);
@@ -74,7 +74,7 @@ describe('ClusterMetricsHistoryService', () => {
         { in: 17_265, out: 50_667 },
         { in: 21_880, out: 64_522 },
         { in: 50_894, out: 160_806 },
-      ])
+      ]),
     );
 
     // The live poll says 57 KB/s while the window typically ran at 77 KB/s: that
@@ -92,7 +92,7 @@ describe('ClusterMetricsHistoryService', () => {
         { in: 21_880, out: 64_522 },
         { in: 21_000, out: 64_000 },
         { in: 22_000, out: 65_000 },
-      ])
+      ]),
     );
 
     expect(service.averages().network).toEqual([86_402, 85_000, 87_000]);
@@ -100,7 +100,11 @@ describe('ClusterMetricsHistoryService', () => {
   });
 
   it('names every node while the palette can, and summarises once it cannot', async () => {
-    const body = history([{ in: 1, out: 1 }, { in: 2, out: 2 }, { in: 3, out: 3 }]);
+    const body = history([
+      { in: 1, out: 1 },
+      { in: 2, out: 2 },
+      { in: 3, out: 3 },
+    ]);
     body.servers = Array.from({ length: 5 }, (_, i) => ({
       ...body.servers[0],
       instance: `node-${i}`,
@@ -113,8 +117,14 @@ describe('ClusterMetricsHistoryService', () => {
     expect(service.cpu()?.series.map((s) => s.name)).toEqual(['Cluster average', 'Busiest node']);
   });
 
-  it('drops another cluster\'s window before asking for this one', async () => {
-    await load(history([{ in: 10, out: 10 }, { in: 20, out: 20 }, { in: 30, out: 30 }]));
+  it("drops another cluster's window before asking for this one", async () => {
+    await load(
+      history([
+        { in: 10, out: 10 },
+        { in: 20, out: 20 },
+        { in: 30, out: 30 },
+      ]),
+    );
     expect(service.hasData()).toBeTrue();
 
     const done = service.load('c2');

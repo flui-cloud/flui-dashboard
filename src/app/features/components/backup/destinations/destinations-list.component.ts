@@ -1,4 +1,13 @@
-import { Component, OnDestroy, OnInit, computed, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnDestroy,
+  OnInit,
+  computed,
+  effect,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { Router, RouterLink } from '@angular/router';
 import { BackupService } from '../../../service/backup.service';
@@ -21,7 +30,12 @@ import {
 @Component({
   selector: 'app-destinations-list',
   standalone: true,
-  imports: [ReadOnlySectionDirective, RouterLink, BackupStatusBadgeComponent, BackupBackLinkComponent],
+  imports: [
+    ReadOnlySectionDirective,
+    RouterLink,
+    BackupStatusBadgeComponent,
+    BackupBackLinkComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="p-6 space-y-4">
@@ -42,13 +56,15 @@ import {
         </a>
       </header>
 
-      <div class="rounded-lg border border-primary/30 bg-primary/5 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div
+        class="rounded-lg border border-primary/30 bg-primary/5 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+      >
         <div>
           <p class="text-sm font-medium">⚡ One-click Scaleway backups</p>
           <p class="text-xs text-muted-foreground mt-0.5">
-            Pick a cluster and Flui provisions the destination, protects every app on it and takes the first backups
-            automatically — using your existing Scaleway credentials. Most users don't need to add a
-            destination by hand.
+            Pick a cluster and Flui provisions the destination, protects every app on it and takes
+            the first backups automatically — using your existing Scaleway credentials. Most users
+            don't need to add a destination by hand.
           </p>
         </div>
         <a
@@ -61,75 +77,82 @@ import {
       </div>
 
       @if (backup.error()) {
-      <div class="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-400">
-        {{ backup.error() }}
-      </div>
-      } @if (backup.loading()) {
-      <p class="text-sm text-muted-foreground">Loading…</p>
+        <div
+          class="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-400"
+        >
+          {{ backup.error() }}
+        </div>
+      }
+      @if (backup.loading()) {
+        <p class="text-sm text-muted-foreground">Loading…</p>
       } @else if (backup.destinations().length === 0) {
-      <div class="rounded-lg border border-dashed border-border p-8 text-center">
-        <p class="text-sm text-muted-foreground">
-          No destinations yet. Use <span class="font-medium text-foreground">one-click Scaleway backups</span>
-          above, or add an external S3 bucket manually.
-        </p>
-      </div>
+        <div class="rounded-lg border border-dashed border-border p-8 text-center">
+          <p class="text-sm text-muted-foreground">
+            No destinations yet. Use
+            <span class="font-medium text-foreground">one-click Scaleway backups</span>
+            above, or add an external S3 bucket manually.
+          </p>
+        </div>
       } @else {
-      <div class="overflow-hidden rounded-lg border border-border bg-card">
-        <table class="w-full text-sm">
-          <thead class="bg-muted/40 text-xs uppercase text-muted-foreground">
-            <tr>
-              <th class="text-left px-4 py-2">Name</th>
-              <th class="text-left px-4 py-2">Provider</th>
-              <th class="text-left px-4 py-2">Region / Bucket</th>
-              <th class="text-left px-4 py-2">Health</th>
-              <th class="text-left px-4 py-2">Usage</th>
-              <th class="text-right px-4 py-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (d of backup.destinations(); track d.id) {
-            <tr class="border-t border-border hover:bg-muted/20">
-              <td class="px-4 py-2">
-                <a [routerLink]="['/management/backup/destinations', d.id]" class="font-medium hover:underline">
-                  {{ d.name }}
-                </a>
-              </td>
-              <td class="px-4 py-2 text-muted-foreground">{{ providerLabel(d.provider) }}</td>
-              <td class="px-4 py-2 text-muted-foreground">{{ d.region }} / {{ d.bucket }}</td>
-              <td class="px-4 py-2">
-                <app-backup-status-badge kind="health" [value]="d.healthStatus" />
-              </td>
-              <td class="px-4 py-2 text-muted-foreground">{{ formatBytes(d.usageBytes) }}</td>
-              <td class="px-4 py-2 text-right space-x-2">
-                <button
-                  type="button"
-                  class="text-xs text-primary hover:underline"
-                  [disabled]="busy().has(d.id)"
-                  (click)="onTest(d.id)"
-                >
-                  Test
-                </button>
-                <button
-                  type="button"
-                  class="text-xs text-primary hover:underline"
-                  [disabled]="busy().has(d.id)"
-                  (click)="onRefresh(d.id)"
-                >
-                  Refresh usage
-                </button>
-                <button
-                  type="button"
-                  class="text-xs text-red-600 hover:underline"
-                  (click)="onDelete(d.id)"
-                >
-                  Delete
-                </button>
-              </td>
-            </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+        <div class="overflow-hidden rounded-lg border border-border bg-card">
+          <table class="w-full text-sm">
+            <thead class="bg-muted/40 text-xs uppercase text-muted-foreground">
+              <tr>
+                <th class="text-left px-4 py-2">Name</th>
+                <th class="text-left px-4 py-2">Provider</th>
+                <th class="text-left px-4 py-2">Region / Bucket</th>
+                <th class="text-left px-4 py-2">Health</th>
+                <th class="text-left px-4 py-2">Usage</th>
+                <th class="text-right px-4 py-2">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (d of backup.destinations(); track d.id) {
+                <tr class="border-t border-border hover:bg-muted/20">
+                  <td class="px-4 py-2">
+                    <a
+                      [routerLink]="['/management/backup/destinations', d.id]"
+                      class="font-medium hover:underline"
+                    >
+                      {{ d.name }}
+                    </a>
+                  </td>
+                  <td class="px-4 py-2 text-muted-foreground">{{ providerLabel(d.provider) }}</td>
+                  <td class="px-4 py-2 text-muted-foreground">{{ d.region }} / {{ d.bucket }}</td>
+                  <td class="px-4 py-2">
+                    <app-backup-status-badge kind="health" [value]="d.healthStatus" />
+                  </td>
+                  <td class="px-4 py-2 text-muted-foreground">{{ formatBytes(d.usageBytes) }}</td>
+                  <td class="px-4 py-2 text-right space-x-2">
+                    <button
+                      type="button"
+                      class="text-xs text-primary hover:underline"
+                      [disabled]="busy().has(d.id)"
+                      (click)="onTest(d.id)"
+                    >
+                      Test
+                    </button>
+                    <button
+                      type="button"
+                      class="text-xs text-primary hover:underline"
+                      [disabled]="busy().has(d.id)"
+                      (click)="onRefresh(d.id)"
+                    >
+                      Refresh usage
+                    </button>
+                    <button
+                      type="button"
+                      class="text-xs text-red-600 hover:underline"
+                      (click)="onDelete(d.id)"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
       }
     </div>
   `,
@@ -171,10 +194,7 @@ export class DestinationsListComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     void (async () => {
-      await Promise.all([
-        this.backup.loadPresets(),
-        this.backup.loadDestinations(),
-      ]);
+      await Promise.all([this.backup.loadPresets(), this.backup.loadDestinations()]);
     })();
   }
 
@@ -191,8 +211,7 @@ export class DestinationsListComponent implements OnInit, OnDestroy {
   }
 
   async onDelete(id: string): Promise<void> {
-    if (!confirm('Delete this destination? Policies referencing it must be removed first.'))
-      return;
+    if (!confirm('Delete this destination? Policies referencing it must be removed first.')) return;
     await this.backup.deleteDestination(id);
   }
 

@@ -246,7 +246,9 @@ export class VisitorSignInService {
     write(LINK_KEY, null);
     try {
       const answer = await firstValueFrom(
-        this.http.post<{ outcome: 'linked'; returnTo: string | null }>(`${this.base}/link`, { nonce }),
+        this.http.post<{ outcome: 'linked'; returnTo: string | null }>(`${this.base}/link`, {
+          nonce,
+        }),
       );
       this.toast.showSuccess('Your visit is now part of your account.');
       await this.resume(answer.returnTo);

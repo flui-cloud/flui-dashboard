@@ -1,8 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import {
-  AgentConcession,
-  ConcessionOperation,
-} from '../../model/agent-cycle.models';
+import { AgentConcession, ConcessionOperation } from '../../model/agent-cycle.models';
 import { AgentRevokeDialogComponent } from './agent-revoke-dialog.component';
 
 const CONCESSION: AgentConcession = {
@@ -36,9 +33,7 @@ const RUNNING: ConcessionOperation[] = [
 describe('taking a standing permission back', () => {
   let fixture: ComponentFixture<AgentRevokeDialogComponent>;
 
-  const build = async (
-    inputs: Record<string, unknown> = {},
-  ): Promise<void> => {
+  const build = async (inputs: Record<string, unknown> = {}): Promise<void> => {
     await TestBed.configureTestingModule({
       imports: [AgentRevokeDialogComponent],
     }).compileComponents();
@@ -60,9 +55,7 @@ describe('taking a standing permission back', () => {
 
   it('names the permission being taken back, in the words it was granted in', async () => {
     await build();
-    expect(find('revoke-dialog')?.textContent).toContain(
-      'add nodes to cluster c-1',
-    );
+    expect(find('revoke-dialog')?.textContent).toContain('add nodes to cluster c-1');
   });
 
   it('says what carries on regardless', async () => {

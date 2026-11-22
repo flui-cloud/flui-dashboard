@@ -1,4 +1,11 @@
-import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  computed,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -57,9 +64,11 @@ const ALL_SEVERITIES: CrashSeverity[] = ['critical', 'warning', 'info'];
           <button
             type="button"
             class="text-xs px-2 py-0.5 rounded border"
-            [ngClass]="severityFilter() === null
-              ? 'bg-blue-50 border-blue-300 text-blue-700 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400'
-              : 'border-gray-200 text-gray-600 dark:border-gray-700 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'"
+            [ngClass]="
+              severityFilter() === null
+                ? 'bg-blue-50 border-blue-300 text-blue-700 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400'
+                : 'border-gray-200 text-gray-600 dark:border-gray-700 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+            "
             (click)="severityFilter.set(null)"
           >
             All
@@ -68,9 +77,11 @@ const ALL_SEVERITIES: CrashSeverity[] = ['critical', 'warning', 'info'];
             <button
               type="button"
               class="text-xs px-2 py-0.5 rounded border capitalize"
-              [ngClass]="severityFilter() === s
-                ? 'bg-blue-50 border-blue-300 text-blue-700 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400'
-                : 'border-gray-200 text-gray-600 dark:border-gray-700 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'"
+              [ngClass]="
+                severityFilter() === s
+                  ? 'bg-blue-50 border-blue-300 text-blue-700 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400'
+                  : 'border-gray-200 text-gray-600 dark:border-gray-700 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+              "
               (click)="severityFilter.set(s)"
             >
               {{ s }}
@@ -108,7 +119,9 @@ const ALL_SEVERITIES: CrashSeverity[] = ['critical', 'warning', 'info'];
 
       <!-- Error -->
       @if (service.error()) {
-        <div class="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
+        <div
+          class="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm"
+        >
           <ng-icon name="lucideCircleAlert" class="h-4 w-4 shrink-0" />
           {{ service.error() }}
         </div>
@@ -116,12 +129,19 @@ const ALL_SEVERITIES: CrashSeverity[] = ['critical', 'warning', 'info'];
 
       <!-- List -->
       @if (service.loading() && filtered().length === 0) {
-        <div class="flex items-center justify-center py-12 text-sm text-gray-500 dark:text-gray-400">
+        <div
+          class="flex items-center justify-center py-12 text-sm text-gray-500 dark:text-gray-400"
+        >
           Loading diagnoses…
         </div>
       } @else if (filtered().length === 0) {
-        <div class="flex flex-col items-center justify-center py-16 text-center border border-dashed border-gray-200 dark:border-gray-700 rounded-lg">
-          <ng-icon name="lucideShieldAlert" class="h-10 w-10 text-gray-300 dark:text-gray-600 mb-3" />
+        <div
+          class="flex flex-col items-center justify-center py-16 text-center border border-dashed border-gray-200 dark:border-gray-700 rounded-lg"
+        >
+          <ng-icon
+            name="lucideShieldAlert"
+            class="h-10 w-10 text-gray-300 dark:text-gray-600 mb-3"
+          />
           <p class="text-sm font-medium text-gray-700 dark:text-gray-300">No diagnoses</p>
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
             All clear — no crashes detected for the current filters.
@@ -135,7 +155,13 @@ const ALL_SEVERITIES: CrashSeverity[] = ['critical', 'warning', 'info'];
         </div>
         @if (canLoadMore()) {
           <div class="flex justify-center pt-2">
-            <button hlmBtn variant="outline" size="sm" (click)="loadMore()" [disabled]="service.loading()">
+            <button
+              hlmBtn
+              variant="outline"
+              size="sm"
+              (click)="loadMore()"
+              [disabled]="service.loading()"
+            >
               Load more
             </button>
           </div>
@@ -174,7 +200,7 @@ export class AppDiagnosesTabComponent implements OnInit {
   readonly filtered = computed(() => {
     const sev = this.severityFilter();
     const cat = this.categoryFilter();
-    return this.service.diagnoses().filter(d => {
+    return this.service.diagnoses().filter((d) => {
       if (sev && d.severity !== sev) return false;
       if (cat && d.category !== cat) return false;
       return true;

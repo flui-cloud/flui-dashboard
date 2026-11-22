@@ -5,7 +5,7 @@ export const clusterRoutes: Routes = [
     path: '',
     loadComponent: () =>
       import('./features/components/cluster/cluster-list.component').then(
-        (m) => m.ClusterListComponent
+        (m) => m.ClusterListComponent,
       ),
     title: 'Clusters - flui.cloud',
   },
@@ -17,25 +17,25 @@ export const clusterRoutes: Routes = [
   {
     path: 'new',
     loadComponent: () =>
-      import(
-        './features/components/cluster/cluster-creation-wizard.component'
-      ).then((m) => m.ClusterCreationWizardComponent),
+      import('./features/components/cluster/cluster-creation-wizard.component').then(
+        (m) => m.ClusterCreationWizardComponent,
+      ),
     title: 'Create Cluster - flui.cloud',
   },
   {
     path: 'create/:operationId',
     loadComponent: () =>
-      import(
-        './features/components/cluster/cluster-progress-tracker.component'
-      ).then((m) => m.ClusterProgressTrackerComponent),
+      import('./features/components/cluster/cluster-progress-tracker.component').then(
+        (m) => m.ClusterProgressTrackerComponent,
+      ),
     title: 'Creating Cluster - flui.cloud',
   },
   {
     path: ':id',
     loadComponent: () =>
-      import(
-        './features/components/cluster/cluster-dashboard.component'
-      ).then((m) => m.ClusterDashboardComponent),
+      import('./features/components/cluster/cluster-dashboard.component').then(
+        (m) => m.ClusterDashboardComponent,
+      ),
     title: 'Cluster Details - flui.cloud',
     children: [
       { path: '', redirectTo: 'overview', pathMatch: 'full' },
@@ -43,42 +43,42 @@ export const clusterRoutes: Routes = [
         path: 'overview',
         loadComponent: () =>
           import('./features/components/cluster/cluster-overview-tab.component').then(
-            (m) => m.ClusterOverviewTabComponent
+            (m) => m.ClusterOverviewTabComponent,
           ),
       },
       {
         path: 'monitoring',
         loadComponent: () =>
           import('./features/components/cluster/cluster-monitoring-tab.component').then(
-            (m) => m.ClusterMonitoringTabComponent
+            (m) => m.ClusterMonitoringTabComponent,
           ),
       },
       {
         path: 'network',
         loadComponent: () =>
           import('./features/components/cluster/cluster-network-tab.component').then(
-            (m) => m.ClusterNetworkTabComponent
+            (m) => m.ClusterNetworkTabComponent,
           ),
       },
       {
         path: 'storage',
         loadComponent: () =>
           import('./features/components/cluster/cluster-storage-tab.component').then(
-            (m) => m.ClusterStorageTabComponent
+            (m) => m.ClusterStorageTabComponent,
           ),
       },
       {
         path: 'availability',
         loadComponent: () =>
           import('./features/components/cluster/cluster-ha-tab.component').then(
-            (m) => m.ClusterHaTabComponent
+            (m) => m.ClusterHaTabComponent,
           ),
       },
       {
         path: 'nodes',
         loadComponent: () =>
           import('./features/components/cluster/cluster-nodes-tab.component').then(
-            (m) => m.ClusterNodesTabComponent
+            (m) => m.ClusterNodesTabComponent,
           ),
       },
       {
@@ -92,42 +92,42 @@ export const clusterRoutes: Routes = [
         path: 'scaling',
         loadComponent: () =>
           import('./features/components/cluster/cluster-scaling-tab.component').then(
-            (m) => m.ClusterScalingTabComponent
+            (m) => m.ClusterScalingTabComponent,
           ),
       },
       {
         path: 'firewall',
         loadComponent: () =>
           import('./features/components/cluster/cluster-firewall-tab.component').then(
-            (m) => m.ClusterFirewallTabComponent
+            (m) => m.ClusterFirewallTabComponent,
           ),
       },
       {
         path: 'dns',
         loadComponent: () =>
           import('./features/components/cluster/cluster-dns-tab.component').then(
-            (m) => m.ClusterDnsTabComponent
+            (m) => m.ClusterDnsTabComponent,
           ),
       },
       {
         path: 'variables',
         loadComponent: () =>
           import('./features/components/cluster/cluster-variables-tab.component').then(
-            (m) => m.ClusterVariablesTabComponent
+            (m) => m.ClusterVariablesTabComponent,
           ),
       },
       {
         path: 'pricing',
         loadComponent: () =>
           import('./features/components/cluster/cluster-pricing-tab.component').then(
-            (m) => m.ClusterPricingTabComponent
+            (m) => m.ClusterPricingTabComponent,
           ),
       },
       {
         path: 'security',
         loadComponent: () =>
           import('./features/components/cluster/cluster-security-tab.component').then(
-            (m) => m.ClusterSecurityTabComponent
+            (m) => m.ClusterSecurityTabComponent,
           ),
       },
     ],

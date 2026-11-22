@@ -13,7 +13,14 @@ describe('a server row', () => {
     });
     fixture = TestBed.createComponent(InstanceRowComponent);
     fixture.componentInstance.instance = mapClusterNodeToInstance(
-      { id: 'n-1', serverName: 'worker', nodeType: 'worker', status: 'ready', serverType: 'cx33', architecture },
+      {
+        id: 'n-1',
+        serverName: 'worker',
+        nodeType: 'worker',
+        status: 'ready',
+        serverType: 'cx33',
+        architecture,
+      },
       'c-1',
     );
     fixture.detectChanges();

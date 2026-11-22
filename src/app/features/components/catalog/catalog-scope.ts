@@ -12,7 +12,8 @@ export interface CatalogScopeCopy {
 const SCOPE_COPY: Record<CatalogScope, CatalogScopeCopy> = {
   data: {
     title: 'Add a data store',
-    subtitle: 'Databases, caches, queues, search and object stores — Flui provisions storage, secrets, backups and connection settings for you.',
+    subtitle:
+      'Databases, caches, queues, search and object stores — Flui provisions storage, secrets, backups and connection settings for you.',
     back: '/apps/data',
   },
   applications: {
@@ -61,7 +62,8 @@ export function catalogScopeOf(params: { get(name: string): string | null }): Ca
 export function catalogSectionOf(app: CatalogResponseDto): CatalogSection {
   const kind = String(app.appKind ?? '').toUpperCase();
   if (kind === 'SYSTEM') return 'system';
-  if (kind === 'DATABASE' || app.appType === CatalogResponseDto.AppTypeEnum.BuildingBlock) return 'data';
+  if (kind === 'DATABASE' || app.appType === CatalogResponseDto.AppTypeEnum.BuildingBlock)
+    return 'data';
   return kind === 'TOOL' ? 'tools' : 'applications';
 }
 

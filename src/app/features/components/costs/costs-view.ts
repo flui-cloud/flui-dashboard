@@ -53,9 +53,7 @@ export interface ClusterRow {
 export function clusterRows(provider: CostProvider): ClusterRow[] {
   return provider.clusters
     .filter(
-      (c) =>
-        c.unpriced > 0 ||
-        c.months.some((m) => m.spentNet > 0 || (m.forecastNet ?? 0) > 0),
+      (c) => c.unpriced > 0 || c.months.some((m) => m.spentNet > 0 || (m.forecastNet ?? 0) > 0),
     )
     .map((c) => {
       const index = c.months.findIndex((m) => m.current);
@@ -75,7 +73,10 @@ export function clusterRows(provider: CostProvider): ClusterRow[] {
 }
 
 /** What a month cell says: a closed month what it cost, the running one what it cost so far. */
-export function monthCell(month: CostMonth | undefined): { spent: number | null; forecast: number | null } {
+export function monthCell(month: CostMonth | undefined): {
+  spent: number | null;
+  forecast: number | null;
+} {
   if (!month) return { spent: null, forecast: null };
   return { spent: month.spentNet, forecast: month.current ? month.forecastNet : null };
 }

@@ -1,4 +1,12 @@
-import { Component, computed, inject, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  input,
+  output,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideAlertCircle, lucideSend } from '@ng-icons/lucide';
 import { SandboxService } from '../../../core/services/sandbox.service';
@@ -13,27 +21,43 @@ import { AssistantModelPickerComponent } from './assistant-model-picker.componen
   providers: [provideIcons({ lucideAlertCircle, lucideSend })],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <div class="space-y-2" [class.mx-auto]="fullscreen()" [class.max-w-3xl]="fullscreen()" [class.w-full]="fullscreen()">
+    <div
+      class="space-y-2"
+      [class.mx-auto]="fullscreen()"
+      [class.max-w-3xl]="fullscreen()"
+      [class.w-full]="fullscreen()"
+    >
       @if (destructiveNotice()) {
-        <div class="flex items-center gap-2 rounded-lg bg-destructive/10 border border-destructive/20 px-3 py-1.5" data-testid="assistant-destructive-notice">
+        <div
+          class="flex items-center gap-2 rounded-lg bg-destructive/10 border border-destructive/20 px-3 py-1.5"
+          data-testid="assistant-destructive-notice"
+        >
           <ng-icon name="lucideAlertCircle" class="h-3.5 w-3.5 shrink-0 text-destructive" />
           <p class="text-[11px] text-destructive leading-tight">
-            Destructive actions (delete/uninstall) are enabled on this server — they still ask for confirmation, but proceed with care.
+            Destructive actions (delete/uninstall) are enabled on this server — they still ask for
+            confirmation, but proceed with care.
           </p>
         </div>
       }
       @if (chatService.contextLong()) {
-        <div class="flex items-center justify-between gap-2 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-1.5">
+        <div
+          class="flex items-center justify-between gap-2 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-1.5"
+        >
           <p class="text-[11px] text-amber-700 dark:text-amber-400 leading-tight">
             Long conversation — responses may degrade
           </p>
-          <button type="button" (click)="chatService.newConversation()"
-            class="shrink-0 text-[11px] font-semibold text-blue-600 hover:text-blue-700 transition-colors whitespace-nowrap">
+          <button
+            type="button"
+            (click)="chatService.newConversation()"
+            class="shrink-0 text-[11px] font-semibold text-blue-600 hover:text-blue-700 transition-colors whitespace-nowrap"
+          >
             New chat →
           </button>
         </div>
       }
-      <div class="rounded-2xl border border-input bg-muted/50 transition-shadow focus-within:ring-1 focus-within:ring-ring">
+      <div
+        class="rounded-2xl border border-input bg-muted/50 transition-shadow focus-within:ring-1 focus-within:ring-ring"
+      >
         <textarea
           [value]="draft()"
           (input)="onDraftInput($event)"
@@ -45,9 +69,12 @@ import { AssistantModelPickerComponent } from './assistant-model-picker.componen
         ></textarea>
         <div class="flex items-center justify-between gap-2 px-2 pb-2">
           <app-assistant-model-picker (navigated)="navigated.emit()" />
-          <button type="button" (click)="submit()"
+          <button
+            type="button"
+            (click)="submit()"
             [disabled]="chatService.sending() || !draft().trim()"
-            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-md shadow-blue-500/30 transition-all hover:shadow-blue-500/40 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:scale-100">
+            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-md shadow-blue-500/30 transition-all hover:shadow-blue-500/40 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:scale-100"
+          >
             <ng-icon name="lucideSend" class="h-4 w-4" />
           </button>
         </div>

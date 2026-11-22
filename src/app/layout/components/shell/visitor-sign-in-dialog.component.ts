@@ -26,7 +26,9 @@ import {
   template: `
     @if (gate.dialogOpen()) {
       <div class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm" (click)="close()">
-        <div class="fixed left-[50%] top-[50%] z-50 w-full max-w-sm translate-x-[-50%] translate-y-[-50%] p-4">
+        <div
+          class="fixed left-[50%] top-[50%] z-50 w-full max-w-sm translate-x-[-50%] translate-y-[-50%] p-4"
+        >
           <div
             #panel
             role="dialog"
@@ -38,7 +40,10 @@ import {
           >
             <div class="flex items-start justify-between gap-4">
               <div>
-                <h3 id="visitor-sign-in-title" class="text-lg font-semibold text-gray-900 dark:text-white">
+                <h3
+                  id="visitor-sign-in-title"
+                  class="text-lg font-semibold text-gray-900 dark:text-white"
+                >
                   Sign in to deploy
                 </h3>
                 <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -61,8 +66,12 @@ import {
 
             <div class="mt-5 flex flex-col gap-2">
               @if (loading()) {
-                <button hlmBtn variant="outline" type="button" disabled>Continue with GitHub</button>
-                <button hlmBtn variant="outline" type="button" disabled>Continue with Google</button>
+                <button hlmBtn variant="outline" type="button" disabled>
+                  Continue with GitHub
+                </button>
+                <button hlmBtn variant="outline" type="button" disabled>
+                  Continue with Google
+                </button>
               } @else {
                 @for (option of choices().providers; track option.provider) {
                   <button

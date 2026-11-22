@@ -1,11 +1,4 @@
-export type KeyType =
-  | 'string'
-  | 'list'
-  | 'set'
-  | 'zset'
-  | 'hash'
-  | 'stream'
-  | 'none';
+export type KeyType = 'string' | 'list' | 'set' | 'zset' | 'hash' | 'stream' | 'none';
 
 export interface KeyMeta {
   key: string;
@@ -49,12 +42,7 @@ export interface KvOtherValue {
   note: string;
 }
 export type KvValue =
-  | KvStringValue
-  | KvHashValue
-  | KvListValue
-  | KvSetValue
-  | KvZSetValue
-  | KvOtherValue;
+  KvStringValue | KvHashValue | KvListValue | KvSetValue | KvZSetValue | KvOtherValue;
 
 export interface KeyValueRead {
   key: string;

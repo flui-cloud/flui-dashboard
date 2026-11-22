@@ -1,10 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
-import {
-  InstallLogChunk,
-  InstallLogService,
-} from '../../service/install-log.service';
+import { InstallLogChunk, InstallLogService } from '../../service/install-log.service';
 import { NodeInstallLogComponent } from './node-install-log.component';
 
 const chunk = (over: Partial<InstallLogChunk>): InstallLogChunk => ({
@@ -25,9 +22,7 @@ describe('a node install log followed live', () => {
   let fixture: ComponentFixture<NodeInstallLogComponent>;
   let asked: number[];
 
-  const build = async (
-    answer: (since: number) => Observable<InstallLogChunk>,
-  ): Promise<void> => {
+  const build = async (answer: (since: number) => Observable<InstallLogChunk>): Promise<void> => {
     asked = [];
     await TestBed.configureTestingModule({
       imports: [NodeInstallLogComponent],
@@ -121,17 +116,13 @@ describe('a node install log followed live', () => {
       ),
     );
     await settle();
-    expect(find('install-log-note')!.textContent).toContain(
-      'No install log was captured',
-    );
+    expect(find('install-log-note')!.textContent).toContain('No install log was captured');
   });
 
   it('says so when the log cannot be read, and keeps trying', async () => {
     await build(() => throwError(() => new HttpErrorResponse({ status: 502 })));
     await settle();
-    expect(find('install-log-error')!.textContent).toContain(
-      'could not be read',
-    );
+    expect(find('install-log-error')!.textContent).toContain('could not be read');
     expect(asked.length).toBeGreaterThan(1);
   });
 

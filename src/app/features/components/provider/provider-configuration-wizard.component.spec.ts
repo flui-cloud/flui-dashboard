@@ -37,8 +37,22 @@ const SCALEWAY = {
     type: 'access_key_secret',
     supportsExpiry: true,
     fields: [
-      { key: 'accessKey', label: 'Access Key ID', providerLabel: 'Access Key ID', hint: 'IAM', secret: false, required: true },
-      { key: 'secretKey', label: 'Secret Key', providerLabel: 'Secret Key', hint: 'IAM', secret: true, required: true },
+      {
+        key: 'accessKey',
+        label: 'Access Key ID',
+        providerLabel: 'Access Key ID',
+        hint: 'IAM',
+        secret: false,
+        required: true,
+      },
+      {
+        key: 'secretKey',
+        label: 'Secret Key',
+        providerLabel: 'Secret Key',
+        hint: 'IAM',
+        secret: true,
+        required: true,
+      },
     ],
   },
 } as unknown as ProviderDefinitionDto;
@@ -80,7 +94,9 @@ describe('ProviderConfigurationWizardComponent', () => {
   describe('for a demo guest', () => {
     it('shows every credential field, empty and disabled, with a placeholder', async () => {
       const { el } = await build(true);
-      const inputs = Array.from(el.querySelectorAll('input[id^="credential-"]')) as HTMLInputElement[];
+      const inputs = Array.from(
+        el.querySelectorAll('input[id^="credential-"]'),
+      ) as HTMLInputElement[];
       const fields = inputs.filter((i) => i.id !== 'credential-expiry');
 
       expect(fields).toHaveSize(2);

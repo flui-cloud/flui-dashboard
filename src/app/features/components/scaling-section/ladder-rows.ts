@@ -1,8 +1,4 @@
-import {
-  AvailabilityOutlook,
-  LadderRung,
-  ScalingPreview,
-} from '../../model/scaling-group.models';
+import { AvailabilityOutlook, LadderRung, ScalingPreview } from '../../model/scaling-group.models';
 import { SectionGroup } from '../../model/scaling-section.models';
 import { eurHour, heldFor } from './now-format';
 
@@ -117,8 +113,7 @@ function why(ctx: LadderContext, rung: LadderRung): string {
 }
 
 function whyWouldBuy(ctx: LadderContext): string {
-  if (manual(ctx))
-    return 'Fits and is available — but nothing here can add it.';
+  if (manual(ctx)) return 'Fits and is available — but nothing here can add it.';
   return withheld(ctx)
     ? 'Fits, available, inside the spending ceiling — and this group adds nothing.'
     : 'Fits, available, inside the spending ceiling.';
@@ -127,9 +122,7 @@ function whyWouldBuy(ctx: LadderContext): string {
 function whyUnavailable(ctx: LadderContext, rung: LadderRung): string {
   const state = rung.shape ? ctx.outlook[rung.shape] : undefined;
   const since = state?.sinceHours ? ` for ${heldFor(state.sinceHours)}` : '';
-  const history = state?.downIn.length
-    ? `Down in ${state.downIn.join(', ')}${since}.`
-    : '';
+  const history = state?.downIn.length ? `Down in ${state.downIn.join(', ')}${since}.` : '';
 
   if (rung.note) return history ? `${rung.note} ${history}` : rung.note;
   if (history) return history;

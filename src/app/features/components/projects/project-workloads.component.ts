@@ -1,4 +1,14 @@
-import { Component, OnDestroy, OnInit, computed, effect, inject, signal, viewChild, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnDestroy,
+  OnInit,
+  computed,
+  effect,
+  inject,
+  signal,
+  viewChild,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -25,9 +35,7 @@ import { Project } from '../../model/project.model';
 import { ApplicationService } from '../../service/application.service';
 import { ProjectsService } from '../../service/projects.service';
 import { PermissionService } from '../../../core/services/permission.service';
-import {
-  DeleteConfirmationDialogComponent,
-} from '../../../shared/components/delete-confirmation-dialog.component';
+import { DeleteConfirmationDialogComponent } from '../../../shared/components/delete-confirmation-dialog.component';
 import { ProjectFormComponent, ProjectFormValue } from './project-form.component';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
 import {
@@ -73,7 +81,9 @@ const SELECT =
     <div class="space-y-6 p-6">
       <div class="flex items-start justify-between gap-4">
         <div class="flex items-center gap-3">
-          <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-muted border border-border text-muted-foreground shrink-0">
+          <div
+            class="flex h-11 w-11 items-center justify-center rounded-xl bg-muted border border-border text-muted-foreground shrink-0"
+          >
             <ng-icon name="lucideFolders" class="h-5 w-5" />
           </div>
           <div>
@@ -138,13 +148,19 @@ const SELECT =
             class="w-full rounded-lg border border-border bg-background py-2 pl-10 pr-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
         </div>
-        <select [class]="selectClass" [value]="kindFilter()" (change)="kindFilter.set(inputValue($event))">
+        <select
+          [class]="selectClass"
+          [value]="kindFilter()"
+          (change)="kindFilter.set(inputValue($event))"
+        >
           <option value="">All kinds</option>
           @for (k of selectableKinds; track k) {
             <option [value]="k">{{ kindLabel(k) }}</option>
           }
         </select>
-        <label class="inline-flex items-center gap-2 whitespace-nowrap text-xs text-muted-foreground">
+        <label
+          class="inline-flex items-center gap-2 whitespace-nowrap text-xs text-muted-foreground"
+        >
           <input
             type="checkbox"
             [checked]="includeSystem()"
@@ -153,7 +169,9 @@ const SELECT =
           />
           Include system
         </label>
-        <label class="inline-flex items-center gap-2 whitespace-nowrap text-xs text-muted-foreground">
+        <label
+          class="inline-flex items-center gap-2 whitespace-nowrap text-xs text-muted-foreground"
+        >
           <input
             type="checkbox"
             [checked]="hideEmpty()"
@@ -168,10 +186,7 @@ const SELECT =
         <div class="rounded-lg border border-dashed border-border p-10 text-center">
           <p class="text-sm text-muted-foreground">No projects yet.</p>
           @if (canManage()) {
-            <button
-              (click)="toggleCreate()"
-              class="mt-3 text-sm text-primary hover:underline"
-            >
+            <button (click)="toggleCreate()" class="mt-3 text-sm text-primary hover:underline">
               Create your first project
             </button>
           }
@@ -207,7 +222,9 @@ const SELECT =
                   {{ project?.name ?? 'Unassigned' }}
                 </span>
                 @if (project) {
-                  <span class="shrink-0 rounded border border-border px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
+                  <span
+                    class="shrink-0 rounded border border-border px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground"
+                  >
                     {{ project.slug }}
                   </span>
                 }
@@ -291,12 +308,10 @@ export class ProjectWorkloadsComponent implements OnInit, OnDestroy {
   private readonly perms = inject(PermissionService);
   private readonly router = inject(Router);
 
-  private readonly projectDeleteDialog = viewChild.required<DeleteConfirmationDialogComponent>(
-    'projectDeleteDialog',
-  );
-  private readonly appDeleteDialog = viewChild.required<DeleteConfirmationDialogComponent>(
-    'appDeleteDialog',
-  );
+  private readonly projectDeleteDialog =
+    viewChild.required<DeleteConfirmationDialogComponent>('projectDeleteDialog');
+  private readonly appDeleteDialog =
+    viewChild.required<DeleteConfirmationDialogComponent>('appDeleteDialog');
 
   protected readonly selectClass = SELECT;
   protected readonly selectableKinds: ApplicationKind[] = [
@@ -394,7 +409,9 @@ export class ProjectWorkloadsComponent implements OnInit, OnDestroy {
       hideEmpty: this.hideEmpty(),
       createOpen: this.showCreate(),
       editing: editing ? { id: editing.id, name: editing.name } : null,
-      pendingProjectDelete: projectDelete ? { id: projectDelete.id, name: projectDelete.name } : null,
+      pendingProjectDelete: projectDelete
+        ? { id: projectDelete.id, name: projectDelete.name }
+        : null,
       pendingAppDelete: appDelete ? { id: appDelete.id, name: appDelete.name } : null,
     };
   });
@@ -445,7 +462,9 @@ export class ProjectWorkloadsComponent implements OnInit, OnDestroy {
   protected summary(section: ProjectSection): string {
     if (section.groups.length === 0) return 'No workloads';
     return section.counts
-      .map(({ kind, count }) => `${count} ${singularWhenOne(getKindLabel(kind).toLowerCase(), count)}`)
+      .map(
+        ({ kind, count }) => `${count} ${singularWhenOne(getKindLabel(kind).toLowerCase(), count)}`,
+      )
       .join(' · ');
   }
 
@@ -538,9 +557,7 @@ export class ProjectWorkloadsComponent implements OnInit, OnDestroy {
   private matchesTerm(group: AppGroupView, term: string): boolean {
     if (group.name.toLowerCase().includes(term)) return true;
     return group.components.some(
-      (c) =>
-        c.name.toLowerCase().includes(term) ||
-        (c.slug?.toLowerCase().includes(term) ?? false),
+      (c) => c.name.toLowerCase().includes(term) || (c.slug?.toLowerCase().includes(term) ?? false),
     );
   }
 

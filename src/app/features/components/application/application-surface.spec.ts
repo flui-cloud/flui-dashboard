@@ -74,12 +74,16 @@ function input(over: Partial<ApplicationSurfaceInput> = {}): ApplicationSurfaceI
 }
 
 function snapshotOf(over: Partial<ApplicationSurfaceInput> = {}): SurfaceSnapshot {
-  const snapshot = buildApplicationSurface(input(over), { revision: 1, generatedAt: '2026-08-20T09:13:00.000Z' });
+  const snapshot = buildApplicationSurface(input(over), {
+    revision: 1,
+    generatedAt: '2026-08-20T09:13:00.000Z',
+  });
   if (!snapshot) throw new Error('the producer described nothing');
   return snapshot;
 }
 
-const pageScope = (snapshot: SurfaceSnapshot) => snapshot.scopes.find((s) => s.id.startsWith('app-detail:') && s.kind === 'page')!;
+const pageScope = (snapshot: SurfaceSnapshot) =>
+  snapshot.scopes.find((s) => s.id.startsWith('app-detail:') && s.kind === 'page')!;
 const observation = (snapshot: SurfaceSnapshot, key: string) =>
   pageScope(snapshot).observations?.find((o) => o.key === key);
 
@@ -94,11 +98,14 @@ describe('application surface producer', () => {
 
   it('bumps the revision on real change, and validateSurfaceSemantics accepts it against the previous snapshot', () => {
     const tracker = new ApplicationSurfaceRevision();
-    const first = buildApplicationSurface(input(), { revision: tracker.next(presentedContent(input())!), generatedAt: '2026-08-20T09:13:00.000Z' })!;
-    const second = buildApplicationSurface(
-      input({ diagnosesCount: 1 }),
-      { revision: tracker.next(presentedContent(input({ diagnosesCount: 1 }))!), generatedAt: '2026-08-20T09:14:00.000Z' },
-    )!;
+    const first = buildApplicationSurface(input(), {
+      revision: tracker.next(presentedContent(input())!),
+      generatedAt: '2026-08-20T09:13:00.000Z',
+    })!;
+    const second = buildApplicationSurface(input({ diagnosesCount: 1 }), {
+      revision: tracker.next(presentedContent(input({ diagnosesCount: 1 }))!),
+      generatedAt: '2026-08-20T09:14:00.000Z',
+    })!;
     expect(second.surface.revision).toBe(first.surface.revision + 1);
     expect(validateSurfaceSemantics(second, { previousSnapshot: first })).toEqual([]);
   });
@@ -108,8 +115,20 @@ describe('application surface producer', () => {
     // but never read by pageObservations() — only replicaCounts (a separate input) and
     // containers[0]'s image/requests/limits are presented.
     const tracker = new ApplicationSurfaceRevision();
-    const a = input({ runtime: { ...RUNTIME, deploymentName: 'billing-api', replicas: { ...RUNTIME.replicas, available: 2 } } });
-    const b = input({ runtime: { ...RUNTIME, deploymentName: 'billing-api-canary', replicas: { ...RUNTIME.replicas, available: 1 } } });
+    const a = input({
+      runtime: {
+        ...RUNTIME,
+        deploymentName: 'billing-api',
+        replicas: { ...RUNTIME.replicas, available: 2 },
+      },
+    });
+    const b = input({
+      runtime: {
+        ...RUNTIME,
+        deploymentName: 'billing-api-canary',
+        replicas: { ...RUNTIME.replicas, available: 1 },
+      },
+    });
     const r1 = tracker.next(presentedContent(a)!);
     const r2 = tracker.next(presentedContent(b)!);
     expect(r2).toBe(r1);
@@ -118,7 +137,10 @@ describe('application surface producer', () => {
   // The invalid-revision check needs a real failing case exercised, not just trusted.
   it('flags a snapshot whose revision does not advance on the previous one', () => {
     const first = snapshotOf();
-    const stale = { ...snapshotOf(), surface: { ...snapshotOf().surface, revision: first.surface.revision } };
+    const stale = {
+      ...snapshotOf(),
+      surface: { ...snapshotOf().surface, revision: first.surface.revision },
+    };
     const issues = validateSurfaceSemantics(stale, { previousSnapshot: first });
     expect(issues).toEqual([
       jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' }),
@@ -156,10 +178,15 @@ describe('application surface producer', () => {
 
   it('presents the replica counts, image and resource requests actually shown on screen', () => {
     const snapshot = snapshotOf();
-    expect(observation(snapshot, 'flui.application.replicas_ready')?.presentedAs).toEqual({ value: 2 });
-    expect(observation(snapshot, 'flui.application.replicas_desired')?.presentedAs).toEqual({ value: 2 });
-    expect(observation(snapshot, 'flui.application.image')?.presentedAs.text)
-      .toBe('registry.flui.cloud/billing-api:1.4.0@sha256:abc123');
+    expect(observation(snapshot, 'flui.application.replicas_ready')?.presentedAs).toEqual({
+      value: 2,
+    });
+    expect(observation(snapshot, 'flui.application.replicas_desired')?.presentedAs).toEqual({
+      value: 2,
+    });
+    expect(observation(snapshot, 'flui.application.image')?.presentedAs.text).toBe(
+      'registry.flui.cloud/billing-api:1.4.0@sha256:abc123',
+    );
     expect(observation(snapshot, 'flui.application.cpu_request')?.presentedAs.text).toBe('250m');
     expect(observation(snapshot, 'flui.application.memory_limit')?.presentedAs.text).toBe('512Mi');
   });
@@ -171,28 +198,47 @@ describe('application surface producer', () => {
   });
 
   it('says nothing about the diagnoses badge when the count is zero, and something when it is not', () => {
-    expect(observation(snapshotOf({ diagnosesCount: 0 }), 'flui.application.diagnoses_count')).toBeUndefined();
-    expect(observation(snapshotOf({ diagnosesCount: 3 }), 'flui.application.diagnoses_count')?.presentedAs.value).toBe(3);
+    expect(
+      observation(snapshotOf({ diagnosesCount: 0 }), 'flui.application.diagnoses_count'),
+    ).toBeUndefined();
+    expect(
+      observation(snapshotOf({ diagnosesCount: 3 }), 'flui.application.diagnoses_count')
+        ?.presentedAs.value,
+    ).toBe(3);
   });
 
   it('names the access banner the page actually shows, and nothing for full access', () => {
     const showcase: AppAccess = { tabs: [], readOnly: true, showcase: true, dataAccess: false };
     const readOnly: AppAccess = { tabs: [], readOnly: true, showcase: false, dataAccess: true };
-    expect(observation(snapshotOf({ access: showcase }), 'flui.application.access_mode')?.presentedAs.text).toBe('showcase');
-    expect(observation(snapshotOf({ access: readOnly }), 'flui.application.access_mode')?.presentedAs.text).toBe('read-only');
-    expect(observation(snapshotOf({ access: null }), 'flui.application.access_mode')).toBeUndefined();
+    expect(
+      observation(snapshotOf({ access: showcase }), 'flui.application.access_mode')?.presentedAs
+        .text,
+    ).toBe('showcase');
+    expect(
+      observation(snapshotOf({ access: readOnly }), 'flui.application.access_mode')?.presentedAs
+        .text,
+    ).toBe('read-only');
+    expect(
+      observation(snapshotOf({ access: null }), 'flui.application.access_mode'),
+    ).toBeUndefined();
   });
 
-  it('never sets scope.state from the application\'s own status — that is a view-loaded/failed flag, not domain health (§4.3); status is carried as an observation instead', () => {
+  it("never sets scope.state from the application's own status — that is a view-loaded/failed flag, not domain health (§4.3); status is carried as an observation instead", () => {
     const failed = { ...APP, status: 'failed' as Application['status'] };
     expect(pageScope(snapshotOf({ application: failed })).state).toBeUndefined();
     expect(pageScope(snapshotOf()).state).toBeUndefined();
-    expect(observation(snapshotOf({ application: failed }), 'flui.application.status')?.presentedAs.text).toBe('failed');
+    expect(
+      observation(snapshotOf({ application: failed }), 'flui.application.status')?.presentedAs.text,
+    ).toBe('failed');
   });
 
   it('produces no snapshot at all when there is no application loaded — no invented selection', () => {
-    expect(buildApplicationSurface(input({ application: null }), { revision: 1, generatedAt: '2026-08-20T09:13:00.000Z' }))
-      .toBeNull();
+    expect(
+      buildApplicationSurface(input({ application: null }), {
+        revision: 1,
+        generatedAt: '2026-08-20T09:13:00.000Z',
+      }),
+    ).toBeNull();
   });
 
   it('redacts: no environment values, no raw reconciliation text, no ids beyond the entity ref reach the snapshot', () => {
@@ -218,33 +264,49 @@ describe('application surface producer', () => {
       last_failure_at: '2026-08-20T09:10:00.000Z',
       read: true,
     };
-    const tab = (snapshot: SurfaceSnapshot) => snapshot.scopes.find((s) => s.id.endsWith(':tab:monitoring'))!;
-    const tabObs = (snapshot: SurfaceSnapshot, key: string) => tab(snapshot).observations?.find((o) => o.key === key);
+    const tab = (snapshot: SurfaceSnapshot) =>
+      snapshot.scopes.find((s) => s.id.endsWith(':tab:monitoring'))!;
+    const tabObs = (snapshot: SurfaceSnapshot, key: string) =>
+      tab(snapshot).observations?.find((o) => o.key === key);
 
     it('carries the counts as numbers while the monitoring tab is open', () => {
       const snapshot = snapshotOf({ activeTab: 'monitoring', healthChecks: checks });
       expectValidSurface(snapshot);
       expect(tabObs(snapshot, 'flui.application.readiness_failures_1h')!.presentedAs.value).toBe(3);
-      expect(tabObs(snapshot, 'flui.application.restarts_by_liveness_1h')!.presentedAs.value).toBe(1);
+      expect(tabObs(snapshot, 'flui.application.restarts_by_liveness_1h')!.presentedAs.value).toBe(
+        1,
+      );
       expect(JSON.stringify(snapshot)).not.toContain('09:10');
     });
 
     it('carries the busy part of the readiness failures when the API sends it', () => {
-      const snapshot = snapshotOf({ activeTab: 'monitoring', healthChecks: { ...checks, readiness_busy: 2 } });
+      const snapshot = snapshotOf({
+        activeTab: 'monitoring',
+        healthChecks: { ...checks, readiness_busy: 2 },
+      });
       expectValidSurface(snapshot);
       expect(tabObs(snapshot, 'flui.application.readiness_busy_1h')!.presentedAs.value).toBe(2);
     });
 
     it('says the checks could not be read instead of carrying zeros', () => {
-      const snapshot = snapshotOf({ activeTab: 'monitoring', healthChecks: { ...checks, readiness: 0, read: false } });
-      expect(tabObs(snapshot, 'flui.application.health_checks_read')!.presentedAs.value).toBe(false);
+      const snapshot = snapshotOf({
+        activeTab: 'monitoring',
+        healthChecks: { ...checks, readiness: 0, read: false },
+      });
+      expect(tabObs(snapshot, 'flui.application.health_checks_read')!.presentedAs.value).toBe(
+        false,
+      );
       expect(tabObs(snapshot, 'flui.application.readiness_failures_1h')).toBeUndefined();
     });
 
     it('leaves them out on other tabs and for another application', () => {
-      expect(JSON.stringify(snapshotOf({ activeTab: 'overview', healthChecks: checks }))).not.toContain('readiness_failures');
       expect(
-        JSON.stringify(snapshotOf({ activeTab: 'monitoring', healthChecks: { ...checks, app_id: 'other' } })),
+        JSON.stringify(snapshotOf({ activeTab: 'overview', healthChecks: checks })),
+      ).not.toContain('readiness_failures');
+      expect(
+        JSON.stringify(
+          snapshotOf({ activeTab: 'monitoring', healthChecks: { ...checks, app_id: 'other' } }),
+        ),
       ).not.toContain('readiness_failures');
     });
   });

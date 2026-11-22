@@ -1,9 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { ScalingModeComponent } from './scaling-mode.component';
 import { SectionGroup } from '../../model/scaling-section.models';
 import { ScalingNowFleetComponent } from './now-fleet.component';
@@ -34,8 +29,8 @@ import { ScalingGroupStore } from './scaling-group.store';
     @if (group(); as g) {
       <div class="space-y-6" data-testid="tab-now">
         <app-scaling-mode [group]="g" (switched)="store.reload()">
-          An app with nowhere to run is answered in seconds; a cheaper machine
-          coming back is waited for, and that wait stops while anything is stuck.
+          An app with nowhere to run is answered in seconds; a cheaper machine coming back is waited
+          for, and that wait stops while anything is stuck.
         </app-scaling-mode>
 
         <app-scaling-now-summary [group]="g" />
@@ -47,20 +42,12 @@ import { ScalingGroupStore } from './scaling-group.store';
         <app-scaling-now-fleet [group]="g" />
       </div>
     } @else {
-      <p
-        class="m-0 text-sm text-muted-foreground"
-        data-testid="tab-now-no-group"
-      >
-        No such group.
-      </p>
+      <p class="m-0 text-sm text-muted-foreground" data-testid="tab-now-no-group">No such group.</p>
     }
   `,
 })
 export class ScalingNowTabComponent {
   protected readonly store = inject(ScalingGroupStore);
 
-  protected readonly group = computed<SectionGroup | null>(
-    () => this.store.group().data,
-  );
-
+  protected readonly group = computed<SectionGroup | null>(() => this.store.group().data);
 }

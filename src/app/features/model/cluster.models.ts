@@ -1,4 +1,3 @@
-
 export enum ClusterStatus {
   NO_PROVIDER = 'no_provider',
   NO_CLUSTER = 'no_cluster',
@@ -11,14 +10,14 @@ export enum ClusterStatus {
   DELETION_FAILED = 'deletion_failed',
   STOPPED = 'stopped',
   STOPPING = 'stopping',
-  STARTING = 'starting'
+  STARTING = 'starting',
 }
 
 export enum NodeSize {
   SMALL = 'small',
   MEDIUM = 'medium',
   LARGE = 'large',
-  XLARGE = 'xlarge'
+  XLARGE = 'xlarge',
 }
 
 export enum ProviderType {
@@ -26,21 +25,21 @@ export enum ProviderType {
   CONTABO = 'contabo',
   SCALEWAY = 'scaleway',
   OVH = 'ovh',
-  BYOS = 'byos'
+  BYOS = 'byos',
 }
 
 export enum ClusterViewMode {
   LOADING = 'loading',
   NO_PROVIDER = 'no-provider',
   NO_CLUSTER = 'no-cluster',
-  LIST = 'list'
+  LIST = 'list',
 }
 
 export enum ClusterType {
   CONTROL = 'control',
   WORKLOAD = 'workload',
   /** @deprecated legacy value for the control cluster; accepted for back-compat. */
-  OBSERVABILITY = 'observability'
+  OBSERVABILITY = 'observability',
 }
 
 export function isControlClusterType(type?: ClusterType | string | null): boolean {

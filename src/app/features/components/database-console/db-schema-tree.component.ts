@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  input,
-  signal,
-  output
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, signal, output } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideChevronLeft,
@@ -49,11 +42,7 @@ import { SchemaTree } from '../../model/db-console.models';
             class="inline-flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
             title="Refresh tables"
           >
-            <ng-icon
-              name="lucideRefreshCw"
-              class="h-3.5 w-3.5"
-              [class.animate-spin]="loading()"
-            />
+            <ng-icon name="lucideRefreshCw" class="h-3.5 w-3.5" [class.animate-spin]="loading()" />
           </button>
           <button
             type="button"
@@ -162,7 +151,7 @@ export class DbSchemaTreeComponent {
   readonly browse = output<{
     schema: string;
     table: string;
-}>();
+  }>();
 
   readonly expanded = signal<ReadonlySet<string>>(new Set());
 

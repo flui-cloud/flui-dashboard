@@ -3,10 +3,7 @@ import { NavigationEnd, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map, startWith } from 'rxjs/operators';
 import { SandboxLevelNoticeComponent } from '../../../shared/components/sandbox-level-notice.component';
-import {
-  SandboxService,
-  sandboxAreaForUrl,
-} from '../../../core/services/sandbox.service';
+import { SandboxService, sandboxAreaForUrl } from '../../../core/services/sandbox.service';
 
 @Component({
   selector: 'app-sandbox-section-notice',

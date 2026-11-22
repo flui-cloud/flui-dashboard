@@ -63,7 +63,12 @@ import {
   selector: 'app-migrations-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReadOnlySectionDirective, NgIcon, ConfirmationDialogComponent, MigrationLaunchModalComponent],
+  imports: [
+    ReadOnlySectionDirective,
+    NgIcon,
+    ConfirmationDialogComponent,
+    MigrationLaunchModalComponent,
+  ],
   providers: [
     provideIcons({
       lucideArrowRight,
@@ -95,11 +100,7 @@ import {
             [disabled]="loading()"
             class="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
           >
-            <ng-icon
-              name="lucideRefreshCw"
-              class="h-4 w-4"
-              [class.animate-spin]="loading()"
-            />
+            <ng-icon name="lucideRefreshCw" class="h-4 w-4" [class.animate-spin]="loading()" />
             Refresh
           </button>
           <button
@@ -114,7 +115,9 @@ import {
       </header>
 
       @if (error(); as e) {
-        <div class="flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <div
+          class="flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+        >
           <ng-icon name="lucideTriangleAlert" class="h-4 w-4" /> {{ e }}
         </div>
       }
@@ -186,7 +189,9 @@ import {
                         Next steps ({{ nextStepsOf(row).length }})
                       </button>
                       @if (stepsOpen() === rowKey(row)) {
-                        <ul class="mt-1 max-w-xs list-disc space-y-0.5 pl-4 text-xs text-muted-foreground">
+                        <ul
+                          class="mt-1 max-w-xs list-disc space-y-0.5 pl-4 text-xs text-muted-foreground"
+                        >
                           @for (step of nextStepsOf(row); track step.key) {
                             <li>{{ step.text }}</li>
                           }

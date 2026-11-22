@@ -170,7 +170,10 @@ export class AppRuntimeWebSocketService implements OnDestroy {
   private readonly opFailedCallbacks = new Map<string, (e: OperationFailedEvent) => void>();
 
   // Per-app release callbacks
-  private readonly releaseStatusCallbacks = new Map<string, (e: ReleaseStatusChangedEvent) => void>();
+  private readonly releaseStatusCallbacks = new Map<
+    string,
+    (e: ReleaseStatusChangedEvent) => void
+  >();
 
   // Per-app build callbacks
   private readonly buildStartedCbs = new Map<string, (e: BuildStartedEvent) => void>();
@@ -188,11 +191,20 @@ export class AppRuntimeWebSocketService implements OnDestroy {
 
   // Standalone build callbacks (keyed by buildId, not appId)
   private readonly subscribedBuilds = new Set<string>();
-  private readonly standaloneBuildLogCbs  = new Map<string, (e: BuildLogEvent) => void>();
-  private readonly standaloneBuildPlanCbs = new Map<string, (e: StandaloneBuildPlanEvent) => void>();
-  private readonly standaloneBuildCompCbs = new Map<string, (e: StandaloneBuildCompletedEvent) => void>();
-  private readonly standaloneBuildFailCbs = new Map<string, (e: StandaloneBuildFailedEvent) => void>();
-  private readonly standaloneBuildHbCbs   = new Map<string, (buildId: string) => void>();
+  private readonly standaloneBuildLogCbs = new Map<string, (e: BuildLogEvent) => void>();
+  private readonly standaloneBuildPlanCbs = new Map<
+    string,
+    (e: StandaloneBuildPlanEvent) => void
+  >();
+  private readonly standaloneBuildCompCbs = new Map<
+    string,
+    (e: StandaloneBuildCompletedEvent) => void
+  >();
+  private readonly standaloneBuildFailCbs = new Map<
+    string,
+    (e: StandaloneBuildFailedEvent) => void
+  >();
+  private readonly standaloneBuildHbCbs = new Map<string, (buildId: string) => void>();
   private readonly standaloneBuildReconnectCbs = new Map<string, () => void>();
 
   // Global callbacks (fire for any appId)
@@ -284,12 +296,12 @@ export class AppRuntimeWebSocketService implements OnDestroy {
     this.socket.on('connect', () => {
       this.isConnectedSignal.set(true);
       // Re-subscribe all apps and fire reconnect callbacks
-      this.subscribedApps.forEach(appId => {
+      this.subscribedApps.forEach((appId) => {
         this.socket?.emit('subscribe:application', { appId });
         this.reconnectCbs.get(appId)?.();
       });
       // Re-subscribe all standalone builds
-      this.subscribedBuilds.forEach(buildId => {
+      this.subscribedBuilds.forEach((buildId) => {
         this.socket?.emit('subscribe:build', { buildId });
         this.standaloneBuildReconnectCbs.get(buildId)?.();
       });
@@ -310,56 +322,58 @@ export class AppRuntimeWebSocketService implements OnDestroy {
 
     this.socket.on('application:rollout:completed', (data: RolloutCompletedEvent) => {
       this.completedCallbacks.get(data.appId)?.(data);
-      this.globalCompletedCbs.forEach(cb => cb(data));
+      this.globalCompletedCbs.forEach((cb) => cb(data));
     });
 
     this.socket.on('application:rollout:failed', (data: RolloutFailedEvent) => {
       this.failedCallbacks.get(data.appId)?.(data);
-      this.globalFailedCbs.forEach(cb => cb(data));
+      this.globalFailedCbs.forEach((cb) => cb(data));
     });
 
     this.socket.on('application:operation:progress', (data: OperationProgressEvent) => {
       this.opProgressCallbacks.get(data.appId)?.(data);
-      this.globalOpProgressCbs.forEach(cb => cb(data));
+      this.globalOpProgressCbs.forEach((cb) => cb(data));
     });
 
     this.socket.on('application:operation:completed', (data: OperationCompletedEvent) => {
       this.opCompletedCallbacks.get(data.appId)?.(data);
-      this.globalOpCompletedCbs.forEach(cb => cb(data));
+      this.globalOpCompletedCbs.forEach((cb) => cb(data));
     });
 
     this.socket.on('application:operation:failed', (data: OperationFailedEvent) => {
       this.opFailedCallbacks.get(data.appId)?.(data);
-      this.globalOpFailedCbs.forEach(cb => cb(data));
+      this.globalOpFailedCbs.forEach((cb) => cb(data));
     });
 
     this.socket.on('application:release:status', (data: ReleaseStatusChangedEvent) => {
       this.releaseStatusCallbacks.get(data.appId)?.(data);
-      this.globalReleaseStatusCbs.forEach(cb => cb(data));
+      this.globalReleaseStatusCbs.forEach((cb) => cb(data));
     });
 
-    this.socket.on('application:build:started',   (d: BuildStartedEvent)   => {
+    this.socket.on('application:build:started', (d: BuildStartedEvent) => {
       this.buildStartedCbs.get(d.appId)?.(d);
     });
     this.socket.on('application:build:log', (d: BuildLogEvent) => {
       this.buildLogCbs.get(d.appId)?.(d);
     });
-    this.socket.on('application:build:plan',      (d: BuildPlanEvent)      => this.buildPlanCbs.get(d.appId)?.(d));
-    this.socket.on('application:build:heartbeat', (d: { appId: string })   => {
+    this.socket.on('application:build:plan', (d: BuildPlanEvent) =>
+      this.buildPlanCbs.get(d.appId)?.(d),
+    );
+    this.socket.on('application:build:heartbeat', (d: { appId: string }) => {
       this.buildHeartbeatCbs.get(d.appId)?.(d.appId);
     });
     this.socket.on('application:build:completed', (d: BuildCompletedEvent) => {
       this.buildCompletedCbs.get(d.appId)?.(d);
-      this.globalBuildCompletedCbs.forEach(cb => cb(d));
+      this.globalBuildCompletedCbs.forEach((cb) => cb(d));
     });
     this.socket.on('application:build:failed', (d: BuildFailedEvent) => {
       this.buildFailedCbs.get(d.appId)?.(d);
-      this.globalBuildFailedCbs.forEach(cb => cb(d));
+      this.globalBuildFailedCbs.forEach((cb) => cb(d));
     });
 
     this.socket.on('application:crash-diagnosis', (d: CrashDiagnosisEvent) => {
       this.diagnosisCallbacks.get(d.applicationId)?.(d);
-      this.globalDiagnosisCbs.forEach(cb => cb(d));
+      this.globalDiagnosisCbs.forEach((cb) => cb(d));
     });
 
     // Standalone build events (room: build:{buildId})
@@ -405,7 +419,7 @@ export class AppRuntimeWebSocketService implements OnDestroy {
       onProgress: (e: RolloutProgressEvent) => void;
       onCompleted: (e: RolloutCompletedEvent) => void;
       onFailed: (e: RolloutFailedEvent) => void;
-    }
+    },
   ): void {
     this.ensureConnected();
 
@@ -456,14 +470,14 @@ export class AppRuntimeWebSocketService implements OnDestroy {
       onFailed?: (e: BuildFailedEvent) => void;
       onHeartbeat?: (appId: string) => void;
       onReconnect?: () => void;
-    }
+    },
   ): void {
     this.ensureConnected();
-    if (callbacks.onStarted)   this.buildStartedCbs.set(appId, callbacks.onStarted);
-    if (callbacks.onLog)       this.buildLogCbs.set(appId, callbacks.onLog);
-    if (callbacks.onPlan)      this.buildPlanCbs.set(appId, callbacks.onPlan);
+    if (callbacks.onStarted) this.buildStartedCbs.set(appId, callbacks.onStarted);
+    if (callbacks.onLog) this.buildLogCbs.set(appId, callbacks.onLog);
+    if (callbacks.onPlan) this.buildPlanCbs.set(appId, callbacks.onPlan);
     if (callbacks.onCompleted) this.buildCompletedCbs.set(appId, callbacks.onCompleted);
-    if (callbacks.onFailed)    this.buildFailedCbs.set(appId, callbacks.onFailed);
+    if (callbacks.onFailed) this.buildFailedCbs.set(appId, callbacks.onFailed);
     if (callbacks.onHeartbeat) this.buildHeartbeatCbs.set(appId, callbacks.onHeartbeat);
     if (callbacks.onReconnect) this.reconnectCbs.set(appId, callbacks.onReconnect);
 
@@ -486,7 +500,7 @@ export class AppRuntimeWebSocketService implements OnDestroy {
       onProgress: (e: OperationProgressEvent) => void;
       onCompleted: (e: OperationCompletedEvent) => void;
       onFailed: (e: OperationFailedEvent) => void;
-    }
+    },
   ): void {
     this.ensureConnected();
     this.opProgressCallbacks.set(appId, callbacks.onProgress);
@@ -515,13 +529,13 @@ export class AppRuntimeWebSocketService implements OnDestroy {
       onFailed?: (e: StandaloneBuildFailedEvent) => void;
       onHeartbeat?: (buildId: string) => void;
       onReconnect?: () => void;
-    }
+    },
   ): void {
     this.ensureConnected();
-    if (callbacks.onLog)       this.standaloneBuildLogCbs.set(buildId, callbacks.onLog);
-    if (callbacks.onPlan)      this.standaloneBuildPlanCbs.set(buildId, callbacks.onPlan);
+    if (callbacks.onLog) this.standaloneBuildLogCbs.set(buildId, callbacks.onLog);
+    if (callbacks.onPlan) this.standaloneBuildPlanCbs.set(buildId, callbacks.onPlan);
     if (callbacks.onCompleted) this.standaloneBuildCompCbs.set(buildId, callbacks.onCompleted);
-    if (callbacks.onFailed)    this.standaloneBuildFailCbs.set(buildId, callbacks.onFailed);
+    if (callbacks.onFailed) this.standaloneBuildFailCbs.set(buildId, callbacks.onFailed);
     if (callbacks.onHeartbeat) this.standaloneBuildHbCbs.set(buildId, callbacks.onHeartbeat);
     if (callbacks.onReconnect) this.standaloneBuildReconnectCbs.set(buildId, callbacks.onReconnect);
 
@@ -551,8 +565,8 @@ export class AppRuntimeWebSocketService implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.subscribedApps.forEach(id => this.unsubscribeFromApp(id));
-    this.subscribedBuilds.forEach(id => this.unsubscribeFromStandaloneBuild(id));
+    this.subscribedApps.forEach((id) => this.unsubscribeFromApp(id));
+    this.subscribedBuilds.forEach((id) => this.unsubscribeFromStandaloneBuild(id));
     this.socket?.disconnect();
     this.socket = null;
   }

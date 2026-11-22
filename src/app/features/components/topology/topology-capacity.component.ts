@@ -22,36 +22,60 @@ const PX_PER_MI = 0.022;
         <div class="flex items-end gap-4 overflow-x-auto pb-2">
           @for (col of m.columns; track col.server.id) {
             <div class="flex min-w-[6rem] flex-1 flex-col gap-1">
-              <div class="flex flex-col-reverse overflow-hidden rounded-md border border-border"
-                   [style.height.px]="col.allocatableMi * px" role="list" [attr.aria-label]="col.server.nodeName">
+              <div
+                class="flex flex-col-reverse overflow-hidden rounded-md border border-border"
+                [style.height.px]="col.allocatableMi * px"
+                role="list"
+                [attr.aria-label]="col.server.nodeName"
+              >
                 @for (block of col.blocks; track block.label) {
-                  <button type="button" role="listitem"
-                          class="flex-none truncate border-t border-card px-1.5 text-left text-[10px] font-medium"
-                          [style.height.px]="block.mi * px"
-                          [style.background]="block.appId ? fillOf(block.tone) : 'hsl(var(--muted))'"
-                          [style.color]="'hsl(var(--foreground))'"
-                          [attr.aria-label]="block.label + ', ' + mem(block.mi)"
-                          [title]="block.label + ' · ' + mem(block.mi)"
-                          (click)="block.appId && selected.emit({ type: 'app', id: block.appId })">
-                    @if (block.mi * px >= 14) { {{ block.label }} }
+                  <button
+                    type="button"
+                    role="listitem"
+                    class="flex-none truncate border-t border-card px-1.5 text-left text-[10px] font-medium"
+                    [style.height.px]="block.mi * px"
+                    [style.background]="block.appId ? fillOf(block.tone) : 'hsl(var(--muted))'"
+                    [style.color]="'hsl(var(--foreground))'"
+                    [attr.aria-label]="block.label + ', ' + mem(block.mi)"
+                    [title]="block.label + ' · ' + mem(block.mi)"
+                    (click)="block.appId && selected.emit({ type: 'app', id: block.appId })"
+                  >
+                    @if (block.mi * px >= 14) {
+                      {{ block.label }}
+                    }
                   </button>
                 }
                 @if (col.ghost) {
-                  <span class="flex-none border-2 border-dashed px-1.5 text-[10px] font-medium"
-                        style="border-color: hsl(var(--brand)); color: hsl(var(--brand))"
-                        [style.height.px]="ghostHeight(col.ghost)">next replica</span>
+                  <span
+                    class="flex-none border-2 border-dashed px-1.5 text-[10px] font-medium"
+                    style="border-color: hsl(var(--brand)); color: hsl(var(--brand))"
+                    [style.height.px]="ghostHeight(col.ghost)"
+                    >next replica</span
+                  >
                 }
-                <span class="flex-1" aria-hidden="true"
-                      style="background-image: repeating-linear-gradient(45deg, hsl(var(--muted-foreground) / 0.12) 0 4px, transparent 4px 9px)"></span>
+                <span
+                  class="flex-1"
+                  aria-hidden="true"
+                  style="background-image: repeating-linear-gradient(45deg, hsl(var(--muted-foreground) / 0.12) 0 4px, transparent 4px 9px)"
+                ></span>
               </div>
-              <button type="button" class="truncate text-left font-mono text-xs text-foreground hover:underline"
-                      (click)="selected.emit({ type: 'server', id: col.server.id })">{{ col.server.nodeName }}</button>
-              <span class="text-sub">{{ mem(col.freeMi) }} free of {{ mem(col.allocatableMi) }}</span>
+              <button
+                type="button"
+                class="truncate text-left font-mono text-xs text-foreground hover:underline"
+                (click)="selected.emit({ type: 'server', id: col.server.id })"
+              >
+                {{ col.server.nodeName }}
+              </button>
+              <span class="text-sub"
+                >{{ mem(col.freeMi) }} free of {{ mem(col.allocatableMi) }}</span
+              >
             </div>
           }
         </div>
         @if (m.ghostFits === false) {
-          <p class="text-sm status-degraded" role="note">No server has room for another {{ mem(m.ghostMi) }} replica.</p>
+          <p class="text-sm status-degraded" role="note">
+            No server has room for another {{ mem(m.ghostMi) }} replica.
+          </p>
         }
       }
     </section>

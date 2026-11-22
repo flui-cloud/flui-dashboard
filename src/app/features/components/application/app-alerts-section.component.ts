@@ -63,26 +63,17 @@ import { AlertEvent } from '../../model/alert.models';
         <div
           class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-6 text-center"
         >
-          <ng-icon
-            name="lucideCircleCheck"
-            class="text-sub mx-auto mb-2"
-            size="24"
-          />
-          <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
-            No alerts on record
-          </p>
+          <ng-icon name="lucideCircleCheck" class="text-sub mx-auto mb-2" size="24" />
+          <p class="text-sm font-medium text-gray-700 dark:text-gray-300">No alerts on record</p>
           <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Nothing has fired for this application. Absence of alerts is not the same as
-            a health check — see Traffic for a live read.
+            Nothing has fired for this application. Absence of alerts is not the same as a health
+            check — see Traffic for a live read.
           </p>
         </div>
       } @else {
         <ul class="space-y-2">
           @for (alert of rows(); track alert.id) {
-            <li
-              class="rounded-lg border p-3 flex items-start gap-3"
-              [class]="rowClass(alert)"
-            >
+            <li class="rounded-lg border p-3 flex items-start gap-3" [class]="rowClass(alert)">
               <ng-icon
                 [name]="rowIcon(alert)"
                 [class]="rowIconClass(alert)"
@@ -91,9 +82,7 @@ import { AlertEvent } from '../../model/alert.models';
               />
               <div class="min-w-0 flex-1">
                 <div class="flex items-center gap-2 flex-wrap">
-                  <span
-                    class="text-sm font-semibold text-gray-900 dark:text-gray-100"
-                  >
+                  <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">
                     {{ alert.alertname }}
                   </span>
                   <span [class]="badgeClass(alert)">{{ statusLabel(alert) }}</span>
@@ -137,9 +126,7 @@ export class AppAlertsSectionComponent {
 
   protected rowIcon(alert: AlertEvent): string {
     if (alert.status === 'resolved') return 'lucideCircleCheck';
-    return alert.severity === 'critical'
-      ? 'lucideCircleAlert'
-      : 'lucideTriangleAlert';
+    return alert.severity === 'critical' ? 'lucideCircleAlert' : 'lucideTriangleAlert';
   }
 
   protected rowIconClass(alert: AlertEvent): string {
@@ -165,9 +152,7 @@ export class AppAlertsSectionComponent {
     if (alert.status === 'firing') {
       return `Started ${started}`;
     }
-    const ended = alert.ends_at
-      ? new Date(alert.ends_at).toLocaleString()
-      : 'unknown';
+    const ended = alert.ends_at ? new Date(alert.ends_at).toLocaleString() : 'unknown';
     if (alert.resolved_by === 'timeout') {
       return `${started} → ${ended} · stopped reporting, end time approximate`;
     }

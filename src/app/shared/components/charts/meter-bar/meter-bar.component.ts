@@ -58,9 +58,13 @@ import { MeterBarConfig } from '../chart.models';
       </div>
     </div>
   `,
-  styles: [`
-    :host { display: block; }
-  `],
+  styles: [
+    `
+      :host {
+        display: block;
+      }
+    `,
+  ],
 })
 export class MeterBarComponent {
   readonly value = input.required<number>();

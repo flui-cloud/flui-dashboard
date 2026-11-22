@@ -1,10 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  input,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideBraces,
@@ -47,9 +41,7 @@ const JSON_SNIFF_SAMPLE = 50;
           }
           <span>{{ r.durationMs }} ms</span>
           @if (r.truncated) {
-            <span class="text-amber-600 dark:text-amber-400"
-              >truncated to {{ r.rows.length }}</span
-            >
+            <span class="text-amber-600 dark:text-amber-400">truncated to {{ r.rows.length }}</span>
           }
           <div class="ml-auto flex items-center gap-2">
             <button
@@ -100,10 +92,7 @@ const JSON_SNIFF_SAMPLE = 50;
                             <ng-icon name="lucideMaximize2" class="h-3 w-3" />
                           </button>
                           <div class="max-h-48 overflow-auto pr-6">
-                            <app-json-viewer
-                              [value]="asJsonValue(cell)"
-                              [autoExpandDepth]="1"
-                            />
+                            <app-json-viewer [value]="asJsonValue(cell)" [autoExpandDepth]="1" />
                           </div>
                         </div>
                       } @else {
@@ -117,9 +106,7 @@ const JSON_SNIFF_SAMPLE = 50;
           </table>
         }
       } @else {
-        <div class="p-6 text-center text-sm text-muted-foreground">
-          Run a query to see results.
-        </div>
+        <div class="p-6 text-center text-sm text-muted-foreground">Run a query to see results.</div>
       }
     </div>
 
@@ -249,9 +236,7 @@ export class SqlResultGridComponent {
     const esc = (v: unknown): string => {
       if (v === null || v === undefined) return '';
       const s =
-        typeof v === 'object'
-          ? JSON.stringify(v)
-          : String(v as string | number | bigint | boolean);
+        typeof v === 'object' ? JSON.stringify(v) : String(v as string | number | bigint | boolean);
       return /[",\n]/.test(s) ? `"${s.replaceAll('"', '""')}"` : s;
     };
     const header = r.columns.map((c: SqlColumn) => esc(c.name)).join(',');
@@ -267,11 +252,7 @@ export class SqlResultGridComponent {
       r.columns.forEach((c, i) => (obj[c.name] = row[i]));
       return obj;
     });
-    this.download(
-      JSON.stringify(objects, null, 2),
-      'application/json',
-      'query-result.json',
-    );
+    this.download(JSON.stringify(objects, null, 2), 'application/json', 'query-result.json');
   }
 
   private download(content: string, mime: string, filename: string): void {

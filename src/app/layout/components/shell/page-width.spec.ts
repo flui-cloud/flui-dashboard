@@ -15,7 +15,9 @@ describe('pageWidth', () => {
   });
 
   it('takes the width the deepest route names', () => {
-    expect(pageWidth(chain('wide', undefined, 'narrow'), '/management/backup/policies/new')).toBe('narrow');
+    expect(pageWidth(chain('wide', undefined, 'narrow'), '/management/backup/policies/new')).toBe(
+      'narrow',
+    );
   });
 
   it('gives the consoles the whole width', () => {

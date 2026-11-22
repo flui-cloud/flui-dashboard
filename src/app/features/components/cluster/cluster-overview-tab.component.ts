@@ -1,5 +1,13 @@
 import { ClusterHaCardComponent } from './cluster-ha-card.component';
-import { Component, inject, signal, computed, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  inject,
+  signal,
+  computed,
+  OnInit,
+  OnDestroy,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { RouterModule, Router } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
@@ -43,10 +51,18 @@ import { meterBarClass } from './cluster-overview-nodes';
 @Component({
   selector: 'cluster-overview-tab',
   standalone: true,
-  imports: [MaskIdPipe, ClusterOverviewNodesCardComponent, ClusterHaCardComponent,
+  imports: [
+    MaskIdPipe,
+    ClusterOverviewNodesCardComponent,
+    ClusterHaCardComponent,
     ClusterMaintenanceCardComponent,
     ClusterEgressLineComponent,
-    RouterModule, NgIconComponent, AutoscaleWarningBannerComponent, AttachVNetDialogComponent, EnableBackupsModalComponent],
+    RouterModule,
+    NgIconComponent,
+    AutoscaleWarningBannerComponent,
+    AttachVNetDialogComponent,
+    EnableBackupsModalComponent,
+  ],
   providers: [
     provideIcons({
       lucideCircleAlert,
@@ -106,7 +122,6 @@ export class ClusterOverviewTabComponent implements OnInit, OnDestroy {
     this.showAttachDialog.set(true);
   }
 
-
   onVNetAttached(): void {
     this.showAttachDialog.set(false);
   }
@@ -122,8 +137,12 @@ export class ClusterOverviewTabComponent implements OnInit, OnDestroy {
   }
   syncStatus = signal<any>(null);
 
-  readonly cpuPercent = computed(() => Number.parseFloat(String(this.monitoring.clusterStats()[0]?.value ?? '0')));
-  readonly memPercent = computed(() => Number.parseFloat(String(this.monitoring.clusterStats()[1]?.value ?? '0')));
+  readonly cpuPercent = computed(() =>
+    Number.parseFloat(String(this.monitoring.clusterStats()[0]?.value ?? '0')),
+  );
+  readonly memPercent = computed(() =>
+    Number.parseFloat(String(this.monitoring.clusterStats()[1]?.value ?? '0')),
+  );
 
   readonly healthDotColor = computed(() => {
     const s = this.monitoring.healthStatus();
@@ -144,18 +163,27 @@ export class ClusterOverviewTabComponent implements OnInit, OnDestroy {
   readonly platformComponentsForCluster = computed(() => {
     const id = this.cluster()?.id;
     if (!id) return [];
-    const entry = this.platformService.entries().find(e => e.clusterId === id);
+    const entry = this.platformService.entries().find((e) => e.clusterId === id);
     return entry?.components ?? [];
   });
 
-  readonly platformHealthyCount = computed(() =>
-    this.platformComponentsForCluster().filter(c => c.status === PlatformComponentResponseDto.StatusEnum.Healthy).length
+  readonly platformHealthyCount = computed(
+    () =>
+      this.platformComponentsForCluster().filter(
+        (c) => c.status === PlatformComponentResponseDto.StatusEnum.Healthy,
+      ).length,
   );
-  readonly platformDegradedCount = computed(() =>
-    this.platformComponentsForCluster().filter(c => c.status === PlatformComponentResponseDto.StatusEnum.Degraded).length
+  readonly platformDegradedCount = computed(
+    () =>
+      this.platformComponentsForCluster().filter(
+        (c) => c.status === PlatformComponentResponseDto.StatusEnum.Degraded,
+      ).length,
   );
-  readonly platformMissingCount = computed(() =>
-    this.platformComponentsForCluster().filter(c => c.status === PlatformComponentResponseDto.StatusEnum.Missing).length
+  readonly platformMissingCount = computed(
+    () =>
+      this.platformComponentsForCluster().filter(
+        (c) => c.status === PlatformComponentResponseDto.StatusEnum.Missing,
+      ).length,
   );
 
   ngOnInit(): void {
@@ -190,11 +218,16 @@ export class ClusterOverviewTabComponent implements OnInit, OnDestroy {
 
   getProviderLabel(provider?: ProviderType): string {
     switch (provider) {
-      case ProviderType.HETZNER: return 'Hetzner';
-      case ProviderType.CONTABO: return 'Contabo';
-      case ProviderType.SCALEWAY: return 'Scaleway';
-      case ProviderType.OVH: return 'OVH';
-      default: return 'Unknown';
+      case ProviderType.HETZNER:
+        return 'Hetzner';
+      case ProviderType.CONTABO:
+        return 'Contabo';
+      case ProviderType.SCALEWAY:
+        return 'Scaleway';
+      case ProviderType.OVH:
+        return 'OVH';
+      default:
+        return 'Unknown';
     }
   }
 

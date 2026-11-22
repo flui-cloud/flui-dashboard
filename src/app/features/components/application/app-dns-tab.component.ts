@@ -1,9 +1,23 @@
-import { Component, inject, signal, OnInit, computed, effect, untracked, viewChild, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  inject,
+  signal,
+  OnInit,
+  computed,
+  effect,
+  untracked,
+  viewChild,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
-  lucideGlobe, lucideLoader, lucidePlusCircle, lucideRefreshCw,
-  lucideAlertCircle, lucideCheckCircle,
+  lucideGlobe,
+  lucideLoader,
+  lucidePlusCircle,
+  lucideRefreshCw,
+  lucideAlertCircle,
+  lucideCheckCircle,
 } from '@ng-icons/lucide';
 import { firstValueFrom } from 'rxjs';
 import { ApplicationService } from '../../service/application.service';
@@ -27,23 +41,40 @@ import { ToastService } from '../../../shared/services/toast.service';
 @Component({
   selector: 'app-app-dns-tab',
   standalone: true,
-  imports: [RouterModule, NgIconComponent, DnsEndpointsListComponent, ClusterEndpointFormComponent, ConfirmationDialogComponent],
+  imports: [
+    RouterModule,
+    NgIconComponent,
+    DnsEndpointsListComponent,
+    ClusterEndpointFormComponent,
+    ConfirmationDialogComponent,
+  ],
   providers: [
     provideIcons({
-      lucideGlobe, lucideLoader, lucidePlusCircle, lucideRefreshCw,
-      lucideAlertCircle, lucideCheckCircle,
+      lucideGlobe,
+      lucideLoader,
+      lucidePlusCircle,
+      lucideRefreshCw,
+      lucideAlertCircle,
+      lucideCheckCircle,
     }),
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-6">
-
       @if (isInternalApp()) {
-        <div class="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-          <ng-icon name="lucideGlobe" class="h-4 w-4 text-blue-500 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+        <div
+          class="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg"
+        >
+          <ng-icon
+            name="lucideGlobe"
+            class="h-4 w-4 text-blue-500 dark:text-blue-400 flex-shrink-0 mt-0.5"
+          />
           <p class="text-sm text-blue-700 dark:text-blue-300">
             <span class="font-medium text-blue-900 dark:text-blue-100">Internal app.</span>
-            Endpoints use the <span class="font-mono text-xs">.internal.&lt;zone&gt;</span> subdomain convention and are reachable only from the Flui dashboard via an authenticated proxy. DNS records and certificates are managed here through the standard flow.
+            Endpoints use the
+            <span class="font-mono text-xs">.internal.&lt;zone&gt;</span> subdomain convention and
+            are reachable only from the Flui dashboard via an authenticated proxy. DNS records and
+            certificates are managed here through the standard flow.
           </p>
         </div>
       }
@@ -54,23 +85,28 @@ import { ToastService } from '../../../shared/services/toast.service';
           <p class="ml-2 text-sm text-gray-600 dark:text-gray-400">Loading DNS configuration...</p>
         </div>
       } @else {
-
         <!-- Error banners -->
         @if (clusterDnsZoneService.error()) {
-          <div class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400">
+          <div
+            class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400"
+          >
             <ng-icon name="lucideAlertCircle" class="h-4 w-4 mt-0.5 flex-shrink-0" />
             <span>{{ clusterDnsZoneService.error() }}</span>
           </div>
         }
         @if (appEndpointsService.error()) {
-          <div class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400">
+          <div
+            class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400"
+          >
             <ng-icon name="lucideAlertCircle" class="h-4 w-4 mt-0.5 flex-shrink-0" />
             <span>{{ appEndpointsService.error() }}</span>
           </div>
         }
 
         <!-- DNS Zone info (read-only) -->
-        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-2">
+        <div
+          class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-2"
+        >
           <h3 class="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
             <ng-icon name="lucideGlobe" class="h-4 w-4 text-blue-600" />
             DNS Zone
@@ -78,9 +114,16 @@ import { ToastService } from '../../../shared/services/toast.service';
           @if (clusterDnsZoneService.hasAssignment()) {
             @for (zone of clusterDnsZoneService.assignments(); track zone.id) {
               <div class="flex items-center gap-2">
-                <ng-icon name="lucideCheckCircle" class="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0" />
-                <span class="text-sm text-gray-700 dark:text-gray-300 font-mono">{{ zone.dnsZone.zoneName }}</span>
-                <span class="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
+                <ng-icon
+                  name="lucideCheckCircle"
+                  class="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0"
+                />
+                <span class="text-sm text-gray-700 dark:text-gray-300 font-mono">{{
+                  zone.dnsZone.zoneName
+                }}</span>
+                <span
+                  class="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                >
                   {{ zone.dnsZone.dnsProvider }}
                 </span>
               </div>
@@ -91,24 +134,27 @@ import { ToastService } from '../../../shared/services/toast.service';
               <a
                 [routerLink]="['/cluster', clusterId(), 'dns']"
                 class="ml-1 text-blue-600 dark:text-blue-400 hover:underline"
-              >Configure in cluster DNS settings →</a>
+                >Configure in cluster DNS settings →</a
+              >
             </p>
           }
         </div>
 
         <!-- App Endpoints -->
-        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-3">
+        <div
+          class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-3"
+        >
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-sm font-semibold text-gray-900 dark:text-white">App Endpoints</h3>
             <div class="flex items-center gap-3">
               @if (!readOnly()) {
-              <button
-                (click)="openAddForm()"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium transition-colors"
-              >
-                <ng-icon name="lucidePlusCircle" class="h-3.5 w-3.5" />
-                Add Endpoint
-              </button>
+                <button
+                  (click)="openAddForm()"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium transition-colors"
+                >
+                  <ng-icon name="lucidePlusCircle" class="h-3.5 w-3.5" />
+                  Add Endpoint
+                </button>
               }
               <button
                 (click)="refreshEndpoints()"
@@ -116,7 +162,11 @@ import { ToastService } from '../../../shared/services/toast.service';
                 class="p-1 rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 disabled:opacity-50 transition-colors"
                 title="Refresh endpoints"
               >
-                <ng-icon name="lucideRefreshCw" class="h-3.5 w-3.5" [class.animate-spin]="refreshingEndpoints()" />
+                <ng-icon
+                  name="lucideRefreshCw"
+                  class="h-3.5 w-3.5"
+                  [class.animate-spin]="refreshingEndpoints()"
+                />
               </button>
             </div>
           </div>
@@ -176,7 +226,11 @@ import { ToastService } from '../../../shared/services/toast.service';
     <app-confirmation-dialog
       #deleteEndpointDialog
       title="Delete Endpoint"
-      [message]="endpointToDelete() ? 'Delete endpoint ' + endpointToDelete()!.fqdn + '? This cannot be undone.' : ''"
+      [message]="
+        endpointToDelete()
+          ? 'Delete endpoint ' + endpointToDelete()!.fqdn + '? This cannot be undone.'
+          : ''
+      "
       confirmText="Delete"
       variant="danger"
       (confirmed)="executeDeleteEndpoint()"
@@ -206,7 +260,8 @@ export class AppDnsTabComponent implements OnInit {
     () => this.authzInstall.install()?.status === AuthzInstallResponseDto.StatusEnum.Running,
   );
 
-  readonly deleteEndpointDialog = viewChild.required<ConfirmationDialogComponent>('deleteEndpointDialog');
+  readonly deleteEndpointDialog =
+    viewChild.required<ConfirmationDialogComponent>('deleteEndpointDialog');
 
   protected isLoading = signal(false);
   protected showEndpointForm = signal(false);
@@ -220,7 +275,9 @@ export class AppDnsTabComponent implements OnInit {
   protected appId = computed(() => this.appService.selectedApplication()?.id ?? '');
   protected appSlug = computed(() => this.appService.selectedApplication()?.slug ?? '');
   protected isInternalApp = computed(
-    () => !!this.appService.selectedApplication() && !hasPublicEndpoint(this.appService.selectedApplication()),
+    () =>
+      !!this.appService.selectedApplication() &&
+      !hasPublicEndpoint(this.appService.selectedApplication()),
   );
 
   /**
@@ -234,13 +291,13 @@ export class AppDnsTabComponent implements OnInit {
 
   protected masterIp = computed(() => {
     const id = this.clusterId();
-    return this.clusterService.clusters().find(c => c.id === id)?.masterIpAddress ?? '';
+    return this.clusterService.clusters().find((c) => c.id === id)?.masterIpAddress ?? '';
   });
 
   /** Only show endpoints belonging to this specific application */
   protected filteredEndpoints = computed(() => {
     const id = this.appId();
-    return this.appEndpointsService.endpoints().filter(ep => ep.applicationId === id);
+    return this.appEndpointsService.endpoints().filter((ep) => ep.applicationId === id);
   });
 
   private loadedFor: string | null = null;
@@ -328,7 +385,8 @@ export class AppDnsTabComponent implements OnInit {
   }
 
   protected async onSaveEndpoint(
-    event: { clusterId: string; dto: CreateAppEndpointDto } | { id: string; dto: UpdateAppEndpointDto }
+    event:
+      { clusterId: string; dto: CreateAppEndpointDto } | { id: string; dto: UpdateAppEndpointDto },
   ): Promise<void> {
     let endpointId: string | null = null;
     let certRequired = false;
@@ -372,7 +430,7 @@ export class AppDnsTabComponent implements OnInit {
   }
 
   private startCertPolling(endpointId: string): void {
-    const ep = this.filteredEndpoints().find(e => e.id === endpointId);
+    const ep = this.filteredEndpoints().find((e) => e.id === endpointId);
     const certStatus = ep?.certificateStatus ?? null;
     const terminalStates = ['valid', 'failed', 'expired'];
     if (certStatus && terminalStates.includes(certStatus)) return;

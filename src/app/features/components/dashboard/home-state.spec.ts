@@ -46,12 +46,18 @@ describe('home state', () => {
 
     it('treats the legacy control type as control', () => {
       expect(
-        isFreshInstall({ loading: false, userApps: 0, clusters: [{ clusterType: ClusterType.OBSERVABILITY }] }),
+        isFreshInstall({
+          loading: false,
+          userApps: 0,
+          clusters: [{ clusterType: ClusterType.OBSERVABILITY }],
+        }),
       ).toBe(true);
     });
 
     it('is not fresh once a workload cluster exists, even while it is created', () => {
-      expect(isFreshInstall({ loading: false, userApps: 0, clusters: [control, workload] })).toBe(false);
+      expect(isFreshInstall({ loading: false, userApps: 0, clusters: [control, workload] })).toBe(
+        false,
+      );
     });
 
     it('is not fresh once the user has an app', () => {
@@ -77,7 +83,10 @@ describe('home state', () => {
     });
 
     it('shows a dash, not a zero, when no cluster reports now', () => {
-      const tiles = fleetTiles(metrics({ current: null, clustersReporting: 0, nodesReporting: 0 }), false);
+      const tiles = fleetTiles(
+        metrics({ current: null, clustersReporting: 0, nodesReporting: 0 }),
+        false,
+      );
       for (const tile of tiles) {
         expect(tile.value).toBe('—');
         expect(tile.delta).toBeUndefined();
@@ -143,7 +152,13 @@ describe('home state', () => {
     });
 
     it('describes a cluster being created instead of its metrics', () => {
-      const r = clusterRow(cluster({ status: ClusterStatus.CREATING, nodeCount: 0 }), undefined, undefined, 'OVH', NOW);
+      const r = clusterRow(
+        cluster({ status: ClusterStatus.CREATING, nodeCount: 0 }),
+        undefined,
+        undefined,
+        'OVH',
+        NOW,
+      );
       expect(r.status.label).toBe('Creating');
       expect(r.note).toBe('Provisioning cluster');
       expect(r.inProgress).toBe(true);

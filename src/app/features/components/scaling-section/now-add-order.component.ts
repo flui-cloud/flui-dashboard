@@ -84,9 +84,9 @@ function regionAvailability(up: string[] | null, region: string): string {
             data-testid="add-order-shape"
           >
             @for (option of shapes(); track option.value) {
-              <option [value]="option.value" [attr.title]="option.warning">{{
-                option.text
-              }}</option>
+              <option [value]="option.value" [attr.title]="option.warning">
+                {{ option.text }}
+              </option>
             }
           </select>
           <span class="text-muted-foreground">in</span>
@@ -135,16 +135,15 @@ function regionAvailability(up: string[] | null, region: string): string {
         </div>
         <p
           class="m-0 text-[13px]"
-          [class]="refused() || failure() ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground'"
+          [class]="
+            refused() || failure() ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground'
+          "
           data-testid="add-order-says"
         >
           {{ failure() ?? refused() ?? says() }}
         </p>
         @if (warning(); as text) {
-          <p
-            class="m-0 text-[12px] text-muted-foreground"
-            data-testid="add-order-warning"
-          >
+          <p class="m-0 text-[12px] text-muted-foreground" data-testid="add-order-warning">
             {{ text }}
           </p>
         }
@@ -171,7 +170,8 @@ export class ScalingNowAddOrderComponent {
     effect(() => {
       const g = this.group();
       if (!g.shapes.includes(this.shape())) this.shape.set(g.shapes[0] ?? '');
-      if (this.region() !== ANY && !g.regions.includes(this.region())) this.region.set(g.regions[0] ?? '');
+      if (this.region() !== ANY && !g.regions.includes(this.region()))
+        this.region.set(g.regions[0] ?? '');
     });
   }
 
@@ -194,9 +194,7 @@ export class ScalingNowAddOrderComponent {
   protected readonly shapes = computed(() => {
     const labels = this.choices.labels(this.group().provider);
     const architectures = this.choices.architectures(this.group().provider);
-    const listed = new Map(
-      (this.store.catalogue().data?.shapes ?? []).map((s) => [s.shape, s]),
-    );
+    const listed = new Map((this.store.catalogue().data?.shapes ?? []).map((s) => [s.shape, s]));
     const total = this.group().regions.length;
     return this.group().shapes.map((value) => {
       const entry = listed.get(value);
@@ -267,7 +265,8 @@ export class ScalingNowAddOrderComponent {
       if (now === true)
         return `${target} ${this.shape()} is available in ${this.where()} now: Flui adds ${machine} on its next pass, whatever the load.`;
       if (now === false) {
-        const soldOutWhere = this.region() === ANY ? ' everywhere this group adds nodes' : ` in ${this.region()}`;
+        const soldOutWhere =
+          this.region() === ANY ? ' everywhere this group adds nodes' : ` in ${this.region()}`;
         return `${target} ${this.shape()} is sold out${soldOutWhere}: Flui waits and adds ${machine} as soon as it can be had, then closes the order.`;
       }
       return `${target} Flui adds ${machine} as soon as it can be had, whatever the load, and closes the order once there.`;
@@ -293,8 +292,7 @@ export class ScalingNowAddOrderComponent {
       this.close();
       this.store.reload();
     } catch (error: unknown) {
-      const body = (error as { error?: { message?: string | string[] } })?.error
-        ?.message;
+      const body = (error as { error?: { message?: string | string[] } })?.error?.message;
       this.failure.set(
         Array.isArray(body) ? body.join('. ') : (body ?? 'The order could not be added.'),
       );

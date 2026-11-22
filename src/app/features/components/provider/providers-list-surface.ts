@@ -75,7 +75,11 @@ function listObservations(input: ProvidersSurfaceInput): Observation[] {
     valueObservation('flui.providers.shown_count', input.filteredRows.length, 'derived'),
     textObservation('flui.providers.search_term', input.searchTerm || null, 'ui'),
     textObservation('flui.providers.status_filter', input.statusFilter || null, 'ui'),
-    textObservation('flui.providers.credential_type_filter', input.credentialTypeFilter || null, 'ui'),
+    textObservation(
+      'flui.providers.credential_type_filter',
+      input.credentialTypeFilter || null,
+      'ui',
+    ),
   ].filter((observation): observation is Observation => observation !== null);
 }
 
@@ -151,7 +155,11 @@ export function presentedContent(input: ProvidersSurfaceInput): PresentedContent
   if (input.configuringProvider) {
     const scope = configureScope(input.configuringProvider);
     scopes.push(scope);
-    attention.unshift({ scopeId: scope.id, entityRef: providerEntityRef(input.configuringProvider.id), reason: 'selection' });
+    attention.unshift({
+      scopeId: scope.id,
+      entityRef: providerEntityRef(input.configuringProvider.id),
+      reason: 'selection',
+    });
   }
 
   return { scopes, attention };

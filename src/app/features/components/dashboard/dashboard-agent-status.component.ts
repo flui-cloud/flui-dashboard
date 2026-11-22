@@ -1,11 +1,15 @@
-import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  computed,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideArrowRight, lucideBot, lucideClock } from '@ng-icons/lucide';
-import {
-  AgentActivityService,
-  AgentIdentityActivityDto,
-} from '../../../core/api';
+import { AgentActivityService, AgentIdentityActivityDto } from '../../../core/api';
 
 /** How long after its last recorded tool call an identity still reads as "working" rather than merely "seen". */
 const WORKING_WINDOW_MS = 3 * 60 * 1000;
@@ -26,11 +30,15 @@ type AgentHookState = 'working' | 'idle' | 'none';
           @case ('working') {
             <div class="flex items-center gap-3">
               <span class="relative flex h-2.5 w-2.5 flex-shrink-0">
-                <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                <span
+                  class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"
+                ></span>
                 <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
               </span>
               <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-emerald-700 dark:text-emerald-300">An agent is working</p>
+                <p class="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                  An agent is working
+                </p>
                 <p class="text-xs text-muted-foreground truncate">
                   {{ identityLabel(working()!) }}
                   @if (working()!.lastTool) {
@@ -39,27 +47,40 @@ type AgentHookState = 'working' | 'idle' | 'none';
                 </p>
               </div>
             </div>
-            <a routerLink="/agents" class="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
+            <a
+              routerLink="/agents"
+              class="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+            >
               View activity
               <ng-icon name="lucideArrowRight" class="h-3 w-3" />
             </a>
           }
           @case ('idle') {
             <div class="flex items-center gap-3">
-              <span class="flex h-2.5 w-2.5 flex-shrink-0 rounded-full bg-muted-foreground/40"></span>
+              <span
+                class="flex h-2.5 w-2.5 flex-shrink-0 rounded-full bg-muted-foreground/40"
+              ></span>
               <div class="flex-1 min-w-0">
                 <p class="text-sm font-medium">No agent working right now</p>
                 <p class="text-xs text-muted-foreground truncate">
-                  Last seen: {{ identityLabel(mostRecent()!) }} · {{ formatTime(mostRecent()!.lastActivityAt) }}
+                  Last seen: {{ identityLabel(mostRecent()!) }} ·
+                  {{ formatTime(mostRecent()!.lastActivityAt) }}
                 </p>
               </div>
             </div>
             <div class="flex items-center gap-3">
-              <a routerLink="/agents" class="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
+              <a
+                routerLink="/agents"
+                class="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+              >
                 View activity
                 <ng-icon name="lucideArrowRight" class="h-3 w-3" />
               </a>
-              <a routerLink="/settings" fragment="agent-keys" class="text-xs text-muted-foreground hover:text-foreground hover:underline">
+              <a
+                routerLink="/settings"
+                fragment="agent-keys"
+                class="text-xs text-muted-foreground hover:text-foreground hover:underline"
+              >
                 Connect another
               </a>
             </div>

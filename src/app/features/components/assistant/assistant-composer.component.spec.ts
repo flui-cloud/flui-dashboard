@@ -34,7 +34,8 @@ describe('AssistantComposerComponent', () => {
     return fixture.nativeElement as HTMLElement;
   };
 
-  const notice = (el: HTMLElement) => el.querySelector('[data-testid="assistant-destructive-notice"]');
+  const notice = (el: HTMLElement) =>
+    el.querySelector('[data-testid="assistant-destructive-notice"]');
 
   it('warns an operator when destructive actions are enabled on the server', () => {
     const el = build({ destructive: true, inSandbox: false });

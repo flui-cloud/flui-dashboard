@@ -12,9 +12,8 @@ export enum VNetStatus {
   ACTIVE = 'ACTIVE',
   FAILED = 'FAILED',
   DELETING = 'DELETING',
-  DELETED = 'DELETED'
+  DELETED = 'DELETED',
 }
-
 
 // ===== INTERFACES =====
 
@@ -92,7 +91,7 @@ export function vnetServedRegions(vnet: VNetInfo): string[] {
  * Computed property helper: Get all attached server IDs from all subnets
  */
 export function getAllAttachedServerIds(vnet: VNetInfo): string[] {
-  return vnet.subnets.flatMap(subnet => subnet.attachedServerIds);
+  return vnet.subnets.flatMap((subnet) => subnet.attachedServerIds);
 }
 
 /**

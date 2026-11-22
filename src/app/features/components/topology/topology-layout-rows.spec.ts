@@ -2,7 +2,15 @@ import { GraphEdge, TopologyGraph, node } from './topology-graph-model';
 import { rowsLayout } from './topology-layout-rows';
 
 const edge = (from: string, to: string): GraphEdge => ({
-  id: `${from}>${to}`, from, to, label: '', measured: false, failing: false, rps: null, count: 1, focus: null,
+  id: `${from}>${to}`,
+  from,
+  to,
+  label: '',
+  measured: false,
+  failing: false,
+  rps: null,
+  count: 1,
+  focus: null,
 });
 
 function shop(): TopologyGraph {

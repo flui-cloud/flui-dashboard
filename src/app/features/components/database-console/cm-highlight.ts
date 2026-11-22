@@ -7,9 +7,7 @@
  *
  * Lazy-loaded alongside the editor modules; returns the extension to drop into `extensions`.
  */
-export async function fluiHighlighting(): Promise<
-  import('@codemirror/state').Extension
-> {
+export async function fluiHighlighting(): Promise<import('@codemirror/state').Extension> {
   const [{ HighlightStyle, syntaxHighlighting }, { tags: t }] = await Promise.all([
     import('@codemirror/language'),
     import('@lezer/highlight'),

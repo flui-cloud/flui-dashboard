@@ -246,17 +246,16 @@ export class MailTestSendComponent {
       text: this.text,
     };
 
-    (id ? this.api.connectionTest(id, body) : this.api.test(this.domain(), body))
-      .subscribe({
-        next: (result) => {
-          this.result.set(result);
-          this.busy.set(false);
-          this.draft.set(null);
-        },
-        error: (err) => {
-          this.error.set(consoleError(err));
-          this.busy.set(false);
-        },
-      });
+    (id ? this.api.connectionTest(id, body) : this.api.test(this.domain(), body)).subscribe({
+      next: (result) => {
+        this.result.set(result);
+        this.busy.set(false);
+        this.draft.set(null);
+      },
+      error: (err) => {
+        this.error.set(consoleError(err));
+        this.busy.set(false);
+      },
+    });
   }
 }

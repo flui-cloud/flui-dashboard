@@ -31,7 +31,10 @@ function input(over: Partial<MigrationsListSurfaceInput> = {}): MigrationsListSu
 }
 
 function snapshotOf(over: Partial<MigrationsListSurfaceInput> = {}): SurfaceSnapshot {
-  return buildMigrationsListSurface(input(over), { revision: 1, generatedAt: '2026-09-02T09:00:00.000Z' });
+  return buildMigrationsListSurface(input(over), {
+    revision: 1,
+    generatedAt: '2026-09-02T09:00:00.000Z',
+  });
 }
 
 const listScope = (s: SurfaceSnapshot) => s.scopes.find((x) => x.kind === 'list')!;
@@ -63,9 +66,14 @@ describe('migrations list surface producer', () => {
 
   it('flags a snapshot whose revision does not advance on the previous one', () => {
     const first = snapshotOf();
-    const stale = { ...snapshotOf(), surface: { ...snapshotOf().surface, revision: first.surface.revision } };
+    const stale = {
+      ...snapshotOf(),
+      surface: { ...snapshotOf().surface, revision: first.surface.revision },
+    };
     const issues = validateSurfaceSemantics(stale, { previousSnapshot: first });
-    expect(issues).toEqual([jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' })]);
+    expect(issues).toEqual([
+      jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' }),
+    ]);
   });
 
   it('is a list page with no selection — rows drive inline actions, not a detail route: attention names only the page', () => {
@@ -103,7 +111,9 @@ describe('migrations list surface producer', () => {
       },
     };
     const row = rowScope(snapshotOf({ migrations: [bridging] }));
-    expect(row.observations?.find((o) => o.key === 'flui.migration.bridge_state')?.presentedAs.text).toBe('active');
+    expect(
+      row.observations?.find((o) => o.key === 'flui.migration.bridge_state')?.presentedAs.text,
+    ).toBe('active');
   });
 
   it('declares completeness, and truncates past the row cap', () => {
@@ -122,6 +132,8 @@ describe('migrations list surface producer', () => {
     const json = JSON.stringify(snapshotOf({ migrations: [withError] }));
     expect(json).not.toContain('sk_live_MMM');
     const row = rowScope(snapshotOf({ migrations: [withError] }));
-    expect(row.observations?.find((o) => o.key === 'flui.migration.has_error')?.presentedAs.value).toBe(true);
+    expect(
+      row.observations?.find((o) => o.key === 'flui.migration.has_error')?.presentedAs.value,
+    ).toBe(true);
   });
 });

@@ -21,7 +21,9 @@ describe('metric-format', () => {
     });
 
     it('formats the change in the unit of the value it sits under', () => {
-      expect(formatDelta(80_000, [10_000, 10_000, 10_000, 10_000], formatRate).text).toBe('+68 KB/s');
+      expect(formatDelta(80_000, [10_000, 10_000, 10_000, 10_000], formatRate).text).toBe(
+        '+68 KB/s',
+      );
     });
 
     it('flattens jitter inside a deadband proportional to the reading', () => {

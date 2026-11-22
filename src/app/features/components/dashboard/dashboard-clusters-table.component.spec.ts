@@ -12,11 +12,32 @@ import { AppGroupView } from '../../model/application.models';
 import { DashboardClustersTableComponent } from './dashboard-clusters-table.component';
 
 const now = new Date().toISOString();
-const point = { timestamp: now, cpuPercent: 13.5, memoryPercent: 52.1, diskPercent: 10, networkInBytesPerSecond: 1, networkOutBytesPerSecond: 1, nodes: 1 };
+const point = {
+  timestamp: now,
+  cpuPercent: 13.5,
+  memoryPercent: 52.1,
+  diskPercent: 10,
+  networkInBytesPerSecond: 1,
+  networkOutBytesPerSecond: 1,
+  nodes: 1,
+};
 
 const CLUSTERS: ClusterInfo[] = [
-  { id: 'c-1', name: 'control-cluster', status: ClusterStatus.ACTIVE, clusterType: ClusterType.CONTROL, provider: 'hetzner' as ClusterInfo['provider'], nodeCount: 1 },
-  { id: 'c-2', name: 'wc-new', status: ClusterStatus.CREATING, clusterType: ClusterType.WORKLOAD, provider: 'ovh' as ClusterInfo['provider'] },
+  {
+    id: 'c-1',
+    name: 'control-cluster',
+    status: ClusterStatus.ACTIVE,
+    clusterType: ClusterType.CONTROL,
+    provider: 'hetzner' as ClusterInfo['provider'],
+    nodeCount: 1,
+  },
+  {
+    id: 'c-2',
+    name: 'wc-new',
+    status: ClusterStatus.CREATING,
+    clusterType: ClusterType.WORKLOAD,
+    provider: 'ovh' as ClusterInfo['provider'],
+  },
 ];
 
 const METRICS: FleetMetrics = {
@@ -25,9 +46,26 @@ const METRICS: FleetMetrics = {
   rangeStart: now,
   rangeEnd: now,
   queriedAt: now,
-  fleet: { clustersTotal: 2, clustersReporting: 1, nodesReporting: 1, current: point, series: [point] },
+  fleet: {
+    clustersTotal: 2,
+    clustersReporting: 1,
+    nodesReporting: 1,
+    current: point,
+    series: [point],
+  },
   clusters: [
-    { clusterId: 'c-1', name: 'control-cluster', provider: 'hetzner', clusterType: 'control', status: 'active', metrics: 'reporting', nodesReporting: 1, lastSampleAt: now, current: point, series: [point, point] },
+    {
+      clusterId: 'c-1',
+      name: 'control-cluster',
+      provider: 'hetzner',
+      clusterType: 'control',
+      status: 'active',
+      metrics: 'reporting',
+      nodesReporting: 1,
+      lastSampleAt: now,
+      current: point,
+      series: [point, point],
+    },
   ],
 };
 
@@ -35,14 +73,18 @@ describe('DashboardClustersTableComponent', () => {
   let fixture: ComponentFixture<DashboardClustersTableComponent>;
   const state = signal<FleetReadState>('ready');
 
-  const q = (id: string): HTMLElement | null => fixture.nativeElement.querySelector(`[data-testid="${id}"]`);
+  const q = (id: string): HTMLElement | null =>
+    fixture.nativeElement.querySelector(`[data-testid="${id}"]`);
 
   const build = async (fresh = false) => {
     await TestBed.configureTestingModule({
       imports: [DashboardClustersTableComponent],
       providers: [
         provideRouter([]),
-        { provide: FleetService, useValue: { metrics: signal(METRICS), metricsState: state, window: signal('3h') } },
+        {
+          provide: FleetService,
+          useValue: { metrics: signal(METRICS), metricsState: state, window: signal('3h') },
+        },
         { provide: ClusterService, useValue: { clusters: signal(CLUSTERS), progress: signal(40) } },
         {
           provide: ApplicationService,
@@ -53,8 +95,16 @@ describe('DashboardClustersTableComponent', () => {
             ]),
           },
         },
-        { provide: ProvidersService, useValue: { getProviderById: (id: string) => ({ displayName: id === 'ovh' ? 'OVH' : 'Hetzner' }) } },
-        { provide: ClusterAutoscaleService, useValue: { fetchStatusFor: () => Promise.resolve({ warning: 'NONE' }) } },
+        {
+          provide: ProvidersService,
+          useValue: {
+            getProviderById: (id: string) => ({ displayName: id === 'ovh' ? 'OVH' : 'Hetzner' }),
+          },
+        },
+        {
+          provide: ClusterAutoscaleService,
+          useValue: { fetchStatusFor: () => Promise.resolve({ warning: 'NONE' }) },
+        },
         { provide: PermissionService, useValue: { hasSection: () => false } },
       ],
     }).compileComponents();

@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, effect, input, output, signal, untracked } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  input,
+  output,
+  signal,
+  untracked,
+} from '@angular/core';
 import {
   CpuUnit,
   MemoryUnit,
@@ -15,8 +24,14 @@ import {
   template: `
     <label class="block">
       <span class="text-xs font-medium text-gray-600 dark:text-gray-400">{{ label() }}</span>
-      <div class="mt-1 flex rounded-lg border bg-white dark:bg-gray-900 overflow-hidden transition-colors"
-        [class]="invalid() ? 'border-red-400 dark:border-red-500' : 'border-gray-200 dark:border-gray-600 focus-within:border-blue-500'">
+      <div
+        class="mt-1 flex rounded-lg border bg-white dark:bg-gray-900 overflow-hidden transition-colors"
+        [class]="
+          invalid()
+            ? 'border-red-400 dark:border-red-500'
+            : 'border-gray-200 dark:border-gray-600 focus-within:border-blue-500'
+        "
+      >
         <input
           type="number"
           inputmode="decimal"
@@ -32,7 +47,8 @@ import {
           [disabled]="disabled()"
           [attr.aria-label]="label() + ' unit'"
           (change)="onUnit($event)"
-          class="px-2 text-xs font-mono bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-l border-gray-200 dark:border-gray-600 outline-none disabled:cursor-not-allowed">
+          class="px-2 text-xs font-mono bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-l border-gray-200 dark:border-gray-600 outline-none disabled:cursor-not-allowed"
+        >
           @for (u of units(); track u.value) {
             <option [value]="u.value" [selected]="u.value === unit()">{{ u.label }}</option>
           }
@@ -54,8 +70,14 @@ export class ResourceQuantityFieldComponent {
 
   protected readonly units = computed(() =>
     this.kind() === 'cpu'
-      ? [{ value: 'm', label: 'm' }, { value: 'cores', label: 'cores' }]
-      : [{ value: 'Mi', label: 'MiB' }, { value: 'Gi', label: 'GiB' }],
+      ? [
+          { value: 'm', label: 'm' },
+          { value: 'cores', label: 'cores' },
+        ]
+      : [
+          { value: 'Mi', label: 'MiB' },
+          { value: 'Gi', label: 'GiB' },
+        ],
   );
 
   protected readonly step = computed(() => {

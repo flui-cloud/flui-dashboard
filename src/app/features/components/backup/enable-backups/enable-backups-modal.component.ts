@@ -1,4 +1,13 @@
-import { Component, OnInit, computed, inject, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  computed,
+  inject,
+  input,
+  output,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -22,237 +31,284 @@ type Step = 'loading' | 'connect_primary' | 'choose' | 'running' | 'done' | 'err
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (open()) {
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div class="w-full max-w-lg rounded-lg border border-border bg-background shadow-xl">
-        <header class="flex items-center justify-between p-5 border-b border-border">
-          <div>
-            <h2 class="text-lg font-semibold">Enable backups</h2>
-            <p class="text-xs text-muted-foreground mt-0.5">
-              EU sovereignty by default — data stays where you choose.
-            </p>
-          </div>
-          <button
-            type="button"
-            class="text-muted-foreground hover:text-foreground"
-            (click)="onClose()"
-          >
-            ✕
-          </button>
-        </header>
-
-        <div class="p-5">
-          @switch (step()) {
-          <!-- Loading setup options -->
-          @case ('loading') {
-          <p class="text-sm text-muted-foreground">Loading setup options…</p>
-          }
-
-          <!-- Primary storage provider not yet connected -->
-          @case ('connect_primary') {
-          <div class="space-y-4">
-            <div class="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-700 dark:text-amber-400">
-              <p class="font-medium mb-1">Storage provider required</p>
-              <p class="text-xs">
-                {{ readinessMessage() }}
+      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+        <div class="w-full max-w-lg rounded-lg border border-border bg-background shadow-xl">
+          <header class="flex items-center justify-between p-5 border-b border-border">
+            <div>
+              <h2 class="text-lg font-semibold">Enable backups</h2>
+              <p class="text-xs text-muted-foreground mt-0.5">
+                EU sovereignty by default — data stays where you choose.
               </p>
             </div>
-            <p class="text-xs text-muted-foreground">
-              Configure Scaleway from the Providers page, then return here to enable backups.
-            </p>
-          </div>
-          }
+            <button
+              type="button"
+              class="text-muted-foreground hover:text-foreground"
+              (click)="onClose()"
+            >
+              ✕
+            </button>
+          </header>
 
-          <!-- Choose schedule + activate -->
-          @case ('choose') {
-          @if (options(); as opts) {
-          <div class="space-y-4">
-            @if (!opts.primary.ready) {
-            <div class="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-700 dark:text-amber-400 space-y-1">
-              <p class="font-medium">Storage provider not ready</p>
-              <p class="text-xs">{{ readinessMessage() }}</p>
-              <p class="text-xs">
-                <a routerLink="/management/providers" class="text-primary hover:underline">
-                  Open Providers →
-                </a>
-              </p>
-            </div>
-            }
+          <div class="p-5">
+            @switch (step()) {
+              <!-- Loading setup options -->
+              @case ('loading') {
+                <p class="text-sm text-muted-foreground">Loading setup options…</p>
+              }
 
-            <div class="rounded-md border border-border bg-card p-3 text-xs space-y-1">
-              <div class="flex justify-between items-center">
-                <span class="text-muted-foreground">Storage provider</span>
-                @if ((opts.eligible?.length ?? 0) > 1) {
-                <select
-                  [ngModel]="chosenProvider() ?? opts.primary.provider"
-                  (ngModelChange)="chosenProvider.set($event)"
-                  name="primaryProvider"
-                  class="rounded border border-border bg-background px-2 py-1 text-xs font-medium"
+              <!-- Primary storage provider not yet connected -->
+              @case ('connect_primary') {
+                <div class="space-y-4">
+                  <div
+                    class="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-700 dark:text-amber-400"
+                  >
+                    <p class="font-medium mb-1">Storage provider required</p>
+                    <p class="text-xs">
+                      {{ readinessMessage() }}
+                    </p>
+                  </div>
+                  <p class="text-xs text-muted-foreground">
+                    Configure Scaleway from the Providers page, then return here to enable backups.
+                  </p>
+                </div>
+              }
+
+              <!-- Choose schedule + activate -->
+              @case ('choose') {
+                @if (options(); as opts) {
+                  <div class="space-y-4">
+                    @if (!opts.primary.ready) {
+                      <div
+                        class="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-700 dark:text-amber-400 space-y-1"
+                      >
+                        <p class="font-medium">Storage provider not ready</p>
+                        <p class="text-xs">{{ readinessMessage() }}</p>
+                        <p class="text-xs">
+                          <a
+                            routerLink="/management/providers"
+                            class="text-primary hover:underline"
+                          >
+                            Open Providers →
+                          </a>
+                        </p>
+                      </div>
+                    }
+
+                    <div class="rounded-md border border-border bg-card p-3 text-xs space-y-1">
+                      <div class="flex justify-between items-center">
+                        <span class="text-muted-foreground">Storage provider</span>
+                        @if ((opts.eligible?.length ?? 0) > 1) {
+                          <select
+                            [ngModel]="chosenProvider() ?? opts.primary.provider"
+                            (ngModelChange)="chosenProvider.set($event)"
+                            name="primaryProvider"
+                            class="rounded border border-border bg-background px-2 py-1 text-xs font-medium"
+                          >
+                            @for (c of opts.eligible; track c.provider) {
+                              <option [value]="c.provider" [disabled]="!c.ready">
+                                {{ providerLabel(c.provider)
+                                }}{{ c.ready ? '' : ' — not connected' }}
+                              </option>
+                            }
+                          </select>
+                        } @else {
+                          <span class="font-medium">{{
+                            providerLabel(opts.primary.provider)
+                          }}</span>
+                        }
+                      </div>
+                      <div class="flex justify-between">
+                        <span class="text-muted-foreground">Estimated data</span>
+                        @if (opts.estimate.estimatedDataGb != null) {
+                          <span>~{{ opts.estimate.estimatedDataGb }} GB</span>
+                        } @else {
+                          <span class="text-muted-foreground italic">Unavailable</span>
+                        }
+                      </div>
+                      <div class="flex justify-between">
+                        <span class="text-muted-foreground">Backup storage / month</span>
+                        @if (opts.estimate.backupMonthlyCentsBy.single != null) {
+                          <span
+                            class="font-medium"
+                            [title]="opts.estimate.backupPricingSource || ''"
+                            >{{ centsToEur(opts.estimate.backupMonthlyCentsBy.single) }}</span
+                          >
+                        } @else {
+                          <span
+                            class="text-muted-foreground italic"
+                            [title]="opts.estimate.backupUnavailableReason || ''"
+                          >
+                            Cost unavailable
+                          </span>
+                        }
+                      </div>
+                      <div class="flex justify-between border-t border-border/60 pt-1 mt-1">
+                        <span class="text-muted-foreground">Cluster + backup / month</span>
+                        @if (totalEstimate(); as t) {
+                          <span class="font-semibold">{{ t }}</span>
+                        } @else {
+                          <span
+                            class="text-muted-foreground italic"
+                            title="Costs not available — see details below."
+                          >
+                            Cost unavailable
+                          </span>
+                        }
+                      </div>
+                    </div>
+
+                    @if (opts.estimate.backupScope; as scope) {
+                      <details class="rounded-md border border-border bg-card text-xs">
+                        <summary
+                          class="cursor-pointer px-3 py-2 text-muted-foreground hover:text-foreground"
+                        >
+                          What's included in a backup?
+                        </summary>
+                        <div class="px-3 pb-3 pt-1 space-y-2">
+                          @if (scope.persistentVolumes === 'per-application') {
+                            <ul class="list-disc ml-4 text-foreground space-y-0.5">
+                              <li>Each app gets its own backup, new apps included</li>
+                              <li>Databases: continuous backup, or nightly dumps</li>
+                              <li>Other volumes: encrypted snapshots, 7 daily and 4 weekly</li>
+                            </ul>
+                            <p class="text-muted-foreground">
+                              Databases Flui does not recognise are listed as needing a decision
+                              instead of being copied while they write.
+                            </p>
+                          } @else {
+                            <p class="text-muted-foreground">{{ scope.notes }}</p>
+                          }
+                          <p class="text-muted-foreground">
+                            Container images and resources outside the cluster are not included.
+                          </p>
+                        </div>
+                      </details>
+                    }
+
+                    @if (opts.estimate.backupMonthlyCentsBy.single == null) {
+                      <div
+                        class="rounded-md border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground"
+                      >
+                        <strong class="text-foreground">Why no cost?</strong>
+                        We don't have a price for this storage provider yet. You can set a custom
+                        price per GB after activation to get monthly estimates.
+                      </div>
+                    }
+
+                    <label class="block">
+                      <span class="text-sm font-medium">Schedule</span>
+                      <select
+                        [(ngModel)]="cronSchedule"
+                        class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                      >
+                        <option value="">Nightly, each kind at its own time (recommended)</option>
+                        <option value="0 2 * * *">Everything at 02:00 UTC</option>
+                        <option value="0 */6 * * *">Every 6 hours</option>
+                      </select>
+                    </label>
+
+                    <p class="text-[10px] text-muted-foreground">
+                      Estimated costs. Vary based on actual usage, commercial discounts and provider
+                      price changes.
+                    </p>
+                    @if (errorMsg()) {
+                      <div
+                        class="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-400"
+                      >
+                        {{ errorMsg() }}
+                      </div>
+                    }
+                  </div>
+                }
+              }
+
+              <!-- Quick-setup running -->
+              @case ('running') {
+                <div class="text-center py-6">
+                  <p class="text-sm text-muted-foreground">Provisioning your backups…</p>
+                </div>
+                <app-backup-progress-modal
+                  [operationId]="opId()"
+                  title="Enabling backups"
+                  (closed)="onProgressClosed()"
+                />
+              }
+
+              <!-- Done -->
+              @case ('done') {
+                <div class="text-center py-6 space-y-2">
+                  <div class="text-3xl">✓</div>
+                  <p class="text-sm font-medium">Backups enabled successfully.</p>
+                  <p class="text-xs text-muted-foreground">
+                    Every app on this cluster now has a backup, and new apps get one too.
+                  </p>
+                </div>
+              }
+
+              <!-- Error -->
+              @case ('error') {
+                <div
+                  class="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-400"
                 >
-                  @for (c of opts.eligible; track c.provider) {
-                  <option [value]="c.provider" [disabled]="!c.ready">
-                    {{ providerLabel(c.provider) }}{{ c.ready ? '' : ' — not connected' }}
-                  </option>
-                  }
-                </select>
-                } @else {
-                <span class="font-medium">{{ providerLabel(opts.primary.provider) }}</span>
-                }
-              </div>
-              <div class="flex justify-between">
-                <span class="text-muted-foreground">Estimated data</span>
-                @if (opts.estimate.estimatedDataGb != null) {
-                <span>~{{ opts.estimate.estimatedDataGb }} GB</span>
-                } @else {
-                <span class="text-muted-foreground italic">Unavailable</span>
-                }
-              </div>
-              <div class="flex justify-between">
-                <span class="text-muted-foreground">Backup storage / month</span>
-                @if (opts.estimate.backupMonthlyCentsBy.single != null) {
-                <span class="font-medium" [title]="opts.estimate.backupPricingSource || ''">{{ centsToEur(opts.estimate.backupMonthlyCentsBy.single) }}</span>
-                } @else {
-                <span class="text-muted-foreground italic" [title]="opts.estimate.backupUnavailableReason || ''">
-                  Cost unavailable
-                </span>
-                }
-              </div>
-              <div class="flex justify-between border-t border-border/60 pt-1 mt-1">
-                <span class="text-muted-foreground">Cluster + backup / month</span>
-                @if (totalEstimate(); as t) {
-                <span class="font-semibold">{{ t }}</span>
-                } @else {
-                <span class="text-muted-foreground italic" title="Costs not available — see details below.">
-                  Cost unavailable
-                </span>
-                }
-              </div>
-            </div>
-
-            @if (opts.estimate.backupScope; as scope) {
-            <details class="rounded-md border border-border bg-card text-xs">
-              <summary class="cursor-pointer px-3 py-2 text-muted-foreground hover:text-foreground">
-                What's included in a backup?
-              </summary>
-              <div class="px-3 pb-3 pt-1 space-y-2">
-                @if (scope.persistentVolumes === 'per-application') {
-                <ul class="list-disc ml-4 text-foreground space-y-0.5">
-                  <li>Each app gets its own backup, new apps included</li>
-                  <li>Databases: continuous backup, or nightly dumps</li>
-                  <li>Other volumes: encrypted snapshots, 7 daily and 4 weekly</li>
-                </ul>
-                <p class="text-muted-foreground">
-                  Databases Flui does not recognise are listed as needing a decision
-                  instead of being copied while they write.
-                </p>
-                } @else {
-                <p class="text-muted-foreground">{{ scope.notes }}</p>
-                }
-                <p class="text-muted-foreground">
-                  Container images and resources outside the cluster are not included.
-                </p>
-              </div>
-            </details>
-            }
-
-            @if (opts.estimate.backupMonthlyCentsBy.single == null) {
-            <div class="rounded-md border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-              <strong class="text-foreground">Why no cost?</strong>
-              We don't have a price for this storage provider yet. You can set a custom price per GB after activation to get monthly estimates.
-            </div>
-            }
-
-            <label class="block">
-              <span class="text-sm font-medium">Schedule</span>
-              <select
-                [(ngModel)]="cronSchedule"
-                class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-              >
-                <option value="">Nightly, each kind at its own time (recommended)</option>
-                <option value="0 2 * * *">Everything at 02:00 UTC</option>
-                <option value="0 */6 * * *">Every 6 hours</option>
-              </select>
-            </label>
-
-            <p class="text-[10px] text-muted-foreground">
-              Estimated costs. Vary based on actual usage, commercial discounts and provider price changes.
-            </p>
-            @if (errorMsg()) {
-            <div class="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-400">
-              {{ errorMsg() }}
-            </div>
+                  {{ errorMsg() || 'Setup failed.' }}
+                </div>
+              }
             }
           </div>
-          }
-          }
 
-          <!-- Quick-setup running -->
-          @case ('running') {
-          <div class="text-center py-6">
-            <p class="text-sm text-muted-foreground">Provisioning your backups…</p>
-          </div>
-          <app-backup-progress-modal
-            [operationId]="opId()"
-            title="Enabling backups"
-            (closed)="onProgressClosed()"
-          />
-          }
-
-          <!-- Done -->
-          @case ('done') {
-          <div class="text-center py-6 space-y-2">
-            <div class="text-3xl">✓</div>
-            <p class="text-sm font-medium">Backups enabled successfully.</p>
-            <p class="text-xs text-muted-foreground">
-              Every app on this cluster now has a backup, and new apps get one too.
-            </p>
-          </div>
-          }
-
-          <!-- Error -->
-          @case ('error') {
-          <div class="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-400">
-            {{ errorMsg() || 'Setup failed.' }}
-          </div>
-          }
-          }
+          <footer class="flex items-center justify-end gap-2 p-5 border-t border-border">
+            @switch (step()) {
+              @case ('connect_primary') {
+                <button
+                  class="rounded-md border border-border px-3 py-2 text-sm hover:bg-muted"
+                  (click)="onClose()"
+                >
+                  Cancel
+                </button>
+                <a
+                  routerLink="/management/providers"
+                  class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                  (click)="onClose()"
+                >
+                  Configure provider
+                </a>
+              }
+              @case ('choose') {
+                <button
+                  class="rounded-md border border-border px-3 py-2 text-sm hover:bg-muted"
+                  (click)="onClose()"
+                >
+                  Cancel
+                </button>
+                <button
+                  class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                  [disabled]="submitting() || !canActivate()"
+                  [title]="canActivate() ? '' : 'Primary storage provider is not ready.'"
+                  (click)="onActivate()"
+                >
+                  {{ submitting() ? 'Starting…' : 'Activate backups' }}
+                </button>
+              }
+              @case ('done') {
+                <button
+                  class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                  (click)="onClose()"
+                >
+                  Done
+                </button>
+              }
+              @case ('error') {
+                <button
+                  class="rounded-md border border-border px-3 py-2 text-sm hover:bg-muted"
+                  (click)="onClose()"
+                >
+                  Close
+                </button>
+              }
+            }
+          </footer>
         </div>
-
-        <footer class="flex items-center justify-end gap-2 p-5 border-t border-border">
-          @switch (step()) { @case ('connect_primary') {
-          <button class="rounded-md border border-border px-3 py-2 text-sm hover:bg-muted" (click)="onClose()">
-            Cancel
-          </button>
-          <a
-            routerLink="/management/providers"
-            class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-            (click)="onClose()"
-          >
-            Configure provider
-          </a>
-          } @case ('choose') {
-          <button class="rounded-md border border-border px-3 py-2 text-sm hover:bg-muted" (click)="onClose()">
-            Cancel
-          </button>
-          <button
-            class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-            [disabled]="submitting() || !canActivate()"
-            [title]="canActivate() ? '' : 'Primary storage provider is not ready.'"
-            (click)="onActivate()"
-          >
-            {{ submitting() ? 'Starting…' : 'Activate backups' }}
-          </button>
-          } @case ('done') {
-          <button class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90" (click)="onClose()">
-            Done
-          </button>
-          } @case ('error') {
-          <button class="rounded-md border border-border px-3 py-2 text-sm hover:bg-muted" (click)="onClose()">
-            Close
-          </button>
-          } }
-        </footer>
       </div>
-    </div>
     }
   `,
 })
@@ -267,8 +323,7 @@ export class EnableBackupsModalComponent implements OnInit {
   // Typed as the DTO's own enum, not a bare string: the generated client now
   // narrows this field, and an untyped signal only defers the mismatch to the
   // call that sends it.
-  protected readonly chosenProvider =
-    signal<QuickSetupDto.PrimaryProviderEnum | null>(null);
+  protected readonly chosenProvider = signal<QuickSetupDto.PrimaryProviderEnum | null>(null);
 
   protected readonly step = signal<Step>('loading');
   protected readonly options = signal<SetupOptions | null>(null);
@@ -286,25 +341,18 @@ export class EnableBackupsModalComponent implements OnInit {
    * The destination this activation would use: whichever the operator picked,
    * otherwise the one the backend proposed.
    */
-  private readonly effectiveProvider = computed<ProviderReadiness | undefined>(
-    () => {
-      const opts = this.options();
-      if (!opts) return undefined;
-      const chosen = this.chosenProvider();
-      return (
-        (chosen && opts.eligible?.find((c) => c.provider === chosen)) ||
-        opts.primary
-      );
-    },
-  );
+  private readonly effectiveProvider = computed<ProviderReadiness | undefined>(() => {
+    const opts = this.options();
+    if (!opts) return undefined;
+    const chosen = this.chosenProvider();
+    return (chosen && opts.eligible?.find((c) => c.provider === chosen)) || opts.primary;
+  });
 
   /**
    * Activate is allowed only when the backend reports the chosen destination as
    * ready. `ready=false` (for any reason) blocks the POST — server would 400.
    */
-  protected readonly canActivate = computed<boolean>(
-    () => !!this.effectiveProvider()?.ready,
-  );
+  protected readonly canActivate = computed<boolean>(() => !!this.effectiveProvider()?.ready);
 
   protected readonly readinessMessage = computed<string>(() => {
     const p = this.effectiveProvider();

@@ -7,23 +7,40 @@ describe('the outbound ports of a cluster', () => {
   let fixture: ComponentFixture<ClusterEgressCardComponent>;
   let setCluster: jasmine.Spy;
 
-  const open: EgressView = { open: true, ports: [], summary: 'Outbound traffic is open on every port.' };
+  const open: EgressView = {
+    open: true,
+    ports: [],
+    summary: 'Outbound traffic is open on every port.',
+  };
 
   async function mount(options: { view: EgressView; can: boolean }): Promise<void> {
-    setCluster = jasmine.createSpy('setCluster').and.callFake((_id: string, ports: EgressView['ports']) =>
-      Promise.resolve({
-        open: false,
-        ports,
-        summary: 'Outbound traffic leaving the cluster is allowed on ports 80, 443; for any other port ask your administrator.',
-        applied: 3,
-        failed: [],
-      }),
-    );
+    setCluster = jasmine
+      .createSpy('setCluster')
+      .and.callFake((_id: string, ports: EgressView['ports']) =>
+        Promise.resolve({
+          open: false,
+          ports,
+          summary:
+            'Outbound traffic leaving the cluster is allowed on ports 80, 443; for any other port ask your administrator.',
+          applied: 3,
+          failed: [],
+        }),
+      );
     await TestBed.configureTestingModule({
       imports: [ClusterEgressCardComponent],
       providers: [
-        { provide: EgressService, useValue: { cluster: () => Promise.resolve(options.view), setCluster, openCluster: jasmine.createSpy() } },
-        { provide: PermissionService, useValue: { can: (key: string) => options.can && key === 'egress:manage' } },
+        {
+          provide: EgressService,
+          useValue: {
+            cluster: () => Promise.resolve(options.view),
+            setCluster,
+            openCluster: jasmine.createSpy(),
+          },
+        },
+        {
+          provide: PermissionService,
+          useValue: { can: (key: string) => options.can && key === 'egress:manage' },
+        },
       ],
     }).compileComponents();
     fixture = TestBed.createComponent(ClusterEgressCardComponent);
@@ -33,7 +50,8 @@ describe('the outbound ports of a cluster', () => {
     fixture.detectChanges();
   }
 
-  const el = (testId: string): HTMLElement | null => fixture.nativeElement.querySelector(`[data-testid="${testId}"]`);
+  const el = (testId: string): HTMLElement | null =>
+    fixture.nativeElement.querySelector(`[data-testid="${testId}"]`);
 
   afterEach(() => TestBed.resetTestingModule());
 

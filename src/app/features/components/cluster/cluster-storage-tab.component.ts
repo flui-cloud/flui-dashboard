@@ -1,5 +1,13 @@
-
-import { Component, OnInit, computed, effect, inject, signal, viewChild, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  computed,
+  effect,
+  inject,
+  signal,
+  viewChild,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
@@ -76,7 +84,13 @@ const STATUS_CONFIG: Record<StatusEnum, StatusBadgeConfig> = {
 @Component({
   selector: 'cluster-storage-tab',
   standalone: true,
-  imports: [RouterModule, NgIconComponent, ClusterOrphanedVolumesComponent, ClusterReplicatedVolumesCardComponent, ClusterNodeDisksCardComponent],
+  imports: [
+    RouterModule,
+    NgIconComponent,
+    ClusterOrphanedVolumesComponent,
+    ClusterReplicatedVolumesCardComponent,
+    ClusterNodeDisksCardComponent,
+  ],
   providers: [
     provideIcons({
       lucideHardDrive,
@@ -103,7 +117,8 @@ const STATUS_CONFIG: Record<StatusEnum, StatusBadgeConfig> = {
             Cluster storage
           </h2>
           <p class="text-sm text-muted-foreground mt-0.5">
-            One disk on the master node, shared with every other node. This is where most of your apps' data lives.
+            One disk on the master node, shared with every other node. This is where most of your
+            apps' data lives.
           </p>
         </div>
         <button
@@ -111,11 +126,7 @@ const STATUS_CONFIG: Record<StatusEnum, StatusBadgeConfig> = {
           [disabled]="isLoading()"
           class="inline-flex items-center gap-2 px-3 py-1.5 text-sm border border-border rounded-md hover:bg-muted transition-colors disabled:opacity-50"
         >
-          <ng-icon
-            name="lucideRefreshCw"
-            class="h-3.5 w-3.5"
-            [class.animate-spin]="isLoading()"
-          />
+          <ng-icon name="lucideRefreshCw" class="h-3.5 w-3.5" [class.animate-spin]="isLoading()" />
           Refresh
         </button>
       </div>
@@ -133,11 +144,18 @@ const STATUS_CONFIG: Record<StatusEnum, StatusBadgeConfig> = {
 
       <!-- Error (transport-level) -->
       @if (errorMessage() && !isLoading()) {
-        <div class="card-surface p-4 border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10">
+        <div
+          class="card-surface p-4 border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10"
+        >
           <div class="flex items-start gap-3">
-            <ng-icon name="lucideCircleAlert" class="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5" />
+            <ng-icon
+              name="lucideCircleAlert"
+              class="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5"
+            />
             <div>
-              <p class="text-sm font-medium text-red-900 dark:text-red-200">Failed to load storage status</p>
+              <p class="text-sm font-medium text-red-900 dark:text-red-200">
+                Failed to load storage status
+              </p>
               <p class="text-sm text-red-700 dark:text-red-300 mt-1">{{ errorMessage() }}</p>
             </div>
           </div>
@@ -158,8 +176,12 @@ const STATUS_CONFIG: Record<StatusEnum, StatusBadgeConfig> = {
               <p class="text-sm text-foreground">{{ summaryLine() }}</p>
             </div>
           </div>
-          @if (s.message && (s.status === 'DEGRADED' || s.status === 'ERROR' || s.status === 'UNKNOWN')) {
-            <p class="text-xs text-muted-foreground mt-3 font-mono whitespace-pre-wrap">{{ s.message }}</p>
+          @if (
+            s.message && (s.status === 'DEGRADED' || s.status === 'ERROR' || s.status === 'UNKNOWN')
+          ) {
+            <p class="text-xs text-muted-foreground mt-3 font-mono whitespace-pre-wrap">
+              {{ s.message }}
+            </p>
           }
         </div>
 
@@ -169,7 +191,10 @@ const STATUS_CONFIG: Record<StatusEnum, StatusBadgeConfig> = {
             @if (s.volume; as vol) {
               <div class="card-inner p-4">
                 <div class="flex items-center gap-2 mb-3">
-                  <ng-icon name="lucideHardDrive" class="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <ng-icon
+                    name="lucideHardDrive"
+                    class="h-4 w-4 text-blue-600 dark:text-blue-400"
+                  />
                   <span class="text-label">Backing volume</span>
                   <span class="ml-auto text-xs uppercase tracking-wide text-muted-foreground">
                     {{ vol.provider }}
@@ -179,7 +204,9 @@ const STATUS_CONFIG: Record<StatusEnum, StatusBadgeConfig> = {
                   <div class="flex items-center justify-between gap-3">
                     <dt class="text-muted-foreground">Volume ID</dt>
                     <dd class="flex items-center gap-2 font-mono text-xs">
-                      <span class="truncate max-w-[180px]" [title]="vol.volumeId">{{ vol.volumeId }}</span>
+                      <span class="truncate max-w-[180px]" [title]="vol.volumeId">{{
+                        vol.volumeId
+                      }}</span>
                       <button
                         (click)="copy(vol.volumeId, 'volumeId')"
                         class="p-1 hover:bg-muted rounded"
@@ -200,7 +227,9 @@ const STATUS_CONFIG: Record<StatusEnum, StatusBadgeConfig> = {
                   </div>
                   <div class="flex items-center justify-between">
                     <dt class="text-muted-foreground">Mount path</dt>
-                    <dd class="font-mono text-xs">{{ vol.mountPath || '/var/lib/flui/storage' }}</dd>
+                    <dd class="font-mono text-xs">
+                      {{ vol.mountPath || '/var/lib/flui/storage' }}
+                    </dd>
                   </div>
                   <div class="flex items-center justify-between">
                     <dt class="text-muted-foreground">Filesystem label</dt>
@@ -213,7 +242,10 @@ const STATUS_CONFIG: Record<StatusEnum, StatusBadgeConfig> = {
             <!-- PVC summary card -->
             <div class="card-inner p-4">
               <div class="flex items-center gap-2 mb-3">
-                <ng-icon name="lucideDatabase" class="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                <ng-icon
+                  name="lucideDatabase"
+                  class="h-4 w-4 text-purple-600 dark:text-purple-400"
+                />
                 <span class="text-label">PVC usage</span>
               </div>
 
@@ -226,7 +258,9 @@ const STATUS_CONFIG: Record<StatusEnum, StatusBadgeConfig> = {
                   <div>
                     <div class="flex items-center justify-between mb-1">
                       <span class="text-muted-foreground text-xs">
-                        Requested {{ pvcs.requestedGb }} GB{{ s.volume?.sizeGb ? ' of ' + s.volume!.sizeGb + ' GB' : '' }}
+                        Requested {{ pvcs.requestedGb }} GB{{
+                          s.volume?.sizeGb ? ' of ' + s.volume!.sizeGb + ' GB' : ''
+                        }}
                       </span>
                       <span class="text-xs font-medium">{{ requestedPercent().toFixed(0) }}%</span>
                     </div>
@@ -284,7 +318,10 @@ const STATUS_CONFIG: Record<StatusEnum, StatusBadgeConfig> = {
                 class="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
               >
                 <span class="flex items-center gap-2">
-                  <ng-icon name="lucideShare2" class="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                  <ng-icon
+                    name="lucideShare2"
+                    class="h-4 w-4 text-emerald-600 dark:text-emerald-400"
+                  />
                   <span class="text-label">NFS configuration</span>
                 </span>
                 <ng-icon
@@ -293,7 +330,9 @@ const STATUS_CONFIG: Record<StatusEnum, StatusBadgeConfig> = {
                 />
               </button>
               @if (nfs.confirmsBeforeDisk) {
-                <p class="px-4 pb-3 -mt-1 flex items-start gap-2 text-xs text-amber-700 dark:text-amber-400">
+                <p
+                  class="px-4 pb-3 -mt-1 flex items-start gap-2 text-xs text-amber-700 dark:text-amber-400"
+                >
                   <ng-icon name="lucideCircleAlert" class="h-3.5 w-3.5 mt-0.5 shrink-0" />
                   <span>{{ nfs.durability }}</span>
                 </p>
@@ -325,7 +364,10 @@ const STATUS_CONFIG: Record<StatusEnum, StatusBadgeConfig> = {
               class="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
             >
               <span class="flex items-center gap-2">
-                <ng-icon name="lucideDatabase" class="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                <ng-icon
+                  name="lucideDatabase"
+                  class="h-4 w-4 text-indigo-600 dark:text-indigo-400"
+                />
                 <span class="text-label">Application snapshots in this cluster</span>
                 <span class="text-xs text-muted-foreground">({{ snapshots().length }})</span>
               </span>
@@ -361,7 +403,10 @@ const STATUS_CONFIG: Record<StatusEnum, StatusBadgeConfig> = {
                       @for (snap of snapshots(); track snap.exportId) {
                         <tr class="border-b border-border/50 last:border-0">
                           <td class="py-2">
-                            <a [routerLink]="['/apps/applications', snap.appId]" class="text-blue-600 dark:text-blue-400 hover:underline">
+                            <a
+                              [routerLink]="['/apps/applications', snap.appId]"
+                              class="text-blue-600 dark:text-blue-400 hover:underline"
+                            >
                               {{ snap.appId }}
                             </a>
                           </td>
@@ -372,7 +417,11 @@ const STATUS_CONFIG: Record<StatusEnum, StatusBadgeConfig> = {
                             </span>
                           </td>
                           <td class="py-2">
-                            <span class="text-xs" [class]="snapshotStatusClass(snapshotStatusOf(snap))">{{ snapshotLabel(snap) }}</span>
+                            <span
+                              class="text-xs"
+                              [class]="snapshotStatusClass(snapshotStatusOf(snap))"
+                              >{{ snapshotLabel(snap) }}</span
+                            >
                           </td>
                           <td class="py-2 text-right">{{ snapshotSize(snap) }}</td>
                           <td class="py-2 text-xs text-muted-foreground">
@@ -392,8 +441,8 @@ const STATUS_CONFIG: Record<StatusEnum, StatusBadgeConfig> = {
             <ng-icon name="lucideHardDrive" class="h-10 w-10 text-muted-foreground mx-auto mb-3" />
             <p class="text-sm font-medium">Shared storage is disabled</p>
             <p class="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
-              This cluster is using <span class="font-mono">flui-local</span> as the fallback.
-              PVCs land on each node's bundled disk and are not portable across nodes.
+              This cluster is using <span class="font-mono">flui-local</span> as the fallback. PVCs
+              land on each node's bundled disk and are not portable across nodes.
             </p>
           </div>
         }
@@ -406,16 +455,22 @@ const STATUS_CONFIG: Record<StatusEnum, StatusBadgeConfig> = {
         <div class="card-inner p-4">
           <span class="text-label">Where your apps store data</span>
           <p class="text-xs text-muted-foreground mt-1">
-            Flui picks the right one automatically based on the app. You almost never need to choose by hand.
+            Flui picks the right one automatically based on the app. You almost never need to choose
+            by hand.
           </p>
           <div class="mt-3 space-y-2">
             @for (sc of storageClasses; track sc.name) {
-              <div class="flex items-start justify-between gap-4 p-3 rounded-md border border-border">
+              <div
+                class="flex items-start justify-between gap-4 p-3 rounded-md border border-border"
+              >
                 <div>
                   <div class="flex items-center gap-2">
                     <span class="text-sm font-medium">{{ sc.label }}</span>
                     <span class="font-mono text-[11px] text-muted-foreground">{{ sc.name }}</span>
-                    <span class="text-[11px] px-2 py-0.5 rounded-full" [class]="stateClass(sc.state)">
+                    <span
+                      class="text-[11px] px-2 py-0.5 rounded-full"
+                      [class]="stateClass(sc.state)"
+                    >
                       {{ stateLabel(sc.state) }}
                     </span>
                   </div>

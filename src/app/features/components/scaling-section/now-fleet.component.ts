@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  input,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideChevronDown,
@@ -18,10 +11,7 @@ import { SectionGroup } from '../../model/scaling-section.models';
 import { ScalingGroupStore } from './scaling-group.store';
 import { ArchitectureBadgeComponent } from '../../../shared/components/architecture-badge.component';
 import { TABLE, eurHour } from './now-format';
-import {
-  SectionFailureComponent,
-  SectionSkeletonComponent,
-} from './section-states.component';
+import { SectionFailureComponent, SectionSkeletonComponent } from './section-states.component';
 
 interface NodeFlag {
   id: 'stand-in' | 'never-replace' | 'drain-blocker';
@@ -40,12 +30,7 @@ interface FleetRow {
 @Component({
   selector: 'app-scaling-now-fleet',
   standalone: true,
-  imports: [
-    NgIcon,
-    SectionFailureComponent,
-    SectionSkeletonComponent,
-    ArchitectureBadgeComponent,
-  ],
+  imports: [NgIcon, SectionFailureComponent, SectionSkeletonComponent, ArchitectureBadgeComponent],
   providers: [
     provideIcons({
       lucideChevronDown,
@@ -78,24 +63,12 @@ interface FleetRow {
 
       @if (open()) {
         @if (loading()) {
-          <app-section-skeleton
-            variant="table"
-            [count]="3"
-            label="the fleet"
-            testid="fleet"
-          />
+          <app-section-skeleton variant="table" [count]="3" label="the fleet" testid="fleet" />
         } @else if (failed()) {
-          <app-section-failure
-            [message]="failed() ?? ''"
-            testid="fleet"
-            (retry)="store.reload()"
-          />
+          <app-section-failure [message]="failed() ?? ''" testid="fleet" (retry)="store.reload()" />
         } @else if (unavailable()) {
           <div [class]="t.card" id="fleet-nodes">
-            <p
-              class="m-0 max-w-prose text-sm text-foreground"
-              data-testid="fleet-unlisted"
-            >
+            <p class="m-0 max-w-prose text-sm text-foreground" data-testid="fleet-unlisted">
               The machines cannot be named yet.
             </p>
             <p class="m-0 mt-1.5 max-w-prose text-[13px] text-muted-foreground">
@@ -117,28 +90,18 @@ interface FleetRow {
                 </thead>
                 <tbody>
                   @for (row of rows(); track row.node.id) {
-                    <tr
-                      [class]="t.row"
-                      [attr.data-testid]="'node-' + row.node.id"
-                    >
+                    <tr [class]="t.row" [attr.data-testid]="'node-' + row.node.id">
                       <th scope="row" [class]="t.td + ' font-normal'">
                         <span [class]="t.mono">{{ row.node.name }}</span>
                       </th>
                       <td [class]="t.td">
                         <span class="inline-flex items-center gap-1.5">
-                          <span [class]="t.mono"
-                            >{{ row.node.shape }} · {{ row.node.region }}</span
-                          >
-                          <app-architecture-badge
-                            [architecture]="row.node.architecture"
-                          />
+                          <span [class]="t.mono">{{ row.node.shape }} · {{ row.node.region }}</span>
+                          <app-architecture-badge [architecture]="row.node.architecture" />
                         </span>
                       </td>
                       <td [class]="t.tdMuted">{{ row.node.role }}</td>
-                      <td
-                        [class]="t.tdNum"
-                        [attr.data-testid]="'node-price-' + row.node.id"
-                      >
+                      <td [class]="t.tdNum" [attr.data-testid]="'node-price-' + row.node.id">
                         {{ row.price }}
                       </td>
                       <td [class]="t.td">
@@ -149,14 +112,9 @@ interface FleetRow {
                                 class="flex flex-col gap-0.5"
                                 [attr.data-testid]="flag.id + '-' + row.node.id"
                               >
-                                <span
-                                  [class]="t.pill + ' ' + flag.pill + ' w-fit'"
-                                >
+                                <span [class]="t.pill + ' ' + flag.pill + ' w-fit'">
                                   @if (flag.icon) {
-                                    <ng-icon
-                                      [name]="flag.icon"
-                                      class="h-3 w-3"
-                                    />
+                                    <ng-icon [name]="flag.icon" class="h-3 w-3" />
                                   }
                                   {{ flag.label }}
                                 </span>
@@ -169,13 +127,7 @@ interface FleetRow {
                     </tr>
                   } @empty {
                     <tr [class]="t.row">
-                      <td
-                        [class]="t.tdMuted"
-                        colspan="5"
-                        data-testid="fleet-empty"
-                      >
-                        No nodes.
-                      </td>
+                      <td [class]="t.tdMuted" colspan="5" data-testid="fleet-empty">No nodes.</td>
                     </tr>
                   }
                 </tbody>
@@ -198,13 +150,9 @@ export class ScalingNowFleetComponent {
     () => this.store.fleet().loading || this.store.row().loading,
   );
 
-  protected readonly failed = computed(
-    () => this.store.fleet().failed ?? this.store.row().failed,
-  );
+  protected readonly failed = computed(() => this.store.fleet().failed ?? this.store.row().failed);
 
-  protected readonly unavailable = computed(
-    () => this.store.fleet().data?.unavailable ?? null,
-  );
+  protected readonly unavailable = computed(() => this.store.fleet().data?.unavailable ?? null);
 
   private readonly fleet = computed(() => this.store.fleet().data?.nodes ?? []);
 
@@ -218,9 +166,7 @@ export class ScalingNowFleetComponent {
     for (const node of this.fleet()) {
       counts.set(node.shape, (counts.get(node.shape) ?? 0) + 1);
     }
-    const mix = [...counts.entries()]
-      .map(([shape, n]) => `${n}× ${shape}`)
-      .join(' · ');
+    const mix = [...counts.entries()].map(([shape, n]) => `${n}× ${shape}`).join(' · ');
     return `${nodes} node${nodes === 1 ? '' : 's'}${mix ? ' · ' + mix : ''}`;
   });
 
@@ -243,8 +189,7 @@ export class ScalingNowFleetComponent {
         });
       }
 
-      const blockers =
-        claim?.drainable?.ok === false ? claim.drainable.blockers : [];
+      const blockers = claim?.drainable?.ok === false ? claim.drainable.blockers : [];
       for (const blocker of blockers) {
         flags.push({
           id: 'drain-blocker',
@@ -267,8 +212,7 @@ export class ScalingNowFleetComponent {
 
       return {
         node,
-        price:
-          node.hourlyEur === null ? "operator's own" : eurHour(node.hourlyEur),
+        price: node.hourlyEur === null ? "operator's own" : eurHour(node.hourlyEur),
         flags,
       };
     });

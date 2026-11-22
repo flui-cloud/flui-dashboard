@@ -57,39 +57,79 @@ export class MaintenanceService {
   }
 
   cluster(clusterId: string): Promise<ClusterMaintenance> {
-    return firstValueFrom(this.http.get<ClusterMaintenance>(`${this.base}/infrastructure/clusters/${clusterId}/maintenance-window`));
+    return firstValueFrom(
+      this.http.get<ClusterMaintenance>(
+        `${this.base}/infrastructure/clusters/${clusterId}/maintenance-window`,
+      ),
+    );
   }
 
   setCluster(clusterId: string, window: MaintenanceWindow): Promise<ClusterMaintenance | null> {
-    return this.guard(this.http.put<ClusterMaintenance>(`${this.base}/infrastructure/clusters/${clusterId}/maintenance-window`, window), 'The window was not saved');
+    return this.guard(
+      this.http.put<ClusterMaintenance>(
+        `${this.base}/infrastructure/clusters/${clusterId}/maintenance-window`,
+        window,
+      ),
+      'The window was not saved',
+    );
   }
 
   clearCluster(clusterId: string): Promise<ClusterMaintenance | null> {
-    return this.guard(this.http.delete<ClusterMaintenance>(`${this.base}/infrastructure/clusters/${clusterId}/maintenance-window`), 'The window was not removed');
+    return this.guard(
+      this.http.delete<ClusterMaintenance>(
+        `${this.base}/infrastructure/clusters/${clusterId}/maintenance-window`,
+      ),
+      'The window was not removed',
+    );
   }
 
   clusterDeferred(clusterId: string): Promise<DeferredAction[]> {
-    return firstValueFrom(this.http.get<DeferredAction[]>(`${this.base}/infrastructure/clusters/${clusterId}/deferred-actions`));
+    return firstValueFrom(
+      this.http.get<DeferredAction[]>(
+        `${this.base}/infrastructure/clusters/${clusterId}/deferred-actions`,
+      ),
+    );
   }
 
   app(appId: string): Promise<AppMaintenance> {
-    return firstValueFrom(this.http.get<AppMaintenance>(`${this.base}/applications/${appId}/maintenance`));
+    return firstValueFrom(
+      this.http.get<AppMaintenance>(`${this.base}/applications/${appId}/maintenance`),
+    );
   }
 
-  setApp(appId: string, body: { mode: AppMaintenanceMode; window?: MaintenanceWindow }): Promise<AppMaintenance | null> {
-    return this.guard(this.http.put<AppMaintenance>(`${this.base}/applications/${appId}/maintenance`, body), 'The setting was not saved');
+  setApp(
+    appId: string,
+    body: { mode: AppMaintenanceMode; window?: MaintenanceWindow },
+  ): Promise<AppMaintenance | null> {
+    return this.guard(
+      this.http.put<AppMaintenance>(`${this.base}/applications/${appId}/maintenance`, body),
+      'The setting was not saved',
+    );
   }
 
   appDeferred(appId: string): Promise<DeferredAction[]> {
-    return firstValueFrom(this.http.get<DeferredAction[]>(`${this.base}/applications/${appId}/deferred-actions`));
+    return firstValueFrom(
+      this.http.get<DeferredAction[]>(`${this.base}/applications/${appId}/deferred-actions`),
+    );
   }
 
   cancel(appId: string, actionId: string): Promise<DeferredAction | null> {
-    return this.guard(this.http.delete<DeferredAction>(`${this.base}/applications/${appId}/deferred-actions/${actionId}`), 'It was not cancelled');
+    return this.guard(
+      this.http.delete<DeferredAction>(
+        `${this.base}/applications/${appId}/deferred-actions/${actionId}`,
+      ),
+      'It was not cancelled',
+    );
   }
 
   deferProposal(appId: string): Promise<DeferredAction | null> {
-    return this.guard(this.http.post<DeferredAction>(`${this.base}/applications/${appId}/resources/proposal/defer`, {}), 'The change was not held');
+    return this.guard(
+      this.http.post<DeferredAction>(
+        `${this.base}/applications/${appId}/resources/proposal/defer`,
+        {},
+      ),
+      'The change was not held',
+    );
   }
 
   private async guard<T>(call: import('rxjs').Observable<T>, title: string): Promise<T | null> {
@@ -97,7 +137,10 @@ export class MaintenanceService {
       return await firstValueFrom(call);
     } catch (err: unknown) {
       const message = (err as { error?: { message?: string | string[] } })?.error?.message;
-      this.toast.showError({ title, message: Array.isArray(message) ? message.join(' ') : (message ?? 'Please try again.') });
+      this.toast.showError({
+        title,
+        message: Array.isArray(message) ? message.join(' ') : (message ?? 'Please try again.'),
+      });
       return null;
     }
   }
@@ -107,5 +150,11 @@ export function openingLabel(iso: string | null): string {
   if (!iso) return '';
   const at = new Date(iso);
   if (Math.abs(at.getTime() - Date.now()) < 60_000) return 'open now';
-  return at.toLocaleString([], { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  return at.toLocaleString([], {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }

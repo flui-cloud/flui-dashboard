@@ -2,7 +2,16 @@ import { PermissionGroupDto } from '../../../../core/api/model/permissionGroupDt
 import { heldGroups, scopesAfter } from './agent-key-scopes-edit';
 
 const group = (key: string, area: string, scopes: string[]): PermissionGroupDto =>
-  ({ key, area, depth: 'x', label: key, summary: '', scopes, grantable: true, blockedScopes: [] }) as unknown as PermissionGroupDto;
+  ({
+    key,
+    area,
+    depth: 'x',
+    label: key,
+    summary: '',
+    scopes,
+    grantable: true,
+    blockedScopes: [],
+  }) as unknown as PermissionGroupDto;
 
 const CATALOGUE = [
   group('apps:look', 'apps', ['mcp:app:read']),
@@ -24,7 +33,13 @@ describe('editing what a key may do', () => {
       new Set(['apps:destroy', 'mail:look']),
     );
     expect(next.sort()).toEqual(
-      ['mcp:app:destructive', 'mcp:app:read', 'mcp:app:write', 'mcp:mail:read', 'mcp:onboarding:read'].sort(),
+      [
+        'mcp:app:destructive',
+        'mcp:app:read',
+        'mcp:app:write',
+        'mcp:mail:read',
+        'mcp:onboarding:read',
+      ].sort(),
     );
   });
 

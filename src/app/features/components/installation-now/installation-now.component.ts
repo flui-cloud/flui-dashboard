@@ -54,9 +54,12 @@ const MIB = 1024 * 1024;
         <div>
           <h1 class="text-xl font-semibold">Now</h1>
           <p class="mt-0.5 text-sm text-muted-foreground">
-            <app-explain label="What runs out first under a crowd" labelClass="text-sm text-muted-foreground">
-              Amber means a figure is past an alert threshold; red means it needs attention now.
-              The thresholds come from this installation's settings.
+            <app-explain
+              label="What runs out first under a crowd"
+              labelClass="text-sm text-muted-foreground"
+            >
+              Amber means a figure is past an alert threshold; red means it needs attention now. The
+              thresholds come from this installation's settings.
             </app-explain>
           </p>
         </div>
@@ -112,10 +115,20 @@ const MIB = 1024 * 1024;
             <span class="h-2 w-2 rounded-full bg-green-500"></span>
             <span class="font-medium text-green-700 dark:text-green-400">No alert firing</span>
           } @else {
-            <span class="h-2 w-2 rounded-full" [class.bg-amber-500]="d.alerts.critical === 0" [class.bg-destructive]="d.alerts.critical > 0"></span>
-            <span class="font-medium">{{ d.alerts.firing }} firing · {{ d.alerts.critical }} critical</span>
+            <span
+              class="h-2 w-2 rounded-full"
+              [class.bg-amber-500]="d.alerts.critical === 0"
+              [class.bg-destructive]="d.alerts.critical > 0"
+            ></span>
+            <span class="font-medium"
+              >{{ d.alerts.firing }} firing · {{ d.alerts.critical }} critical</span
+            >
             @for (name of d.alerts.names; track name) {
-              <span class="rounded-full bg-muted px-2 py-0.5 text-xs" data-testid="now-alert-name">{{ name }}</span>
+              <span
+                class="rounded-full bg-muted px-2 py-0.5 text-xs"
+                data-testid="now-alert-name"
+                >{{ name }}</span
+              >
             }
           }
         </div>
@@ -126,7 +139,9 @@ const MIB = 1024 * 1024;
             <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <div class="card-inner p-3 col-span-2 sm:col-span-1">
                 <p class="text-label">Spaces in use</p>
-                <p class="text-lg font-semibold" data-testid="now-demo-live">{{ s.live }} / {{ s.ceiling }}</p>
+                <p class="text-lg font-semibold" data-testid="now-demo-live">
+                  {{ s.live }} / {{ s.ceiling }}
+                </p>
                 <div class="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-muted">
                   <div
                     class="h-full rounded-full"
@@ -141,18 +156,32 @@ const MIB = 1024 * 1024;
               </div>
               <div class="card-inner p-3">
                 <p class="text-label">Waiting</p>
-                <p class="text-lg font-semibold" data-testid="now-demo-waiting" [class]="textClass(s.waiting > 0 ? 'warn' : 'ok')">{{ s.waiting }}</p>
+                <p
+                  class="text-lg font-semibold"
+                  data-testid="now-demo-waiting"
+                  [class]="textClass(s.waiting > 0 ? 'warn' : 'ok')"
+                >
+                  {{ s.waiting }}
+                </p>
               </div>
               <div class="card-inner p-3">
                 <p class="text-label">Turned away</p>
-                <p class="text-lg font-semibold" data-testid="now-demo-turned-away" [class]="textClass(s.fullRefusals > 0 ? 'warn' : 'ok')">{{ s.fullRefusals }}</p>
+                <p
+                  class="text-lg font-semibold"
+                  data-testid="now-demo-turned-away"
+                  [class]="textClass(s.fullRefusals > 0 ? 'warn' : 'ok')"
+                >
+                  {{ s.fullRefusals }}
+                </p>
               </div>
             </div>
           </section>
         }
 
         <section class="card-surface" data-testid="now-edges">
-          <h2 class="border-b border-border px-5 py-3 text-sm font-semibold">Requests at the door</h2>
+          <h2 class="border-b border-border px-5 py-3 text-sm font-semibold">
+            Requests at the door
+          </h2>
           @if (d.edges.length === 0) {
             <p class="px-5 py-4 text-sm text-muted-foreground">No requests measured.</p>
           } @else {
@@ -174,11 +203,27 @@ const MIB = 1024 * 1024;
                         <span class="font-medium">{{ rate(e.rpsNow) }}</span>
                         <span class="text-muted-foreground"> · {{ rate(e.rpsBefore) }}</span>
                         @if (surge(e)) {
-                          <span class="badge ml-1.5 bg-amber-500/10 text-amber-600 dark:text-amber-400" data-testid="now-surge">Surge</span>
+                          <span
+                            class="badge ml-1.5 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                            data-testid="now-surge"
+                            >Surge</span
+                          >
                         }
                       </td>
-                      <td class="px-5 py-2.5" data-testid="now-edge-limited" [class]="textClass(limited(e) ? 'warn' : 'ok')">{{ e.rateLimited10m }}</td>
-                      <td class="px-5 py-2.5" data-testid="now-edge-errors" [class]="textClass(failing(e) ? 'bad' : 'ok')">{{ errorPercent(e) }}</td>
+                      <td
+                        class="px-5 py-2.5"
+                        data-testid="now-edge-limited"
+                        [class]="textClass(limited(e) ? 'warn' : 'ok')"
+                      >
+                        {{ e.rateLimited10m }}
+                      </td>
+                      <td
+                        class="px-5 py-2.5"
+                        data-testid="now-edge-errors"
+                        [class]="textClass(failing(e) ? 'bad' : 'ok')"
+                      >
+                        {{ errorPercent(e) }}
+                      </td>
                     </tr>
                   }
                 </tbody>
@@ -211,25 +256,49 @@ const MIB = 1024 * 1024;
                         <span class="block text-xs text-muted-foreground">{{ n.clusterName }}</span>
                       </td>
                       <td class="px-5 py-2.5" data-testid="now-node-cpu">
-                        <span [class]="textClass(cpu(n.cpuPercent))">{{ percent(n.cpuPercent) }}</span>
+                        <span [class]="textClass(cpu(n.cpuPercent))">{{
+                          percent(n.cpuPercent)
+                        }}</span>
                         @if (n.cpuPercent !== null) {
                           <div class="mt-1 h-1 w-16 overflow-hidden rounded-full bg-muted">
-                            <div class="h-full rounded-full" [class]="barClass(cpu(n.cpuPercent))" [style.width.%]="clamp(n.cpuPercent)"></div>
+                            <div
+                              class="h-full rounded-full"
+                              [class]="barClass(cpu(n.cpuPercent))"
+                              [style.width.%]="clamp(n.cpuPercent)"
+                            ></div>
                           </div>
                         }
                       </td>
                       <td class="px-5 py-2.5" data-testid="now-node-memory">
-                        <span [class]="textClass(memory(n.memoryPercent))">{{ percent(n.memoryPercent) }}</span>
+                        <span [class]="textClass(memory(n.memoryPercent))">{{
+                          percent(n.memoryPercent)
+                        }}</span>
                         @if (n.memoryPercent !== null) {
                           <div class="mt-1 h-1 w-16 overflow-hidden rounded-full bg-muted">
-                            <div class="h-full rounded-full" [class]="barClass(memory(n.memoryPercent))" [style.width.%]="clamp(n.memoryPercent)"></div>
+                            <div
+                              class="h-full rounded-full"
+                              [class]="barClass(memory(n.memoryPercent))"
+                              [style.width.%]="clamp(n.memoryPercent)"
+                            ></div>
                           </div>
                         }
                       </td>
-                      <td class="px-5 py-2.5 whitespace-nowrap" data-testid="now-node-link" [class]="textClass(linkBusy(n) ? 'warn' : 'ok')">
+                      <td
+                        class="px-5 py-2.5 whitespace-nowrap"
+                        data-testid="now-node-link"
+                        [class]="textClass(linkBusy(n) ? 'warn' : 'ok')"
+                      >
                         {{ rate(n.mbpsOut) }} · {{ rate(n.mbpsIn) }} Mbit/s
                       </td>
-                      <td class="px-5 py-2.5 whitespace-nowrap" data-testid="now-node-month" [class]="n.includedTb === null ? 'text-muted-foreground' : textClass(monthHeavy(n) ? 'warn' : 'ok')">
+                      <td
+                        class="px-5 py-2.5 whitespace-nowrap"
+                        data-testid="now-node-month"
+                        [class]="
+                          n.includedTb === null
+                            ? 'text-muted-foreground'
+                            : textClass(monthHeavy(n) ? 'warn' : 'ok')
+                        "
+                      >
                         {{ month(n) }}
                       </td>
                     </tr>
@@ -241,7 +310,9 @@ const MIB = 1024 * 1024;
         </section>
 
         <section class="card-surface" data-testid="now-platform">
-          <h2 class="border-b border-border px-5 py-3 text-sm font-semibold">Platform components</h2>
+          <h2 class="border-b border-border px-5 py-3 text-sm font-semibold">
+            Platform components
+          </h2>
           @if (d.platform.length === 0) {
             <p class="px-5 py-4 text-sm text-muted-foreground">No components measured.</p>
           } @else {
@@ -259,9 +330,23 @@ const MIB = 1024 * 1024;
                   @for (c of d.platform; track c.name) {
                     <tr [attr.data-testid]="'now-platform-' + c.name">
                       <td class="px-5 py-2.5">{{ c.name }}</td>
-                      <td class="px-5 py-2.5" [class]="textClass(cpu(c.cpuPercent))">{{ percent(c.cpuPercent) }}</td>
-                      <td class="px-5 py-2.5" data-testid="now-platform-memory" [class]="textClass(memory(c.memoryPercent))">{{ percent(c.memoryPercent) }}</td>
-                      <td class="px-5 py-2.5" data-testid="now-platform-restarts" [class]="textClass(c.restartsLastHour > 0 ? 'warn' : 'ok')">{{ c.restartsLastHour }}</td>
+                      <td class="px-5 py-2.5" [class]="textClass(cpu(c.cpuPercent))">
+                        {{ percent(c.cpuPercent) }}
+                      </td>
+                      <td
+                        class="px-5 py-2.5"
+                        data-testid="now-platform-memory"
+                        [class]="textClass(memory(c.memoryPercent))"
+                      >
+                        {{ percent(c.memoryPercent) }}
+                      </td>
+                      <td
+                        class="px-5 py-2.5"
+                        data-testid="now-platform-restarts"
+                        [class]="textClass(c.restartsLastHour > 0 ? 'warn' : 'ok')"
+                      >
+                        {{ c.restartsLastHour }}
+                      </td>
                     </tr>
                   }
                 </tbody>
@@ -284,16 +369,28 @@ const MIB = 1024 * 1024;
               </div>
               <div class="card-inner p-3">
                 <p class="text-label">Pulled out</p>
-                <p class="text-lg font-semibold" data-testid="now-registry-out">{{ mib(r.bytesOut) }}</p>
+                <p class="text-lg font-semibold" data-testid="now-registry-out">
+                  {{ mib(r.bytesOut) }}
+                </p>
               </div>
               <div class="card-inner p-3">
                 <p class="text-label">Peak out</p>
-                <p class="text-lg font-semibold" data-testid="now-registry-peak">{{ mbit(r.peakBytesPerSecondOut) }}</p>
+                <p class="text-lg font-semibold" data-testid="now-registry-peak">
+                  {{ mbit(r.peakBytesPerSecondOut) }}
+                </p>
               </div>
             </div>
             <p class="flex gap-3 text-xs text-muted-foreground">
-              <span data-testid="now-registry-refused" [class]="textClass(r.outcomes.refused > 0 ? 'warn' : 'ok')">{{ r.outcomes.refused }} refused</span>
-              <span data-testid="now-registry-failed" [class]="textClass(r.outcomes.failed > 0 ? 'bad' : 'ok')">{{ r.outcomes.failed }} failed</span>
+              <span
+                data-testid="now-registry-refused"
+                [class]="textClass(r.outcomes.refused > 0 ? 'warn' : 'ok')"
+                >{{ r.outcomes.refused }} refused</span
+              >
+              <span
+                data-testid="now-registry-failed"
+                [class]="textClass(r.outcomes.failed > 0 ? 'bad' : 'ok')"
+                >{{ r.outcomes.failed }} failed</span
+              >
             </p>
           </section>
         }

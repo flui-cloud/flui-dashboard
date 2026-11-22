@@ -1,4 +1,11 @@
-import { Component, input, computed, signal, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  input,
+  computed,
+  signal,
+  OnDestroy,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { NgxEchartsDirective, provideEcharts } from 'ngx-echarts';
 import type { EChartsOption } from 'echarts';
@@ -7,7 +14,7 @@ import {
   ProportionDonutData,
   DEFAULT_DONUT_CONFIG,
   DISTRIBUTION_PALETTE,
-  ChartTheme
+  ChartTheme,
 } from '../chart.models';
 
 /**
@@ -48,20 +55,23 @@ import {
         <p class="text-xs text-muted-foreground mb-2">{{ data().subtitle }}</p>
       }
 
-      <div echarts
-           [options]="chartOption()"
-           [theme]="currentTheme()"
-           class="w-full"
-           [style.height]="mergedConfig().height">
-      </div>
+      <div
+        echarts
+        [options]="chartOption()"
+        [theme]="currentTheme()"
+        class="w-full"
+        [style.height]="mergedConfig().height"
+      ></div>
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.Eager,
-  styles: [`
-    .proportion-donut-container {
-      width: 100%;
-    }
-  `]
+  styles: [
+    `
+      .proportion-donut-container {
+        width: 100%;
+      }
+    `,
+  ],
 })
 export class ProportionDonutComponent implements OnDestroy {
   data = input.required<ProportionDonutData>();
@@ -84,28 +94,25 @@ export class ProportionDonutComponent implements OnDestroy {
   }
 
   private detectDarkMode(): boolean {
-    return typeof document !== 'undefined' &&
-      document.documentElement.classList.contains('dark');
+    return typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
   }
 
   mergedConfig = computed(() => ({
     ...DEFAULT_DONUT_CONFIG,
-    ...this.config()
+    ...this.config(),
   }));
 
-  currentTheme = computed<ChartTheme>(() =>
-    this.config().theme ?? (this.isDarkSignal() ? 'dark' : 'light')
+  currentTheme = computed<ChartTheme>(
+    () => this.config().theme ?? (this.isDarkSignal() ? 'dark' : 'light'),
   );
 
-  private readonly total = computed(() =>
-    this.data().slices.reduce((sum, s) => sum + s.value, 0)
-  );
+  private readonly total = computed(() => this.data().slices.reduce((sum, s) => sum + s.value, 0));
 
   private readonly coloredSlices = computed(() =>
     this.data().slices.map((s, i) => ({
       ...s,
-      color: s.color || DISTRIBUTION_PALETTE[i % DISTRIBUTION_PALETTE.length]
-    }))
+      color: s.color || DISTRIBUTION_PALETTE[i % DISTRIBUTION_PALETTE.length],
+    })),
   );
 
   chartOption = computed((): EChartsOption => {
@@ -122,21 +129,32 @@ export class ProportionDonutComponent implements OnDestroy {
         formatter: (params: any) => this.formatTooltip(params, formatter, unit),
         backgroundColor: isDark ? '#1f2937' : '#ffffff',
         borderColor: isDark ? '#374151' : '#e5e7eb',
-        textStyle: { color: isDark ? '#f9fafb' : '#111827' }
+        textStyle: { color: isDark ? '#f9fafb' : '#111827' },
       },
       series: [this.buildPieSeries(cfg, isDark, slices, formatter, unit) as any],
-      animation: cfg.animated
+      animation: cfg.animated,
     };
 
     // Legend (disabled if showLabels is true)
     if (cfg.showLegend && !cfg.showLabels) {
-      option.legend = this.buildLegendOption(cfg.legendPosition, isDark, slices, total, formatter, unit);
+      option.legend = this.buildLegendOption(
+        cfg.legendPosition,
+        isDark,
+        slices,
+        total,
+        formatter,
+        unit,
+      );
     }
 
     return option;
   });
 
-  private formatTooltip(params: any, formatter: ((value: number, percent: number) => string) | undefined, unit: string | undefined): string {
+  private formatTooltip(
+    params: any,
+    formatter: ((value: number, percent: number) => string) | undefined,
+    unit: string | undefined,
+  ): string {
     const pct = params.percent as number;
     const val = params.value as number;
     const formatted = this.formatSliceValue(val, pct, formatter, unit);
@@ -161,35 +179,37 @@ export class ProportionDonutComponent implements OnDestroy {
       itemStyle: {
         borderRadius: cfg.borderRadius,
         borderColor: isDark ? '#1f2937' : '#ffffff',
-        borderWidth: 2
+        borderWidth: 2,
       },
       label: this.buildPieLabel(cfg, isDark, formatter, unit),
       emphasis: {
         itemStyle: {
           shadowBlur: 10,
           shadowOffsetX: 0,
-          shadowColor: 'rgba(0, 0, 0, 0.3)'
+          shadowColor: 'rgba(0, 0, 0, 0.3)',
         },
         scale: true,
-        scaleSize: 5
+        scaleSize: 5,
       },
-      labelLine: cfg.showLabels ? {
-        show: true,
-        length: 20,
-        length2: 60,
-        smooth: false,
-        lineStyle: {
-          color: isDark ? '#4b5563' : '#9ca3af',
-          width: 1
-        }
-      } : {
-        show: false
-      },
-      data: slices.map(s => ({
+      labelLine: cfg.showLabels
+        ? {
+            show: true,
+            length: 20,
+            length2: 60,
+            smooth: false,
+            lineStyle: {
+              color: isDark ? '#4b5563' : '#9ca3af',
+              width: 1,
+            },
+          }
+        : {
+            show: false,
+          },
+      data: slices.map((s) => ({
         value: s.value,
         name: s.name,
-        itemStyle: { color: s.color }
-      }))
+        itemStyle: { color: s.color },
+      })),
     };
   }
 
@@ -212,20 +232,20 @@ export class ProportionDonutComponent implements OnDestroy {
         name: {
           fontSize: 12,
           fontWeight: 'bold',
-          color: isDark ? '#f9fafb' : '#111827'
+          color: isDark ? '#f9fafb' : '#111827',
         },
         value: {
           fontSize: 11,
-          color: isDark ? '#d1d5db' : '#4b5563'
+          color: isDark ? '#d1d5db' : '#4b5563',
         },
         percent: {
           fontSize: 10,
-          color: isDark ? '#9ca3af' : '#6b7280'
-        }
+          color: isDark ? '#9ca3af' : '#6b7280',
+        },
       },
       alignTo: 'edge',
       edgeDistance: '5%',
-      distanceToLabelLine: 5
+      distanceToLabelLine: 5,
     };
   }
 
@@ -253,7 +273,7 @@ export class ProportionDonutComponent implements OnDestroy {
       icon: 'circle',
       itemWidth: 10,
       itemHeight: 10,
-      itemGap: 16
+      itemGap: 16,
     };
 
     if (legendPosition === 'top') {
@@ -268,13 +288,13 @@ export class ProportionDonutComponent implements OnDestroy {
         top: 'middle',
         itemGap: 14,
         formatter: (name: string) => {
-          const slice = slices.find(s => s.name === name);
+          const slice = slices.find((s) => s.name === name);
           if (!slice) return name;
           const val = slice.value;
           const pct = total > 0 ? ((val / total) * 100).toFixed(1) : '0';
           const formatted = this.formatSliceValue(val, Number.parseFloat(pct), formatter, unit);
           return `${name}\n${formatted} (${pct}%)`;
-        }
+        },
       };
     }
 
@@ -284,12 +304,11 @@ export class ProportionDonutComponent implements OnDestroy {
       bottom: 0,
       left: 'center',
       formatter: (name: string) => {
-        const slice = slices.find(s => s.name === name);
+        const slice = slices.find((s) => s.name === name);
         if (!slice) return name;
         const pct = total > 0 ? ((slice.value / total) * 100).toFixed(0) : '0';
         return `${name} ${pct}%`;
-      }
+      },
     };
   }
-
 }

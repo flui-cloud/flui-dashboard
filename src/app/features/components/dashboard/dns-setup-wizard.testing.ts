@@ -1,6 +1,10 @@
 import { Provider, signal } from '@angular/core';
 import { DnsZonesService, DnsCapableProvider } from '../../service/dns-zones.service';
-import { ClusterDnsZoneService, SystemHostnames, SystemHostnamesCheck } from '../../service/cluster-dns-zone.service';
+import {
+  ClusterDnsZoneService,
+  SystemHostnames,
+  SystemHostnamesCheck,
+} from '../../service/cluster-dns-zone.service';
 import { AppEndpointsService } from '../../service/app-endpoints.service';
 import { AppRuntimeWebSocketService } from '../../service/app-runtime-websocket.service';
 import { DNSZonesService } from '../../../core/api/api/dNSZones.service';
@@ -38,18 +42,33 @@ export function wizardProviders(fakes: WizardFakes = {}) {
     dnsCapableProviders: capable,
     error,
     loadZones: jasmine.createSpy('loadZones').and.resolveTo(),
-    loadProviders: jasmine.createSpy('loadProviders').and.callFake(async () => providers.set(fakes.supported ?? [])),
-    loadDnsCapableProviders: jasmine.createSpy('loadDnsCapableProviders').and.callFake(async () => capable.set(fakes.capable ?? [])),
-    fetchProviderZones: jasmine.createSpy('fetchProviderZones').and.callFake(async (provider: string) => {
-      const found = fakes.providerZones?.[provider];
-      if (found instanceof Error) throw found;
-      return found ?? [];
-    }),
-    registerZone: jasmine.createSpy('registerZone').and.callFake(async (dto: { zoneName: string; providerZoneId?: string; dnsProvider: string }) => {
-      const zone = { id: `reg-${dto.zoneName}`, zoneName: dto.zoneName, providerZoneId: dto.providerZoneId, dnsProvider: dto.dnsProvider } as DnsZoneResponseDto;
-      zones.update(list => [...list, zone]);
-      return zone;
-    }),
+    loadProviders: jasmine
+      .createSpy('loadProviders')
+      .and.callFake(async () => providers.set(fakes.supported ?? [])),
+    loadDnsCapableProviders: jasmine
+      .createSpy('loadDnsCapableProviders')
+      .and.callFake(async () => capable.set(fakes.capable ?? [])),
+    fetchProviderZones: jasmine
+      .createSpy('fetchProviderZones')
+      .and.callFake(async (provider: string) => {
+        const found = fakes.providerZones?.[provider];
+        if (found instanceof Error) throw found;
+        return found ?? [];
+      }),
+    registerZone: jasmine
+      .createSpy('registerZone')
+      .and.callFake(
+        async (dto: { zoneName: string; providerZoneId?: string; dnsProvider: string }) => {
+          const zone = {
+            id: `reg-${dto.zoneName}`,
+            zoneName: dto.zoneName,
+            providerZoneId: dto.providerZoneId,
+            dnsProvider: dto.dnsProvider,
+          } as DnsZoneResponseDto;
+          zones.update((list) => [...list, zone]);
+          return zone;
+        },
+      ),
   };
 
   const clusterDnsZone = {
@@ -57,8 +76,14 @@ export function wizardProviders(fakes: WizardFakes = {}) {
     error: signal<string | null>(null),
     loadAssignment: jasmine.createSpy('loadAssignment').and.resolveTo(),
     getIssuers: jasmine.createSpy('getIssuers').and.resolveTo([]),
-    getSystemHostnames: jasmine.createSpy('getSystemHostnames').and.callFake(async () => fakes.hostnames ?? { zoneName: null, hostnames: [] }),
-    checkSystemHostnames: jasmine.createSpy('checkSystemHostnames').and.callFake(async () => fakes.check ?? { ok: true, result: { zoneName: null, hostnames: [] } }),
+    getSystemHostnames: jasmine
+      .createSpy('getSystemHostnames')
+      .and.callFake(async () => fakes.hostnames ?? { zoneName: null, hostnames: [] }),
+    checkSystemHostnames: jasmine
+      .createSpy('checkSystemHostnames')
+      .and.callFake(
+        async () => fakes.check ?? { ok: true, result: { zoneName: null, hostnames: [] } },
+      ),
   };
 
   const providersList: Provider[] = [

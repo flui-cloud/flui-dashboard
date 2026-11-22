@@ -1,12 +1,34 @@
-import { Component, ElementRef, inject, input, signal, computed, effect, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  inject,
+  input,
+  signal,
+  computed,
+  effect,
+  OnInit,
+  OnDestroy,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
-  lucideShieldCheck, lucideShieldAlert, lucideShieldOff,
-  lucideLoader, lucideCheckCircle, lucideAlertCircle, lucideSettings2, lucideTrash2
+  lucideShieldCheck,
+  lucideShieldAlert,
+  lucideShieldOff,
+  lucideLoader,
+  lucideCheckCircle,
+  lucideAlertCircle,
+  lucideSettings2,
+  lucideTrash2,
 } from '@ng-icons/lucide';
 import { ClusterDnsZoneService } from '../../service/cluster-dns-zone.service';
-import { ClusterIssuerWebSocketService, IssuerStatusEvent, IssuerConfiguredEvent, IssuerFailedEvent } from '../../service/cluster-issuer-websocket.service';
+import {
+  ClusterIssuerWebSocketService,
+  IssuerStatusEvent,
+  IssuerConfiguredEvent,
+  IssuerFailedEvent,
+} from '../../service/cluster-issuer-websocket.service';
 import { ClusterDnsZoneControllerGetIssuers200ResponseInner } from '../../../core/api/model/clusterDnsZoneControllerGetIssuers200ResponseInner';
 import { CanDirective } from '../../../core/directives/can.directive';
 
@@ -19,18 +41,24 @@ const SolverType = ClusterDnsZoneControllerGetIssuers200ResponseInner.SolverType
   imports: [NgIconComponent, FormsModule, CanDirective],
   providers: [
     provideIcons({
-      lucideShieldCheck, lucideShieldAlert, lucideShieldOff,
-      lucideLoader, lucideCheckCircle, lucideAlertCircle, lucideSettings2, lucideTrash2
+      lucideShieldCheck,
+      lucideShieldAlert,
+      lucideShieldOff,
+      lucideLoader,
+      lucideCheckCircle,
+      lucideAlertCircle,
+      lucideSettings2,
+      lucideTrash2,
     }),
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div id="standard-certificate-issuers" class="space-y-4">
       <div>
-        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Standard Certificate Issuers (HTTP-01)</h3>
-        <p class="text-xs text-sub mt-0.5">
-          Manage certificates for standard domains.
-        </p>
+        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">
+          Standard Certificate Issuers (HTTP-01)
+        </h3>
+        <p class="text-xs text-sub mt-0.5">Manage certificates for standard domains.</p>
       </div>
 
       @if (loading() && httpIssuers().length === 0) {
@@ -41,38 +69,60 @@ const SolverType = ClusterDnsZoneControllerGetIssuers200ResponseInner.SolverType
       } @else if (httpIssuers().length > 0) {
         <div class="grid gap-2">
           @for (issuer of httpIssuers(); track issuer.name) {
-            <div class="rounded-lg border overflow-hidden"
-              [class]="issuer.ready
-                ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800'
-                : 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800'"
+            <div
+              class="rounded-lg border overflow-hidden"
+              [class]="
+                issuer.ready
+                  ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800'
+                  : 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800'
+              "
             >
               <div class="flex items-center justify-between px-3 py-2.5">
                 <div class="flex items-center gap-2.5">
                   <ng-icon
-                    [name]="configuring() ? 'lucideLoader' : (issuer.ready ? 'lucideShieldCheck' : 'lucideShieldAlert')"
+                    [name]="
+                      configuring()
+                        ? 'lucideLoader'
+                        : issuer.ready
+                          ? 'lucideShieldCheck'
+                          : 'lucideShieldAlert'
+                    "
                     class="h-4 w-4 flex-shrink-0"
-                    [class]="configuring() ? 'animate-spin text-blue-500' : (issuer.ready ? 'text-green-600 dark:text-green-400' : 'text-amber-500 dark:text-amber-400')"
+                    [class]="
+                      configuring()
+                        ? 'animate-spin text-blue-500'
+                        : issuer.ready
+                          ? 'text-green-600 dark:text-green-400'
+                          : 'text-amber-500 dark:text-amber-400'
+                    "
                   />
                   <div>
-                    <p class="text-xs font-medium font-mono text-gray-900 dark:text-white">{{ issuer.name }}</p>
+                    <p class="text-xs font-medium font-mono text-gray-900 dark:text-white">
+                      {{ issuer.name }}
+                    </p>
                     @if (issuer.email) {
                       <p class="text-xs text-gray-500 dark:text-gray-400">{{ issuer.email }}</p>
                     }
                   </div>
                 </div>
-                <span class="text-xs font-medium px-2 py-0.5 rounded-full"
-                  [class]="configuring()
-                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                    : (issuer.ready
+                <span
+                  class="text-xs font-medium px-2 py-0.5 rounded-full"
+                  [class]="
+                    configuring()
+                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                      : issuer.ready
                         ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                        : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400')"
+                        : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                  "
                 >
-                  {{ configuring() ? 'Configuring...' : (issuer.ready ? 'Ready' : 'Not Ready') }}
+                  {{ configuring() ? 'Configuring...' : issuer.ready ? 'Ready' : 'Not Ready' }}
                 </span>
               </div>
               @if (configuring()) {
                 <div class="h-1 w-full bg-blue-100 dark:bg-blue-900/40 overflow-hidden">
-                  <div class="h-1 w-1/3 bg-blue-500 dark:bg-blue-400 rounded-full animate-indeterminate"></div>
+                  <div
+                    class="h-1 w-1/3 bg-blue-500 dark:bg-blue-400 rounded-full animate-indeterminate"
+                  ></div>
                 </div>
               }
             </div>
@@ -111,18 +161,26 @@ const SolverType = ClusterDnsZoneControllerGetIssuers200ResponseInner.SolverType
         @if (configuring()) {
           <div class="grid gap-2">
             @for (name of pendingIssuerNames; track name) {
-              <div class="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/10 overflow-hidden">
+              <div
+                class="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/10 overflow-hidden"
+              >
                 <div class="flex items-center justify-between px-3 py-2.5">
                   <div class="flex items-center gap-2.5">
                     <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin text-blue-500" />
-                    <p class="text-xs font-medium font-mono text-gray-900 dark:text-white">{{ name }}</p>
+                    <p class="text-xs font-medium font-mono text-gray-900 dark:text-white">
+                      {{ name }}
+                    </p>
                   </div>
-                  <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                  <span
+                    class="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                  >
                     Configuring...
                   </span>
                 </div>
                 <div class="h-1 w-full bg-blue-100 dark:bg-blue-900/40 overflow-hidden">
-                  <div class="h-1 w-1/3 bg-blue-500 dark:bg-blue-400 rounded-full animate-indeterminate"></div>
+                  <div
+                    class="h-1 w-1/3 bg-blue-500 dark:bg-blue-400 rounded-full animate-indeterminate"
+                  ></div>
                 </div>
               </div>
             }
@@ -132,9 +190,14 @@ const SolverType = ClusterDnsZoneControllerGetIssuers200ResponseInner.SolverType
           </p>
         } @else {
           <div class="flex items-start gap-3 p-3 card-inner border border-border rounded-lg">
-            <ng-icon name="lucideShieldOff" class="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+            <ng-icon
+              name="lucideShieldOff"
+              class="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5"
+            />
             <div class="flex-1 min-w-0">
-              <p class="text-xs font-medium text-foreground">No standard certificate issuers configured</p>
+              <p class="text-xs font-medium text-foreground">
+                No standard certificate issuers configured
+              </p>
               <p class="text-xs text-sub mt-0.5">
                 Configure standard issuers to enable certificates for your domains.
               </p>
@@ -151,19 +214,37 @@ const SolverType = ClusterDnsZoneControllerGetIssuers200ResponseInner.SolverType
       }
 
       @if (deleteConfirm()) {
-        <div class="flex items-center gap-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-xs">
-          <span class="text-red-700 dark:text-red-400 flex-1">Delete standard issuers (staging + production)?</span>
-          <button (click)="deleteHttpIssuers()" [disabled]="deleting()" class="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-xs font-medium disabled:opacity-50">
-            @if (deleting()) { Deleting... } @else { Delete }
+        <div
+          class="flex items-center gap-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-xs"
+        >
+          <span class="text-red-700 dark:text-red-400 flex-1"
+            >Delete standard issuers (staging + production)?</span
+          >
+          <button
+            (click)="deleteHttpIssuers()"
+            [disabled]="deleting()"
+            class="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-xs font-medium disabled:opacity-50"
+          >
+            @if (deleting()) {
+              Deleting...
+            } @else {
+              Delete
+            }
           </button>
-          <button (click)="deleteConfirm.set(false)" [disabled]="deleting()" class="px-2 py-1 text-muted-foreground hover:text-foreground text-xs disabled:opacity-50">
+          <button
+            (click)="deleteConfirm.set(false)"
+            [disabled]="deleting()"
+            class="px-2 py-1 text-muted-foreground hover:text-foreground text-xs disabled:opacity-50"
+          >
             Cancel
           </button>
         </div>
       }
 
       @if (deleteError()) {
-        <div class="flex items-center gap-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-xs text-red-700 dark:text-red-400">
+        <div
+          class="flex items-center gap-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-xs text-red-700 dark:text-red-400"
+        >
           <ng-icon name="lucideAlertCircle" class="h-3.5 w-3.5 flex-shrink-0" />
           {{ deleteError() }}
         </div>
@@ -189,7 +270,9 @@ const SolverType = ClusterDnsZoneControllerGetIssuers200ResponseInner.SolverType
           </div>
 
           @if (formError()) {
-            <div class="flex items-center gap-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-xs text-red-700 dark:text-red-400">
+            <div
+              class="flex items-center gap-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-xs text-red-700 dark:text-red-400"
+            >
               <ng-icon name="lucideAlertCircle" class="h-3.5 w-3.5 flex-shrink-0" />
               {{ formError() }}
             </div>
@@ -245,11 +328,12 @@ export class ClusterCertificateIssuersComponent implements OnInit, OnDestroy {
   private isHttpIssuer(issuer: Issuer): boolean {
     const name = issuer.name ?? '';
     if (name.includes('wildcard')) return false;
-    if (issuer.solverType === SolverType.Dns01 || issuer.solverType === SolverType.Combined) return false;
+    if (issuer.solverType === SolverType.Dns01 || issuer.solverType === SolverType.Combined)
+      return false;
     return true;
   }
 
-  protected httpIssuers = computed(() => this.issuers().filter(i => this.isHttpIssuer(i)));
+  protected httpIssuers = computed(() => this.issuers().filter((i) => this.isHttpIssuer(i)));
   protected isConfigured = computed(() => this.httpIssuers().length > 0);
 
   constructor() {
@@ -281,7 +365,7 @@ export class ClusterCertificateIssuersComponent implements OnInit, OnDestroy {
   readonly el = inject(ElementRef);
 
   openForm(): void {
-    const existing = this.httpIssuers().find(i => i.email);
+    const existing = this.httpIssuers().find((i) => i.email);
     this.formEmail = existing?.email ?? '';
     this.formError.set(null);
     this.deleteError.set(null);
@@ -290,12 +374,12 @@ export class ClusterCertificateIssuersComponent implements OnInit, OnDestroy {
   }
 
   protected toggleForm(): void {
-    const existing = this.httpIssuers().find(i => i.email);
+    const existing = this.httpIssuers().find((i) => i.email);
     this.formEmail = existing?.email ?? '';
     this.formError.set(null);
     this.deleteError.set(null);
     this.deleteConfirm.set(false);
-    this.showForm.update(v => !v);
+    this.showForm.update((v) => !v);
   }
 
   protected async submitForm(): Promise<void> {

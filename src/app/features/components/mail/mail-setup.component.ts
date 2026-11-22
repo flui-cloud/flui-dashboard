@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -43,11 +50,7 @@ import { consoleError } from './mail-format';
           [disabled]="loading()"
           class="inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-2.5 text-xs text-muted-foreground hover:bg-muted disabled:opacity-60"
         >
-          <ng-icon
-            name="lucideRotateCcw"
-            class="h-3.5 w-3.5"
-            [class.animate-spin]="loading()"
-          />
+          <ng-icon name="lucideRotateCcw" class="h-3.5 w-3.5" [class.animate-spin]="loading()" />
           Re-check
         </button>
       </app-mail-section-nav>

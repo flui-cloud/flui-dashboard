@@ -27,13 +27,19 @@ import { Toast, ToastService } from '../services/toast.service';
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <div class="fixed top-16 right-4 z-[100] flex flex-col gap-2 w-full max-w-sm pointer-events-none">
+    <div
+      class="fixed top-16 right-4 z-[100] flex flex-col gap-2 w-full max-w-sm pointer-events-none"
+    >
       @for (t of toastService.toasts(); track t.id) {
         <div
           class="pointer-events-auto rounded-lg border shadow-lg px-3 py-2.5 flex items-start gap-2.5 animate-in slide-in-from-right duration-200"
           [class]="containerClass(t)"
         >
-          <ng-icon [name]="iconName(t)" class="h-4 w-4 flex-shrink-0 mt-0.5" [class]="iconClass(t)" />
+          <ng-icon
+            [name]="iconName(t)"
+            class="h-4 w-4 flex-shrink-0 mt-0.5"
+            [class]="iconClass(t)"
+          />
           <div class="flex-1 min-w-0">
             @if (t.title) {
               <p class="text-sm font-medium text-foreground">{{ t.title }}</p>
@@ -79,10 +85,14 @@ export class ToastContainerComponent {
 
   iconName(t: Toast): string {
     switch (t.kind) {
-      case 'success': return 'lucideCircleCheck';
-      case 'warning': return 'lucideTriangleAlert';
-      case 'error': return 'lucideCircleAlert';
-      default: return 'lucideInfo';
+      case 'success':
+        return 'lucideCircleCheck';
+      case 'warning':
+        return 'lucideTriangleAlert';
+      case 'error':
+        return 'lucideCircleAlert';
+      default:
+        return 'lucideInfo';
     }
   }
 
@@ -92,10 +102,14 @@ export class ToastContainerComponent {
 
   iconClass(t: Toast): string {
     switch (t.kind) {
-      case 'success': return 'text-[hsl(var(--ok))]';
-      case 'warning': return 'text-[hsl(var(--warn))]';
-      case 'error': return 'text-destructive';
-      default: return 'text-muted-foreground';
+      case 'success':
+        return 'text-[hsl(var(--ok))]';
+      case 'warning':
+        return 'text-[hsl(var(--warn))]';
+      case 'error':
+        return 'text-destructive';
+      default:
+        return 'text-muted-foreground';
     }
   }
 

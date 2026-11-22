@@ -23,7 +23,8 @@ export interface OtherGroup {
   options: EnrichedOption[];
 }
 
-type StoredSelection = { kind: 'auto' } | { provider?: string; connectionId?: string; model?: string };
+type StoredSelection =
+  { kind: 'auto' } | { provider?: string; connectionId?: string; model?: string };
 
 const SELECTION_KEY = 'flui.assistant.modelSelection';
 
@@ -61,7 +62,11 @@ export class AssistantModelSelectionService {
   readonly defaultModelLabel = computed(() => {
     const providers = this.inference.configuredProviders();
     const provider = providers.find((p) => p.euDataResidency) ?? providers[0];
-    return provider?.defaultModel ?? this.inference.recommendations()?.recommendedProvider.defaultModel ?? '';
+    return (
+      provider?.defaultModel ??
+      this.inference.recommendations()?.recommendedProvider.defaultModel ??
+      ''
+    );
   });
 
   readonly featuredOptions = computed<EnrichedOption[]>(() => {
@@ -74,7 +79,15 @@ export class AssistantModelSelectionService {
         opt.opts?.provider ??
         this.inference.connections().find((c) => c.id === opt.opts?.connectionId)?.label ??
         '';
-      result.push({ idx, label: opt.label, modelId: rec.model, provider, description: rec.description, note: rec.note, opts: opt.opts });
+      result.push({
+        idx,
+        label: opt.label,
+        modelId: rec.model,
+        provider,
+        description: rec.description,
+        note: rec.note,
+        opts: opt.opts,
+      });
     });
     return result;
   });
@@ -147,7 +160,9 @@ export class AssistantModelSelectionService {
       return info?.euDataResidency ? `EU inference · ${provider}` : provider;
     }
     if (connectionId) {
-      return this.inference.connections().find((c) => c.id === connectionId)?.label ?? 'custom endpoint';
+      return (
+        this.inference.connections().find((c) => c.id === connectionId)?.label ?? 'custom endpoint'
+      );
     }
     return '';
   });
@@ -192,10 +207,15 @@ export class AssistantModelSelectionService {
     if (!rec) return 0;
     const want = rec.recommendedProvider;
     const wantIdx = opts.findIndex(
-      (o, i) => i > 0 && this.inference.groupFor(o.opts)?.key === want.key && o.opts?.model === want.defaultModel,
+      (o, i) =>
+        i > 0 &&
+        this.inference.groupFor(o.opts)?.key === want.key &&
+        o.opts?.model === want.defaultModel,
     );
     if (wantIdx >= 0) return wantIdx;
-    const defIdx = opts.findIndex((o, i) => i > 0 && !!this.inference.recommendedModelFor(o.opts)?.isDefault);
+    const defIdx = opts.findIndex(
+      (o, i) => i > 0 && !!this.inference.recommendedModelFor(o.opts)?.isDefault,
+    );
     return Math.max(defIdx, 0);
   }
 

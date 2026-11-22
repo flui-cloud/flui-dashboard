@@ -110,9 +110,7 @@ export class ExplainComponent {
    * and near its bottom. Positioned against the window, so it closes on a
    * scroll rather than drifting away from what it explains.
    */
-  protected readonly escaped = signal<{ top: number; left: number } | null>(
-    null,
-  );
+  protected readonly escaped = signal<{ top: number; left: number } | null>(null);
 
   private readonly host = inject(ElementRef<HTMLElement>);
 
@@ -153,9 +151,7 @@ export class ExplainComponent {
   private correct(el: HTMLElement): void {
     const panel = el.getBoundingClientRect();
     const clip = this.clipRect();
-    const anchor = (
-      this.host.nativeElement as HTMLElement
-    ).getBoundingClientRect();
+    const anchor = (this.host.nativeElement as HTMLElement).getBoundingClientRect();
 
     if (!this.dropUp() && panel.bottom > clip.bottom) {
       this.dropUp.set(anchor.top - clip.top > clip.bottom - anchor.bottom);
@@ -168,17 +164,11 @@ export class ExplainComponent {
 
   private escapeIfStillCut(el: HTMLElement, clip: DOMRect): void {
     const panel = el.getBoundingClientRect();
-    if (
-      panel.bottom <= clip.bottom &&
-      panel.top >= clip.top &&
-      panel.right <= clip.right
-    ) {
+    if (panel.bottom <= clip.bottom && panel.top >= clip.top && panel.right <= clip.right) {
       return;
     }
 
-    const anchor = (
-      this.host.nativeElement as HTMLElement
-    ).getBoundingClientRect();
+    const anchor = (this.host.nativeElement as HTMLElement).getBoundingClientRect();
     const below = anchor.bottom + 6;
     const top =
       below + panel.height <= window.innerHeight
@@ -207,21 +197,15 @@ export class ExplainComponent {
    * place that is worse.
    */
   private place(): void {
-    const anchor = (
-      this.host.nativeElement as HTMLElement
-    ).getBoundingClientRect();
+    const anchor = (this.host.nativeElement as HTMLElement).getBoundingClientRect();
     const clip = this.clipRect();
 
     const roomBelow = clip.bottom - anchor.bottom;
-    this.dropUp.set(
-      roomBelow < ExplainComponent.PANEL_HEIGHT &&
-        anchor.top - clip.top > roomBelow,
-    );
+    this.dropUp.set(roomBelow < ExplainComponent.PANEL_HEIGHT && anchor.top - clip.top > roomBelow);
 
     const roomRight = clip.right - anchor.left;
     this.alignRight.set(
-      roomRight < ExplainComponent.PANEL_WIDTH &&
-        anchor.right - clip.left > roomRight,
+      roomRight < ExplainComponent.PANEL_WIDTH && anchor.right - clip.left > roomRight,
     );
   }
 

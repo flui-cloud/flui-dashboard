@@ -1,4 +1,12 @@
-import { Component, OnDestroy, OnInit, computed, effect, inject, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnDestroy,
+  OnInit,
+  computed,
+  effect,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -45,7 +53,8 @@ import {
         <div>
           <h1 class="text-2xl font-semibold">Backup policies</h1>
           <p class="text-sm text-muted-foreground mt-1">
-            One policy per app and engine: continuous backups or dumps for databases, snapshots for volumes, and Flui itself.
+            One policy per app and engine: continuous backups or dumps for databases, snapshots for
+            volumes, and Flui itself.
           </p>
         </div>
         <a
@@ -64,76 +73,97 @@ import {
         >
           <option value="">All clusters</option>
           @for (c of clusters(); track c.id) {
-          <option [value]="c.id">{{ c.name }}</option>
+            <option [value]="c.id">{{ c.name }}</option>
           }
         </select>
       </div>
 
       @if (backup.loading()) {
-      <p class="text-sm text-muted-foreground">Loading…</p>
+        <p class="text-sm text-muted-foreground">Loading…</p>
       } @else if (filtered().length === 0) {
-      <div class="rounded-lg border border-dashed border-border p-8 text-center">
-        <p class="text-sm text-muted-foreground">No policies match the current filter.</p>
-      </div>
+        <div class="rounded-lg border border-dashed border-border p-8 text-center">
+          <p class="text-sm text-muted-foreground">No policies match the current filter.</p>
+        </div>
       } @else {
-      @if (backup.activityError()) {
-      <p class="text-xs text-muted-foreground">Run activity is unavailable right now; health and run times are not shown.</p>
-      }
-      <div class="overflow-x-auto rounded-lg border border-border bg-card">
-        <table class="w-full text-sm">
-          <thead class="bg-muted/40 text-xs uppercase text-muted-foreground">
-            <tr>
-              <th class="text-left px-4 py-2">Name</th>
-              <th class="text-left px-4 py-2">Cluster</th>
-              <th class="text-left px-4 py-2">Protects</th>
-              <th class="text-left px-4 py-2">Profile</th>
-              <th class="text-left px-4 py-2">Schedule</th>
-              <th class="text-left px-4 py-2">Health</th>
-              <th class="text-left px-4 py-2">Last run</th>
-              <th class="text-left px-4 py-2">Next run</th>
-              <th class="text-left px-4 py-2">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (p of filtered(); track p.id) {
-            <tr class="border-t border-border hover:bg-muted/20">
-              <td class="px-4 py-2">
-                <a [routerLink]="['/management/backup/policies', p.id]" class="font-medium hover:underline">
-                  {{ p.name }}
-                </a>
-              </td>
-              <td class="px-4 py-2 text-muted-foreground">{{ clusterName(p.clusterId) }}</td>
-              <td class="px-4 py-2 text-muted-foreground">{{ engineLabel(p.engineClass, p.engine) }}</td>
-              <td class="px-4 py-2 text-muted-foreground capitalize">{{ p.profile }}</td>
-              @if (activityFor(p.id); as a) {
-              <td class="px-4 py-2 text-muted-foreground" [attr.title]="p.cronSchedule ? p.cronSchedule + ' (UTC)' : null">
-                {{ a.schedule.description }}
-              </td>
-              <td class="px-4 py-2">
-                <app-backup-health-badge [state]="a.health.state" [detail]="a.health.detail" />
-              </td>
-              <td class="px-4 py-2 text-muted-foreground whitespace-nowrap" [attr.title]="hover(lastRunAt(a))">
-                {{ relative(lastRunAt(a)) }}
-              </td>
-              <td class="px-4 py-2 text-muted-foreground whitespace-nowrap" [attr.title]="hover(a.schedule.nextRunAt)">
-                {{ relative(a.schedule.nextRunAt) }}
-              </td>
-              } @else {
-              <td class="px-4 py-2 text-muted-foreground font-mono text-xs">
-                {{ p.cronSchedule || 'on-demand' }}
-              </td>
-              <td class="px-4 py-2 text-muted-foreground">{{ backup.activityLoaded() ? '—' : '…' }}</td>
-              <td class="px-4 py-2 text-muted-foreground">—</td>
-              <td class="px-4 py-2 text-muted-foreground">—</td>
+        @if (backup.activityError()) {
+          <p class="text-xs text-muted-foreground">
+            Run activity is unavailable right now; health and run times are not shown.
+          </p>
+        }
+        <div class="overflow-x-auto rounded-lg border border-border bg-card">
+          <table class="w-full text-sm">
+            <thead class="bg-muted/40 text-xs uppercase text-muted-foreground">
+              <tr>
+                <th class="text-left px-4 py-2">Name</th>
+                <th class="text-left px-4 py-2">Cluster</th>
+                <th class="text-left px-4 py-2">Protects</th>
+                <th class="text-left px-4 py-2">Profile</th>
+                <th class="text-left px-4 py-2">Schedule</th>
+                <th class="text-left px-4 py-2">Health</th>
+                <th class="text-left px-4 py-2">Last run</th>
+                <th class="text-left px-4 py-2">Next run</th>
+                <th class="text-left px-4 py-2">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of filtered(); track p.id) {
+                <tr class="border-t border-border hover:bg-muted/20">
+                  <td class="px-4 py-2">
+                    <a
+                      [routerLink]="['/management/backup/policies', p.id]"
+                      class="font-medium hover:underline"
+                    >
+                      {{ p.name }}
+                    </a>
+                  </td>
+                  <td class="px-4 py-2 text-muted-foreground">{{ clusterName(p.clusterId) }}</td>
+                  <td class="px-4 py-2 text-muted-foreground">
+                    {{ engineLabel(p.engineClass, p.engine) }}
+                  </td>
+                  <td class="px-4 py-2 text-muted-foreground capitalize">{{ p.profile }}</td>
+                  @if (activityFor(p.id); as a) {
+                    <td
+                      class="px-4 py-2 text-muted-foreground"
+                      [attr.title]="p.cronSchedule ? p.cronSchedule + ' (UTC)' : null"
+                    >
+                      {{ a.schedule.description }}
+                    </td>
+                    <td class="px-4 py-2">
+                      <app-backup-health-badge
+                        [state]="a.health.state"
+                        [detail]="a.health.detail"
+                      />
+                    </td>
+                    <td
+                      class="px-4 py-2 text-muted-foreground whitespace-nowrap"
+                      [attr.title]="hover(lastRunAt(a))"
+                    >
+                      {{ relative(lastRunAt(a)) }}
+                    </td>
+                    <td
+                      class="px-4 py-2 text-muted-foreground whitespace-nowrap"
+                      [attr.title]="hover(a.schedule.nextRunAt)"
+                    >
+                      {{ relative(a.schedule.nextRunAt) }}
+                    </td>
+                  } @else {
+                    <td class="px-4 py-2 text-muted-foreground font-mono text-xs">
+                      {{ p.cronSchedule || 'on-demand' }}
+                    </td>
+                    <td class="px-4 py-2 text-muted-foreground">
+                      {{ backup.activityLoaded() ? '—' : '…' }}
+                    </td>
+                    <td class="px-4 py-2 text-muted-foreground">—</td>
+                    <td class="px-4 py-2 text-muted-foreground">—</td>
+                  }
+                  <td class="px-4 py-2">
+                    <app-backup-status-badge kind="policy" [value]="p.status" />
+                  </td>
+                </tr>
               }
-              <td class="px-4 py-2">
-                <app-backup-status-badge kind="policy" [value]="p.status" />
-              </td>
-            </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+            </tbody>
+          </table>
+        </div>
       }
     </div>
   `,

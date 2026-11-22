@@ -14,13 +14,7 @@ export type Validity = 'checked' | 'stale' | 'broken' | 'unverified';
 
 export type ReachAudience = 'installation' | 'cluster' | 'selection';
 
-export const PROBE_OPS = [
-  'equals',
-  'notEquals',
-  'atLeast',
-  'atMost',
-  'exists',
-] as const;
+export const PROBE_OPS = ['equals', 'notEquals', 'atLeast', 'atMost', 'exists'] as const;
 
 export type ProbeOp = (typeof PROBE_OPS)[number];
 
@@ -136,12 +130,8 @@ const REVIEW_RANK: Record<Validity, number> = {
   checked: 3,
 };
 
-export function suspectFirst<T extends { confidence: Validity }>(
-  entries: readonly T[],
-): T[] {
-  return [...entries].sort(
-    (a, b) => REVIEW_RANK[a.confidence] - REVIEW_RANK[b.confidence],
-  );
+export function suspectFirst<T extends { confidence: Validity }>(entries: readonly T[]): T[] {
+  return [...entries].sort((a, b) => REVIEW_RANK[a.confidence] - REVIEW_RANK[b.confidence]);
 }
 
 export interface ValidityCopy {
@@ -180,7 +170,8 @@ export const NATURE_COPY: Record<EntryNature, NatureCopy> = {
   },
   rationale: {
     label: 'Why it is done',
-    means: 'Stays with whoever’s access covers the whole of this level — incidents, names, commercial choices.',
+    means:
+      'Stays with whoever’s access covers the whole of this level — incidents, names, commercial choices.',
   },
 };
 
@@ -203,9 +194,7 @@ export function conflictGroups(
   return conflicts
     .map((c) => ({
       topic: c.topic,
-      entries: c.entryIds
-        .map((id) => byId.get(id))
-        .filter((e): e is ContextEntry => !!e),
+      entries: c.entryIds.map((id) => byId.get(id)).filter((e): e is ContextEntry => !!e),
     }))
     .filter((g) => g.entries.length > 1);
 }
@@ -249,10 +238,7 @@ export function describeSelector(
 }
 
 export function describeScope(
-  entry: Pick<
-    ContextEntry,
-    'scopeType' | 'scopeRef' | 'selector' | 'pinnedToAnOwner'
-  >,
+  entry: Pick<ContextEntry, 'scopeType' | 'scopeRef' | 'selector' | 'pinnedToAnOwner'>,
   clusterName?: (id: string) => string | undefined,
 ): string {
   switch (entry.scopeType) {
@@ -270,13 +256,7 @@ export function describeScope(
   }
 }
 
-export const ABOUT_AXES = [
-  'everything',
-  'apps',
-  'project',
-  'kind',
-  'tag',
-] as const;
+export const ABOUT_AXES = ['everything', 'apps', 'project', 'kind', 'tag'] as const;
 
 export type AboutAxis = (typeof ABOUT_AXES)[number];
 
@@ -372,9 +352,7 @@ export function prospectiveScope(
     return { scopeType: 'global' };
   }
   if (d.about === 'everything' && d.where === 'cluster') {
-    return d.clusterId
-      ? { scopeType: 'cluster', scopeRef: d.clusterId }
-      : null;
+    return d.clusterId ? { scopeType: 'cluster', scopeRef: d.clusterId } : null;
   }
   return { scopeType: 'selector' };
 }
@@ -484,24 +462,19 @@ export function whatIsStillNeeded(
   if (!body) {
     return 'Finish naming the level: an axis you picked is still empty.';
   }
-  if (!body.topic) return 'Give it a subject, so two notes about one thing can be seen to disagree.';
+  if (!body.topic)
+    return 'Give it a subject, so two notes about one thing can be seen to disagree.';
   if (!body.title) return 'Give it a title.';
   if (!body.body) return 'Write the note itself.';
   if (body.checkKind === 'probe') {
     if (!body.probeId) return 'Pick the live fact this note leans on.';
     const params = body.probeParams ?? {};
-    const unanswered = (probe?.takes ?? []).find(
-      (p) => p.required && params[p.name] === undefined,
-    );
+    const unanswered = (probe?.takes ?? []).find((p) => p.required && params[p.name] === undefined);
     if (unanswered) {
       return `“${body.probeId}” cannot be asked without a ${unanswered.name}. Say which one this note is about.`;
     }
     const type = answerTypeOf(probe, params);
-    if (
-      type &&
-      type !== 'number' &&
-      (body.probeOp === 'atLeast' || body.probeOp === 'atMost')
-    ) {
+    if (type && type !== 'number' && (body.probeOp === 'atLeast' || body.probeOp === 'atMost')) {
       return `That fact answers a ${type}, and “${body.probeOp}” compares numbers. Compare it with “equals”, or lean on one that answers a number.`;
     }
     if (body.probeOp !== 'exists' && body.probeExpected === undefined) {

@@ -1,4 +1,11 @@
-import { Component, OnInit, OnDestroy, computed, inject, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  computed,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideLoader, lucideAlertCircle } from '@ng-icons/lucide';
@@ -17,15 +24,20 @@ import { accessOf } from '../../model/app-access';
 @Component({
   selector: 'app-resources-tab',
   standalone: true,
-  imports: [NgIconComponent, LookOnlyDirective, AppResourcesEditorComponent, AppResourceProposalComponent, AppMaintenanceCardComponent, AppAutoscalingCardComponent, AppEgressNoteComponent],
-  providers: [
-    provideIcons({ lucideLoader, lucideAlertCircle }),
+  imports: [
+    NgIconComponent,
+    LookOnlyDirective,
+    AppResourcesEditorComponent,
+    AppResourceProposalComponent,
+    AppMaintenanceCardComponent,
+    AppAutoscalingCardComponent,
+    AppEgressNoteComponent,
   ],
+  providers: [provideIcons({ lucideLoader, lucideAlertCircle })],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (app(); as app) {
       <div class="space-y-4" [appLookOnly]="readOnly()">
-
         @if (runtimeService.loading()) {
           <div class="flex items-center gap-2 py-4">
             <ng-icon name="lucideLoader" class="h-5 w-5 animate-spin text-blue-600" />
@@ -34,7 +46,9 @@ import { accessOf } from '../../model/app-access';
         }
 
         @if (runtimeService.error()) {
-          <div class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400">
+          <div
+            class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400"
+          >
             <ng-icon name="lucideAlertCircle" class="h-4 w-4 mt-0.5 flex-shrink-0" />
             <span>{{ runtimeService.error() }}</span>
           </div>
@@ -64,7 +78,6 @@ import { accessOf } from '../../model/app-access';
           <app-autoscaling-card [appId]="app.id ?? null" />
           <app-egress-note [appId]="app.id ?? null" />
         }
-
       </div>
     }
   `,

@@ -144,15 +144,31 @@ export function presentedContent(input: InstallationNowSurfaceInput): PresentedC
             percentObservation('flui.now.node.cpu_percent', node.cpuPercent),
             textObservation('flui.now.node.cpu_level', cpuLevel(node.cpuPercent), 'derived'),
             percentObservation('flui.now.node.memory_percent', node.memoryPercent),
-            textObservation('flui.now.node.memory_level', memoryLevel(node.memoryPercent), 'derived'),
+            textObservation(
+              'flui.now.node.memory_level',
+              memoryLevel(node.memoryPercent),
+              'derived',
+            ),
             valueObservation('flui.now.node.mbps_out', round1(node.mbpsOut), 'api', 'Mbit/s'),
             valueObservation('flui.now.node.mbps_in', round1(node.mbpsIn), 'api', 'Mbit/s'),
             boolObservation('flui.now.node.link_alert', isLinkBusy(node, t), 'derived'),
-            valueObservation('flui.now.node.month_pace_tb', round1(node.monthPaceBytes / TB), 'api', 'TB'),
+            valueObservation(
+              'flui.now.node.month_pace_tb',
+              round1(node.monthPaceBytes / TB),
+              'api',
+              'TB',
+            ),
             node.includedTb != null
               ? valueObservation('flui.now.node.included_tb', node.includedTb, 'api', 'TB')
               : boolObservation('flui.now.node.not_metered', true, 'api'),
-            share !== null ? valueObservation('flui.now.node.month_share_percent', Math.round(share), 'derived', '%') : null,
+            share !== null
+              ? valueObservation(
+                  'flui.now.node.month_share_percent',
+                  Math.round(share),
+                  'derived',
+                  '%',
+                )
+              : null,
             boolObservation('flui.now.node.month_alert', isMonthHeavy(node, t), 'derived'),
           ]),
         };
@@ -171,7 +187,11 @@ export function presentedContent(input: InstallationNowSurfaceInput): PresentedC
         observations: keep([
           percentObservation('flui.now.platform.cpu_percent', component.cpuPercent),
           percentObservation('flui.now.platform.memory_percent', component.memoryPercent),
-          valueObservation('flui.now.platform.restarts_last_hour', component.restartsLastHour, 'api'),
+          valueObservation(
+            'flui.now.platform.restarts_last_hour',
+            component.restartsLastHour,
+            'api',
+          ),
         ]),
       })),
     });

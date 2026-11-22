@@ -29,17 +29,10 @@ export class VolumeBackupsService {
     return firstValueFrom(this.http.get<VolumeBackup[]>(this.base(appId)));
   }
 
-  browse(
-    appId: string,
-    backupId: string,
-    path = '',
-  ): Promise<VolumeBackupListing> {
+  browse(appId: string, backupId: string, path = ''): Promise<VolumeBackupListing> {
     const params = path ? new HttpParams().set('path', path) : undefined;
     return firstValueFrom(
-      this.http.get<VolumeBackupListing>(
-        `${this.one(appId, backupId)}/files`,
-        { params },
-      ),
+      this.http.get<VolumeBackupListing>(`${this.one(appId, backupId)}/files`, { params }),
     );
   }
 
@@ -49,10 +42,7 @@ export class VolumeBackupsService {
     body: VolumeBackupRestoreRequest = {},
   ): Promise<VolumeBackupRestoreResult> {
     return firstValueFrom(
-      this.http.post<VolumeBackupRestoreResult>(
-        `${this.one(appId, backupId)}/restore`,
-        body,
-      ),
+      this.http.post<VolumeBackupRestoreResult>(`${this.one(appId, backupId)}/restore`, body),
     );
   }
 
@@ -62,17 +52,12 @@ export class VolumeBackupsService {
     body: VolumeFilesRestoreRequest,
   ): Promise<VolumeFilesRestoreResult> {
     return firstValueFrom(
-      this.http.post<VolumeFilesRestoreResult>(
-        `${this.one(appId, backupId)}/restore-files`,
-        body,
-      ),
+      this.http.post<VolumeFilesRestoreResult>(`${this.one(appId, backupId)}/restore-files`, body),
     );
   }
 
   remove(appId: string, backupId: string): Promise<{ operationId: string }> {
-    return firstValueFrom(
-      this.http.delete<{ operationId: string }>(this.one(appId, backupId)),
-    );
+    return firstValueFrom(this.http.delete<{ operationId: string }>(this.one(appId, backupId)));
   }
 
   errorMessage(err: unknown, fallback: string): string {

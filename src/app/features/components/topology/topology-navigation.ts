@@ -34,7 +34,14 @@ const pathOf = (focus: TopologyFocus): TopologyDrillLink => ({
 
 const serviceMapOf = (appId: string, clusterId: string): TopologyDrillLink => ({
   label: 'Service map',
-  state: { view: 'services', level: 'app', app: appId, cluster: clusterId, focus: { type: 'app', id: appId }, drill: null },
+  state: {
+    view: 'services',
+    level: 'app',
+    app: appId,
+    cluster: clusterId,
+    focus: { type: 'app', id: appId },
+    drill: null,
+  },
 });
 
 const serversOf = (appId: string): TopologyDrillLink => ({
@@ -83,9 +90,17 @@ export function destinationsFor(
 }
 
 /** A guest keeps the views inside Topology and nothing that leaves it. */
-const forGuest = (drills: TopologyDrillLink[]): TopologyDestinations => ({ open: null, quick: [], drills });
+const forGuest = (drills: TopologyDrillLink[]): TopologyDestinations => ({
+  open: null,
+  quick: [],
+  drills,
+});
 
-function clusterDestinations(t: TopologyResponseDto, focus: TopologyFocus, guest: boolean): TopologyDestinations {
+function clusterDestinations(
+  t: TopologyResponseDto,
+  focus: TopologyFocus,
+  guest: boolean,
+): TopologyDestinations {
   const cluster = t.clusters.find((c) => c.id === focus.id);
   if (!cluster) return NONE;
   const drills = [capacityOf(cluster.id, focus)];
@@ -101,27 +116,46 @@ function clusterDestinations(t: TopologyResponseDto, focus: TopologyFocus, guest
   return { open: clusterTab(cluster.id, 'overview', 'Open cluster'), quick, drills };
 }
 
-function serverDestinations(t: TopologyResponseDto, focus: TopologyFocus, guest: boolean): TopologyDestinations {
+function serverDestinations(
+  t: TopologyResponseDto,
+  focus: TopologyFocus,
+  guest: boolean,
+): TopologyDestinations {
   const server = t.servers.find((s) => s.id === focus.id);
   if (!server) return NONE;
   const open = server.providerResourceId
-    ? { label: 'Open server', commands: ['/infrastructure/compute', server.provider, server.providerResourceId] }
+    ? {
+        label: 'Open server',
+        commands: ['/infrastructure/compute', server.provider, server.providerResourceId],
+      }
     : null;
   const quick = guest ? [] : [clusterTab(server.clusterId, 'scaling', 'Scaling')];
   return { open, quick, drills: [capacityOf(server.clusterId, focus)] };
 }
 
-function stackDestinations(t: TopologyResponseDto, focus: TopologyFocus, guest: boolean): TopologyDestinations {
+function stackDestinations(
+  t: TopologyResponseDto,
+  focus: TopologyFocus,
+  guest: boolean,
+): TopologyDestinations {
   const stack = t.stacks.find((s) => s.id === focus.id);
   if (!stack || guest) return NONE;
   const open =
     stack.type === 'composed'
-      ? { label: 'Open stack', commands: ['/apps/recap', stack.primaryAppId], queryParams: { from: 'applications' } }
+      ? {
+          label: 'Open stack',
+          commands: ['/apps/recap', stack.primaryAppId],
+          queryParams: { from: 'applications' },
+        }
       : appTab(stack.primaryAppId, 'overview', 'Open app');
   return { open, quick: [], drills: [] };
 }
 
-function appDestinations(t: TopologyResponseDto, focus: TopologyFocus, guest: boolean): TopologyDestinations {
+function appDestinations(
+  t: TopologyResponseDto,
+  focus: TopologyFocus,
+  guest: boolean,
+): TopologyDestinations {
   const app = t.apps.find((a) => a.id === focus.id);
   if (!app) return NONE;
   const routed = t.links.some((l) => l.source === 'gateway-route' && l.to.appId === app.id);
@@ -144,18 +178,35 @@ function appDestinations(t: TopologyResponseDto, focus: TopologyFocus, guest: bo
   };
 }
 
-function platformDestinations(t: TopologyResponseDto, focus: TopologyFocus, guest: boolean): TopologyDestinations {
+function platformDestinations(
+  t: TopologyResponseDto,
+  focus: TopologyFocus,
+  guest: boolean,
+): TopologyDestinations {
   const cluster = t.clusters.find((c) => c.id === focus.id);
   if (!cluster) return NONE;
   const drills = [
-    { label: 'Each app', state: { view: 'services' as const, level: 'cluster' as const, cluster: cluster.id, focus: null, drill: null } },
+    {
+      label: 'Each app',
+      state: {
+        view: 'services' as const,
+        level: 'cluster' as const,
+        cluster: cluster.id,
+        focus: null,
+        drill: null,
+      },
+    },
     capacityOf(cluster.id, { type: 'cluster', id: cluster.id }),
   ];
   if (guest) return forGuest(drills);
   return { open: clusterTab(cluster.id, 'overview', 'Open cluster'), quick: [], drills };
 }
 
-function linkDestinations(t: TopologyResponseDto, focus: TopologyFocus, guest: boolean): TopologyDestinations {
+function linkDestinations(
+  t: TopologyResponseDto,
+  focus: TopologyFocus,
+  guest: boolean,
+): TopologyDestinations {
   const link = t.links.find((l) => l.id === focus.id);
   if (!link?.to.appId || link.source !== 'gateway-route') return NONE;
   const drills = [pathOf({ type: 'app', id: link.to.appId })];

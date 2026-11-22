@@ -55,8 +55,7 @@ export interface PlatformUpdateComponentProgress {
 export const WITHOUT_BACKUP_ACKNOWLEDGEMENT =
   'Without a backup, a database migration cannot be undone.';
 
-export type UpgradePhaseKey =
-  'backup' | 'manifests' | 'images' | 'k3s' | 'verify';
+export type UpgradePhaseKey = 'backup' | 'manifests' | 'images' | 'k3s' | 'verify';
 
 export interface PlatformUpgradeBlocker {
   phase: string;
@@ -194,12 +193,8 @@ export class PlatformUpdateService {
   readonly plan$ = this.planData.asReadonly();
   readonly planning = this.planningData.asReadonly();
 
-  readonly updateAvailable = computed(
-    () => this.statusData()?.updateAvailable ?? false,
-  );
-  readonly availableVersion = computed(
-    () => this.statusData()?.availableVersion ?? null,
-  );
+  readonly updateAvailable = computed(() => this.statusData()?.updateAvailable ?? false);
+  readonly availableVersion = computed(() => this.statusData()?.availableVersion ?? null);
   readonly running = computed(() => {
     const op = this.operationData();
     return !!op && (op.status === 'PENDING' || op.status === 'IN_PROGRESS');
@@ -215,8 +210,7 @@ export class PlatformUpdateService {
    */
   readonly checkFailed = computed(() => !!this.statusData()?.checkError);
   readonly blockers = computed(
-    () =>
-      this.statusData()?.advisories.filter((a) => a.level === 'blocker') ?? [],
+    () => this.statusData()?.advisories.filter((a) => a.level === 'blocker') ?? [],
   );
 
   private url(path = ''): string {
@@ -244,17 +238,13 @@ export class PlatformUpdateService {
 
   async loadStatus(): Promise<void> {
     try {
-      const status = await firstValueFrom(
-        this.http.get<PlatformUpdateStatus>(this.url()),
-      );
+      const status = await firstValueFrom(this.http.get<PlatformUpdateStatus>(this.url()));
       this.statusData.set(status);
       this.errorData.set(status.checkError);
       this.apiUnreachableData.set(false);
     } catch (err) {
       this.apiUnreachableData.set(true);
-      this.errorData.set(
-        this.messageOf(err, 'Could not read the update status'),
-      );
+      this.errorData.set(this.messageOf(err, 'Could not read the update status'));
     }
   }
 
@@ -275,9 +265,7 @@ export class PlatformUpdateService {
     try {
       this.historyData.set(
         await firstValueFrom(
-          this.http.get<PlatformUpdateOperation[]>(
-            this.url(`/history?limit=${limit}`),
-          ),
+          this.http.get<PlatformUpdateOperation[]>(this.url(`/history?limit=${limit}`)),
         ),
       );
     } catch {
@@ -294,9 +282,7 @@ export class PlatformUpdateService {
       this.statusData.set(status);
       this.errorData.set(status.checkError);
     } catch (err) {
-      this.errorData.set(
-        this.messageOf(err, 'Could not reach the release manifest'),
-      );
+      this.errorData.set(this.messageOf(err, 'Could not reach the release manifest'));
     } finally {
       this.checkingData.set(false);
     }
@@ -323,10 +309,7 @@ export class PlatformUpdateService {
     }
   }
 
-  async start(
-    targetVersion: string,
-    options: StartUpgradeOptions = {},
-  ): Promise<void> {
+  async start(targetVersion: string, options: StartUpgradeOptions = {}): Promise<void> {
     this.startingData.set(true);
     this.errorData.set(null);
     const body: Record<string, unknown> = { targetVersion };
@@ -397,9 +380,7 @@ export class PlatformUpdateService {
     if (this.apiUnreachable()) return;
 
     this.stopPolling();
-    if (
-      before?.components.some((c) => c.key === 'fluiWeb' && c.status === 'done')
-    ) {
+    if (before?.components.some((c) => c.key === 'fluiWeb' && c.status === 'done')) {
       // The dashboard itself was replaced; this tab is running the old bundle.
       window.location.reload();
     }

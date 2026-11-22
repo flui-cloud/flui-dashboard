@@ -11,6 +11,7 @@ Gauge circolare completo per visualizzare metriche con progresso animato.
 **File:** `ring-gauge/ring-gauge.component.ts`
 
 **Caratteristiche:**
+
 - Gauge circolare a 360°
 - Gradiente lineare per il progresso
 - Valore centrale grande e leggibile
@@ -19,32 +20,28 @@ Gauge circolare completo per visualizzare metriche con progresso animato.
 - Supporto tema chiaro/scuro
 
 **Esempio d'uso:**
+
 ```typescript
 import { RingGaugeComponent } from '@shared/components/charts';
 
 @Component({
-  template: `
-    <app-ring-gauge
-      [data]="cpuData"
-      [config]="cpuConfig"
-    />
-  `
+  template: ` <app-ring-gauge [data]="cpuData" [config]="cpuConfig" /> `,
 })
 export class MyComponent {
   cpuData: GaugeChartData = {
     value: 75,
     title: 'CPU Usage',
     subtitle: '4 cores active',
-    previousValue: 70  // opzionale, per trend
+    previousValue: 70, // opzionale, per trend
   };
 
   cpuConfig: GaugeChartConfig = {
     unit: '%',
     thresholds: {
       warning: 70,
-      danger: 90
+      danger: 90,
     },
-    height: '240px'
+    height: '240px',
   };
 }
 ```
@@ -58,6 +55,7 @@ Gauge semicircolare minimalista per dashboard cloud professionali.
 **File:** `grade-gauge/grade-gauge.component.ts`
 
 **Caratteristiche:**
+
 - Gauge semicircolare 180° pulito e minimalista
 - Progresso con gradiente (no lancetta, no zone colorate)
 - Design essenziale senza elementi distraenti
@@ -67,31 +65,27 @@ Gauge semicircolare minimalista per dashboard cloud professionali.
 - **Perfetto per dashboard cloud**: design professionale senza caos visivo
 
 **Esempio d'uso:**
+
 ```typescript
 import { GradeGaugeComponent } from '@shared/components/charts';
 
 @Component({
-  template: `
-    <app-grade-gauge
-      [data]="memoryData"
-      [config]="memoryConfig"
-    />
-  `
+  template: ` <app-grade-gauge [data]="memoryData" [config]="memoryConfig" /> `,
 })
 export class MyComponent {
   memoryData: GaugeChartData = {
     value: 85,
     title: 'Memory',
     subtitle: '8.5 GB / 10 GB',
-    previousValue: 80
+    previousValue: 80,
   };
 
   memoryConfig: GaugeChartConfig = {
     unit: '%',
     thresholds: {
       warning: 75,
-      danger: 90
-    }
+      danger: 90,
+    },
   };
 }
 ```
@@ -104,10 +98,10 @@ export class MyComponent {
 
 ```typescript
 interface GaugeChartData {
-  value: number;           // Valore corrente
-  title: string;           // Titolo del gauge
-  subtitle?: string;       // Sottotitolo (es: "8 GB / 10 GB")
-  previousValue?: number;  // Valore precedente per trend
+  value: number; // Valore corrente
+  title: string; // Titolo del gauge
+  subtitle?: string; // Sottotitolo (es: "8 GB / 10 GB")
+  previousValue?: number; // Valore precedente per trend
 }
 ```
 
@@ -115,15 +109,15 @@ interface GaugeChartData {
 
 ```typescript
 interface GaugeChartConfig {
-  min?: number;                  // Valore minimo (default: 0)
-  max?: number;                  // Valore massimo (default: 100)
-  unit?: string;                 // Unità di misura (default: '%')
-  height?: string;               // Altezza CSS (default: '240px')
+  min?: number; // Valore minimo (default: 0)
+  max?: number; // Valore massimo (default: 100)
+  unit?: string; // Unità di misura (default: '%')
+  height?: string; // Altezza CSS (default: '240px')
 
   // Soglie per colorazione automatica
   thresholds?: {
-    warning: number;             // Soglia warning (es: 70)
-    danger: number;              // Soglia danger (es: 90)
+    warning: number; // Soglia warning (es: 70)
+    danger: number; // Soglia danger (es: 90)
   };
 
   // Oppure severity fissa
@@ -133,11 +127,11 @@ interface GaugeChartConfig {
   valueFormatter?: (value: number) => string;
 
   // Opzioni UI
-  showValue?: boolean;           // Mostra valore (default: true)
-  showTitle?: boolean;           // Mostra titolo (default: true)
-  animated?: boolean;            // Animazioni (default: true)
-  responsive?: boolean;          // Responsive (default: true)
-  theme?: 'light' | 'dark';      // Tema (default: auto-detect)
+  showValue?: boolean; // Mostra valore (default: true)
+  showTitle?: boolean; // Mostra titolo (default: true)
+  animated?: boolean; // Animazioni (default: true)
+  responsive?: boolean; // Responsive (default: true)
+  theme?: 'light' | 'dark'; // Tema (default: auto-detect)
 }
 ```
 
@@ -152,11 +146,13 @@ export type MetricSeverity = 'success' | 'warning' | 'danger' | 'info' | 'neutra
 ```
 
 **Colorazione automatica basata su soglie:**
+
 - `value < warning` → **success** (verde)
 - `warning <= value < danger` → **warning** (arancione)
 - `value >= danger` → **danger** (rosso)
 
 **Palette colori (allineata a Tailwind):**
+
 - **Success:** `#10b981` → `#34d399`
 - **Warning:** `#f59e0b` → `#fbbf24`
 - **Danger:** `#ef4444` → `#f87171`
@@ -174,6 +170,7 @@ I componenti supportano automaticamente il tema chiaro/scuro:
 3. **Servizio globale** tramite `ChartThemeService`
 
 **Esempio con servizio:**
+
 ```typescript
 import { ChartThemeService } from '@shared/services/chart-theme.service';
 
@@ -191,12 +188,14 @@ export class MyComponent {
 ## 🚀 Demo Interattiva
 
 Visita `/chart-demo` per vedere tutti i componenti in azione con:
+
 - Esempi di metriche (CPU, Memory, Disk, Network)
 - Simulazione di cambiamenti real-time
 - Diversi stili e configurazioni
 - Confronto Ring vs Grade gauge
 
 **Avvia il server:**
+
 ```bash
 npm start
 ```
@@ -228,21 +227,32 @@ src/app/shared/services/
 ## 💡 Best Practices
 
 ### 1. Scelta del Gauge
+
 - **Ring Gauge:** Design compatto e moderno, ottimo per griglie dense di metriche
 - **Grade Gauge:** Design più tradizionale semicircolare, occupa più spazio verticale ma fornisce sensazione di "misuratore"
 - Entrambi hanno lo stesso livello di minimalismo e pulizia visiva
 - La scelta dipende solo da preferenza estetica e spazio disponibile
 
 ### 2. Unità di Misura
+
 Specifica sempre l'unità corretta:
+
 ```typescript
-{ unit: '%' }    // Percentuali
-{ unit: ' GB' }  // Spazio (nota lo spazio prima)
-{ unit: 'ms' }   // Latency
+{
+  unit: '%';
+} // Percentuali
+{
+  unit: ' GB';
+} // Spazio (nota lo spazio prima)
+{
+  unit: 'ms';
+} // Latency
 ```
 
 ### 3. Trend Indicator
+
 Passa sempre `previousValue` per mostrare trend:
+
 ```typescript
 {
   value: currentValue,
@@ -251,22 +261,32 @@ Passa sempre `previousValue` per mostrare trend:
 ```
 
 ### 4. Formatter Personalizzato
+
 Per formattazioni complesse:
+
 ```typescript
 {
   valueFormatter: (value) => {
     if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
     return value.toFixed(0);
-  }
+  };
 }
 ```
 
 ### 5. Responsive Height
+
 Usa unità CSS responsive:
+
 ```typescript
-{ height: '240px' }    // Fisso
-{ height: '20vh' }     // Basato su viewport
-{ height: '100%' }     // Riempie container
+{
+  height: '240px';
+} // Fisso
+{
+  height: '20vh';
+} // Basato su viewport
+{
+  height: '100%';
+} // Riempie container
 ```
 
 ---

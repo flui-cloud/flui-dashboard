@@ -5,7 +5,16 @@
  * routes, and attached servers. Provides subnet management capabilities.
  */
 
-import { Component, OnInit, OnDestroy, signal, computed, inject, effect, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  signal,
+  computed,
+  inject,
+  effect,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -21,15 +30,11 @@ import {
   lucideActivity,
   lucideMapPin,
   lucideInfo,
-  lucideX
+  lucideX,
 } from '@ng-icons/lucide';
 
 import { VNetService } from '../../service/vnet.service';
-import {
-  SubnetInfo,
-  VNetStatus,
-  getAllAttachedServerIds
-} from '../../model/vnet.models';
+import { SubnetInfo, VNetStatus, getAllAttachedServerIds } from '../../model/vnet.models';
 import { ServerSelectorComponent } from '../../../shared/components/server-selector/server-selector.component';
 import { VirtualInstancesService } from '../../../core/api/api/virtualInstances.service';
 import { InstanceWithLabels } from '../../model/instance.models';
@@ -47,7 +52,13 @@ import {
 @Component({
   selector: 'vnet-details',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIcon, ServerSelectorComponent, InstanceStatusBadgeComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    NgIcon,
+    ServerSelectorComponent,
+    InstanceStatusBadgeComponent,
+  ],
   providers: [
     provideIcons({
       lucideArrowLeft,
@@ -60,8 +71,8 @@ import {
       lucideActivity,
       lucideMapPin,
       lucideInfo,
-      lucideX
-    })
+      lucideX,
+    }),
   ],
   template: `
     <div class="space-y-6 p-6">
@@ -94,11 +105,7 @@ import {
             [disabled]="isLoading()"
             class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            <ng-icon
-              name="lucideRefreshCw"
-              class="h-4 w-4"
-              [class.animate-spin]="isLoading()"
-            />
+            <ng-icon name="lucideRefreshCw" class="h-4 w-4" [class.animate-spin]="isLoading()" />
             Sync
           </button>
           <button
@@ -197,9 +204,7 @@ import {
         >
           <div class="flex items-center gap-2 mb-4">
             <ng-icon name="lucideInfo" class="h-5 w-5 text-gray-500" />
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-              Network Information
-            </h2>
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Network Information</h2>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -211,9 +216,7 @@ import {
             </div>
 
             <div>
-              <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">
-                Provider Resource ID
-              </div>
+              <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">Provider Resource ID</div>
               <div class="text-sm font-mono text-gray-900 dark:text-white">
                 {{ vnet()!.providerResourceId }}
               </div>
@@ -277,9 +280,7 @@ import {
           @if (vnet()!.subnets.length === 0) {
             <div class="text-center py-8">
               <ng-icon name="lucideNetwork" class="h-12 w-12 text-gray-400 mx-auto mb-3" />
-              <p class="text-sm text-gray-600 dark:text-gray-400">
-                No subnets configured yet
-              </p>
+              <p class="text-sm text-gray-600 dark:text-gray-400">No subnets configured yet</p>
             </div>
           } @else {
             <div class="space-y-3">
@@ -290,7 +291,9 @@ import {
                   <div class="flex items-start justify-between">
                     <div class="flex-1">
                       <div class="flex items-center gap-3 mb-2">
-                        <span class="text-base font-mono font-semibold text-gray-900 dark:text-white">
+                        <span
+                          class="text-base font-mono font-semibold text-gray-900 dark:text-white"
+                        >
                           {{ subnet.ipRange }}
                         </span>
                         <span
@@ -337,14 +340,18 @@ import {
                           </div>
                           <div class="space-y-2">
                             @for (serverId of subnet.attachedServerIds; track serverId) {
-                              <div class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                              <div
+                                class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                              >
                                 <div class="flex items-center gap-2">
                                   <ng-icon name="lucideServer" size="16" class="text-gray-500" />
                                   <span class="text-sm font-mono text-gray-900 dark:text-white">
                                     {{ getServerName(serverId) || serverId }}
                                   </span>
                                   @if (getServer(serverId)) {
-                                    <app-instance-status-badge [status]="getServer(serverId)!.status || 'unknown'" />
+                                    <app-instance-status-badge
+                                      [status]="getServer(serverId)!.status || 'unknown'"
+                                    />
                                   }
                                 </div>
                                 <button
@@ -469,17 +476,23 @@ import {
                   />
                   <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     {{ subnetCidrHint() }} —
-                    <button type="button"
+                    <button
+                      type="button"
                       (click)="newSubnetIpRange.set('10.0.1.0/' + suggestedSubnetPrefix())"
-                      class="text-blue-600 hover:text-blue-700 dark:text-blue-400 underline">
+                      class="text-blue-600 hover:text-blue-700 dark:text-blue-400 underline"
+                    >
                       Use /{{ suggestedSubnetPrefix() }}
                     </button>
                     @if (subnetIpAddressLabel()) {
-                      <span class="ml-2 text-gray-400 dark:text-gray-500">· {{ subnetIpAddressLabel() }}</span>
+                      <span class="ml-2 text-gray-400 dark:text-gray-500"
+                        >· {{ subnetIpAddressLabel() }}</span
+                      >
                     }
                   </p>
                   @if (subnetCidrError()) {
-                    <p class="text-xs text-red-600 dark:text-red-400 mt-1">{{ subnetCidrError() }}</p>
+                    <p class="text-xs text-red-600 dark:text-red-400 mt-1">
+                      {{ subnetCidrError() }}
+                    </p>
                   }
                 </div>
               </div>
@@ -497,7 +510,11 @@ import {
                   [disabled]="isLoading() || !newSubnetZone"
                   class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  @if (isLoading()) { Adding… } @else { Add Subnet }
+                  @if (isLoading()) {
+                    Adding…
+                  } @else {
+                    Add Subnet
+                  }
                 </button>
               </div>
             </div>
@@ -542,7 +559,7 @@ import {
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.Eager,
-  styles: []
+  styles: [],
 })
 export class VNetDetailsComponent implements OnInit, OnDestroy {
   private readonly vnetService = inject(VNetService);
@@ -586,7 +603,9 @@ export class VNetDetailsComponent implements OnInit, OnDestroy {
   readonly vnetTopology = computed(() => {
     const provider = this.vnet()?.provider;
     if (!provider) return null;
-    return this.providerWizardService.getProviderDefinition(provider)?.capabilities?.vnetTopology ?? null;
+    return (
+      this.providerWizardService.getProviderDefinition(provider)?.capabilities?.vnetTopology ?? null
+    );
   });
 
   readonly supportsSubnets = computed(() => this.vnetTopology()?.supportsSubnets ?? false);
@@ -623,9 +642,8 @@ export class VNetDetailsComponent implements OnInit, OnDestroy {
     const last = (first | (~mask >>> 0)) >>> 0;
     const toIp = (n: number) =>
       `${(n >>> 24) & 0xff}.${(n >>> 16) & 0xff}.${(n >>> 8) & 0xff}.${n & 0xff}`;
-    const countLabel = count >= 1_000_000
-      ? `${(count / 1_000_000).toFixed(1)}M`
-      : count.toLocaleString();
+    const countLabel =
+      count >= 1_000_000 ? `${(count / 1_000_000).toFixed(1)}M` : count.toLocaleString();
     return `${countLabel} addresses · ${toIp(first)}–${toIp(last)}`;
   });
 
@@ -698,10 +716,7 @@ export class VNetDetailsComponent implements OnInit, OnDestroy {
 
   async loadVNet(id: string) {
     try {
-      await Promise.all([
-        this.vnetService.getVNet(id),
-        this.providerWizardService.loadProviders()
-      ]);
+      await Promise.all([this.vnetService.getVNet(id), this.providerWizardService.loadProviders()]);
       await this.loadServers();
     } catch (error) {
       console.error('Failed to load VNet:', error);
@@ -722,13 +737,13 @@ export class VNetDetailsComponent implements OnInit, OnDestroy {
           undefined,
           undefined,
           undefined,
-          vnet.provider
-        )
+          vnet.provider,
+        ),
       );
 
       const servers = (response.data || []) as InstanceWithLabels[];
       const cache = new Map<string, InstanceWithLabels>();
-      servers.forEach(server => {
+      servers.forEach((server) => {
         if (server.id) {
           cache.set(server.id, server);
         }
@@ -778,7 +793,7 @@ export class VNetDetailsComponent implements OnInit, OnDestroy {
     try {
       await this.vnetService.addSubnet(vnet.id, {
         networkZone: this.newSubnetZone,
-        ipRange: this.newSubnetIpRange() || undefined
+        ipRange: this.newSubnetIpRange() || undefined,
       });
 
       this.showSubnetForm.set(false);
@@ -858,7 +873,7 @@ export class VNetDetailsComponent implements OnInit, OnDestroy {
 
     try {
       await this.vnetService.attachServerToSubnet(subnet.id, {
-        serverId: server.id
+        serverId: server.id,
       });
 
       // Refresh servers cache
@@ -874,7 +889,7 @@ export class VNetDetailsComponent implements OnInit, OnDestroy {
   async detachServer(subnet: SubnetInfo, serverId: string) {
     try {
       await this.vnetService.detachServerFromSubnet(subnet.id, {
-        serverId
+        serverId,
       });
 
       // Refresh servers cache
@@ -890,7 +905,7 @@ export class VNetDetailsComponent implements OnInit, OnDestroy {
 
   getServerName(serverId: string): string | null {
     const server = this.getServer(serverId);
-    return server ? (server.displayName || server.name || null) : null;
+    return server ? server.displayName || server.name || null : null;
   }
 
   getAllAttachedServers(): number {

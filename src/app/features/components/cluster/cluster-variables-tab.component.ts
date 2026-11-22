@@ -1,4 +1,11 @@
-import { Component, OnInit, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  inject,
+  signal,
+  computed,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
@@ -13,7 +20,10 @@ import {
 } from '@ng-icons/lucide';
 import { ClusterService } from '../../service/cluster.service';
 import { ClusterVariablesService } from '../../service/cluster-variables.service';
-import { AppVariablesEditorComponent, VariablesSavePayload } from '../application/app-variables-editor.component';
+import {
+  AppVariablesEditorComponent,
+  VariablesSavePayload,
+} from '../application/app-variables-editor.component';
 import { VariableSetSummaryDto } from '../../../core/api/model/variableSetSummaryDto';
 
 @Component({
@@ -21,12 +31,19 @@ import { VariableSetSummaryDto } from '../../../core/api/model/variableSetSummar
   standalone: true,
   imports: [FormsModule, NgIconComponent, AppVariablesEditorComponent],
   providers: [
-    provideIcons({ lucideKey, lucideLock, lucideLoader, lucideAlertCircle, lucideChevronDown, lucideChevronRight, lucideRefreshCw }),
+    provideIcons({
+      lucideKey,
+      lucideLock,
+      lucideLoader,
+      lucideAlertCircle,
+      lucideChevronDown,
+      lucideChevronRight,
+      lucideRefreshCw,
+    }),
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="card-surface p-6 space-y-5">
-
       <!-- Namespace selector -->
       <div class="flex items-center gap-3">
         <label class="text-xs font-medium text-muted-foreground whitespace-nowrap">Namespace</label>
@@ -43,7 +60,11 @@ import { VariableSetSummaryDto } from '../../../core/api/model/variableSetSummar
             [disabled]="variablesService.loading()"
             class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs text-muted-foreground border border-border rounded hover:bg-muted disabled:opacity-50 transition-colors"
           >
-            <ng-icon name="lucideRefreshCw" class="h-3.5 w-3.5" [class.animate-spin]="variablesService.loading()" />
+            <ng-icon
+              name="lucideRefreshCw"
+              class="h-3.5 w-3.5"
+              [class.animate-spin]="variablesService.loading()"
+            />
             Load
           </button>
         </div>
@@ -51,7 +72,7 @@ import { VariableSetSummaryDto } from '../../../core/api/model/variableSetSummar
 
       @if (variablesService.loading() && variablesService.sets().length === 0) {
         <div class="animate-pulse space-y-3">
-          @for (i of [1,2,3]; track i) {
+          @for (i of [1, 2, 3]; track i) {
             <div class="border border-border rounded-lg overflow-hidden">
               <div class="flex items-center justify-between px-4 py-3 card-inner">
                 <div class="flex items-center gap-3">
@@ -67,10 +88,11 @@ import { VariableSetSummaryDto } from '../../../core/api/model/variableSetSummar
           }
         </div>
       } @else {
-
         <!-- Error banner -->
         @if (variablesService.error()) {
-          <div class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400">
+          <div
+            class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400"
+          >
             <ng-icon name="lucideAlertCircle" class="h-4 w-4 mt-0.5 flex-shrink-0" />
             <span>{{ variablesService.error() }}</span>
           </div>
@@ -81,7 +103,6 @@ import { VariableSetSummaryDto } from '../../../core/api/model/variableSetSummar
           <div class="space-y-3">
             @for (set of variablesService.sets(); track set.name) {
               <div class="border border-border rounded-lg overflow-hidden">
-
                 <!-- Set header -->
                 <button
                   type="button"
@@ -100,7 +121,13 @@ import { VariableSetSummaryDto } from '../../../core/api/model/variableSetSummar
                       <p class="text-sub text-xs">
                         {{ set.keys.length }} {{ set.keys.length === 1 ? 'key' : 'keys' }} &middot;
                         <span class="uppercase">{{ set.scope }}</span> &middot;
-                        <span [class]="set.type === 'sensitive' ? 'text-amber-600 dark:text-amber-400' : 'text-blue-600 dark:text-blue-400'">
+                        <span
+                          [class]="
+                            set.type === 'sensitive'
+                              ? 'text-amber-600 dark:text-amber-400'
+                              : 'text-blue-600 dark:text-blue-400'
+                          "
+                        >
                           {{ set.type }}
                         </span>
                       </p>
@@ -117,7 +144,7 @@ import { VariableSetSummaryDto } from '../../../core/api/model/variableSetSummar
                   <div class="p-4 border-t border-border">
                     @if (variablesService.loading()) {
                       <div class="animate-pulse space-y-2 py-1">
-                        @for (i of [1,2,3]; track i) {
+                        @for (i of [1, 2, 3]; track i) {
                           <div class="skeleton h-8"></div>
                         }
                       </div>
@@ -146,8 +173,13 @@ import { VariableSetSummaryDto } from '../../../core/api/model/variableSetSummar
         } @else if (!variablesService.loading()) {
           <div class="text-center py-12">
             <ng-icon name="lucideKey" class="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-            <p class="text-sm text-sub">No variable sets found in namespace <span class="font-mono font-semibold text-foreground">{{ namespace }}</span></p>
-            <p class="text-xs text-muted-foreground mt-1">Variables are created when applications are deployed</p>
+            <p class="text-sm text-sub">
+              No variable sets found in namespace
+              <span class="font-mono font-semibold text-foreground">{{ namespace }}</span>
+            </p>
+            <p class="text-xs text-muted-foreground mt-1">
+              Variables are created when applications are deployed
+            </p>
           </div>
         }
       }
@@ -192,13 +224,13 @@ export class ClusterVariablesTabComponent implements OnInit {
   }
 
   protected buildSensitiveDisplayData(set: VariableSetSummaryDto): Record<string, string> {
-    return Object.fromEntries(set.keys.map(k => [k, '****']));
+    return Object.fromEntries(set.keys.map((k) => [k, '****']));
   }
 
   protected async onSaveSet(
     set: VariableSetSummaryDto,
     payload: VariablesSavePayload,
-    type: 'plain' | 'sensitive'
+    type: 'plain' | 'sensitive',
   ): Promise<void> {
     const id = this.clusterId();
     if (!id) return;

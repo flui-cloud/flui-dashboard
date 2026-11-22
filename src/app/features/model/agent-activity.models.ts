@@ -1,4 +1,3 @@
-
 export type ActorKind = 'user' | 'key' | 'agent' | 'unknown';
 
 export type ActivityUnder = 'concession' | 'approval';
@@ -75,10 +74,7 @@ export interface AgentIdentity {
   fluiUserId: string | null;
 }
 
-export function actorRef(entry: {
-  actorKeyId: string | null;
-  userId: string;
-}): string {
+export function actorRef(entry: { actorKeyId: string | null; userId: string }): string {
   return entry.actorKeyId ? `key:${entry.actorKeyId}` : `account:${entry.userId}`;
 }
 
@@ -139,8 +135,7 @@ export function underLabel(entry: {
       text: 'standing grant',
       detail:
         entry.underSentence ??
-        'A standing permission removed the pause. Its wording belongs to ' +
-          'whoever gave it.',
+        'A standing permission removed the pause. Its wording belongs to ' + 'whoever gave it.',
     };
   }
   if (entry.under === 'approval') {

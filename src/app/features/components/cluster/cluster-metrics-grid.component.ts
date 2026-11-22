@@ -5,7 +5,10 @@ import {
   TimeSeriesChartConfig,
 } from '../../../shared/components/charts';
 import { ClusterMetricsHistoryService } from '../../service/cluster-metrics-history.service';
-import { ClusterMonitoringService, ServerMetricsState } from '../../service/cluster-monitoring.service';
+import {
+  ClusterMonitoringService,
+  ServerMetricsState,
+} from '../../service/cluster-monitoring.service';
 import { ClusterAutoscaleService } from '../../service/cluster-autoscale.service';
 import { formatPercent, formatRate } from '../../../shared/utils/metric-format';
 
@@ -88,9 +91,13 @@ const EXPANDED_HEIGHT = 'min(62vh, 560px)';
       }
     </div>
   `,
-  styles: [`
-    :host { display: block; }
-  `],
+  styles: [
+    `
+      :host {
+        display: block;
+      }
+    `,
+  ],
 })
 export class ClusterMetricsGridComponent {
   readonly history = inject(ClusterMetricsHistoryService);
@@ -103,10 +110,13 @@ export class ClusterMetricsGridComponent {
   private readonly thresholds = computed(() => this.autoscale.status()?.effectiveThresholds);
 
   readonly cpuConfig = computed(() =>
-    this.percentConfig(this.thresholds()?.warnCpuPct ?? 70, this.thresholds()?.dangerCpuPct ?? 90)
+    this.percentConfig(this.thresholds()?.warnCpuPct ?? 70, this.thresholds()?.dangerCpuPct ?? 90),
   );
   readonly memoryConfig = computed(() =>
-    this.percentConfig(this.thresholds()?.warnMemoryPct ?? 75, this.thresholds()?.dangerMemoryPct ?? 90)
+    this.percentConfig(
+      this.thresholds()?.warnMemoryPct ?? 75,
+      this.thresholds()?.dangerMemoryPct ?? 90,
+    ),
   );
   readonly diskConfig = computed(() => this.percentConfig(80, 95));
   readonly networkConfig = computed<SizedConfig>(() => ({
@@ -141,7 +151,11 @@ export class ClusterMetricsGridComponent {
    * costs a full-viewport repaint, and watching a line redraw is not what the
    * bigger size was opened for.
    */
-  private sized(height: string, expanded: boolean, extra: TimeSeriesChartConfig): TimeSeriesChartConfig {
+  private sized(
+    height: string,
+    expanded: boolean,
+    extra: TimeSeriesChartConfig,
+  ): TimeSeriesChartConfig {
     return {
       height,
       showGrid: true,

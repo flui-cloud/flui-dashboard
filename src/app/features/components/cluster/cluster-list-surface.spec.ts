@@ -48,11 +48,16 @@ function input(over: Partial<ClusterListSurfaceInput> = {}): ClusterListSurfaceI
 }
 
 function snapshotOf(over: Partial<ClusterListSurfaceInput> = {}): SurfaceSnapshot {
-  return buildClusterListSurface(input(over), { revision: 1, generatedAt: '2026-08-20T09:13:00.000Z' });
+  return buildClusterListSurface(input(over), {
+    revision: 1,
+    generatedAt: '2026-08-20T09:13:00.000Z',
+  });
 }
 
-const listScope = (snapshot: SurfaceSnapshot) => snapshot.scopes.find((s) => s.id === 'cluster-list:rows')!;
-const rowScopes = (snapshot: SurfaceSnapshot) => snapshot.scopes.filter((s) => s.parentId === 'cluster-list:rows');
+const listScope = (snapshot: SurfaceSnapshot) =>
+  snapshot.scopes.find((s) => s.id === 'cluster-list:rows')!;
+const rowScopes = (snapshot: SurfaceSnapshot) =>
+  snapshot.scopes.filter((s) => s.parentId === 'cluster-list:rows');
 
 describe('cluster list surface producer', () => {
   it('emits a snapshot that validates against the real schema and passes semantic checks', () => {
@@ -65,11 +70,14 @@ describe('cluster list surface producer', () => {
 
   it('bumps the revision on real change, and validateSurfaceSemantics accepts it against the previous snapshot', () => {
     const tracker = new ClusterListSurfaceRevision();
-    const first = buildClusterListSurface(input(), { revision: tracker.next(presentedContent(input())), generatedAt: '2026-08-20T09:13:00.000Z' });
-    const second = buildClusterListSurface(
-      input({ filteredClusters: [CLUSTER_A] }),
-      { revision: tracker.next(presentedContent(input({ filteredClusters: [CLUSTER_A] }))), generatedAt: '2026-08-20T09:14:00.000Z' },
-    );
+    const first = buildClusterListSurface(input(), {
+      revision: tracker.next(presentedContent(input())),
+      generatedAt: '2026-08-20T09:13:00.000Z',
+    });
+    const second = buildClusterListSurface(input({ filteredClusters: [CLUSTER_A] }), {
+      revision: tracker.next(presentedContent(input({ filteredClusters: [CLUSTER_A] }))),
+      generatedAt: '2026-08-20T09:14:00.000Z',
+    });
     expect(second.surface.revision).toBe(first.surface.revision + 1);
     expect(validateSurfaceSemantics(second, { previousSnapshot: first })).toEqual([]);
   });
@@ -77,8 +85,14 @@ describe('cluster list surface producer', () => {
   it('does NOT bump the revision when only an unpresented input field changes', () => {
     // `masterIpAddress` is on ClusterInfo but no row observation ever reads it.
     const tracker = new ClusterListSurfaceRevision();
-    const a = input({ allClusters: [{ ...CLUSTER_A, masterIpAddress: '10.0.0.1' }, CLUSTER_B], filteredClusters: [{ ...CLUSTER_A, masterIpAddress: '10.0.0.1' }, CLUSTER_B] });
-    const b = input({ allClusters: [{ ...CLUSTER_A, masterIpAddress: '10.0.0.9' }, CLUSTER_B], filteredClusters: [{ ...CLUSTER_A, masterIpAddress: '10.0.0.9' }, CLUSTER_B] });
+    const a = input({
+      allClusters: [{ ...CLUSTER_A, masterIpAddress: '10.0.0.1' }, CLUSTER_B],
+      filteredClusters: [{ ...CLUSTER_A, masterIpAddress: '10.0.0.1' }, CLUSTER_B],
+    });
+    const b = input({
+      allClusters: [{ ...CLUSTER_A, masterIpAddress: '10.0.0.9' }, CLUSTER_B],
+      filteredClusters: [{ ...CLUSTER_A, masterIpAddress: '10.0.0.9' }, CLUSTER_B],
+    });
     const r1 = tracker.next(presentedContent(a));
     const r2 = tracker.next(presentedContent(b));
     expect(r2).toBe(r1);
@@ -86,7 +100,10 @@ describe('cluster list surface producer', () => {
 
   it('flags a snapshot whose revision does not advance on the previous one', () => {
     const first = snapshotOf();
-    const stale = { ...snapshotOf(), surface: { ...snapshotOf().surface, revision: first.surface.revision } };
+    const stale = {
+      ...snapshotOf(),
+      surface: { ...snapshotOf().surface, revision: first.surface.revision },
+    };
     const issues = validateSurfaceSemantics(stale, { previousSnapshot: first });
     expect(issues).toEqual([
       jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' }),
@@ -112,7 +129,10 @@ describe('cluster list surface producer', () => {
     const unfiltered = snapshotOf();
     expect(listScope(unfiltered).completeness).toEqual({ shown: 2, total: 2 });
 
-    const filtered = snapshotOf({ filteredClusters: [CLUSTER_A], filters: { ...NO_FILTERS, status: 'active' } });
+    const filtered = snapshotOf({
+      filteredClusters: [CLUSTER_A],
+      filters: { ...NO_FILTERS, status: 'active' },
+    });
     expect(listScope(filtered).completeness).toEqual({ shown: 1, total: 2, filtered: true });
   });
 
@@ -126,9 +146,11 @@ describe('cluster list surface producer', () => {
     ]);
   });
 
-  it('presents each row\'s status/provider/region/nodes/version/created facts, and skips optional ones that are absent', () => {
+  it("presents each row's status/provider/region/nodes/version/created facts, and skips optional ones that are absent", () => {
     const snapshot = snapshotOf();
-    const rowA = rowScopes(snapshot).find((r) => r.entities?.[0].ref === clusterEntityRef(CLUSTER_A.id!))!;
+    const rowA = rowScopes(snapshot).find(
+      (r) => r.entities?.[0].ref === clusterEntityRef(CLUSTER_A.id!),
+    )!;
     const keys = rowA.observations!.map((o) => o.key);
     expect(keys).toContain('flui.cluster.status');
     expect(keys).toContain('flui.cluster.node_count');
@@ -136,7 +158,9 @@ describe('cluster list surface producer', () => {
     expect(keys).toContain('flui.cluster.version');
     expect(keys).toContain('flui.cluster.created_at');
 
-    const rowB = rowScopes(snapshot).find((r) => r.entities?.[0].ref === clusterEntityRef(CLUSTER_B.id!))!;
+    const rowB = rowScopes(snapshot).find(
+      (r) => r.entities?.[0].ref === clusterEntityRef(CLUSTER_B.id!),
+    )!;
     const keysB = rowB.observations!.map((o) => o.key);
     expect(keysB).not.toContain('flui.cluster.auto_scaling_enabled');
     expect(keysB).not.toContain('flui.cluster.version');
@@ -156,10 +180,12 @@ describe('cluster list surface producer', () => {
   });
 
   it('redacts: no master IP or other internal metadata beyond entity refs and the presented fields reach the snapshot', () => {
-    const json = JSON.stringify(snapshotOf({
-      allClusters: [{ ...CLUSTER_A, masterIpAddress: '10.0.0.5' }, CLUSTER_B],
-      filteredClusters: [{ ...CLUSTER_A, masterIpAddress: '10.0.0.5' }, CLUSTER_B],
-    }));
+    const json = JSON.stringify(
+      snapshotOf({
+        allClusters: [{ ...CLUSTER_A, masterIpAddress: '10.0.0.5' }, CLUSTER_B],
+        filteredClusters: [{ ...CLUSTER_A, masterIpAddress: '10.0.0.5' }, CLUSTER_B],
+      }),
+    );
     expect(json).not.toContain('10.0.0.5');
   });
 });

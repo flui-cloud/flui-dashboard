@@ -18,7 +18,9 @@ export function esc(text: string): string {
 export function resolveColor(value: string, root: HTMLElement = document.documentElement): string {
   if (!value.includes('var(')) return value;
   const css = getComputedStyle(root);
-  return value.replace(/var\(--([\w-]+)\)/g, (_, name: string) => css.getPropertyValue(`--${name}`).trim());
+  return value.replace(/var\(--([\w-]+)\)/g, (_, name: string) =>
+    css.getPropertyValue(`--${name}`).trim(),
+  );
 }
 
 export function fontFamily(): string {
@@ -58,7 +60,10 @@ export function frame(
 }
 
 /** Rasterises an exported view at twice its size and hands it to the browser as a PNG. */
-export async function downloadView(view: { svg: string; width: number; height: number }, filename: string): Promise<void> {
+export async function downloadView(
+  view: { svg: string; width: number; height: number },
+  filename: string,
+): Promise<void> {
   const url = URL.createObjectURL(new Blob([view.svg], { type: 'image/svg+xml' }));
   try {
     const image = new Image();

@@ -31,18 +31,11 @@ import {
 @Component({
   selector: 'app-destination-detail',
   standalone: true,
-  imports: [
-    ReadOnlySectionDirective,
-    BackupStatusBadgeComponent,
-    BackupBackLinkComponent,
-  ],
+  imports: [ReadOnlySectionDirective, BackupStatusBadgeComponent, BackupBackLinkComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="p-6 space-y-4 max-w-3xl">
-      <app-backup-back-link
-        link="/management/backup/destinations"
-        label="Back to destinations"
-      />
+      <app-backup-back-link link="/management/backup/destinations" label="Back to destinations" />
 
       @if (dest(); as d) {
         <header class="flex items-start justify-between">
@@ -97,9 +90,7 @@ import {
               <div>{{ formatBytes(d.usageBytes) }}</div>
             </div>
             <div>
-              <div class="text-xs text-muted-foreground">
-                Estimated cost / month
-              </div>
+              <div class="text-xs text-muted-foreground">Estimated cost / month</div>
               <div>{{ estimatedCost(d) }}</div>
             </div>
             <div>
@@ -136,11 +127,7 @@ import {
                 }
               } @else {
                 <div>
-                  {{
-                    d.costPerGbMonthCents == null
-                      ? 'Not set'
-                      : d.costPerGbMonthCents + ' cents'
-                  }}
+                  {{ d.costPerGbMonthCents == null ? 'Not set' : d.costPerGbMonthCents + ' cents' }}
                   @if (d.metadata?.['costSource'] === 'list-price') {
                     <span class="text-xs text-muted-foreground">(list price)</span>
                   }

@@ -27,7 +27,9 @@ describe('deleting an LLM connection', () => {
       isHosted: signal(false),
       loadConnections: jasmine.createSpy('loadConnections'),
       deleteConnection,
-      validateConnection: jasmine.createSpy('validateConnection').and.returnValue(of({ success: true })),
+      validateConnection: jasmine
+        .createSpy('validateConnection')
+        .and.returnValue(of({ success: true })),
       createConnection: jasmine.createSpy('createConnection').and.returnValue(of(connection)),
     };
 
@@ -68,8 +70,7 @@ describe('deleting an LLM connection', () => {
     return buttons.find((b) => b.className.includes('border-destructive'))!;
   };
 
-  const dialogText = (): string =>
-    (fixture.nativeElement.textContent ?? '') as string;
+  const dialogText = (): string => (fixture.nativeElement.textContent ?? '') as string;
 
   it('does not delete anything on the click itself', () => {
     deleteButton().click();

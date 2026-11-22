@@ -23,22 +23,40 @@ import { CanDirective } from '../../../core/directives/can.directive';
           <h3 class="m-0 text-sm font-semibold text-foreground">Maintenance window</h3>
           <p class="m-0 mt-0.5 text-[13px] text-muted-foreground">
             {{ reading()?.says ?? (failed() ? 'Could not be read right now.' : 'Reading…') }}
-            @if (reading()?.nextOpening; as next) { · next {{ label(next) }} }
+            @if (reading()?.nextOpening; as next) {
+              · next {{ label(next) }}
+            }
           </p>
         </div>
         @if (!editing()) {
           <div class="flex gap-2" *fluiCan="'cluster:manage'">
-            <button type="button" class="text-[13px] text-primary hover:underline" (click)="editing.set(true)" data-testid="maintenance-edit">
+            <button
+              type="button"
+              class="text-[13px] text-primary hover:underline"
+              (click)="editing.set(true)"
+              data-testid="maintenance-edit"
+            >
               {{ reading()?.window ? 'Change' : 'Set a window' }}
             </button>
             @if (reading()?.window) {
-              <button type="button" class="text-[13px] text-muted-foreground hover:text-destructive" (click)="clear()">Remove</button>
+              <button
+                type="button"
+                class="text-[13px] text-muted-foreground hover:text-destructive"
+                (click)="clear()"
+              >
+                Remove
+              </button>
             }
           </div>
         }
       </div>
       @if (editing()) {
-        <app-maintenance-window-editor [value]="reading()?.window ?? null" [saving]="saving()" (saved)="save($event)" (cancelled)="editing.set(false)" />
+        <app-maintenance-window-editor
+          [value]="reading()?.window ?? null"
+          [saving]="saving()"
+          (saved)="save($event)"
+          (cancelled)="editing.set(false)"
+        />
       }
       <app-deferred-list [rows]="held()" />
     </section>
@@ -64,7 +82,10 @@ export class ClusterMaintenanceCardComponent {
 
   private async load(id: string): Promise<void> {
     try {
-      const [reading, held] = await Promise.all([this.api.cluster(id), this.api.clusterDeferred(id)]);
+      const [reading, held] = await Promise.all([
+        this.api.cluster(id),
+        this.api.clusterDeferred(id),
+      ]);
       this.reading.set(reading);
       this.held.set(held);
       this.failed.set(false);

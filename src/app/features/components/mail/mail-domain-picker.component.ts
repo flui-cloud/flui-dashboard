@@ -29,11 +29,7 @@ type DomainMode = 'zone' | 'external';
 
       @if (zones().length) {
         <div class="mb-2 grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            (click)="setMode('zone')"
-            [class]="cardClass(mode() === 'zone')"
-          >
+          <button type="button" (click)="setMode('zone')" [class]="cardClass(mode() === 'zone')">
             <span class="flex items-center gap-1.5">
               <ng-icon name="lucideServer" class="h-3.5 w-3.5 text-primary" />
               <span class="text-xs font-medium">A zone Flui manages</span>
@@ -94,8 +90,10 @@ type DomainMode = 'zone' | 'external';
         </div>
         @if (zone()) {
           <span class="mt-1 block text-[11px] text-muted-foreground">
-            Leave the prefix empty to send from the zone itself
-            (<span class="font-mono">{{ zone() }}</span>).
+            Leave the prefix empty to send from the zone itself (<span class="font-mono">{{
+              zone()
+            }}</span
+            >).
           </span>
         } @else {
           <span class="mt-1 block text-[11px] text-muted-foreground">
@@ -112,17 +110,16 @@ type DomainMode = 'zone' | 'external';
         />
         @if (!zones().length) {
           <span class="mt-1 block text-[11px] text-muted-foreground">
-            Flui holds no DNS zone, so the records will come back here for you to publish
-            wherever this domain is hosted.
+            Flui holds no DNS zone, so the records will come back here for you to publish wherever
+            this domain is hosted.
           </span>
         }
       }
 
       @if (value()) {
         <span class="mt-1.5 block text-[11px] text-muted-foreground">
-          Sending from <span class="font-mono text-foreground">{{ value() }}</span> — a domain,
-          not an address. The mailbox part comes from
-          <span class="font-mono">MAIL_FROM</span>.
+          Sending from <span class="font-mono text-foreground">{{ value() }}</span> — a domain, not
+          an address. The mailbox part comes from <span class="font-mono">MAIL_FROM</span>.
         </span>
       }
     </div>
@@ -199,9 +196,7 @@ export class MailDomainPickerComponent implements OnInit {
 
   protected cardClass(active: boolean): string {
     const base = 'rounded-md border px-2.5 py-2 text-left transition-colors';
-    return active
-      ? `${base} border-primary bg-primary/10`
-      : `${base} border-border hover:bg-muted`;
+    return active ? `${base} border-primary bg-primary/10` : `${base} border-border hover:bg-muted`;
   }
 
   private emit(): void {

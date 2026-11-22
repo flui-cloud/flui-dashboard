@@ -1,10 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
-import {
-  AgentProposal,
-  PROPOSAL_STATUS,
-  ProposalDecision,
-} from '../../model/agent-cycle.models';
+import { AgentProposal, PROPOSAL_STATUS, ProposalDecision } from '../../model/agent-cycle.models';
 import { AgentCycleService } from '../../service/agent-cycle.service';
 import { AgentRequestCardComponent } from './agent-request-card.component';
 
@@ -31,9 +27,7 @@ describe('one request, and the answers on offer', () => {
     over: Partial<AgentProposal> = {},
     estimate: unknown = { nodeType: 'CPU-4', monthlyCost: '€8.49 / month' },
   ): Promise<void> => {
-    cycle = jasmine.createSpyObj<AgentCycleService>('AgentCycleService', [
-      'estimate',
-    ]);
+    cycle = jasmine.createSpyObj<AgentCycleService>('AgentCycleService', ['estimate']);
     cycle.estimate.and.returnValue(of(estimate));
 
     await TestBed.configureTestingModule({
@@ -57,9 +51,7 @@ describe('one request, and the answers on offer', () => {
   describe('what happens if you allow it', () => {
     it('shows the consequence the route declared', async () => {
       await build({ consequence: 'Servers start being billed.' });
-      expect(find('request-consequence')?.textContent).toContain(
-        'Servers start being billed.',
-      );
+      expect(find('request-consequence')?.textContent).toContain('Servers start being billed.');
     });
 
     it('shows nothing at all when the route declared none', async () => {
@@ -90,9 +82,9 @@ describe('one request, and the answers on offer', () => {
 
     it('offers no disabled stand-in for the answer it withheld', async () => {
       await build({ offersAlways: false });
-      const labels = Array.from(
-        fixture.nativeElement.querySelectorAll('button'),
-      ).map((b) => (b as HTMLButtonElement).textContent?.trim().toLowerCase());
+      const labels = Array.from(fixture.nativeElement.querySelectorAll('button')).map((b) =>
+        (b as HTMLButtonElement).textContent?.trim().toLowerCase(),
+      );
       expect(labels.some((l) => l?.includes('always'))).toBe(false);
     });
 
@@ -118,17 +110,13 @@ describe('one request, and the answers on offer', () => {
       await build();
       const line = find('grants-line');
       expect(line?.textContent).toContain('add nodes to cluster c-1');
-      expect(line?.querySelector('code')?.textContent?.trim()).toBe(
-        'add nodes to cluster c-1',
-      );
+      expect(line?.querySelector('code')?.textContent?.trim()).toBe('add nodes to cluster c-1');
     });
 
     it('states the fact instead when there is no boundary to state', async () => {
       await build({ offersAlways: false });
       expect(find('grants-line')).toBeNull();
-      expect(find('no-always-note')?.textContent).toContain(
-        'did not state its own boundary',
-      );
+      expect(find('no-always-note')?.textContent).toContain('did not state its own boundary');
     });
 
     it('says why when the action is one a person answers every time', async () => {
@@ -141,9 +129,7 @@ describe('one request, and the answers on offer', () => {
   describe('the cost, before the decision', () => {
     it('prices the request from the route the request named', async () => {
       await build();
-      expect(cycle.estimate).toHaveBeenCalledWith(
-        '/infrastructure/clusters/c-1/capacity-plan',
-      );
+      expect(cycle.estimate).toHaveBeenCalledWith('/infrastructure/clusters/c-1/capacity-plan');
       const facts = findAll('estimate-fact').map((f) => f.textContent ?? '');
       expect(facts.join(' ')).toContain('€8.49 / month');
     });
@@ -169,9 +155,7 @@ describe('one request, and the answers on offer', () => {
     });
 
     it('says the price is missing rather than inventing one', async () => {
-      cycle = jasmine.createSpyObj<AgentCycleService>('AgentCycleService', [
-        'estimate',
-      ]);
+      cycle = jasmine.createSpyObj<AgentCycleService>('AgentCycleService', ['estimate']);
       cycle.estimate.and.returnValue(throwError(() => new Error('no')));
       await TestBed.configureTestingModule({
         imports: [AgentRequestCardComponent],
@@ -232,4 +216,3 @@ describe('one request, and the answers on offer', () => {
     });
   });
 });
-

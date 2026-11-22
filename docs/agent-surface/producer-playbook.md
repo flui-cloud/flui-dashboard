@@ -22,6 +22,7 @@ più per mettere quei due errori per iscritto qui, non per lasciare il compito a
 ## 1. Fonte di verità
 
 La specifica normativa è **congelata**, vive fuori da questo repo:
+
 - `~/Project/flui/semantic-surface/docs/agent-surface/semantic-surface-core-v0.2.md`
 - `~/Project/flui/semantic-surface/docs/agent-surface/semantic-surface.schema.json`
 
@@ -105,9 +106,9 @@ componente — vedi sotto.
 
 ## 4. Attenzione vs correlato — l'unica vera decisione di giudizio
 
-`attention` (a livello di snapshot) dice *dove sta guardando l'utente*. `role: 'related'`
-su un'entità dentro uno scope dice *questa entità è elencata qui, ma non è ciò che
-l'utente sta guardando ora*. La differenza è deittica: "riavvia questo" deve poter
+`attention` (a livello di snapshot) dice _dove sta guardando l'utente_. `role: 'related'`
+su un'entità dentro uno scope dice _questa entità è elencata qui, ma non è ciò che
+l'utente sta guardando ora_. La differenza è deittica: "riavvia questo" deve poter
 risolvere solo su ciò che è in `attention`.
 
 **Due casi, due pattern diversi — non forzare l'uno nell'altro:**
@@ -216,7 +217,7 @@ riscoprirli.
    dati **prima** che passassero dal mascheramento, o da una fonte diversa da quella che
    il template usa, aggirerebbe silenziosamente mask mode. Verificalo esplicitamente
    quando scrivi un producer su una pagina che mostra dati classificati.
-6. **"Il campo è nel DTO" non basta — verifica che la *rotta* dichiari quel DTO.**
+6. **"Il campo è nel DTO" non basta — verifica che la _rotta_ dichiari quel DTO.**
    `GET /iam/grants`, `/iam/principals`, `/iam/groups` non avevano nessun
    `@ApiResponse`/`@ApiOkResponse` sul controller: l'interceptor di mascheramento risolve
    il tipo di risposta dalla metadata di `@nestjs/swagger` (non da `instanceof`, i
@@ -260,6 +261,7 @@ caricano nel bundle di test del browser — **non riscrivere lo shim `Buffer`/l'
 Ajv in ogni nuovo file di test**, importa da lì.
 
 Un nuovo producer non è finito finché il suo file di test non:
+
 - chiama `expectValidSurface` su almeno uno snapshot realistico;
 - chiama `expectDeterministicDigest`;
 - esercita **davvero** il controllo `invalid-revision` con una `previousSnapshot` (non

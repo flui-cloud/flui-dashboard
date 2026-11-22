@@ -1,5 +1,14 @@
 import { ExplainComponent } from '../../../shared/components/explain.component';
-import { Component, OnDestroy, inject, signal, computed, effect, untracked, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnDestroy,
+  inject,
+  signal,
+  computed,
+  effect,
+  untracked,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 import { Router, ActivatedRoute, RouterModule, NavigationEnd } from '@angular/router';
@@ -145,50 +154,32 @@ interface TabItem {
         <div class="animate-pulse space-y-6">
           <!-- Header skeleton -->
           <div class="flex items-start gap-4">
-            <div
-              class="mt-1 h-9 w-9 rounded-lg bg-gray-200 dark:bg-gray-700"
-            ></div>
+            <div class="mt-1 h-9 w-9 rounded-lg bg-gray-200 dark:bg-gray-700"></div>
             <div class="space-y-2">
               <div class="flex items-center gap-3">
-                <div
-                  class="h-8 w-48 rounded bg-gray-200 dark:bg-gray-700"
-                ></div>
-                <div
-                  class="h-5 w-16 rounded bg-gray-200 dark:bg-gray-700"
-                ></div>
+                <div class="h-8 w-48 rounded bg-gray-200 dark:bg-gray-700"></div>
+                <div class="h-5 w-16 rounded bg-gray-200 dark:bg-gray-700"></div>
               </div>
               <div class="h-4 w-32 rounded bg-gray-200 dark:bg-gray-700"></div>
               <div class="flex gap-2">
-                <div
-                  class="h-6 w-20 rounded-full bg-gray-200 dark:bg-gray-700"
-                ></div>
+                <div class="h-6 w-20 rounded-full bg-gray-200 dark:bg-gray-700"></div>
               </div>
             </div>
           </div>
           <!-- Stats skeleton -->
           <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
             @for (i of [1, 2, 3, 4]; track i) {
-              <div
-                class="bg-white dark:bg-gray-800 border rounded-lg p-4 space-y-2"
-              >
-                <div
-                  class="h-3 w-16 rounded bg-gray-200 dark:bg-gray-700"
-                ></div>
-                <div
-                  class="h-6 w-24 rounded bg-gray-200 dark:bg-gray-700"
-                ></div>
+              <div class="bg-white dark:bg-gray-800 border rounded-lg p-4 space-y-2">
+                <div class="h-3 w-16 rounded bg-gray-200 dark:bg-gray-700"></div>
+                <div class="h-6 w-24 rounded bg-gray-200 dark:bg-gray-700"></div>
               </div>
             }
           </div>
           <!-- Tab skeleton -->
           <div class="bg-white dark:bg-gray-800 border rounded-lg">
-            <div
-              class="border-b border-gray-200 dark:border-gray-700 flex gap-1 px-2"
-            >
+            <div class="border-b border-gray-200 dark:border-gray-700 flex gap-1 px-2">
               @for (i of [1, 2, 3, 4, 5, 6]; track i) {
-                <div
-                  class="h-10 w-24 my-2 rounded bg-gray-200 dark:bg-gray-700"
-                ></div>
+                <div class="h-10 w-24 my-2 rounded bg-gray-200 dark:bg-gray-700"></div>
               }
             </div>
             <div class="p-6 space-y-3">
@@ -196,15 +187,9 @@ interface TabItem {
               <div class="h-4 w-1/2 rounded bg-gray-200 dark:bg-gray-700"></div>
               <div class="h-4 w-2/3 rounded bg-gray-200 dark:bg-gray-700"></div>
               <div class="h-64">
-                <div
-                  class="h-4 w-3/4 rounded bg-gray-200 dark:bg-gray-700"
-                ></div>
-                <div
-                  class="h-4 w-1/2 rounded bg-gray-200 dark:bg-gray-700"
-                ></div>
-                <div
-                  class="h-4 w-2/3 rounded bg-gray-200 dark:bg-gray-700"
-                ></div>
+                <div class="h-4 w-3/4 rounded bg-gray-200 dark:bg-gray-700"></div>
+                <div class="h-4 w-1/2 rounded bg-gray-200 dark:bg-gray-700"></div>
+                <div class="h-4 w-2/3 rounded bg-gray-200 dark:bg-gray-700"></div>
               </div>
             </div>
           </div>
@@ -238,7 +223,9 @@ interface TabItem {
                 </span>
                 @if (app.id) {
                   <div class="flex items-center gap-1">
-                    <span class="font-mono text-xs text-gray-400 dark:text-gray-500">{{ app.id | maskId }}</span>
+                    <span class="font-mono text-xs text-gray-400 dark:text-gray-500">{{
+                      app.id | maskId
+                    }}</span>
                     <button
                       (click)="copyId(app.id)"
                       class="p-0.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -247,7 +234,10 @@ interface TabItem {
                       @if (copiedId()) {
                         <ng-icon name="lucideCheck" class="h-3 w-3 text-green-500" />
                       } @else {
-                        <ng-icon name="lucideCopy" class="h-3 w-3 text-gray-400 dark:text-gray-500" />
+                        <ng-icon
+                          name="lucideCopy"
+                          class="h-3 w-3 text-gray-400 dark:text-gray-500"
+                        />
                       }
                     </button>
                   </div>
@@ -258,35 +248,53 @@ interface TabItem {
 
           <!-- Quick actions toolbar -->
           <div class="flex items-center gap-1 mt-1 flex-shrink-0">
-@if (!access()?.readOnly) {
-                        @let pending = runtimeService.runtime()?.restartPending;
-            <button
-              (click)="onRollingRestart(app.id)"
-              [disabled]="runtimeService.savingRestart() || !canRestart(app.status) || !!restartOff()"
-              [class]="pending
-                ? 'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed'
-                : 'inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed'"
-              [title]="restartOff() ?? (pending ? 'Saved changes the running pods do not have yet: ' + (pending.changes.join(', ') || 'variables') : 'Rolling restart')"
-              data-testid="app-restart"
-            >
-              @if (runtimeService.savingRestart()) {
-                <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
-              } @else {
-                <ng-icon name="lucideRotateCcw" class="h-3.5 w-3.5" />
-              }
-              @if (pending) {
-                Restart to apply{{ pending.changes.length ? ' — ' + pending.changes.length + (pending.changes.length === 1 ? ' change' : ' changes') : '' }}
-              } @else {
-                Restart
-              }
-            </button>
+            @if (!access()?.readOnly) {
+              @let pending = runtimeService.runtime()?.restartPending;
+              <button
+                (click)="onRollingRestart(app.id)"
+                [disabled]="
+                  runtimeService.savingRestart() || !canRestart(app.status) || !!restartOff()
+                "
+                [class]="
+                  pending
+                    ? 'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed'
+                    : 'inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed'
+                "
+                [title]="
+                  restartOff() ??
+                  (pending
+                    ? 'Saved changes the running pods do not have yet: ' +
+                      (pending.changes.join(', ') || 'variables')
+                    : 'Rolling restart')
+                "
+                data-testid="app-restart"
+              >
+                @if (runtimeService.savingRestart()) {
+                  <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
+                } @else {
+                  <ng-icon name="lucideRotateCcw" class="h-3.5 w-3.5" />
+                }
+                @if (pending) {
+                  Restart to apply{{
+                    pending.changes.length
+                      ? ' — ' +
+                        pending.changes.length +
+                        (pending.changes.length === 1 ? ' change' : ' changes')
+                      : ''
+                  }}
+                } @else {
+                  Restart
+                }
+              </button>
             }
           </div>
         </div>
 
         <!-- Deleted notice -->
         @if (app.status === 'deleted') {
-          <div class="flex items-center gap-3 px-4 py-3 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-500 dark:text-gray-400">
+          <div
+            class="flex items-center gap-3 px-4 py-3 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-500 dark:text-gray-400"
+          >
             <ng-icon name="lucideCircleX" class="h-4 w-4 flex-shrink-0" />
             This application has been deleted and is no longer active.
           </div>
@@ -294,7 +302,9 @@ interface TabItem {
 
         <!-- Reconciliation error (build/deploy failures) -->
         @if (app.status === 'failed' && app.reconciliationError) {
-          <div class="flex items-start gap-3 px-4 py-3 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400">
+          <div
+            class="flex items-start gap-3 px-4 py-3 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400"
+          >
             <ng-icon name="lucideCircleAlert" class="h-4 w-4 flex-shrink-0 mt-0.5" />
             <div class="space-y-0.5 min-w-0">
               <p class="font-medium">Deploy failed</p>
@@ -309,9 +319,7 @@ interface TabItem {
             <p class="text-sm text-gray-600 dark:text-gray-400">Replicas</p>
             <p class="text-lg font-bold tabular-nums">
               {{ replicaCounts().ready
-              }}<span
-                class="text-sm font-normal text-gray-400 dark:text-gray-500"
-              >
+              }}<span class="text-sm font-normal text-gray-400 dark:text-gray-500">
                 / {{ replicaCounts().desired }}</span
               >
             </p>
@@ -321,15 +329,21 @@ interface TabItem {
                 class="mt-1 block text-xs text-amber-700 hover:underline dark:text-amber-400"
                 [title]="wait.says"
                 data-testid="replicas-waiting"
-              >{{ wait.replicas }} waiting for a node with room →</a>
+                >{{ wait.replicas }} waiting for a node with room →</a
+              >
             }
           </div>
-          <a [routerLink]="['images']" class="bg-white dark:bg-gray-800 border rounded-lg p-4 min-w-0 block hover:border-blue-300 dark:hover:border-blue-600 transition-colors">
+          <a
+            [routerLink]="['images']"
+            class="bg-white dark:bg-gray-800 border rounded-lg p-4 min-w-0 block hover:border-blue-300 dark:hover:border-blue-600 transition-colors"
+          >
             <p class="text-sm text-gray-600 dark:text-gray-400">Image</p>
             @if (runtime()?.containers?.[0]?.image; as img) {
               <p class="text-sm font-mono font-medium truncate" [title]="img">{{ img }}</p>
             } @else if (app.imageRef) {
-              <p class="text-sm font-mono font-medium truncate" [title]="app.imageRef">{{ app.imageRef }}</p>
+              <p class="text-sm font-mono font-medium truncate" [title]="app.imageRef">
+                {{ app.imageRef }}
+              </p>
             } @else {
               <p class="text-sm text-gray-400 dark:text-gray-500">—</p>
             }
@@ -365,7 +379,11 @@ interface TabItem {
               role="note"
               class="mb-4 inline-flex max-w-full items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-sm text-muted-foreground"
             >
-              <app-explain [label]="acc.readOnly ? 'A Flui project · read-only' : 'A Flui project'" labelClass="text-[13px] font-medium text-foreground" floating>
+              <app-explain
+                [label]="acc.readOnly ? 'A Flui project · read-only' : 'A Flui project'"
+                labelClass="text-[13px] font-medium text-foreground"
+                floating
+              >
                 We run this one ourselves and leave it on display.
                 @if (acc.readOnly) {
                   Everything else you can see in this instance is only yours.
@@ -384,7 +402,9 @@ interface TabItem {
         <!-- Tab Navigation -->
         <div class="bg-white dark:bg-gray-800 border rounded-lg">
           <div class="border-b border-gray-200 dark:border-gray-700 relative flex items-stretch">
-            <nav class="flex -mb-px gap-1 overflow-x-auto scrollbar-none flex-1 min-w-0 items-stretch">
+            <nav
+              class="flex -mb-px gap-1 overflow-x-auto scrollbar-none flex-1 min-w-0 items-stretch"
+            >
               @for (tab of tabs(); track tab.route) {
                 @if (tabOff(tab.route); as reason) {
                   <span
@@ -397,27 +417,29 @@ interface TabItem {
                     <span class="hidden md:inline">{{ tab.label }}</span>
                   </span>
                 } @else {
-                <a
-                  [routerLink]="[tab.route]"
-                  routerLinkActive
-                  #rla="routerLinkActive"
-                  [routerLinkActiveOptions]="{ exact: true }"
-                  [title]="tab.label"
-                  class="inline-flex items-center gap-1.5 px-3 md:px-5 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0"
-                  [class]="
-                    rla.isActive
-                      ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                      : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:border-gray-300 dark:hover:border-gray-600'
-                  "
-                >
-                  <ng-icon [name]="tab.icon" class="h-4 w-4 flex-shrink-0" />
-                  <span class="hidden md:inline">{{ tab.label }}</span>
-                </a>
+                  <a
+                    [routerLink]="[tab.route]"
+                    routerLinkActive
+                    #rla="routerLinkActive"
+                    [routerLinkActiveOptions]="{ exact: true }"
+                    [title]="tab.label"
+                    class="inline-flex items-center gap-1.5 px-3 md:px-5 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0"
+                    [class]="
+                      rla.isActive
+                        ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                        : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:border-gray-300 dark:hover:border-gray-600'
+                    "
+                  >
+                    <ng-icon [name]="tab.icon" class="h-4 w-4 flex-shrink-0" />
+                    <span class="hidden md:inline">{{ tab.label }}</span>
+                  </a>
                 }
               }
             </nav>
             <!-- Advanced dropdown (outside nav scroll so the menu isn't clipped) -->
-            <div class="relative flex items-stretch border-l border-gray-200 dark:border-gray-700 -mb-px">
+            <div
+              class="relative flex items-stretch border-l border-gray-200 dark:border-gray-700 -mb-px"
+            >
               <button
                 type="button"
                 (click)="toggleAdvanced(); $event.stopPropagation()"
@@ -427,17 +449,16 @@ interface TabItem {
                 <ng-icon name="lucideSettings" class="h-4 w-4 flex-shrink-0" />
                 <span class="hidden md:inline">Advanced</span>
                 @if (diagnosesCount() > 0) {
-                  <span class="ml-0.5 text-xs px-1.5 py-0.5 rounded-full bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 font-semibold tabular-nums">
+                  <span
+                    class="ml-0.5 text-xs px-1.5 py-0.5 rounded-full bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 font-semibold tabular-nums"
+                  >
                     {{ diagnosesCount() }}
                   </span>
                 }
                 <ng-icon name="lucideChevronDown" class="h-3.5 w-3.5 flex-shrink-0" />
               </button>
               @if (advancedOpen()) {
-                <div
-                  class="fixed inset-0 z-40"
-                  (click)="advancedOpen.set(false)"
-                ></div>
+                <div class="fixed inset-0 z-40" (click)="advancedOpen.set(false)"></div>
                 <div
                   class="absolute right-0 top-full mt-1 w-52 z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1"
                   (click)="advancedOpen.set(false)"
@@ -452,7 +473,9 @@ interface TabItem {
                       <ng-icon [name]="item.icon" class="h-4 w-4" />
                       <span class="flex-1">{{ item.label }}</span>
                       @if (item.route === 'diagnoses' && diagnosesCount() > 0) {
-                        <span class="text-xs px-1.5 py-0.5 rounded-full bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 font-semibold tabular-nums">
+                        <span
+                          class="text-xs px-1.5 py-0.5 rounded-full bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 font-semibold tabular-nums"
+                        >
                           {{ diagnosesCount() }}
                         </span>
                       }
@@ -492,7 +515,7 @@ export class ApplicationDetailComponent implements OnDestroy {
   advancedOpen = signal(false);
 
   toggleAdvanced(): void {
-    this.advancedOpen.update(v => !v);
+    this.advancedOpen.update((v) => !v);
   }
 
   application = this.appService.selectedApplication;
@@ -515,10 +538,9 @@ export class ApplicationDetailComponent implements OnDestroy {
   private readonly _appWasLoaded = signal(false);
   private readonly lastKnownList = signal<WorkloadList>('applications');
 
-  private readonly routeId = toSignal(
-    this.route.paramMap.pipe(map(p => p.get('id'))),
-    { initialValue: this.route.snapshot.paramMap.get('id') },
-  );
+  private readonly routeId = toSignal(this.route.paramMap.pipe(map((p) => p.get('id'))), {
+    initialValue: this.route.snapshot.paramMap.get('id'),
+  });
 
   // The Semantic Surface's tab scope reads this — the same source the routerLinkActive
   // bindings in the template read from, not a second notion of "which tab is open".
@@ -584,14 +606,11 @@ export class ApplicationDetailComponent implements OnDestroy {
       this.monitoringService.startPolling(id);
       this.pollingAppId = id;
       this.runtimeService.loadRuntime(id);
-      this.ws.onDiagnosis(id, d => this.diagnosesService.pushRealtime(d));
+      this.ws.onDiagnosis(id, (d) => this.diagnosesService.pushRealtime(d));
       this.ws.ensureAppSubscription(id);
       this.diagnosesService.loadList(id, { limit: 10 });
     } catch (error: any) {
-      const msg =
-        error?.error?.message ||
-        error?.message ||
-        'The application could not be found.';
+      const msg = error?.error?.message || error?.message || 'The application could not be found.';
       this.errorToastMessage.set(msg);
       this.showErrorToast.set(true);
       setTimeout(() => {
@@ -660,10 +679,14 @@ export class ApplicationDetailComponent implements OnDestroy {
   protected readonly title = computed(() => {
     const app = this.application();
     if (!app || !this.access()?.showcase) return null;
-    const group = this.appService.applicationGroups().find((g) => g.components.some((c) => c.id === app.id));
+    const group = this.appService
+      .applicationGroups()
+      .find((g) => g.components.some((c) => c.id === app.id));
     if (!group || group.components.length < 2) return null;
     const part = (app.metadata as { composedComponent?: unknown } | undefined)?.composedComponent;
-    return group.primaryComponentId === app.id || typeof part !== 'string' ? group.name : `${group.name} · ${part}`;
+    return group.primaryComponentId === app.id || typeof part !== 'string'
+      ? group.name
+      : `${group.name} · ${part}`;
   });
 
   private readonly surfaceRevision = new ApplicationSurfaceRevision();
@@ -771,5 +794,4 @@ export class ApplicationDetailComponent implements OnDestroy {
   async onRollingRestart(appId: string): Promise<void> {
     await this.runtimeService.restart(appId);
   }
-
 }

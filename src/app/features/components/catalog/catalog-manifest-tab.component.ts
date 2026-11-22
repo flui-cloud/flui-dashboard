@@ -42,14 +42,14 @@ import { CatalogService } from '../../service/catalog.service';
               Every catalog app is described by a single
               <code class="rounded bg-muted px-1 py-0.5 font-mono text-xs">flui.yaml</code>
               manifest — a declarative blueprint that lists the components to deploy, the
-              configuration the user can edit, the secrets to generate and the endpoints to
-              expose. The dashboard reads it to render the install wizard; the cluster reads
-              it to provision the resources.
+              configuration the user can edit, the secrets to generate and the endpoints to expose.
+              The dashboard reads it to render the install wizard; the cluster reads it to provision
+              the resources.
             </p>
             <p>
-              The manifest below is the exact file shipped with this catalog entry, byte for
-              byte. It's read-only here — useful to inspect what will be deployed, copy it
-              into a custom workflow, or fork it into your own version.
+              The manifest below is the exact file shipped with this catalog entry, byte for byte.
+              It's read-only here — useful to inspect what will be deployed, copy it into a custom
+              workflow, or fork it into your own version.
             </p>
           </div>
         </div>
@@ -74,10 +74,7 @@ import { CatalogService } from '../../service/catalog.service';
             <span class="text-muted-foreground">·</span>
             <span class="text-muted-foreground">v{{ yaml()!.version }}</span>
             <span class="text-muted-foreground">·</span>
-            <span
-              class="font-mono text-muted-foreground"
-              [title]="'SHA-256: ' + yaml()!.checksum"
-            >
+            <span class="font-mono text-muted-foreground" [title]="'SHA-256: ' + yaml()!.checksum">
               {{ shortChecksum() }}
             </span>
           </div>

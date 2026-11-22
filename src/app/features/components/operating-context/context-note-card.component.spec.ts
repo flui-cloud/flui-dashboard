@@ -162,10 +162,7 @@ describe('one note, read back', () => {
 
   describe('a note that was retired', () => {
     it('says when it was withdrawn', async () => {
-      await build(
-        note({ archivedAt: '2026-08-01T09:00:00.000Z' }),
-        true,
-      );
+      await build(note({ archivedAt: '2026-08-01T09:00:00.000Z' }), true);
       expect(find('retired')).not.toBeNull();
     });
 
@@ -197,10 +194,7 @@ describe('one note, read back', () => {
     });
 
     it('shows no line at all when there is nobody to name', async () => {
-      await build(
-        note({ archivedAt: '2026-08-01T09:00:00.000Z', archivedBy: null }),
-        true,
-      );
+      await build(note({ archivedAt: '2026-08-01T09:00:00.000Z', archivedBy: null }), true);
       expect(find('retired-by')).toBeNull();
     });
   });
@@ -216,4 +210,3 @@ describe('one note, read back', () => {
     expect(find('level')?.textContent).toContain('api');
   });
 });
-

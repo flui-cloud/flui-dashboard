@@ -1,4 +1,9 @@
-import { ApplicationConfig, inject, provideAppInitializer, provideZoneChangeDetection } from '@angular/core';
+import {
+  ApplicationConfig,
+  inject,
+  provideAppInitializer,
+  provideZoneChangeDetection,
+} from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors, withXhr } from '@angular/common/http';
 import { provideEcharts } from 'ngx-echarts';
@@ -22,12 +27,15 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
-    provideHttpClient(withXhr(), withInterceptors([
+    provideHttpClient(
+      withXhr(),
+      withInterceptors([
         authInterceptor,
         maskModeInterceptor,
         apiErrorMessageInterceptor,
         sandboxFenceInterceptor,
-      ])),
+      ]),
+    ),
     provideEcharts(),
     provideMarkdown({
       markedOptions: {
@@ -73,7 +81,8 @@ export const appConfig: ApplicationConfig = {
     }),
     {
       provide: Configuration,
-      useFactory: (cfg: AppConfigService) => new Configuration({ basePath: cfg.apiBaseUrl, withCredentials: true }),
+      useFactory: (cfg: AppConfigService) =>
+        new Configuration({ basePath: cfg.apiBaseUrl, withCredentials: true }),
       deps: [AppConfigService],
     },
   ],

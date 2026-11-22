@@ -1,4 +1,12 @@
-import { Component, inject, input, output, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  inject,
+  input,
+  output,
+  signal,
+  OnInit,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -43,22 +51,30 @@ interface IssuedToken {
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm" (click)="closed.emit()">
-      <div class="fixed left-[50%] top-[50%] z-50 w-full max-w-lg translate-x-[-50%] translate-y-[-50%] p-4">
+      <div
+        class="fixed left-[50%] top-[50%] z-50 w-full max-w-lg translate-x-[-50%] translate-y-[-50%] p-4"
+      >
         <div class="card-surface p-5 space-y-4" (click)="$event.stopPropagation()">
           <div class="flex items-start justify-between">
             <div class="flex items-start gap-3">
-              <span class="inline-flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 text-primary">
+              <span
+                class="inline-flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 text-primary"
+              >
                 <ng-icon name="lucideServer" class="h-5 w-5" />
               </span>
               <div>
                 <h2 class="text-lg font-semibold text-foreground">Connect a worker node</h2>
                 <p class="text-xs text-muted-foreground mt-0.5">
-                  Self-hosted clusters don't provision servers — point Flui at a Linux
-                  box you already own and it installs over SSH.
+                  Self-hosted clusters don't provision servers — point Flui at a Linux box you
+                  already own and it installs over SSH.
                 </p>
               </div>
             </div>
-            <button type="button" (click)="closed.emit()" class="text-muted-foreground hover:text-foreground p-1 rounded">
+            <button
+              type="button"
+              (click)="closed.emit()"
+              class="text-muted-foreground hover:text-foreground p-1 rounded"
+            >
               <ng-icon name="lucideX" class="h-4 w-4" />
             </button>
           </div>
@@ -66,9 +82,12 @@ interface IssuedToken {
           @if (!result()) {
             <div class="space-y-3">
               <div class="space-y-1">
-                <label class="text-sm font-medium text-foreground">Master address (node reaches k3s API here)</label>
+                <label class="text-sm font-medium text-foreground"
+                  >Master address (node reaches k3s API here)</label
+                >
                 <input
-                  type="text" [(ngModel)]="formMasterIp"
+                  type="text"
+                  [(ngModel)]="formMasterIp"
                   placeholder="10.0.0.11"
                   class="w-full px-3 py-1.5 text-sm rounded-md border border-border bg-background"
                 />
@@ -76,20 +95,29 @@ interface IssuedToken {
               @if (registeredNetwork()) {
                 <div class="space-y-1">
                   <label class="text-sm font-medium text-foreground">Private network</label>
-                  <div class="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md border border-border bg-muted/40">
-                    <ng-icon name="lucideShieldCheck" class="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <div
+                    class="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md border border-border bg-muted/40"
+                  >
+                    <ng-icon
+                      name="lucideShieldCheck"
+                      class="h-4 w-4 text-blue-600 dark:text-blue-400"
+                    />
                     <span class="font-mono text-foreground">{{ registeredNetwork() }}</span>
                     <span class="text-xs text-muted-foreground">registered</span>
                   </div>
                   <p class="text-xs text-muted-foreground">
-                    The new node joins this cluster's private network. Manage it from the Network tab.
+                    The new node joins this cluster's private network. Manage it from the Network
+                    tab.
                   </p>
                 </div>
               } @else {
                 <div class="space-y-1">
-                  <label class="text-sm font-medium text-foreground">Private network CIDR (nodes share it)</label>
+                  <label class="text-sm font-medium text-foreground"
+                    >Private network CIDR (nodes share it)</label
+                  >
                   <input
-                    type="text" [(ngModel)]="formNodeNetwork"
+                    type="text"
+                    [(ngModel)]="formNodeNetwork"
                     placeholder="10.0.0.0/24"
                     class="w-full px-3 py-1.5 text-sm rounded-md border border-border bg-background"
                   />
@@ -106,14 +134,22 @@ interface IssuedToken {
               }
             </div>
             <div class="flex justify-end gap-2">
-              <button type="button" (click)="closed.emit()" class="px-3 py-1.5 text-xs font-medium rounded-md border border-border hover:bg-muted">
+              <button
+                type="button"
+                (click)="closed.emit()"
+                class="px-3 py-1.5 text-xs font-medium rounded-md border border-border hover:bg-muted"
+              >
                 Cancel
               </button>
               <button
-                type="button" (click)="generate()" [disabled]="generating() || !formMasterIp"
+                type="button"
+                (click)="generate()"
+                [disabled]="generating() || !formMasterIp"
                 class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
               >
-                @if (generating()) { <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" /> }
+                @if (generating()) {
+                  <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
+                }
                 Generate join command
               </button>
             </div>
@@ -122,21 +158,45 @@ interface IssuedToken {
               <li>On the new host (a clean Linux box, 2GB+ RAM), run as root:</li>
             </ol>
             <div class="relative">
-              <pre class="text-xs bg-muted rounded-md p-3 pr-10 overflow-x-auto font-mono whitespace-pre-wrap break-all">{{ result()!.command }}</pre>
+              <pre
+                class="text-xs bg-muted rounded-md p-3 pr-10 overflow-x-auto font-mono whitespace-pre-wrap break-all"
+                >{{ result()!.command }}</pre>
               <button
-                type="button" (click)="copy()" title="Copy command"
+                type="button"
+                (click)="copy()"
+                title="Copy command"
                 class="absolute top-2 right-2 inline-flex items-center justify-center h-7 w-7 rounded border border-border bg-background hover:bg-muted"
               >
-                <ng-icon [name]="copied() ? 'lucideCheck' : 'lucideCopy'" class="h-3.5 w-3.5" [class.text-green-600]="copied()" />
+                <ng-icon
+                  [name]="copied() ? 'lucideCheck' : 'lucideCopy'"
+                  class="h-3.5 w-3.5"
+                  [class.text-green-600]="copied()"
+                />
               </button>
             </div>
-            <div class="rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground space-y-1">
-              <div>Node name: <span class="font-mono text-foreground">{{ result()!.serverName }}</span></div>
-              <div>Reaches master at <span class="font-mono text-foreground">{{ result()!.masterIp }}:6443</span> · firewall allows <span class="font-mono text-foreground">{{ result()!.nodeNetwork || 'n/a' }}</span></div>
-              <div>Single-use · expires {{ result()!.expiresAt | date: 'short' }}. The node appears in this list once it joins.</div>
+            <div
+              class="rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground space-y-1"
+            >
+              <div>
+                Node name: <span class="font-mono text-foreground">{{ result()!.serverName }}</span>
+              </div>
+              <div>
+                Reaches master at
+                <span class="font-mono text-foreground">{{ result()!.masterIp }}:6443</span> ·
+                firewall allows
+                <span class="font-mono text-foreground">{{ result()!.nodeNetwork || 'n/a' }}</span>
+              </div>
+              <div>
+                Single-use · expires {{ result()!.expiresAt | date: 'short' }}. The node appears in
+                this list once it joins.
+              </div>
             </div>
             <div class="flex justify-end">
-              <button type="button" (click)="closed.emit()" class="px-3 py-1.5 text-xs font-medium rounded-md border border-border hover:bg-muted">
+              <button
+                type="button"
+                (click)="closed.emit()"
+                class="px-3 py-1.5 text-xs font-medium rounded-md border border-border hover:bg-muted"
+              >
                 Done
               </button>
             </div>
@@ -177,8 +237,7 @@ export class ByosConnectNodeDialogComponent implements OnInit {
         this.registeredNetwork.set(vnet.ipRange);
         this.formNodeNetwork = vnet.ipRange;
       }
-    } catch {
-    }
+    } catch {}
   }
 
   private deriveSlash24(ip: string): string {

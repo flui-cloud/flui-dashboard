@@ -80,9 +80,10 @@ export function validatePrompt(
  * `FIELD: msg` prefix are returned as the `unparsed` array so the caller can
  * still surface them somewhere (e.g. top-level error box).
  */
-export function parseBackendFieldErrors(
-  errors: readonly string[] | undefined,
-): { perField: Record<string, string>; unparsed: string[] } {
+export function parseBackendFieldErrors(errors: readonly string[] | undefined): {
+  perField: Record<string, string>;
+  unparsed: string[];
+} {
   const perField: Record<string, string> = {};
   const unparsed: string[] = [];
   for (const raw of errors ?? []) {

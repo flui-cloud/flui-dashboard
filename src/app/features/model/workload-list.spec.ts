@@ -59,28 +59,42 @@ describe('workload list', () => {
   });
 
   it('keeps a tool among the applications', () => {
-    expect(workloadListOf(app('kuma', { kind: 'TOOL' as Application['kind'] }))).toBe('applications');
+    expect(workloadListOf(app('kuma', { kind: 'TOOL' as Application['kind'] }))).toBe(
+      'applications',
+    );
   });
 
   it('keeps a system database in System', () => {
     expect(
-      workloadListOf(app('platform-db', { kind: 'SYSTEM' as Application['kind'], imageRef: 'postgres:16', labels: composedLabels })),
+      workloadListOf(
+        app('platform-db', {
+          kind: 'SYSTEM' as Application['kind'],
+          imageRef: 'postgres:16',
+          labels: composedLabels,
+        }),
+      ),
     ).toBe('system');
   });
 
   it('puts a declared database, and a building block with a declared engine, in Data', () => {
     expect(workloadListOf(app('pg', { kind: 'DATABASE' as Application['kind'] }))).toBe('data');
-    const queue = app('nats', { labels: { 'flui.cloud/app-type': 'building-block', 'flui.cloud/db-engine': 'nats' } });
+    const queue = app('nats', {
+      labels: { 'flui.cloud/app-type': 'building-block', 'flui.cloud/db-engine': 'nats' },
+    });
     expect(workloadListOf(queue)).toBe('data');
   });
 
   it('does not take an application image tagged with a database name for a database', () => {
-    expect(workloadListOf(app('web', { imageRef: 'umami-software/umami:postgresql-v2' }))).toBe('applications');
+    expect(workloadListOf(app('web', { imageRef: 'umami-software/umami:postgresql-v2' }))).toBe(
+      'applications',
+    );
   });
 
   it('leaves the bundle in Applications and shows its data store in Data with a note', () => {
     expect(groupListOf(bundle)).toBe('applications');
-    expect(workloadEntries([bundle], 'applications').map((e) => e.group.id)).toEqual(['install-umami']);
+    expect(workloadEntries([bundle], 'applications').map((e) => e.group.id)).toEqual([
+      'install-umami',
+    ]);
     const data = workloadEntries([bundle], 'data');
     expect(data.map((e) => e.group.id)).toEqual(['umami-308040-db']);
     expect(data[0].partOf).toEqual({ id: 'install-umami', name: 'umami' });
@@ -88,7 +102,11 @@ describe('workload list', () => {
   });
 
   it('does not count the showcase among the caller\u2019s own', () => {
-    const shown = (a: Application) => ({ ...a, access: { tabs: [], readOnly: true, showcase: true, dataAccess: false } }) as Application;
+    const shown = (a: Application) =>
+      ({
+        ...a,
+        access: { tabs: [], readOnly: true, showcase: true, dataAccess: false },
+      }) as Application;
     const showcase = { ...bundle, id: 'install-live', components: bundle.components.map(shown) };
     expect(workloadListCounts([bundle, showcase])).toEqual({ applications: 1, data: 1, system: 0 });
   });
@@ -96,8 +114,15 @@ describe('workload list', () => {
   it('never lists a data bundle twice', () => {
     const ferret = app('ferret', { kind: 'DATABASE' as Application['kind'] });
     const store = app('ferret-pg', { imageRef: 'postgres:16', labels: composedLabels });
-    const dataBundle = { ...bundle, id: 'install-ferret', primaryComponentId: ferret.id, components: [ferret, store] };
-    expect(workloadEntries([dataBundle], 'data').map((e) => e.group.id)).toEqual(['install-ferret']);
+    const dataBundle = {
+      ...bundle,
+      id: 'install-ferret',
+      primaryComponentId: ferret.id,
+      components: [ferret, store],
+    };
+    expect(workloadEntries([dataBundle], 'data').map((e) => e.group.id)).toEqual([
+      'install-ferret',
+    ]);
   });
 
   it('lights the list of the opened recap or application', () => {
@@ -113,11 +138,29 @@ describe('workload list', () => {
     const web = standalone(app('web'));
     const kuma = standalone(app('kuma', { kind: 'TOOL' as Application['kind'] }));
     expect(workloadTypeOptions([web], 'applications')).toEqual([]);
-    expect(workloadTypeOptions([web, kuma], 'applications').map((t) => t.key)).toEqual(['application', 'tool']);
+    expect(workloadTypeOptions([web, kuma], 'applications').map((t) => t.key)).toEqual([
+      'application',
+      'tool',
+    ]);
 
-    const pg = standalone(app('pg', { kind: 'DATABASE' as Application['kind'], imageRef: 'postgres:16', labels: composedLabels }));
-    const redis = standalone(app('redis', { kind: 'DATABASE' as Application['kind'], imageRef: 'redis:7', labels: composedLabels }));
+    const pg = standalone(
+      app('pg', {
+        kind: 'DATABASE' as Application['kind'],
+        imageRef: 'postgres:16',
+        labels: composedLabels,
+      }),
+    );
+    const redis = standalone(
+      app('redis', {
+        kind: 'DATABASE' as Application['kind'],
+        imageRef: 'redis:7',
+        labels: composedLabels,
+      }),
+    );
     expect(workloadTypeOptions([pg], 'data')).toEqual([]);
-    expect(workloadTypeOptions([pg, redis], 'data').map((t) => t.label)).toEqual(['SQL', 'Key-value']);
+    expect(workloadTypeOptions([pg, redis], 'data').map((t) => t.label)).toEqual([
+      'SQL',
+      'Key-value',
+    ]);
   });
 });

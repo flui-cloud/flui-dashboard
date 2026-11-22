@@ -1,12 +1,32 @@
-import { Component, EventEmitter, Input, Output, OnInit, inject, signal, computed } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+  OnInit,
+  inject,
+  signal,
+  computed,
+} from '@angular/core';
 
 import { ProjectPickerComponent } from '../projects/project-picker.component';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
-  lucideX, lucideLoader, lucideCheck, lucideCircleCheck, lucideTriangleAlert,
-  lucideGithub, lucideServer, lucideRocket, lucideLock, lucideGlobe, lucideInfo, lucideTrash, lucideExternalLink,
+  lucideX,
+  lucideLoader,
+  lucideCheck,
+  lucideCircleCheck,
+  lucideTriangleAlert,
+  lucideGithub,
+  lucideServer,
+  lucideRocket,
+  lucideLock,
+  lucideGlobe,
+  lucideInfo,
+  lucideTrash,
+  lucideExternalLink,
 } from '@ng-icons/lucide';
 
 import { TemplateService } from '../../service/template.service';
@@ -34,9 +54,9 @@ interface OrchestrationPhase {
 }
 
 const PHASES: OrchestrationPhase[] = [
-  { id: 'creating-repo',       label: 'Creating GitHub repository from template' },
-  { id: 'registering-repo',    label: 'Registering repository with Flui' },
-  { id: 'creating-app',        label: 'Creating Flui application' },
+  { id: 'creating-repo', label: 'Creating GitHub repository from template' },
+  { id: 'registering-repo', label: 'Registering repository with Flui' },
+  { id: 'creating-app', label: 'Creating Flui application' },
   { id: 'generating-workflow', label: 'Committing build workflow to repository' },
 ];
 
@@ -46,50 +66,88 @@ const NAME_PATTERN = /^[a-zA-Z0-9._-]+$/;
   selector: 'app-use-template-modal',
   standalone: true,
   imports: [RouterLink, NgIcon, ProjectPickerComponent],
-  providers: [provideIcons({
-    lucideX, lucideLoader, lucideCheck, lucideCircleCheck, lucideTriangleAlert,
-    lucideGithub, lucideServer, lucideRocket, lucideLock, lucideGlobe, lucideInfo, lucideTrash, lucideExternalLink,
-  })],
+  providers: [
+    provideIcons({
+      lucideX,
+      lucideLoader,
+      lucideCheck,
+      lucideCircleCheck,
+      lucideTriangleAlert,
+      lucideGithub,
+      lucideServer,
+      lucideRocket,
+      lucideLock,
+      lucideGlobe,
+      lucideInfo,
+      lucideTrash,
+      lucideExternalLink,
+    }),
+  ],
   template: `
-    <div class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
-         (click)="onBackdropClick($event)">
-      <div class="bg-card border border-border rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto"
-           (click)="onCardClick($event)">
-
+    <div
+      class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+      (click)="onBackdropClick($event)"
+    >
+      <div
+        class="bg-card border border-border rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+        (click)="onCardClick($event)"
+      >
         <!-- Header -->
         <div class="flex items-center justify-between px-5 py-4 border-b border-border">
           <div class="flex items-center gap-3 min-w-0">
-            <div class="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <div
+              class="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0"
+            >
               <ng-icon name="lucideRocket" class="h-4 w-4" />
             </div>
             <div class="min-w-0">
               <div class="flex items-center gap-1.5">
-                <h2 class="font-semibold text-base leading-tight truncate">Create repo from template</h2>
-                <button type="button" (click)="togglePopover('intro', $event)" class="text-muted-foreground hover:text-foreground transition-colors flex">
+                <h2 class="font-semibold text-base leading-tight truncate">
+                  Create repo from template
+                </h2>
+                <button
+                  type="button"
+                  (click)="togglePopover('intro', $event)"
+                  class="text-muted-foreground hover:text-foreground transition-colors flex"
+                >
                   <ng-icon name="lucideInfo" class="h-3.5 w-3.5" />
                 </button>
               </div>
               <p class="text-xs text-muted-foreground truncate">{{ template.displayName }}</p>
             </div>
           </div>
-          <button type="button" (click)="onClose()" [disabled]="isBusy()"
-            class="p-1 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+          <button
+            type="button"
+            (click)="onClose()"
+            [disabled]="isBusy()"
+            class="p-1 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          >
             <ng-icon name="lucideX" class="h-4 w-4" />
           </button>
         </div>
 
         <!-- Body -->
         <div class="p-5 space-y-4">
-
           @if (currentStep() === 'form') {
             <!-- GitHub scope warning -->
             @if (!repositoryService.hasRepoScope()) {
-              <div class="flex items-start gap-2 p-3 rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10">
-                <ng-icon name="lucideTriangleAlert" class="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+              <div
+                class="flex items-start gap-2 p-3 rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10"
+              >
+                <ng-icon
+                  name="lucideTriangleAlert"
+                  class="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5"
+                />
                 <div class="text-xs text-amber-900 dark:text-amber-100 space-y-1">
                   <p class="font-medium">GitHub connection required</p>
-                  <p>Connect GitHub with the <code class="font-mono">repo</code> scope to create a new repository.</p>
-                  <a routerLink="/apps/repositories/github-setup" class="inline-flex items-center gap-1 text-amber-700 dark:text-amber-300 hover:underline font-medium">
+                  <p>
+                    Connect GitHub with the <code class="font-mono">repo</code> scope to create a
+                    new repository.
+                  </p>
+                  <a
+                    routerLink="/apps/repositories/github-setup"
+                    class="inline-flex items-center gap-1 text-amber-700 dark:text-amber-300 hover:underline font-medium"
+                  >
                     Connect GitHub →
                   </a>
                 </div>
@@ -98,7 +156,9 @@ const NAME_PATTERN = /^[a-zA-Z0-9._-]+$/;
 
             <!-- Repo name -->
             <div class="space-y-1.5">
-              <label class="text-sm font-medium">Repository name <span class="text-destructive">*</span></label>
+              <label class="text-sm font-medium"
+                >Repository name <span class="text-destructive">*</span></label
+              >
               <input
                 type="text"
                 [value]="name()"
@@ -114,8 +174,14 @@ const NAME_PATTERN = /^[a-zA-Z0-9._-]+$/;
             <!-- Owner (optional) -->
             <div class="space-y-1.5">
               <div class="flex items-center gap-1.5">
-                <label class="text-sm font-medium">Owner <span class="text-muted-foreground font-normal">(optional)</span></label>
-                <button type="button" (click)="togglePopover('owner', $event)" class="text-muted-foreground hover:text-foreground transition-colors flex">
+                <label class="text-sm font-medium"
+                  >Owner <span class="text-muted-foreground font-normal">(optional)</span></label
+                >
+                <button
+                  type="button"
+                  (click)="togglePopover('owner', $event)"
+                  class="text-muted-foreground hover:text-foreground transition-colors flex"
+                >
                   <ng-icon name="lucideInfo" class="h-3.5 w-3.5" />
                 </button>
               </div>
@@ -132,15 +198,27 @@ const NAME_PATTERN = /^[a-zA-Z0-9._-]+$/;
             <div class="space-y-1.5">
               <div class="flex items-center gap-1.5">
                 <label class="text-sm font-medium">Visibility</label>
-                <button type="button" (click)="togglePopover('visibility', $event)" class="text-muted-foreground hover:text-foreground transition-colors flex">
+                <button
+                  type="button"
+                  (click)="togglePopover('visibility', $event)"
+                  class="text-muted-foreground hover:text-foreground transition-colors flex"
+                >
                   <ng-icon name="lucideInfo" class="h-3.5 w-3.5" />
                 </button>
               </div>
               <div class="flex gap-2">
-                <button type="button" (click)="isPrivate.set(true)" [class]="getVisibilityButtonClass(true)">
+                <button
+                  type="button"
+                  (click)="isPrivate.set(true)"
+                  [class]="getVisibilityButtonClass(true)"
+                >
                   <ng-icon name="lucideLock" class="h-3.5 w-3.5" /> Private
                 </button>
-                <button type="button" (click)="isPrivate.set(false)" [class]="getVisibilityButtonClass(false)">
+                <button
+                  type="button"
+                  (click)="isPrivate.set(false)"
+                  [class]="getVisibilityButtonClass(false)"
+                >
                   <ng-icon name="lucideGlobe" class="h-3.5 w-3.5" /> Public
                 </button>
               </div>
@@ -149,7 +227,9 @@ const NAME_PATTERN = /^[a-zA-Z0-9._-]+$/;
             <!-- Cluster picker (only when multiple) -->
             @if (clusters().length > 1) {
               <div class="space-y-1.5">
-                <label class="text-sm font-medium">Target cluster <span class="text-destructive">*</span></label>
+                <label class="text-sm font-medium"
+                  >Target cluster <span class="text-destructive">*</span></label
+                >
                 <select
                   [value]="selectedClusterId()"
                   (change)="selectedClusterId.set($any($event.target).value)"
@@ -163,10 +243,13 @@ const NAME_PATTERN = /^[a-zA-Z0-9._-]+$/;
               </div>
             } @else if (clusters().length === 1) {
               <p class="text-xs text-muted-foreground">
-                Deploying to <span class="font-medium text-foreground">{{ clusters()[0].name }}</span>
+                Deploying to
+                <span class="font-medium text-foreground">{{ clusters()[0].name }}</span>
               </p>
             } @else if (!isLoadingClusters()) {
-              <div class="flex items-start gap-2 p-3 rounded-md border border-destructive/20 bg-destructive/5 text-xs text-destructive">
+              <div
+                class="flex items-start gap-2 p-3 rounded-md border border-destructive/20 bg-destructive/5 text-xs text-destructive"
+              >
                 <ng-icon name="lucideTriangleAlert" class="h-4 w-4 shrink-0 mt-0.5" />
                 <span>No clusters available. Create a cluster first.</span>
               </div>
@@ -182,7 +265,9 @@ const NAME_PATTERN = /^[a-zA-Z0-9._-]+$/;
               <p class="font-medium text-foreground">Runtime defaults from this template</p>
               <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-muted-foreground">
                 <span>Framework:</span>
-                <span class="font-medium text-foreground">{{ template.displayName }} {{ template.version }}</span>
+                <span class="font-medium text-foreground"
+                  >{{ template.displayName }} {{ template.version }}</span
+                >
                 <span>Port:</span>
                 <span class="font-mono text-foreground">{{ template.port }}</span>
                 <span>Healthcheck:</span>
@@ -205,7 +290,9 @@ const NAME_PATTERN = /^[a-zA-Z0-9._-]+$/;
                       <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
                     }
                   </div>
-                  <span [class]="isPhasePending(phase.id) ? 'text-muted-foreground' : 'text-foreground'">
+                  <span
+                    [class]="isPhasePending(phase.id) ? 'text-muted-foreground' : 'text-foreground'"
+                  >
                     {{ phase.label }}
                   </span>
                 </div>
@@ -213,11 +300,17 @@ const NAME_PATTERN = /^[a-zA-Z0-9._-]+$/;
             </div>
 
             @if (currentStep() === 'done') {
-              <div class="flex items-start gap-2 p-3 rounded-md border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/10 text-xs text-green-900 dark:text-green-100">
-                <ng-icon name="lucideCircleCheck" class="h-4 w-4 text-green-600 dark:text-green-400 shrink-0 mt-0.5" />
+              <div
+                class="flex items-start gap-2 p-3 rounded-md border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/10 text-xs text-green-900 dark:text-green-100"
+              >
+                <ng-icon
+                  name="lucideCircleCheck"
+                  class="h-4 w-4 text-green-600 dark:text-green-400 shrink-0 mt-0.5"
+                />
                 <span>
                   @if (reusedExisting()) {
-                    Reused an existing repository from a previous attempt. Taking you to the build monitor...
+                    Reused an existing repository from a previous attempt. Taking you to the build
+                    monitor...
                   } @else {
                     All set! Taking you to the build monitor...
                   }
@@ -226,40 +319,66 @@ const NAME_PATTERN = /^[a-zA-Z0-9._-]+$/;
             }
 
             @if (currentStep() === 'error' && errorMessage()) {
-              <div class="flex items-start gap-2 p-3 rounded-md border border-destructive/20 bg-destructive/5 text-xs text-destructive">
+              <div
+                class="flex items-start gap-2 p-3 rounded-md border border-destructive/20 bg-destructive/5 text-xs text-destructive"
+              >
                 <ng-icon name="lucideTriangleAlert" class="h-4 w-4 shrink-0 mt-0.5" />
                 <span>{{ errorMessage() }}</span>
               </div>
 
               @if (cleanupDone()) {
-                <div class="flex items-start gap-2 p-3 rounded-md border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/10 text-xs text-green-900 dark:text-green-100">
-                  <ng-icon name="lucideCircleCheck" class="h-4 w-4 text-green-600 dark:text-green-400 shrink-0 mt-0.5" />
+                <div
+                  class="flex items-start gap-2 p-3 rounded-md border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/10 text-xs text-green-900 dark:text-green-100"
+                >
+                  <ng-icon
+                    name="lucideCircleCheck"
+                    class="h-4 w-4 text-green-600 dark:text-green-400 shrink-0 mt-0.5"
+                  />
                   <div class="space-y-1">
                     <p class="font-medium">Flui resources removed.</p>
                     @if (createdGithubRepoFullName()) {
                       <p>
                         The GitHub repository
-                        <a [href]="getGithubRepoUrl()" target="_blank" rel="noopener" class="font-mono underline hover:no-underline">{{ createdGithubRepoFullName() }}</a>
-                        is still in your GitHub account — delete it manually if you don't want to keep it.
+                        <a
+                          [href]="getGithubRepoUrl()"
+                          target="_blank"
+                          rel="noopener"
+                          class="font-mono underline hover:no-underline"
+                          >{{ createdGithubRepoFullName() }}</a
+                        >
+                        is still in your GitHub account — delete it manually if you don't want to
+                        keep it.
                       </p>
                     }
                   </div>
                 </div>
               } @else if (hasResourcesToCleanup()) {
-                <div class="flex items-start gap-2 p-3 rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 text-xs text-amber-900 dark:text-amber-100">
-                  <ng-icon name="lucideTriangleAlert" class="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                <div
+                  class="flex items-start gap-2 p-3 rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 text-xs text-amber-900 dark:text-amber-100"
+                >
+                  <ng-icon
+                    name="lucideTriangleAlert"
+                    class="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5"
+                  />
                   <div class="space-y-2">
                     <p>
                       Some resources were already created before the failure. You can either
-                      <span class="font-medium">retry</span> (the steps that already succeeded will be reused),
-                      or <span class="font-medium">clean them up</span> to start fresh.
+                      <span class="font-medium">retry</span> (the steps that already succeeded will
+                      be reused), or <span class="font-medium">clean them up</span> to start fresh.
                     </p>
-                    <ul class="list-disc list-inside space-y-0.5 text-amber-800 dark:text-amber-200/80">
+                    <ul
+                      class="list-disc list-inside space-y-0.5 text-amber-800 dark:text-amber-200/80"
+                    >
                       @if (createdAppId()) {
-                        <li>Flui application <span class="font-mono">{{ name() }}</span></li>
+                        <li>
+                          Flui application <span class="font-mono">{{ name() }}</span>
+                        </li>
                       }
                       @if (createdFluiRepoId()) {
-                        <li>Flui repository link to <span class="font-mono">{{ createdGithubRepoFullName() }}</span></li>
+                        <li>
+                          Flui repository link to
+                          <span class="font-mono">{{ createdGithubRepoFullName() }}</span>
+                        </li>
                       }
                     </ul>
                     @if (createdGithubRepoFullName()) {
@@ -267,10 +386,17 @@ const NAME_PATTERN = /^[a-zA-Z0-9._-]+$/;
                         <p class="font-medium mb-1">⚠ The GitHub repository will not be deleted</p>
                         <p>
                           Flui won't touch
-                          <a [href]="getGithubRepoUrl()" target="_blank" rel="noopener" class="font-mono underline hover:no-underline inline-flex items-center gap-1">
-                            {{ createdGithubRepoFullName() }}<ng-icon name="lucideExternalLink" class="h-3 w-3" />
+                          <a
+                            [href]="getGithubRepoUrl()"
+                            target="_blank"
+                            rel="noopener"
+                            class="font-mono underline hover:no-underline inline-flex items-center gap-1"
+                          >
+                            {{ createdGithubRepoFullName()
+                            }}<ng-icon name="lucideExternalLink" class="h-3 w-3" />
                           </a>
-                          — it lives in your GitHub account. If you don't want to keep it, open it on GitHub and delete it manually before retrying with a new name.
+                          — it lives in your GitHub account. If you don't want to keep it, open it
+                          on GitHub and delete it manually before retrying with a new name.
                         </p>
                       </div>
                     }
@@ -284,14 +410,22 @@ const NAME_PATTERN = /^[a-zA-Z0-9._-]+$/;
         <!-- Footer -->
         <div class="flex items-center justify-end gap-2 px-5 py-4 border-t border-border">
           @if (currentStep() === 'form' || currentStep() === 'error') {
-            <button type="button" (click)="onClose()" [disabled]="isBusy() || isCleaningUp()"
-              class="px-4 py-2 text-sm rounded-md border border-border hover:bg-accent transition-colors disabled:opacity-50">
+            <button
+              type="button"
+              (click)="onClose()"
+              [disabled]="isBusy() || isCleaningUp()"
+              class="px-4 py-2 text-sm rounded-md border border-border hover:bg-accent transition-colors disabled:opacity-50"
+            >
               Cancel
             </button>
 
             @if (currentStep() === 'error' && hasResourcesToCleanup()) {
-              <button type="button" (click)="cleanupCreatedResources()" [disabled]="isCleaningUp()"
-                class="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-md border border-destructive/40 text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+              <button
+                type="button"
+                (click)="cleanupCreatedResources()"
+                [disabled]="isCleaningUp()"
+                class="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-md border border-destructive/40 text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 @if (isCleaningUp()) {
                   <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
                 } @else {
@@ -301,8 +435,12 @@ const NAME_PATTERN = /^[a-zA-Z0-9._-]+$/;
               </button>
             }
 
-            <button type="button" (click)="onSubmit()" [disabled]="!canSubmit() || isCleaningUp()"
-              class="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+            <button
+              type="button"
+              (click)="onSubmit()"
+              [disabled]="!canSubmit() || isCleaningUp()"
+              class="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               <ng-icon name="lucideRocket" class="h-4 w-4" />
               {{ currentStep() === 'error' ? 'Retry' : 'Create & Deploy' }}
             </button>
@@ -321,28 +459,31 @@ const NAME_PATTERN = /^[a-zA-Z0-9._-]+$/;
           (click)="$event.stopPropagation()"
         >
           <!-- Arrow -->
-          <div class="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-popover border-l border-t border-border rotate-45"></div>
+          <div
+            class="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-popover border-l border-t border-border rotate-45"
+          ></div>
 
           @switch (openPopover()) {
             @case ('intro') {
               <p>
                 Flui will create a brand-new GitHub repository in your account starting from the
-                <span class="font-semibold">{{ template.displayName }}</span> template, then deploy it on your cluster.
-                The original template won't be touched.
+                <span class="font-semibold">{{ template.displayName }}</span> template, then deploy
+                it on your cluster. The original template won't be touched.
               </p>
             }
             @case ('owner') {
               <p>
-                GitHub user or organization that will own the new repo. Leave empty to use your personal account.
-                Use an org name (e.g. <code class="font-mono bg-muted px-1 rounded">acme-corp</code>)
-                to create the repo inside that organization — you must have permission to create repos there.
+                GitHub user or organization that will own the new repo. Leave empty to use your
+                personal account. Use an org name (e.g.
+                <code class="font-mono bg-muted px-1 rounded">acme-corp</code>) to create the repo
+                inside that organization — you must have permission to create repos there.
               </p>
             }
             @case ('visibility') {
               <p>
-                <span class="font-medium">Private</span>: only you and people you invite can see the repo.
-                <span class="font-medium">Public</span>: anyone on GitHub can see the source code.
-                You can change this later in GitHub settings.
+                <span class="font-medium">Private</span>: only you and people you invite can see the
+                repo. <span class="font-medium">Public</span>: anyone on GitHub can see the source
+                code. You can change this later in GitHub settings.
               </p>
             }
           }
@@ -394,7 +535,7 @@ export class UseTemplateModalComponent implements OnInit {
   popoverPosition = signal<{ top: number; left: number } | null>(null);
 
   readonly phases = PHASES;
-  readonly clusters = computed(() => this.clusterService.clusters().filter(c => !!c.id));
+  readonly clusters = computed(() => this.clusterService.clusters().filter((c) => !!c.id));
 
   readonly nameError = computed(() => {
     const value = this.name();
@@ -414,7 +555,12 @@ export class UseTemplateModalComponent implements OnInit {
 
   readonly isBusy = computed(() => {
     const s = this.currentStep();
-    return s === 'creating-repo' || s === 'registering-repo' || s === 'creating-app' || s === 'generating-workflow';
+    return (
+      s === 'creating-repo' ||
+      s === 'registering-repo' ||
+      s === 'creating-app' ||
+      s === 'generating-workflow'
+    );
   });
 
   readonly defaultOwnerPlaceholder = computed(() => {
@@ -426,12 +572,16 @@ export class UseTemplateModalComponent implements OnInit {
     void (async () => {
       // Pre-fill name from template framework
       this.name.set(`${this.template.framework}-app`.replaceAll(/[^a-zA-Z0-9._-]/g, '-'));
-  
+
       // Make sure OAuth status is loaded so hasRepoScope is accurate
       if (!this.repositoryService.oauth().size) {
-        try { await this.repositoryService.checkOAuthStatus(); } catch { /* non-fatal */ }
+        try {
+          await this.repositoryService.checkOAuthStatus();
+        } catch {
+          /* non-fatal */
+        }
       }
-  
+
       // Load clusters and auto-select if only one
       this.isLoadingClusters.set(true);
       try {
@@ -465,8 +615,8 @@ export class UseTemplateModalComponent implements OnInit {
     const trigger = event.currentTarget as HTMLElement;
     const rect = trigger.getBoundingClientRect();
     this.popoverPosition.set({
-      top: rect.bottom + 8,                // 8px gap below the icon
-      left: rect.left + rect.width / 2,    // horizontally centered on the icon
+      top: rect.bottom + 8, // 8px gap below the icon
+      left: rect.left + rect.width / 2, // horizontally centered on the icon
     });
     this.openPopover.set(id);
   }
@@ -504,7 +654,7 @@ export class UseTemplateModalComponent implements OnInit {
       const repo = await this.templateService.useTemplate(this.template.framework, {
         name: this.name(),
         owner: this.owner().trim() || undefined,
-        'private': this.isPrivate(),
+        private: this.isPrivate(),
         description: this.template.description,
       });
       this.createdGithubRepoFullName.set(repo.fullName);
@@ -531,7 +681,11 @@ export class UseTemplateModalComponent implements OnInit {
 
       // Step 3: Create Flui application linked to the new repo
       this.currentStep.set('creating-app');
-      const appName = stripHyphenEdges(this.name().toLowerCase().replaceAll(/[^a-z0-9-]/g, '-'));
+      const appName = stripHyphenEdges(
+        this.name()
+          .toLowerCase()
+          .replaceAll(/[^a-z0-9-]/g, '-'),
+      );
       const appResponse = await firstValueFrom(
         this.applicationsApi.applicationsControllerCreate(this.selectedClusterId(), {
           name: appName,
@@ -553,7 +707,7 @@ export class UseTemplateModalComponent implements OnInit {
             httpPort: this.template.port,
           },
           autoDeploy: false,
-        } as any)
+        } as any),
       );
       const appId = appResponse.application?.id;
       if (!appId) throw new Error('Application created but no ID was returned.');
@@ -576,12 +730,10 @@ export class UseTemplateModalComponent implements OnInit {
   }
 
   /** True when at least one resource was created during the failed attempt and is still around. */
-  readonly hasResourcesToCleanup = computed(() =>
-    !this.cleanupDone() && (
-      !!this.createdAppId() ||
-      !!this.createdFluiRepoId() ||
-      !!this.createdGithubRepoFullName()
-    )
+  readonly hasResourcesToCleanup = computed(
+    () =>
+      !this.cleanupDone() &&
+      (!!this.createdAppId() || !!this.createdFluiRepoId() || !!this.createdGithubRepoFullName()),
   );
 
   /**
@@ -657,14 +809,15 @@ export class UseTemplateModalComponent implements OnInit {
   // ===== UI helpers =====
 
   getVisibilityButtonClass(privateBtn: boolean): string {
-    const base = 'inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md border transition-colors';
+    const base =
+      'inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md border transition-colors';
     return this.isPrivate() === privateBtn
       ? `${base} border-primary bg-primary/10 text-foreground`
       : `${base} border-border text-muted-foreground hover:bg-accent`;
   }
 
   isPhaseDone(phaseId: OrchestrationPhase['id']): boolean {
-    const order = PHASES.map(p => p.id);
+    const order = PHASES.map((p) => p.id);
     const currentIdx = order.indexOf(this.currentStep() as OrchestrationPhase['id']);
     const phaseIdx = order.indexOf(phaseId);
     if (this.currentStep() === 'done') return true;

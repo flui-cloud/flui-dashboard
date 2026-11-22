@@ -9,13 +9,20 @@ describe('TopologyServicesControlsComponent', () => {
     const fixture = TestBed.createComponent(TopologyServicesControlsComponent);
     fixture.componentRef.setInput('snapshot', topologyFixture());
     fixture.componentRef.setInput('state', { ...DEFAULT_TOPOLOGY_STATE, ...state });
-    fixture.componentRef.setInput('graph', { level: 'fleet', nodes: [], edges: [], collapsedFrom: null, ...graph });
+    fixture.componentRef.setInput('graph', {
+      level: 'fleet',
+      nodes: [],
+      edges: [],
+      collapsedFrom: null,
+      ...graph,
+    });
     fixture.componentRef.setInput('fleetBy', 'apps');
     const changes: Partial<TopologyViewState>[] = [];
     fixture.componentInstance.changed.subscribe((c) => changes.push(c));
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
-    const click = (testId: string) => (el.querySelector(`[data-testid="${testId}"]`) as HTMLButtonElement).click();
+    const click = (testId: string) =>
+      (el.querySelector(`[data-testid="${testId}"]`) as HTMLButtonElement).click();
     return { el, changes, click };
   };
 
@@ -35,7 +42,10 @@ describe('TopologyServicesControlsComponent', () => {
   });
 
   it('draws a crowded cluster in full when asked', () => {
-    const { changes, click } = build({ level: 'cluster', filtered: true }, { level: 'cluster', cluster: 'c-eu' });
+    const { changes, click } = build(
+      { level: 'cluster', filtered: true },
+      { level: 'cluster', cluster: 'c-eu' },
+    );
     click('topology-show-all');
     expect(changes).toEqual([{ all: true }]);
   });

@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  input,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { ScalingApiService } from '../../service/scaling-api.service';
 import { withoutOrder } from './standing-order-write';
@@ -13,13 +6,7 @@ import { ExplainComponent } from '../../../shared/components/explain.component';
 import { ReplacePlan, StandingOrder } from '../../model/scaling-group.models';
 import { SectionGroup } from '../../model/scaling-section.models';
 import { ScalingGroupStore } from './scaling-group.store';
-import {
-  CatalogueState,
-  STATE_LABEL,
-  STATE_PILL,
-  TABLE,
-  heldFor,
-} from './now-format';
+import { CatalogueState, STATE_LABEL, STATE_PILL, TABLE, heldFor } from './now-format';
 
 const REPLACE_PLAN: ReplacePlan = {
   steps: [
@@ -83,9 +70,8 @@ interface OrderRow {
                     labelClass="text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
                     testid="status-why"
                   >
-                    Nothing breaks if one never fires — the fleet just costs
-                    more than it had to. They stand down while an app is waiting
-                    to run.
+                    Nothing breaks if one never fires — the fleet just costs more than it had to.
+                    They stand down while an app is waiting to run.
                   </app-explain>
                 </th>
                 <th scope="col" [class]="t.th">Blocked by</th>
@@ -95,17 +81,13 @@ interface OrderRow {
               @for (row of rows(); track row.order.kind + row.order.shape) {
                 <tr
                   [class]="t.row"
-                  [attr.data-testid]="
-                    'order-' + row.order.kind + '-' + row.order.shape
-                  "
+                  [attr.data-testid]="'order-' + row.order.kind + '-' + row.order.shape"
                 >
                   <th scope="row" [class]="t.td + ' font-normal'">
                     <span class="flex flex-col gap-0.5">
                       <span class="flex items-center gap-1.5">
                         <span
-                          [class]="
-                            t.pill + ' w-fit ' + kindPill(row.order.kind)
-                          "
+                          [class]="t.pill + ' w-fit ' + kindPill(row.order.kind)"
                           [attr.data-testid]="'order-kind-' + row.order.kind"
                         >
                           {{ row.order.kind }}
@@ -129,10 +111,7 @@ interface OrderRow {
                     </span>
                   </th>
                   <td [class]="t.td">
-                    <span
-                      [class]="t.pill + ' w-fit ' + pill(row.state)"
-                      data-testid="order-state"
-                    >
+                    <span [class]="t.pill + ' w-fit ' + pill(row.state)" data-testid="order-state">
                       {{ row.where }}
                     </span>
                   </td>
@@ -153,10 +132,7 @@ interface OrderRow {
                     @if (row.blocked.length) {
                       <span class="flex flex-col gap-1.5">
                         @for (blocker of row.blocked; track blocker.what) {
-                          <span
-                            class="flex flex-col gap-0.5"
-                            data-testid="blocker"
-                          >
+                          <span class="flex flex-col gap-0.5" data-testid="blocker">
                             <span class="font-mono text-[12px] text-foreground">
                               {{ blocker.what }}
                             </span>
@@ -176,11 +152,7 @@ interface OrderRow {
                 </tr>
               } @empty {
                 <tr [class]="t.row">
-                  <td
-                    [class]="t.tdMuted"
-                    colspan="4"
-                    data-testid="orders-empty"
-                  >
+                  <td [class]="t.tdMuted" colspan="4" data-testid="orders-empty">
                     {{ emptyLine() }}
                   </td>
                 </tr>
@@ -234,9 +206,7 @@ export class ScalingNowOrdersComponent {
 
   protected readonly t = TABLE;
 
-  private readonly held = computed(
-    () => this.store.preview().data?.opportunityHeldBecause ?? null,
-  );
+  private readonly held = computed(() => this.store.preview().data?.opportunityHeldBecause ?? null);
 
   protected readonly replaces = computed(() =>
     this.group().standingOrders.some((o) => o.kind === 'replace'),
@@ -265,10 +235,7 @@ export class ScalingNowOrdersComponent {
       return {
         order,
         shape: `${order.shape} · ${order.region === 'any' ? 'any region' : order.region} ×${order.wanted}`,
-        kindNote:
-          order.kind === 'expand'
-            ? ''
-            : `would drain ${order.replaces ?? 'a node'}`,
+        kindNote: order.kind === 'expand' ? '' : `would drain ${order.replaces ?? 'a node'}`,
         state,
         where: outlook?.sinceHours
           ? `${STATE_LABEL[state]} · ${heldFor(outlook.sinceHours)}`
@@ -294,10 +261,7 @@ export class ScalingNowOrdersComponent {
     return blocked;
   }
 
-  private statusOf(
-    order: StandingOrder,
-    blocked: readonly BlockedBy[],
-  ): OrderStatus {
+  private statusOf(order: StandingOrder, blocked: readonly BlockedBy[]): OrderStatus {
     if (this.held()) return 'Stood down';
     if (blocked.length) return 'Blocked';
     const up = order.outlook?.upIn ?? [];
@@ -310,9 +274,7 @@ export class ScalingNowOrdersComponent {
   }
 
   protected kindPill(kind: StandingOrder['kind']): string {
-    return kind === 'expand'
-      ? 'bg-primary/10 text-primary'
-      : 'bg-muted text-muted-foreground';
+    return kind === 'expand' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground';
   }
 
   private statusNote(status: OrderStatus, order: StandingOrder): string {

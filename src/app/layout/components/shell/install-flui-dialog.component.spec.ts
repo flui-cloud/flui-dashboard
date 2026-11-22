@@ -18,7 +18,8 @@ describe('InstallFluiDialogComponent', () => {
     fixture.detectChanges();
     flush();
     const el = fixture.nativeElement as HTMLElement;
-    const find = (id: string) => el.querySelector<HTMLElement>(`[data-testid="install-flui-${id}"]`);
+    const find = (id: string) =>
+      el.querySelector<HTMLElement>(`[data-testid="install-flui-${id}"]`);
     return { fixture, prompt, el, find };
   };
 

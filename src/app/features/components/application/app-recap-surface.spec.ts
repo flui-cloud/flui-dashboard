@@ -70,7 +70,14 @@ describe('app recap surface producer', () => {
     expectValidSurface(snapshotOf({ accessKind: 'db' }));
     expectValidSurface(
       snapshotOf({
-        group: { id: GROUP_ID, name: 'immich', type: 'composed', status: 'running', category: 'photos', createdAt: '2026-09-01T09:00:00.000Z' },
+        group: {
+          id: GROUP_ID,
+          name: 'immich',
+          type: 'composed',
+          status: 'running',
+          category: 'photos',
+          createdAt: '2026-09-01T09:00:00.000Z',
+        },
         extraDatabases: [{ id: 'app-2', name: 'immich-postgres', status: 'running' }],
       }),
     );
@@ -83,19 +90,42 @@ describe('app recap surface producer', () => {
       { scopeId: PAGE_ID, entityRef: appGroupEntityRef(GROUP_ID), reason: 'route' },
     ]);
     const entities = scope(snapshot, PAGE_ID)!.entities!;
-    expect(entities[0]).toEqual({ ref: appGroupEntityRef(GROUP_ID), label: 'demo-api', role: 'primary' });
-    expect(entities[1]).toEqual({ ref: applicationEntityRef('app-1'), label: 'demo-api', role: 'related' });
-    expect(entities[2]).toEqual({ ref: clusterEntityRef('cluster-1'), label: 'control-cluster', role: 'related' });
+    expect(entities[0]).toEqual({
+      ref: appGroupEntityRef(GROUP_ID),
+      label: 'demo-api',
+      role: 'primary',
+    });
+    expect(entities[1]).toEqual({
+      ref: applicationEntityRef('app-1'),
+      label: 'demo-api',
+      role: 'related',
+    });
+    expect(entities[2]).toEqual({
+      ref: clusterEntityRef('cluster-1'),
+      label: 'control-cluster',
+      role: 'related',
+    });
   });
 
   it('emits nothing while the applications are still arriving', () => {
-    expect(buildAppRecapSurface(input({ group: null, primary: null, isLoading: true }), { revision: 1, generatedAt: GENERATED_AT })).toBeNull();
-    expect(buildAppRecapSurface(input({ groupId: null }), { revision: 1, generatedAt: GENERATED_AT })).toBeNull();
+    expect(
+      buildAppRecapSurface(input({ group: null, primary: null, isLoading: true }), {
+        revision: 1,
+        generatedAt: GENERATED_AT,
+      }),
+    ).toBeNull();
+    expect(
+      buildAppRecapSurface(input({ groupId: null }), { revision: 1, generatedAt: GENERATED_AT }),
+    ).toBeNull();
   });
 
   it('describes the not-found card once the load has finished without the group', () => {
     const snapshot = snapshotOf({ group: null, primary: null, notFound: true });
-    expect(scope(snapshot, PAGE_ID)!.state).toEqual({ loading: false, error: true, errorCode: 'flui.app_recap.not_found' });
+    expect(scope(snapshot, PAGE_ID)!.state).toEqual({
+      loading: false,
+      error: true,
+      errorCode: 'flui.app_recap.not_found',
+    });
     expect(snapshot.scopes.length).toBe(1);
   });
 
@@ -111,18 +141,29 @@ describe('app recap surface producer', () => {
   // Playbook §6 point 2: a failed workload still loaded its recap page perfectly well.
   it('keeps a failed workload out of scope.state and in its status observation', () => {
     const snapshot = snapshotOf({
-      group: { id: GROUP_ID, name: 'demo-api', type: 'standalone', status: 'failed', category: 'backend', createdAt: '2026-09-01T09:00:00.000Z' },
+      group: {
+        id: GROUP_ID,
+        name: 'demo-api',
+        type: 'standalone',
+        status: 'failed',
+        category: 'backend',
+        createdAt: '2026-09-01T09:00:00.000Z',
+      },
     });
     expect(scope(snapshot, PAGE_ID)!.state).toEqual({ loading: false });
     expect(obsOf(snapshot, PAGE_ID, 'flui.application.status')!.presentedAs.text).toBe('failed');
   });
 
   it('lists a composed install bundled databases as real applications', () => {
-    const snapshot = snapshotOf({ extraDatabases: [{ id: 'app-2', name: 'immich-postgres', status: 'running' }] });
+    const snapshot = snapshotOf({
+      extraDatabases: [{ id: 'app-2', name: 'immich-postgres', status: 'running' }],
+    });
     expect(scope(snapshot, `${PAGE_ID}:databases:app-2`)!.entities).toEqual([
       { ref: applicationEntityRef('app-2'), label: 'immich-postgres', role: 'related' },
     ]);
-    expect(obsOf(snapshot, PAGE_ID, 'flui.app_recap.bundled_databases')!.presentedAs.value).toBe(true);
+    expect(obsOf(snapshot, PAGE_ID, 'flui.app_recap.bundled_databases')!.presentedAs.value).toBe(
+      true,
+    );
     expect(scope(snapshotOf(), `${PAGE_ID}:databases`)).toBeUndefined();
   });
 
@@ -140,9 +181,19 @@ describe('app recap surface producer', () => {
   it('bumps the revision on real change, and accepts it against the previous snapshot', () => {
     const tracker = new AppRecapSurfaceRevision();
     const before = input();
-    const first = buildAppRecapSurface(before, { revision: tracker.next(presentedContent(before)), generatedAt: GENERATED_AT })!;
+    const first = buildAppRecapSurface(before, {
+      revision: tracker.next(presentedContent(before)),
+      generatedAt: GENERATED_AT,
+    })!;
     const after = input({
-      group: { id: GROUP_ID, name: 'demo-api', type: 'standalone', status: 'failed', category: 'backend', createdAt: '2026-09-01T09:00:00.000Z' },
+      group: {
+        id: GROUP_ID,
+        name: 'demo-api',
+        type: 'standalone',
+        status: 'failed',
+        category: 'backend',
+        createdAt: '2026-09-01T09:00:00.000Z',
+      },
     });
     const second = buildAppRecapSurface(after, {
       revision: tracker.next(presentedContent(after)),
@@ -159,7 +210,10 @@ describe('app recap surface producer', () => {
 
   it('flags a snapshot whose revision does not advance on the previous one', () => {
     const first = snapshotOf();
-    const stale = { ...snapshotOf(), surface: { ...snapshotOf().surface, revision: first.surface.revision } };
+    const stale = {
+      ...snapshotOf(),
+      surface: { ...snapshotOf().surface, revision: first.surface.revision },
+    };
     expect(validateSurfaceSemantics(stale, { previousSnapshot: first })).toEqual([
       jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' }),
     ]);

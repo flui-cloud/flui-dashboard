@@ -26,9 +26,7 @@ describe('GrantBuilderComponent end of a grant', () => {
         {
           provide: IamService,
           useValue: {
-            principals: signal([
-              { type: 'user', ref: 'alice@acme.com', displayName: 'Alice' },
-            ]),
+            principals: signal([{ type: 'user', ref: 'alice@acme.com', displayName: 'Alice' }]),
             grantableRoles: signal([
               role('viewer', 'Viewer'),
               role('platform_operator', 'Platform operator'),
@@ -41,8 +39,7 @@ describe('GrantBuilderComponent end of a grant', () => {
             sections: signal([]),
             addGrant,
             matchApps: () => [],
-            roleName: (k: string) =>
-              k === 'platform_operator' ? 'Platform operator' : 'Viewer',
+            roleName: (k: string) => (k === 'platform_operator' ? 'Platform operator' : 'Viewer'),
             clusterName: (k: string) => k,
             sectionName: (k: string) => k,
             principalDisplay: (p: { ref: string }) => p.ref,
@@ -52,8 +49,7 @@ describe('GrantBuilderComponent end of a grant', () => {
     }).compileComponents();
     fixture = TestBed.createComponent(GrantBuilderComponent);
     if (preset?.role) fixture.componentRef.setInput('presetRole', preset.role);
-    if (preset?.duration)
-      fixture.componentRef.setInput('presetDuration', preset.duration);
+    if (preset?.duration) fixture.componentRef.setInput('presetDuration', preset.duration);
     fixture.detectChanges();
   };
 
@@ -106,9 +102,7 @@ describe('GrantBuilderComponent end of a grant', () => {
     expect(text()).not.toContain('without reaching any application data');
     select('gb-role', 'platform_operator');
     expect(fixture.componentInstance.duration()).toBe('1d');
-    expect(text()).toContain(
-      'Runs the installation without reaching any application data.',
-    );
+    expect(text()).toContain('Runs the installation without reaching any application data.');
   });
 
   it('lets the person change the preselected end back to never', async () => {

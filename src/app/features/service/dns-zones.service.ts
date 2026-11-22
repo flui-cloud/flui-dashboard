@@ -70,20 +70,18 @@ export class DnsZonesService {
   async loadDnsCapableProviders(): Promise<void> {
     try {
       const configurations = await firstValueFrom(
-        this.providerManagementApi.managementControllerGetUserProviderConfigurations()
+        this.providerManagementApi.managementControllerGetUserProviderConfigurations(),
       );
       const activeConfigs = configurations.filter(
-        (c) => c.status === ProviderConfigurationDto.StatusEnum.Active
+        (c) => c.status === ProviderConfigurationDto.StatusEnum.Active,
       );
 
       const definitions = await Promise.allSettled(
         activeConfigs.map((c) =>
           firstValueFrom(
-            this.providerManagementApi.managementControllerGetProvider(
-              c.provider as any
-            )
-          )
-        )
+            this.providerManagementApi.managementControllerGetProvider(c.provider as any),
+          ),
+        ),
       );
 
       const capable: DnsCapableProvider[] = [];
@@ -115,11 +113,12 @@ export class DnsZonesService {
   /** Reads the zones of one provider account without touching the shared state. Throws on failure. */
   async fetchProviderZones(provider: string): Promise<ProviderZone[]> {
     const result = await firstValueFrom(
-      this.apiService.dnsZoneControllerListProviderZones(provider as 'hetzner' | 'none')
+      this.apiService.dnsZoneControllerListProviderZones(provider as 'hetzner' | 'none'),
     );
     let raw: unknown[];
     if (Array.isArray(result)) raw = result;
-    else if (Array.isArray((result as { zones?: unknown[] })?.zones)) raw = (result as { zones: unknown[] }).zones;
+    else if (Array.isArray((result as { zones?: unknown[] })?.zones))
+      raw = (result as { zones: unknown[] }).zones;
     else raw = [];
     return raw.map((z) => {
       const zone = z as { zoneId?: string; id?: string; name?: string; zoneName?: string };
@@ -132,7 +131,7 @@ export class DnsZonesService {
     this.errorData.set(null);
     try {
       const zone = await firstValueFrom(this.apiService.dnsZoneControllerCreateZone(dto));
-      this.zonesData.update(zones => [...zones, zone]);
+      this.zonesData.update((zones) => [...zones, zone]);
       return zone;
     } catch (err: unknown) {
       const status = (err as { status?: number })?.status;
@@ -151,7 +150,7 @@ export class DnsZonesService {
     this.errorData.set(null);
     try {
       await firstValueFrom(this.apiService.dnsZoneControllerDeleteZone(id));
-      this.zonesData.update(zones => zones.filter(z => z.id !== id));
+      this.zonesData.update((zones) => zones.filter((z) => z.id !== id));
       return true;
     } catch (err: unknown) {
       const status = (err as { status?: number })?.status;
@@ -169,27 +168,30 @@ export class DnsZonesService {
     let clusters: { id: string; name: string }[] = [];
     try {
       const response = await firstValueFrom(this.clustersApi.clustersControllerListClusters());
-      clusters = (response as any[]).map(c => ({ id: c.id, name: c.name ?? c.id }));
+      clusters = (response as any[]).map((c) => ({ id: c.id, name: c.name ?? c.id }));
     } catch {
       return [];
     }
 
     const results = await Promise.allSettled(
-      clusters.filter(c => !!c.id).map(async c => {
-        const assignments = await firstValueFrom(
-          this.clusterDnsApi.clusterDnsZoneControllerListZoneAssignments(c.id)
-        ).catch(() => []);
-        return assignments.some(a => a.dnsZoneId === zoneId)
-          ? { clusterId: c.id, clusterName: c.name }
-          : null;
-      })
+      clusters
+        .filter((c) => !!c.id)
+        .map(async (c) => {
+          const assignments = await firstValueFrom(
+            this.clusterDnsApi.clusterDnsZoneControllerListZoneAssignments(c.id),
+          ).catch(() => []);
+          return assignments.some((a) => a.dnsZoneId === zoneId)
+            ? { clusterId: c.id, clusterName: c.name }
+            : null;
+        }),
     );
 
     return results
-      .filter((r): r is PromiseFulfilledResult<ZoneClusterAssignment> =>
-        r.status === 'fulfilled' && r.value !== null
+      .filter(
+        (r): r is PromiseFulfilledResult<ZoneClusterAssignment> =>
+          r.status === 'fulfilled' && r.value !== null,
       )
-      .map(r => r.value);
+      .map((r) => r.value);
   }
 
   clearError(): void {

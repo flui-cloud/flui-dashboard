@@ -1,10 +1,24 @@
 import { accessOf } from '../../model/app-access';
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnDestroy,
+  OnInit,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideArrowLeft, lucideCircleAlert, lucideLoader, lucideShieldAlert } from '@ng-icons/lucide';
+import {
+  lucideArrowLeft,
+  lucideCircleAlert,
+  lucideLoader,
+  lucideShieldAlert,
+} from '@ng-icons/lucide';
 import { ApplicationService } from '../../service/application.service';
 import { AppEndpointsService } from '../../service/app-endpoints.service';
 import { ClusterService } from '../../service/cluster.service';
@@ -39,7 +53,16 @@ import {
   kindLabel,
   openUrlOf,
 } from './app-recap-header';
-import { RecapFact, availabilityFact, backupBand, endpointHealth, releaseFact, replicasFact, resourcesFact, routeOf } from './app-recap-view';
+import {
+  RecapFact,
+  availabilityFact,
+  backupBand,
+  endpointHealth,
+  releaseFact,
+  replicasFact,
+  resourcesFact,
+  routeOf,
+} from './app-recap-view';
 import {
   AppRecapSurfaceInput,
   AppRecapSurfaceRevision,
@@ -63,7 +86,10 @@ import {
     AppRecapSummaryComponent,
     AppRecapTopologyComponent,
   ],
-  providers: [AppRecapStore, provideIcons({ lucideArrowLeft, lucideCircleAlert, lucideLoader, lucideShieldAlert })],
+  providers: [
+    AppRecapStore,
+    provideIcons({ lucideArrowLeft, lucideCircleAlert, lucideLoader, lucideShieldAlert }),
+  ],
   template: `
     <div class="mx-auto max-w-6xl space-y-5 p-6">
       @let g = group();
@@ -109,7 +135,8 @@ import {
 
           @if (!readOnly()) {
             <app-delete-dialog [group]="g" [primary]="p" [listRoute]="listRoute()" [compact]="true">
-              {{ sourceLabel(p) }} · {{ p.exposure }} · namespace <span class="font-mono">{{ p.k8sNamespace | maskId }}</span>
+              {{ sourceLabel(p) }} · {{ p.exposure }} · namespace
+              <span class="font-mono">{{ p.k8sNamespace | maskId }}</span>
             </app-delete-dialog>
           }
         } @else if (p) {
@@ -120,7 +147,10 @@ import {
               class="flex flex-wrap items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 hover:bg-amber-100/70 dark:border-amber-900/50 dark:bg-amber-950/30 dark:hover:bg-amber-950/50"
               data-testid="recap-backup-alarm"
             >
-              <ng-icon name="lucideShieldAlert" class="h-5 w-5 text-amber-700 dark:text-amber-400" />
+              <ng-icon
+                name="lucideShieldAlert"
+                class="h-5 w-5 text-amber-700 dark:text-amber-400"
+              />
               <span class="text-sm font-semibold text-foreground">{{ alarm.title }}</span>
               <span class="flex-1 text-sm text-muted-foreground">{{ alarm.detail }}</span>
               <span class="text-sm font-semibold text-primary">Protect it</span>
@@ -154,7 +184,12 @@ import {
                 />
               }
             </div>
-            <app-recap-activity [events]="store.events()" [loaded]="store.eventsLoaded()" [appId]="p.id" [recapPath]="recapPath()" />
+            <app-recap-activity
+              [events]="store.events()"
+              [loaded]="store.eventsLoaded()"
+              [appId]="p.id"
+              [recapPath]="recapPath()"
+            />
           </div>
 
           @if (!readOnly()) {
@@ -175,7 +210,9 @@ import {
         >
           <ng-icon name="lucideArrowLeft" class="h-4 w-4" />
         </a>
-        <div class="flex flex-col items-center gap-3 rounded-xl border border-border bg-card p-8 text-center">
+        <div
+          class="flex flex-col items-center gap-3 rounded-xl border border-border bg-card p-8 text-center"
+        >
           <ng-icon name="lucideCircleAlert" class="h-8 w-8 text-muted-foreground" />
           <p class="text-sm text-muted-foreground">Application not found.</p>
         </div>
@@ -201,15 +238,13 @@ export class AppRecapComponent implements OnInit, OnDestroy {
   private readonly surfaceRevision = new AppRecapSurfaceRevision();
   private loadedFor: string | null = null;
 
-  private readonly id = toSignal(
-    this.route$.paramMap.pipe(map((p) => p.get('id'))),
-    { initialValue: this.route$.snapshot.paramMap.get('id') },
-  );
+  private readonly id = toSignal(this.route$.paramMap.pipe(map((p) => p.get('id'))), {
+    initialValue: this.route$.snapshot.paramMap.get('id'),
+  });
 
-  private readonly from = toSignal(
-    this.route$.queryParamMap.pipe(map((p) => p.get('from'))),
-    { initialValue: this.route$.snapshot.queryParamMap.get('from') },
-  );
+  private readonly from = toSignal(this.route$.queryParamMap.pipe(map((p) => p.get('from'))), {
+    initialValue: this.route$.snapshot.queryParamMap.get('from'),
+  });
 
   protected readonly group = computed(
     () => this.appService.applicationGroups().find((x) => x.id === this.id()) ?? null,
@@ -297,12 +332,19 @@ export class AppRecapComponent implements OnInit, OnDestroy {
   protected readonly topology = computed(() => {
     const primaryId = this.primary()?.id;
     const cards = (this.group()?.components ?? []).map((c) =>
-      componentCard(c, this.store.metrics()[c.id], this.store.protection()[c.id], c.id === primaryId),
+      componentCard(
+        c,
+        this.store.metrics()[c.id],
+        this.store.protection()[c.id],
+        c.id === primaryId,
+      ),
     );
     return splitCards(cards, primaryId);
   });
 
-  protected readonly runningSummary = computed(() => runningSummary(this.group()?.components ?? []));
+  protected readonly runningSummary = computed(() =>
+    runningSummary(this.group()?.components ?? []),
+  );
   protected readonly internalNote = computed(() => internalNote(this.topology().back));
   /** A reader: nothing on this page may change the application. */
   protected readonly readOnly = computed(() => !!accessOf(this.primary())?.readOnly);

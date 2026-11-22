@@ -5,11 +5,17 @@ import {
   inject,
   signal,
   viewChild,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCheck, lucideAlertCircle, lucideLoader, lucidePlus, lucideTrash2 } from '@ng-icons/lucide';
+import {
+  lucideCheck,
+  lucideAlertCircle,
+  lucideLoader,
+  lucidePlus,
+  lucideTrash2,
+} from '@ng-icons/lucide';
 import { InferenceSettingsService } from '../../service/inference-settings.service';
 import {
   HlmCardDirective,
@@ -47,7 +53,9 @@ const DEFAULT_PRESET = CONNECTION_PRESETS[0];
 @Component({
   selector: 'app-inference-connections',
   standalone: true,
-  imports: [ReadOnlySectionDirective, SandboxLevelNoticeComponent,
+  imports: [
+    ReadOnlySectionDirective,
+    SandboxLevelNoticeComponent,
     DeleteConfirmationDialogComponent,
     ReactiveFormsModule,
     NgIcon,
@@ -60,7 +68,9 @@ const DEFAULT_PRESET = CONNECTION_PRESETS[0];
     HlmInputDirective,
     HlmLabelDirective,
   ],
-  providers: [provideIcons({ lucideCheck, lucideAlertCircle, lucideLoader, lucidePlus, lucideTrash2 })],
+  providers: [
+    provideIcons({ lucideCheck, lucideAlertCircle, lucideLoader, lucidePlus, lucideTrash2 }),
+  ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-4">
@@ -81,7 +91,9 @@ const DEFAULT_PRESET = CONNECTION_PRESETS[0];
                           <span hlmBadge variant="secondary" class="text-xs">Default</span>
                         }
                       </div>
-                      <p class="font-mono text-xs text-muted-foreground truncate">{{ c.baseUrl }}</p>
+                      <p class="font-mono text-xs text-muted-foreground truncate">
+                        {{ c.baseUrl }}
+                      </p>
                       @if (c.models.length) {
                         <p class="text-xs text-muted-foreground">
                           {{ c.models.length }} model{{ c.models.length === 1 ? '' : 's' }}
@@ -121,9 +133,11 @@ const DEFAULT_PRESET = CONNECTION_PRESETS[0];
                   @if (st.validation) {
                     <div
                       class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs"
-                      [class]="st.validation.ok
-                        ? 'bg-green-500/10 text-green-600 dark:text-green-400'
-                        : 'bg-destructive/10 text-destructive'"
+                      [class]="
+                        st.validation.ok
+                          ? 'bg-green-500/10 text-green-600 dark:text-green-400'
+                          : 'bg-destructive/10 text-destructive'
+                      "
                     >
                       <ng-icon
                         [name]="st.validation.ok ? 'lucideCheck' : 'lucideAlertCircle'"
@@ -226,10 +240,14 @@ const DEFAULT_PRESET = CONNECTION_PRESETS[0];
                     formControlName="isDefault"
                     class="h-4 w-4 rounded border-input accent-primary"
                   />
-                  <label for="conn-default" class="text-sm text-foreground cursor-pointer">Set as default</label>
+                  <label for="conn-default" class="text-sm text-foreground cursor-pointer"
+                    >Set as default</label
+                  >
                 </div>
                 @if (createError()) {
-                  <div class="flex items-center gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  <div
+                    class="flex items-center gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                  >
                     <ng-icon name="lucideAlertCircle" class="h-4 w-4 shrink-0" />
                     {{ createError() }}
                   </div>

@@ -14,7 +14,13 @@ const form = (over: Partial<CreateBackupPolicyDto> = {}): CreateBackupPolicyDto 
   ...over,
 });
 
-const draft = { profile: 'single' as const, pauseDuringCopy: false, keepMonthly: false, namespacesText: '', labelSelector: '' };
+const draft = {
+  profile: 'single' as const,
+  pauseDuringCopy: false,
+  keepMonthly: false,
+  namespacesText: '',
+  labelSelector: '',
+};
 
 describe('policyDtoOf', () => {
   it('sends the chosen application ids, never typed text', () => {
@@ -36,7 +42,12 @@ describe('policyDtoOf', () => {
   });
 
   it('keeps the copies limit for a database and reads namespaces from the list', () => {
-    const db = policyDtoOf({ ...draft, form: form({ engineClass: 'database' }), destinations: [], applicationIds: ['pg'] });
+    const db = policyDtoOf({
+      ...draft,
+      form: form({ engineClass: 'database' }),
+      destinations: [],
+      applicationIds: ['pg'],
+    });
     expect(db.retentionMaxCopies).toBe(14);
     const ns = policyDtoOf({
       ...draft,

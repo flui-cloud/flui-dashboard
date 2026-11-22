@@ -1,18 +1,7 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  effect,
-  inject,
-  input,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, input, signal } from '@angular/core';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideHardDrive } from '@ng-icons/lucide';
-import {
-  DiskSpace,
-  NodeDisksService,
-  NodeDisksView,
-} from '../../service/node-disks.service';
+import { DiskSpace, NodeDisksService, NodeDisksView } from '../../service/node-disks.service';
 
 @Component({
   selector: 'app-cluster-node-disks-card',
@@ -24,18 +13,13 @@ import {
     @if (view(); as v) {
       <div class="card-inner p-4" data-testid="node-disks-card">
         <span class="flex items-center gap-2">
-          <ng-icon
-            name="lucideHardDrive"
-            class="h-4 w-4 text-slate-600 dark:text-slate-400"
-          />
+          <ng-icon name="lucideHardDrive" class="h-4 w-4 text-slate-600 dark:text-slate-400" />
           <span class="text-label">Space on the nodes</span>
         </span>
         <div class="mt-3 overflow-x-auto">
           <table class="w-full text-sm">
             <thead>
-              <tr
-                class="border-b border-border text-left text-muted-foreground"
-              >
+              <tr class="border-b border-border text-left text-muted-foreground">
                 <th class="py-2 font-normal">Node</th>
                 <th class="py-2 font-normal">Location</th>
                 <th class="py-2 font-normal">Disk</th>

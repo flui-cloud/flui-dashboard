@@ -2,10 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { GitHubSetupService } from '../../core/api/api/gitHubSetup.service';
 import { GitHubOAuthService } from '../../core/api/api/gitHubOAuth.service';
-import {
-  GithubSetupWizardService,
-  organizationProblem,
-} from './github-setup-wizard.service';
+import { GithubSetupWizardService, organizationProblem } from './github-setup-wizard.service';
 
 describe('GithubSetupWizardService — creating the App under an organisation', () => {
   let service: GithubSetupWizardService;
@@ -47,9 +44,7 @@ describe('GithubSetupWizardService — creating the App under an organisation', 
     expect(manifestStart).toHaveBeenCalledOnceWith(
       jasmine.objectContaining({ name: 'flui-acme', organization: 'acme' }),
     );
-    expect(result?.githubUrl).toBe(
-      'https://github.com/organizations/acme/settings/apps/new',
-    );
+    expect(result?.githubUrl).toBe('https://github.com/organizations/acme/settings/apps/new');
   });
 
   it('sends no organisation when the field is left empty', async () => {
@@ -57,9 +52,7 @@ describe('GithubSetupWizardService — creating the App under an organisation', 
 
     await service.startManifest();
 
-    expect(
-      manifestStart.calls.mostRecent().args[0].organization,
-    ).toBeUndefined();
+    expect(manifestStart.calls.mostRecent().args[0].organization).toBeUndefined();
   });
 
   it('refuses a value that is no GitHub login, before asking the API', async () => {

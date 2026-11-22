@@ -34,12 +34,10 @@ export class ProjectsService {
   }
 
   private loadApps(): void {
-    this.http
-      .get<AppAttributes[]>(`${this.appConfig.apiBaseUrl}/api/v1/iam/resources`)
-      .subscribe({
-        next: (a) => this._apps.set(a),
-        error: () => this._apps.set([]),
-      });
+    this.http.get<AppAttributes[]>(`${this.appConfig.apiBaseUrl}/api/v1/iam/resources`).subscribe({
+      next: (a) => this._apps.set(a),
+      error: () => this._apps.set([]),
+    });
   }
 
   create(
@@ -48,9 +46,7 @@ export class ProjectsService {
   ): void {
     this.http.post<Project>(this.base(), input).subscribe({
       next: (p) => {
-        this._projects.update((list) =>
-          [...list, p].sort((a, b) => a.name.localeCompare(b.name)),
-        );
+        this._projects.update((list) => [...list, p].sort((a, b) => a.name.localeCompare(b.name)));
         onCreated?.(p);
       },
       error: (e) => this.fail('create project', e),
@@ -65,9 +61,7 @@ export class ProjectsService {
     this.http.patch<Project>(this.base(`/${id}`), input).subscribe({
       next: (p) => {
         this._projects.update((list) =>
-          list
-            .map((it) => (it.id === id ? p : it))
-            .sort((a, b) => a.name.localeCompare(b.name)),
+          list.map((it) => (it.id === id ? p : it)).sort((a, b) => a.name.localeCompare(b.name)),
         );
         onSettled?.();
       },

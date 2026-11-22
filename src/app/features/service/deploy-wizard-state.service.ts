@@ -14,10 +14,7 @@ import { TemplateService } from './template.service';
 import { CatalogService } from './catalog.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { InfrastructureClustersService } from '../../core/api/api/infrastructureClusters.service';
-import {
-  parseBackendFieldErrors,
-  validatePrompt,
-} from '../model/prompt-validation';
+import { parseBackendFieldErrors, validatePrompt } from '../model/prompt-validation';
 import {
   isValidCpuString,
   isValidMemoryString,
@@ -101,14 +98,17 @@ export type TemplateOrchestrationPhase =
   | 'done'
   | 'error';
 
-export type MarketplaceInstallPhase =
-  | 'idle'
-  | 'submitting'
-  | 'polling'
-  | 'running'
-  | 'failed';
+export type MarketplaceInstallPhase = 'idle' | 'submitting' | 'polling' | 'running' | 'failed';
 
-const NODE_FRAMEWORKS = new Set(['nextjs', 'nuxt', 'svelte-kit', 'sveltekit', 'nestjs', 'angular', 'express']);
+const NODE_FRAMEWORKS = new Set([
+  'nextjs',
+  'nuxt',
+  'svelte-kit',
+  'sveltekit',
+  'nestjs',
+  'angular',
+  'express',
+]);
 const JVM_FRAMEWORKS = new Set(['spring-boot', 'springboot']);
 const DOTNET_FRAMEWORKS = new Set(['aspnet-core', 'aspnetcore']);
 
@@ -277,9 +277,7 @@ export class DeployWizardStateService {
     const memLimit = o.memoryLimit || detail?.resources?.limits?.memory || '';
     const memRequest = o.memoryRequest || detail?.resources?.requests?.memory || '';
     const memStr = memLimit || memRequest;
-    const replicasNum = o.replicas
-      ? Number.parseInt(o.replicas, 10)
-      : detail?.replicas ?? 1;
+    const replicasNum = o.replicas ? Number.parseInt(o.replicas, 10) : (detail?.replicas ?? 1);
     const baseReplicas = Number.isFinite(replicasNum) && replicasNum > 0 ? replicasNum : 1;
 
     let cpuMc = parseCpuToMillicores(cpuStr) * baseReplicas;
@@ -347,7 +345,7 @@ export class DeployWizardStateService {
       out[prompt.name] = validatePrompt(
         prompt,
         inputs[prompt.name] ?? '',
-        prompt.confirm ? confirms[prompt.name] ?? '' : undefined,
+        prompt.confirm ? (confirms[prompt.name] ?? '') : undefined,
       );
     }
     return out;
@@ -368,9 +366,7 @@ export class DeployWizardStateService {
     );
   });
 
-  readonly catalogDisplayNameValid = computed(
-    () => this.catalogDisplayName().trim().length > 0,
-  );
+  readonly catalogDisplayNameValid = computed(() => this.catalogDisplayName().trim().length > 0);
 
   readonly catalogAuthModes = computed<CatalogAuthSpecDto.ModesEnum[]>(
     () => this.catalogDetail()?.auth?.modes ?? [],
@@ -403,9 +399,7 @@ export class DeployWizardStateService {
 
   /** All building-block slugs this catalog app can link to (e.g. dbgate → mariadb/postgresql/valkey). */
   readonly linkedBbRefs = computed<string[]>(() => {
-    const links = this.catalogDetail()?.linkedBuildingBlocks as
-      | Array<{ ref?: string }>
-      | undefined;
+    const links = this.catalogDetail()?.linkedBuildingBlocks as Array<{ ref?: string }> | undefined;
     if (!links?.length) return [];
     return links.map((l) => l?.ref).filter((r): r is string => !!r);
   });
@@ -422,13 +416,9 @@ export class DeployWizardStateService {
   );
 
   /** Manifest-declared dependencies — empty array when none. */
-  readonly catalogDependencies = computed(() =>
-    this.catalogDetail()?.dependencies ?? [],
-  );
+  readonly catalogDependencies = computed(() => this.catalogDetail()?.dependencies ?? []);
 
-  readonly needsDependencyPicker = computed(
-    () => this.catalogDependencies().length > 0,
-  );
+  readonly needsDependencyPicker = computed(() => this.catalogDependencies().length > 0);
 
   /** Every required dependency has a valid choice: DEDICATED, or REUSE_EXISTING with an id. */
   readonly catalogDependenciesValid = computed(() => {
@@ -474,7 +464,7 @@ export class DeployWizardStateService {
   readonly needsJvmConfig = computed(() => JVM_FRAMEWORKS.has(this.confirmedFramework()));
   readonly needsDotnetConfig = computed(() => DOTNET_FRAMEWORKS.has(this.confirmedFramework()));
   readonly needsRuntimeConfig = computed(
-    () => this.needsNodeConfig() || this.needsJvmConfig() || this.needsDotnetConfig()
+    () => this.needsNodeConfig() || this.needsJvmConfig() || this.needsDotnetConfig(),
   );
 
   // ========== Initialisers ==========
@@ -492,7 +482,12 @@ export class DeployWizardStateService {
    *   3. zero / '/health' — only when we can't recognise the framework at all;
    *      the Flui Config step will force the user to fill it in.
    */
-  initialize(repositoryId: string, branch: string, analysis: RepositoryAnalysisDto, clusterId: string): void {
+  initialize(
+    repositoryId: string,
+    branch: string,
+    analysis: RepositoryAnalysisDto,
+    clusterId: string,
+  ): void {
     this.flowSubtype.set('existing-repo');
     this.sourceType.set('git_build');
     this.repositoryId.set(repositoryId);
@@ -512,7 +507,7 @@ export class DeployWizardStateService {
     // in which case matchingTemplate will be undefined and we fall back to the
     // bare defaults — the Flui Config step still gives the user a chance to fix.
     const matchingTemplate = framework
-      ? this.templateService.templates().find(t => t.framework === framework)
+      ? this.templateService.templates().find((t) => t.framework === framework)
       : undefined;
 
     const dockerfilePort = analysis.dockerfileAnalysis?.port;
@@ -601,7 +596,10 @@ export class DeployWizardStateService {
     });
 
     if (JVM_FRAMEWORKS.has(template.framework)) {
-      this.runtimeConfig.set({ javaVersion: '21', buildTool: template.buildTool?.includes('gradle') ? 'gradle' : 'maven' });
+      this.runtimeConfig.set({
+        javaVersion: '21',
+        buildTool: template.buildTool?.includes('gradle') ? 'gradle' : 'maven',
+      });
     } else if (DOTNET_FRAMEWORKS.has(template.framework)) {
       this.runtimeConfig.set({ dotnetVersion: '8.0' });
     } else {
@@ -686,9 +684,7 @@ export class DeployWizardStateService {
       const overrides = this.buildResourceOverridesPayload();
       const response = await this.catalogService.previewCapacity(slug, {
         clusterId,
-        ...(Object.keys(featureToggles).length > 0
-          ? { options: { ...featureToggles } }
-          : {}),
+        ...(Object.keys(featureToggles).length > 0 ? { options: { ...featureToggles } } : {}),
         ...(overrides ? { resourceOverrides: overrides } : {}),
       });
       this.catalogAvailability.set(response);
@@ -702,14 +698,9 @@ export class DeployWizardStateService {
     }
   }
 
-  private async checkCatalogUdpPorts(
-    slug: string,
-    clusterId: string,
-  ): Promise<void> {
+  private async checkCatalogUdpPorts(slug: string, clusterId: string): Promise<void> {
     try {
-      const view = await firstValueFrom(
-        this.udpPortsService.forInstall(slug, clusterId),
-      );
+      const view = await firstValueFrom(this.udpPortsService.forInstall(slug, clusterId));
       this.catalogUdpPorts.set(view.ports.length ? view : null);
     } catch {
       this.catalogUdpPorts.set(null);
@@ -735,9 +726,7 @@ export class DeployWizardStateService {
         this.clustersApi.clustersControllerGetClusterNodes(clusterId),
       );
       const workerCount = Array.isArray(nodes)
-        ? nodes.filter(
-            (n: { nodeType?: string }) => n?.nodeType === 'worker',
-          ).length
+        ? nodes.filter((n: { nodeType?: string }) => n?.nodeType === 'worker').length
         : 0;
       const relevant = workerCount === 0;
       this.allowMasterPlacementRelevant.set(relevant);
@@ -930,9 +919,7 @@ export class DeployWizardStateService {
         ),
         Promise.all(
           refs.map((ref) =>
-            this.catalogService
-              .fetchDetail(ref, clusterId)
-              .then((detail) => ({ ref, detail })),
+            this.catalogService.fetchDetail(ref, clusterId).then((detail) => ({ ref, detail })),
           ),
         ),
       ]);
@@ -1039,12 +1026,12 @@ export class DeployWizardStateService {
 
   setEnvVarsFromExtracted(extracted: ExtractedEnvVarDto[]): void {
     this.envVars.set(
-      extracted.map(e => ({
+      extracted.map((e) => ({
         key: e.key,
         value: e.defaultValue ?? '',
         isSecret: e.suggestedSecret,
         source: e.source,
-      }))
+      })),
     );
   }
 
@@ -1088,7 +1075,7 @@ export class DeployWizardStateService {
       const repo = await this.templateService.useTemplate(template.framework, {
         name: this.newRepoName(),
         owner: this.newRepoOwner().trim() || undefined,
-        'private': this.newRepoPrivate(),
+        private: this.newRepoPrivate(),
         description: template.description,
       });
       this.createdRepoFullName.set(repo.fullName);
@@ -1103,7 +1090,10 @@ export class DeployWizardStateService {
       this.importedRepositoryId.set(fluiRepoId);
 
       this.orchestrationPhase.set('creating-app');
-      const appName = this.newRepoName().toLowerCase().replaceAll(/[^a-z0-9-]/g, '-').replaceAll(/^-+|-+$/g, '');
+      const appName = this.newRepoName()
+        .toLowerCase()
+        .replaceAll(/[^a-z0-9-]/g, '-')
+        .replaceAll(/^-+|-+$/g, '');
       const config = this.deployConfig();
       const envVars = this.envVars();
       const appResponse = await firstValueFrom(
@@ -1123,15 +1113,15 @@ export class DeployWizardStateService {
           resourceProfile: config.resourceProfile as CreateApplicationDto.ResourceProfileEnum,
           exposure: this.exposureMode(),
           env: envVars
-            .filter(v => v.key && v.value)
-            .map(v => ({ name: v.key, value: v.value, secret: v.isSecret })),
+            .filter((v) => v.key && v.value)
+            .map((v) => ({ name: v.key, value: v.value, secret: v.isSecret })),
           healthProbe: {
             type: 'http',
             httpPath: config.healthcheckPath,
             httpPort: config.port,
           },
           autoDeploy: false,
-        } as any)
+        } as any),
       );
       const appId = appResponse.application?.id;
       if (!appId) throw new Error('Application created but no ID was returned.');
@@ -1148,7 +1138,11 @@ export class DeployWizardStateService {
       return appId;
     } catch (e: any) {
       this.orchestrationPhase.set('error');
-      const msg = internalHostingErrorMessage(e) || e?.error?.message || e?.message || 'Failed to deploy from template';
+      const msg =
+        internalHostingErrorMessage(e) ||
+        e?.error?.message ||
+        e?.message ||
+        'Failed to deploy from template';
       this.orchestrationError.set(msg);
       return null;
     }
@@ -1165,7 +1159,13 @@ export class DeployWizardStateService {
    */
   async orchestrateExistingRepoFlow(): Promise<string | null> {
     const manifest = this.manifestResult();
-    if (!this.repositoryId() || !this.clusterId() || !this.repoFullName() || !manifest?.content || !manifest.valid) {
+    if (
+      !this.repositoryId() ||
+      !this.clusterId() ||
+      !this.repoFullName() ||
+      !manifest?.content ||
+      !manifest.valid
+    ) {
       this.orchestrationError.set('Missing repository, cluster or flui.yaml manifest');
       this.orchestrationPhase.set('error');
       return null;
@@ -1189,7 +1189,7 @@ export class DeployWizardStateService {
           branch: this.branch() || undefined,
           envOverrides: Object.keys(envOverrides).length > 0 ? envOverrides : undefined,
           overrides: this.buildInstallOverrides(manifest.manifest),
-        } as DeployFromYamlDto)
+        } as DeployFromYamlDto),
       );
 
       this.applicationId.set(response.applicationId);
@@ -1206,7 +1206,8 @@ export class DeployWizardStateService {
       return response.applicationId;
     } catch (e: any) {
       this.orchestrationPhase.set('error');
-      const msg = internalHostingErrorMessage(e) || e?.error?.message || e?.message || 'Failed to deploy';
+      const msg =
+        internalHostingErrorMessage(e) || e?.error?.message || e?.message || 'Failed to deploy';
       this.orchestrationError.set(msg);
       return null;
     }
@@ -1215,7 +1216,7 @@ export class DeployWizardStateService {
   /** Diff against the manifest: the backend pins any override permanently, so an
    *  unchanged value would take that field away from flui.yaml for good. */
   private buildInstallOverrides(
-    spec: RepositoryFluiManifest['manifest']
+    spec: RepositoryFluiManifest['manifest'],
   ): DeployOverridesPayload | undefined {
     if (!spec) return undefined;
     const overrides: DeployOverridesPayload = {};
@@ -1331,10 +1332,8 @@ export class DeployWizardStateService {
       // Wait for the install to finish (parked or regular). Connect must come
       // AFTER the backend has created the ApplicationEntity — firing it on the
       // PENDING response would fail with "has no application yet".
-      let final = await this.catalogService.pollInstall(
-        install.id,
-        install.operationId,
-        (latest) => this.currentInstall.set(latest),
+      let final = await this.catalogService.pollInstall(install.id, install.operationId, (latest) =>
+        this.currentInstall.set(latest),
       );
 
       // Auto-connect if the user picked a target BB (wizard picker or deep-link).
@@ -1357,7 +1356,9 @@ export class DeployWizardStateService {
         } catch (connectErr) {
           const e = connectErr as { error?: { message?: string }; message?: string };
           this.installError.set(
-            e?.error?.message || e?.message || 'Install succeeded but Connect failed. Retry from the app page.',
+            e?.error?.message ||
+              e?.message ||
+              'Install succeeded but Connect failed. Retry from the app page.',
           );
           this.installPhase.set('failed');
           return null;
@@ -1371,8 +1372,10 @@ export class DeployWizardStateService {
           this.exposureMode() === CreateApplicationDto.ExposureEnum.Internal;
         let body: string | undefined;
         if (final.resolvedFqdn) body = `Available at ${final.resolvedFqdn}`;
-        else if (isInternal) body = 'Internal app is running — accessible via your cluster\'s internal domain.';
-        else if (final.skipEndpoint) body = 'Install complete — configure a domain when you are ready.';
+        else if (isInternal)
+          body = "Internal app is running — accessible via your cluster's internal domain.";
+        else if (final.skipEndpoint)
+          body = 'Install complete — configure a domain when you are ready.';
         else body = undefined;
         this.notifications.add({
           title: `${final.displayName} is running`,
@@ -1402,10 +1405,11 @@ export class DeployWizardStateService {
       if (Object.keys(perField).length > 0) this.backendFieldErrors.set(perField);
 
       // Prefer the backend `message`; fall back to unparsed errors when only those are available.
-      const headline = body?.message
-        ?? (unparsed.length > 0 ? unparsed.join(' · ') : null)
-        ?? e?.message
-        ?? 'Failed to install from catalog';
+      const headline =
+        body?.message ??
+        (unparsed.length > 0 ? unparsed.join(' · ') : null) ??
+        e?.message ??
+        'Failed to install from catalog';
       this.installError.set(headline);
       this.installPhase.set('failed');
       this.notifications.add({
@@ -1433,7 +1437,9 @@ export class DeployWizardStateService {
   }
 
   private sanitizeMap(map: Record<string, string>): Record<string, string> | undefined {
-    const entries = Object.entries(map).filter(([, v]) => v !== undefined && v !== null && v !== '');
+    const entries = Object.entries(map).filter(
+      ([, v]) => v !== undefined && v !== null && v !== '',
+    );
     if (entries.length === 0) return undefined;
     return Object.fromEntries(entries);
   }

@@ -13,8 +13,14 @@ describe('ClusterMonitoringService without metrics', () => {
       providers: [
         ClusterMonitoringService,
         { provide: ClusterService, useValue: { cluster: signal({ id: 'c1' }) } },
-        { provide: ClusterMetricsLogsService, useValue: { serverMetricsControllerGetClusterMetrics: () => notFound } },
-        { provide: ClusterHealthService, useValue: { clusterHealthControllerGetClusterHealth: () => of({}) } },
+        {
+          provide: ClusterMetricsLogsService,
+          useValue: { serverMetricsControllerGetClusterMetrics: () => notFound },
+        },
+        {
+          provide: ClusterHealthService,
+          useValue: { clusterHealthControllerGetClusterHealth: () => of({}) },
+        },
       ],
     });
     const service = TestBed.inject(ClusterMonitoringService);

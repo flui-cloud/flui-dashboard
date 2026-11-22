@@ -1,19 +1,38 @@
-import { Component, effect, inject, input, output, signal, computed, viewChild, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+  computed,
+  viewChild,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
-  lucideGlobe, lucideRefreshCw, lucideLoader,
-  lucideCheckCircle, lucideAlertCircle, lucidePlusCircle,
-  lucideArrowUpCircle, lucideExternalLink
+  lucideGlobe,
+  lucideRefreshCw,
+  lucideLoader,
+  lucideCheckCircle,
+  lucideAlertCircle,
+  lucidePlusCircle,
+  lucideArrowUpCircle,
+  lucideExternalLink,
 } from '@ng-icons/lucide';
 import { ClusterDnsZoneResponseDto } from '../../../core/api/model/clusterDnsZoneResponseDto';
 import { DnsZoneResponseDto } from '../../../core/api/model/dnsZoneResponseDto';
 import { AssignDnsZoneDto } from '../../../core/api/model/assignDnsZoneDto';
 import {
-  getReconciliationBadgeColor, getReconciliationBadgeLabel,
-  formatTimeSince, needsReconciliation,
-  CertificateProvider, DnsReconciliationStatus, getZoneDisplayName
+  getReconciliationBadgeColor,
+  getReconciliationBadgeLabel,
+  formatTimeSince,
+  needsReconciliation,
+  CertificateProvider,
+  DnsReconciliationStatus,
+  getZoneDisplayName,
 } from '../../model/dns.models';
 import { CanDirective } from '../../../core/directives/can.directive';
 import { ClusterIssuerSetupComponent } from './cluster-issuer-setup.component';
@@ -28,11 +47,18 @@ import { SandboxService } from '../../../core/services/sandbox.service';
   selector: 'app-cluster-dns-zone-section',
   standalone: true,
   imports: [FormsModule, RouterLink, NgIconComponent, CanDirective, ClusterIssuerSetupComponent],
-  providers: [provideIcons({
-    lucideGlobe, lucideRefreshCw, lucideLoader,
-    lucideCheckCircle, lucideAlertCircle, lucidePlusCircle,
-    lucideArrowUpCircle, lucideExternalLink
-  })],
+  providers: [
+    provideIcons({
+      lucideGlobe,
+      lucideRefreshCw,
+      lucideLoader,
+      lucideCheckCircle,
+      lucideAlertCircle,
+      lucidePlusCircle,
+      lucideArrowUpCircle,
+      lucideExternalLink,
+    }),
+  ],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './cluster-dns-zone-section.component.html',
 })
@@ -94,25 +120,28 @@ export class ClusterDnsZoneSectionComponent {
   };
 
   protected unassignedZones = computed(() => {
-    const assignedIds = new Set(this.assignments().map(a => a.dnsZoneId));
-    return this.availableZones().filter(z => !assignedIds.has(z.id));
+    const assignedIds = new Set(this.assignments().map((a) => a.dnsZoneId));
+    return this.availableZones().filter((z) => !assignedIds.has(z.id));
   });
 
   protected hasWildcardAssignment = computed(() =>
-    this.assignments().some(a => a.wildcardCertificate)
+    this.assignments().some((a) => a.wildcardCertificate),
   );
 
   /** ACME email the operator already gave on a zone — no reason to ask twice. */
-  protected wildcardAcmeEmail = computed(() =>
-    this.assignments().find(a => a.wildcardCertificate && a.acmeEmail)?.acmeEmail
-      ?? this.assignments().find(a => a.acmeEmail)?.acmeEmail
-      ?? ''
+  protected wildcardAcmeEmail = computed(
+    () =>
+      this.assignments().find((a) => a.wildcardCertificate && a.acmeEmail)?.acmeEmail ??
+      this.assignments().find((a) => a.acmeEmail)?.acmeEmail ??
+      '',
   );
 
   /** In flight locally, or reconciling server-side (issuer still registering with ACME). */
   protected isBusy(a: ClusterDnsZoneResponseDto): boolean {
-    return this.reconcilingId() === a.id
-      || a.reconciliationStatus === DnsReconciliationStatus.RECONCILING;
+    return (
+      this.reconcilingId() === a.id ||
+      a.reconciliationStatus === DnsReconciliationStatus.RECONCILING
+    );
   }
 
   protected canReconcile(a: ClusterDnsZoneResponseDto): boolean {
@@ -134,8 +163,9 @@ export class ClusterDnsZoneSectionComponent {
     return this.getStatusClass(a.reconciliationStatus);
   }
 
-  protected assigningZoneName = computed(() =>
-    this.availableZones().find(z => z.id === this.submittedZoneId())?.zoneName ?? 'DNS zone'
+  protected assigningZoneName = computed(
+    () =>
+      this.availableZones().find((z) => z.id === this.submittedZoneId())?.zoneName ?? 'DNS zone',
   );
 
   /** Wildcard TLS is intended on the assignment but no DNS-01 issuer is Ready yet. */
@@ -178,9 +208,7 @@ export class ClusterDnsZoneSectionComponent {
     return formatTimeSince(ts);
   }
 
-  protected wildcardOf(
-    a: ClusterDnsZoneResponseDto
-  ): ClusterWildcard | undefined {
+  protected wildcardOf(a: ClusterDnsZoneResponseDto): ClusterWildcard | undefined {
     return this.wildcards()[a.id];
   }
 
@@ -206,7 +234,7 @@ export class ClusterDnsZoneSectionComponent {
     if (!clusterId || this.sandbox.inSandbox()) return;
     for (const a of this.assignments()) {
       const state = await this.dnsZoneService.getClusterWildcard(clusterId, a.id);
-      if (state) this.wildcards.update(m => ({ ...m, [a.id]: state }));
+      if (state) this.wildcards.update((m) => ({ ...m, [a.id]: state }));
     }
   }
 
@@ -215,11 +243,8 @@ export class ClusterDnsZoneSectionComponent {
     if (!clusterId || this.publishingId()) return;
     this.publishingId.set(a.id);
     try {
-      const state = await this.dnsZoneService.publishClusterWildcard(
-        clusterId,
-        a.id
-      );
-      if (state) this.wildcards.update(m => ({ ...m, [a.id]: state }));
+      const state = await this.dnsZoneService.publishClusterWildcard(clusterId, a.id);
+      if (state) this.wildcards.update((m) => ({ ...m, [a.id]: state }));
     } finally {
       this.publishingId.set(null);
     }
@@ -232,7 +257,8 @@ export class ClusterDnsZoneSectionComponent {
       wildcardCertificate: this.assignForm.enableTls ? this.assignForm.wildcardCertificate : false,
       ...(this.assignForm.enableTls
         ? {
-            certificateProvider: this.assignForm.certificateProvider as AssignDnsZoneDto.CertificateProviderEnum,
+            certificateProvider: this.assignForm
+              .certificateProvider as AssignDnsZoneDto.CertificateProviderEnum,
             ...(this.assignForm.acmeEmail ? { acmeEmail: this.assignForm.acmeEmail } : {}),
           }
         : {}),
@@ -241,7 +267,13 @@ export class ClusterDnsZoneSectionComponent {
     this.assignZone.emit(dto);
     this.showAssignForm.set(false);
     if (dto.wildcardCertificate) this.justAssigned.set(true);
-    this.assignForm = { dnsZoneId: '', enableTls: false, certificateProvider: CertificateProvider.LETS_ENCRYPT_STAGING, acmeEmail: '', wildcardCertificate: true };
+    this.assignForm = {
+      dnsZoneId: '',
+      enableTls: false,
+      certificateProvider: CertificateProvider.LETS_ENCRYPT_STAGING,
+      acmeEmail: '',
+      wildcardCertificate: true,
+    };
   }
 
   protected executeRemove(assignmentId: string): void {

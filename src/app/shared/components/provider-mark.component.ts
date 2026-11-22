@@ -13,7 +13,8 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
       [style.font-size.px]="size() * 0.5"
       [attr.aria-label]="name()"
       role="img"
-    >{{ initial() }}</span>
+      >{{ initial() }}</span
+    >
   `,
 })
 export class ProviderMarkComponent {

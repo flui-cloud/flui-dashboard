@@ -7,7 +7,7 @@ import {
   effect,
   inject,
   signal,
-  viewChild
+  viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -45,7 +45,8 @@ import {
   selector: 'app-mail-domains',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReadOnlySectionDirective, 
+  imports: [
+    ReadOnlySectionDirective,
     FormsModule,
     NgIcon,
     MailSectionNavComponent,
@@ -75,16 +76,14 @@ import {
           [disabled]="loading()"
           class="inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-2.5 text-xs text-muted-foreground hover:bg-muted disabled:opacity-60"
         >
-          <ng-icon
-            name="lucideRotateCcw"
-            class="h-3.5 w-3.5"
-            [class.animate-spin]="loading()"
-          />
+          <ng-icon name="lucideRotateCcw" class="h-3.5 w-3.5" [class.animate-spin]="loading()" />
           Refresh
         </button>
       </app-mail-section-nav>
 
-      <section class="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card p-4">
+      <section
+        class="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card p-4"
+      >
         <p class="text-xs text-muted-foreground">
           Sending domains belong to a provider connection — that is where the credential and the
           account are. Add one from the connection that will send from it.
@@ -194,7 +193,8 @@ import {
                 } @else {
                   <span class="text-xs text-amber-700 dark:text-amber-400">Not verified yet</span>
                 }
-                <button appReadOnlySection="mail"
+                <button
+                  appReadOnlySection="mail"
                   type="button"
                   (click)="publish(d.domain)"
                   [disabled]="publishing()"
@@ -202,7 +202,8 @@ import {
                 >
                   Re-publish
                 </button>
-                <button appReadOnlySection="mail"
+                <button
+                  appReadOnlySection="mail"
                   type="button"
                   (click)="askRemove(d.domain)"
                   [disabled]="removing()"
@@ -283,7 +284,9 @@ export class MailDomainsComponent implements OnInit, OnDestroy {
 
   private readonly removeDialog = viewChild<ConfirmationDialogComponent>('removeDialog');
 
-  protected readonly removeTitle = computed(() => `Remove ${this.pendingRemove() ?? 'this domain'}`);
+  protected readonly removeTitle = computed(
+    () => `Remove ${this.pendingRemove() ?? 'this domain'}`,
+  );
 
   protected readonly removeMessage = 'Deleted at the mail provider. This cannot be undone.';
 

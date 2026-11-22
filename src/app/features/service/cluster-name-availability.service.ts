@@ -26,7 +26,7 @@ export class ClusterNameAvailabilityService {
     return firstValueFrom(
       this.http.get<NameAvailability>(`${this.base}/name-availability`, {
         params: { name, provider },
-      })
+      }),
     );
   }
 }

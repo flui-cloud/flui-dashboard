@@ -357,8 +357,20 @@ const PREVIEWS: Record<string, ScalingPreview> = {
     blocked: {
       headline: 'Scaling needed — blocked by the spending ceiling',
       exits: [
-        { kind: 'raise-cap', label: 'Raise the spending ceiling to €34', toEur: 34, toNodes: null, shape: null },
-        { kind: 'attach', label: 'Attach a machine yourself', toEur: null, toNodes: null, shape: null },
+        {
+          kind: 'raise-cap',
+          label: 'Raise the spending ceiling to €34',
+          toEur: 34,
+          toNodes: null,
+          shape: null,
+        },
+        {
+          kind: 'attach',
+          label: 'Attach a machine yourself',
+          toEur: null,
+          toNodes: null,
+          shape: null,
+        },
       ],
     },
   },
@@ -488,8 +500,7 @@ const FLEET: FleetReading = {
       architecture: 'x86',
       since: ago(2200),
       standIn: false,
-      neverReplace:
-        'The master carries the control plane and storage nothing can move.',
+      neverReplace: 'The master carries the control plane and storage nothing can move.',
     },
     {
       id: 'n-2',
@@ -623,21 +634,41 @@ export class ScalingFixtureService extends ScalingApiService {
     return of(GROUPS[groupId]);
   }
 
-  override removalPreview(groupId: string, proposed: { min?: number; desired?: number }): Observable<RemovalPreview> {
+  override removalPreview(
+    groupId: string,
+    proposed: { min?: number; desired?: number },
+  ): Observable<RemovalPreview> {
     const group = GROUPS[groupId] ?? GROUPS['g-prod'];
     const fleet = ROWS.find((row) => row.groupId === groupId)?.nodes ?? 3;
-    const target = Math.max(proposed.desired ?? group.bounds.desired, proposed.min ?? group.bounds.min);
+    const target = Math.max(
+      proposed.desired ?? group.bounds.desired,
+      proposed.min ?? group.bounds.min,
+    );
     const leaving = Math.max(fleet - target, 0);
     if (!leaving) {
       return of({
-        removes: false, fleet, target, leaving, node: null, shape: null, proceeds: false,
-        opensMaster: false, moves: [], waitsFor: [],
+        removes: false,
+        fleet,
+        target,
+        leaving,
+        node: null,
+        shape: null,
+        proceeds: false,
+        opensMaster: false,
+        moves: [],
+        waitsFor: [],
         sentence: `Saving changes no machine: the cluster has ${fleet} node(s) and the target is ${target}.`,
         headline: `Saving changes no machine: the cluster has ${fleet} node(s) and the target is ${target}.`,
       });
     }
     return of({
-      removes: true, fleet, target, leaving, node: 'prod-eu-worker-3', shape: 'cx33', proceeds: true,
+      removes: true,
+      fleet,
+      target,
+      leaving,
+      node: 'prod-eu-worker-3',
+      shape: 'cx33',
+      proceeds: true,
       opensMaster: false,
       moves: [
         { what: 'flui-web', system: true },

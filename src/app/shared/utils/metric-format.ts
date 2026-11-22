@@ -52,7 +52,7 @@ function median(values: number[]): number {
 export function formatDelta(
   current: number,
   values: number[],
-  format: (value: number) => string = (value) => value.toFixed(1)
+  format: (value: number) => string = (value) => value.toFixed(1),
 ): { text: string; tone: 'up' | 'down' | 'flat' } {
   if (values.length < 3) return { text: '', tone: 'flat' };
 

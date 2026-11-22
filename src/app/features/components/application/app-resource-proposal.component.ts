@@ -7,12 +7,13 @@ import {
   output,
   signal,
 } from '@angular/core';
-import {
-  AppRuntimeService,
-  ResourceProposal,
-} from '../../service/app-runtime.service';
+import { AppRuntimeService, ResourceProposal } from '../../service/app-runtime.service';
 import { ExplainComponent } from '../../../shared/components/explain.component';
-import { AppMaintenance, MaintenanceService, openingLabel } from '../../service/maintenance.service';
+import {
+  AppMaintenance,
+  MaintenanceService,
+  openingLabel,
+} from '../../service/maintenance.service';
 import { ToastService } from '../../../shared/services/toast.service';
 
 /**
@@ -44,21 +45,28 @@ import { ToastService } from '../../../shared/services/toast.service';
                 <span class="mt-1 block">{{ p.configurationNote }}</span>
               }
             </app-explain>
-            <p class="m-0 font-mono text-[13px] text-gray-800 dark:text-gray-200" data-testid="proposal-values">
+            <p
+              class="m-0 font-mono text-[13px] text-gray-800 dark:text-gray-200"
+              data-testid="proposal-values"
+            >
               memory
               @if (p.consequence.requests.memory !== p.currentRequests.memory) {
-                {{ p.currentRequests.memory ?? '—' }} → {{ p.consequence.requests.memory ?? '—' }} reserved
+                {{ p.currentRequests.memory ?? '—' }} →
+                {{ p.consequence.requests.memory ?? '—' }} reserved
               } @else {
                 {{ p.currentRequests.memory ?? '—' }} reserved
               }
               ·
               @if (p.consequence.limits.memory !== p.currentLimits.memory) {
-                {{ p.currentLimits.memory ?? '—' }} → {{ p.consequence.limits.memory ?? '—' }} at most
+                {{ p.currentLimits.memory ?? '—' }} → {{ p.consequence.limits.memory ?? '—' }} at
+                most
               } @else {
                 {{ p.currentLimits.memory ?? '—' }} at most
               }
             </p>
-            <p class="m-0 text-[12px] text-gray-600 dark:text-gray-400">{{ p.consequence.placement.sentence }}</p>
+            <p class="m-0 text-[12px] text-gray-600 dark:text-gray-400">
+              {{ p.consequence.placement.sentence }}
+            </p>
           </div>
           <div class="flex items-center gap-2">
             @if (confirming()) {
@@ -66,29 +74,46 @@ import { ToastService } from '../../../shared/services/toast.service';
                 type="button"
                 class="rounded-md px-3 py-1.5 text-sm text-gray-700 hover:bg-amber-100 dark:text-gray-300 dark:hover:bg-amber-900/40"
                 (click)="confirming.set(false)"
-              >Cancel</button>
+              >
+                Cancel
+              </button>
               <button
                 type="button"
                 class="rounded-md bg-amber-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-700 disabled:opacity-50"
                 [disabled]="applying() || !!p.consequence.problem"
                 (click)="apply(p)"
                 data-testid="proposal-confirm"
-              >{{ applying() ? 'Applying…' : 'Apply and restart' }}</button>
+              >
+                {{ applying() ? 'Applying…' : 'Apply and restart' }}
+              </button>
               <button
                 type="button"
                 class="rounded-md border border-amber-300 bg-white px-3 py-1.5 text-sm font-medium text-amber-900 hover:bg-amber-100 disabled:opacity-50 dark:border-amber-700 dark:bg-transparent dark:text-amber-200"
-                [disabled]="applying() || !!p.consequence.problem || !window()?.nextOpening || window()?.mode === 'anytime'"
+                [disabled]="
+                  applying() ||
+                  !!p.consequence.problem ||
+                  !window()?.nextOpening ||
+                  window()?.mode === 'anytime'
+                "
                 [title]="window()?.nextOpening ? '' : (window()?.says ?? '')"
                 (click)="defer()"
                 data-testid="proposal-defer"
-              >At next window{{ window()?.nextOpening && window()?.mode !== 'anytime' ? ' (' + label(window()!.nextOpening) + ')' : '' }}</button>
+              >
+                At next window{{
+                  window()?.nextOpening && window()?.mode !== 'anytime'
+                    ? ' (' + label(window()!.nextOpening) + ')'
+                    : ''
+                }}
+              </button>
             } @else {
               <button
                 type="button"
                 class="rounded-md border border-amber-300 bg-white px-3 py-1.5 text-sm font-medium text-amber-900 hover:bg-amber-100 dark:border-amber-700 dark:bg-transparent dark:text-amber-200"
                 (click)="confirming.set(true)"
                 data-testid="proposal-apply"
-              >Apply</button>
+              >
+                Apply
+              </button>
             }
           </div>
         </div>
@@ -118,7 +143,10 @@ export class AppResourceProposalComponent {
       this.window.set(null);
       if (id) {
         void this.load(id);
-        void this.maintenance.app(id).then((w) => this.appId() === id && this.window.set(w)).catch(() => undefined);
+        void this.maintenance
+          .app(id)
+          .then((w) => this.appId() === id && this.window.set(w))
+          .catch(() => undefined);
       }
     });
   }

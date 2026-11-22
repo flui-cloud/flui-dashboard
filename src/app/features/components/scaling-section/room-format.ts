@@ -46,8 +46,12 @@ export const TIGHT_PERCENT = 85;
  */
 export function nodeUsageLine(node: NodeRoom): { text: string; overcommitted: boolean } | null {
   const parts: string[] = [];
-  if (node.used) parts.push(`In use now ${gib(node.used.memoryMi)} · ${cores(node.used.cpuMillicores)}`);
-  if (node.limits) parts.push(`at their limits ${gib(node.limits.memoryMi)} · ${cores(node.limits.cpuMillicores)}`);
+  if (node.used)
+    parts.push(`In use now ${gib(node.used.memoryMi)} · ${cores(node.used.cpuMillicores)}`);
+  if (node.limits)
+    parts.push(
+      `at their limits ${gib(node.limits.memoryMi)} · ${cores(node.limits.cpuMillicores)}`,
+    );
   if (!parts.length) return null;
   const overcommitted = !!node.limits && node.limits.memoryMi > node.allocatable.memoryMi;
   return {

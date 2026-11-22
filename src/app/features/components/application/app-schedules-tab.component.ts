@@ -87,10 +87,7 @@ import {
         </div>
       } @else if (jobs().length === 0) {
         <div class="card-inner p-8 text-center">
-          <ng-icon
-            name="lucideClock"
-            class="h-8 w-8 mx-auto text-muted-foreground"
-          />
+          <ng-icon name="lucideClock" class="h-8 w-8 mx-auto text-muted-foreground" />
           <p class="mt-2 text-sm font-medium">No schedules yet</p>
           <p class="text-sm text-muted-foreground">
             Create one to run a recurring command against this application.
@@ -100,9 +97,7 @@ import {
         <div class="card-inner overflow-x-auto">
           <table class="w-full text-sm">
             <thead>
-              <tr
-                class="text-left text-muted-foreground border-b border-border"
-              >
+              <tr class="text-left text-muted-foreground border-b border-border">
                 <th class="py-2 px-3 font-medium">Name</th>
                 <th class="py-2 px-3 font-medium">Schedule</th>
                 <th class="py-2 px-3 font-medium">Command</th>
@@ -118,9 +113,7 @@ import {
                   <td class="py-2 px-3">
                     <code class="text-xs">{{ job.schedule }}</code>
                     @if (job.timezone) {
-                      <span class="text-xs text-muted-foreground">
-                        · {{ job.timezone }}</span
-                      >
+                      <span class="text-xs text-muted-foreground"> · {{ job.timezone }}</span>
                     }
                   </td>
                   <td
@@ -140,25 +133,13 @@ import {
                             : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
                       "
                       [title]="
-                        job.failing
-                          ? 'The last ' +
-                            job.consecutiveFailures +
-                            ' runs failed'
-                          : ''
+                        job.failing ? 'The last ' + job.consecutiveFailures + ' runs failed' : ''
                       "
                     >
-                      {{
-                        job.failing
-                          ? 'failing'
-                          : job.enabled
-                            ? 'enabled'
-                            : 'suspended'
-                      }}
+                      {{ job.failing ? 'failing' : job.enabled ? 'enabled' : 'suspended' }}
                     </span>
                     @if (job.origin === 'manifest') {
-                      <span class="ml-1 text-xs text-muted-foreground"
-                        >from flui.yaml</span
-                      >
+                      <span class="ml-1 text-xs text-muted-foreground">from flui.yaml</span>
                     }
                     @if (job.onCluster === false) {
                       <span
@@ -189,28 +170,28 @@ import {
                         Runs
                       </button>
                       @if (job.origin !== 'manifest') {
-                      <button
-                        type="button"
-                        class="px-2 py-1 text-xs rounded-md hover:bg-muted"
-                        (click)="openEdit(job)"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        class="px-2 py-1 text-xs rounded-md hover:bg-muted"
-                        (click)="toggle(job)"
-                      >
-                        {{ job.enabled ? 'Suspend' : 'Enable' }}
-                      </button>
-                      <button
-                        type="button"
-                        class="p-1.5 rounded-md hover:bg-muted text-red-600"
-                        title="Delete"
-                        (click)="confirmDelete(job)"
-                      >
-                        <ng-icon name="lucideTrash2" class="h-4 w-4" />
-                      </button>
+                        <button
+                          type="button"
+                          class="px-2 py-1 text-xs rounded-md hover:bg-muted"
+                          (click)="openEdit(job)"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          class="px-2 py-1 text-xs rounded-md hover:bg-muted"
+                          (click)="toggle(job)"
+                        >
+                          {{ job.enabled ? 'Suspend' : 'Enable' }}
+                        </button>
+                        <button
+                          type="button"
+                          class="p-1.5 rounded-md hover:bg-muted text-red-600"
+                          title="Delete"
+                          (click)="confirmDelete(job)"
+                        >
+                          <ng-icon name="lucideTrash2" class="h-4 w-4" />
+                        </button>
                       }
                     </div>
                   </td>
@@ -224,9 +205,7 @@ import {
 
     <!-- Create dialog -->
     @if (createOpen()) {
-      <div
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      >
+      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
         <div
           class="bg-background rounded-lg border border-border shadow-xl max-w-md w-full p-6 space-y-4"
         >
@@ -327,16 +306,14 @@ import {
 
     <!-- Delete confirm -->
     @if (pendingDelete()) {
-      <div
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      >
+      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
         <div
           class="bg-background rounded-lg border border-border shadow-xl max-w-md w-full p-6 space-y-4"
         >
           <h3 class="text-base font-semibold">Delete schedule</h3>
           <p class="text-sm text-muted-foreground">
-            Delete "{{ pendingDelete()?.name }}"? Running jobs are not
-            interrupted, but no further runs will be scheduled.
+            Delete "{{ pendingDelete()?.name }}"? Running jobs are not interrupted, but no further
+            runs will be scheduled.
           </p>
           <div class="flex justify-end gap-2">
             <button
@@ -360,16 +337,12 @@ import {
 
     <!-- Runs panel -->
     @if (runsFor()) {
-      <div
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      >
+      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
         <div
           class="bg-background rounded-lg border border-border shadow-xl max-w-2xl w-full p-6 space-y-4"
         >
           <div class="flex items-center justify-between">
-            <h3 class="text-base font-semibold">
-              Runs · {{ runsFor()?.name }}
-            </h3>
+            <h3 class="text-base font-semibold">Runs · {{ runsFor()?.name }}</h3>
             <button
               type="button"
               class="px-3 py-1 text-sm border border-border rounded-md hover:bg-muted"
@@ -390,9 +363,7 @@ import {
             <div class="overflow-x-auto max-h-80 overflow-y-auto">
               <table class="w-full text-sm">
                 <thead>
-                  <tr
-                    class="text-left text-muted-foreground border-b border-border"
-                  >
+                  <tr class="text-left text-muted-foreground border-b border-border">
                     <th class="py-2 px-3 font-medium">Run</th>
                     <th class="py-2 px-3 font-medium">Status</th>
                     <th class="py-2 px-3 font-medium">Trigger</th>
@@ -413,9 +384,7 @@ import {
                           >{{ r.status }}</span
                         >
                         @if (r.reason) {
-                          <div
-                            class="mt-1 text-xs text-red-600 dark:text-red-400"
-                          >
+                          <div class="mt-1 text-xs text-red-600 dark:text-red-400">
                             {{ r.reason }}
                           </div>
                         }
@@ -620,11 +589,7 @@ export class AppSchedulesTabComponent implements OnInit, OnDestroy {
     if (!id || !job) return;
     this.runLogsLoading.set(true);
     this.runLogs.set({ jobName: run.jobName, logs: '' });
-    const { logs, reason } = await this.cronService.runLogs(
-      id,
-      job.name,
-      run.jobName,
-    );
+    const { logs, reason } = await this.cronService.runLogs(id, job.name, run.jobName);
     this.runLogs.set({ jobName: run.jobName, logs, reason });
     this.runLogsLoading.set(false);
   }

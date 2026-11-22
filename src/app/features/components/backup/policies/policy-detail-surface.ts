@@ -7,14 +7,8 @@ import type {
   SurfaceSnapshot,
 } from '@flui-cloud/semantic-surface';
 
-import type {
-  BackupPolicy,
-  BackupPolicyDestination,
-} from '../../../model/backup.models';
-import type {
-  BackupPolicyActivity,
-  BackupRun,
-} from '../../../model/backup-run.models';
+import type { BackupPolicy, BackupPolicyDestination } from '../../../model/backup.models';
+import type { BackupPolicyActivity, BackupRun } from '../../../model/backup-run.models';
 import { destinationEntityRef } from '../destinations/destination-detail-surface';
 import { jobEntityRef } from '../jobs/job-detail-surface';
 import { buildSurfaceList, scopeIdPart } from '../../../../shared/utils/surface-kit';
@@ -37,11 +31,19 @@ export interface PolicyDetailSurfaceContext {
   appVersion?: string;
 }
 
-function textObservation(key: string, value: string | undefined | null, source: ObservationSource): Observation | null {
+function textObservation(
+  key: string,
+  value: string | undefined | null,
+  source: ObservationSource,
+): Observation | null {
   return value ? { key, presentedAs: { text: value }, source } : null;
 }
 
-function valueObservation(key: string, value: number | boolean, source: ObservationSource): Observation {
+function valueObservation(
+  key: string,
+  value: number | boolean,
+  source: ObservationSource,
+): Observation {
   return { key, presentedAs: { value }, source };
 }
 
@@ -75,9 +77,15 @@ function runObservations(run: BackupRun): Observation[] {
     textObservation('flui.backup.run.trigger', run.trigger, 'api'),
     textObservation('flui.backup.run.status', run.status, 'api'),
     textObservation('flui.backup.run.started_at', run.startedAt, 'api'),
-    run.durationSeconds != null ? valueObservation('flui.backup.run.duration_seconds', run.durationSeconds, 'api') : null,
-    run.sizeBytes != null ? valueObservation('flui.backup.run.size_bytes', run.sizeBytes, 'api') : null,
-    run.encrypted != null ? valueObservation('flui.backup.run.encrypted', run.encrypted, 'api') : null,
+    run.durationSeconds != null
+      ? valueObservation('flui.backup.run.duration_seconds', run.durationSeconds, 'api')
+      : null,
+    run.sizeBytes != null
+      ? valueObservation('flui.backup.run.size_bytes', run.sizeBytes, 'api')
+      : null,
+    run.encrypted != null
+      ? valueObservation('flui.backup.run.encrypted', run.encrypted, 'api')
+      : null,
     textObservation('flui.backup.run.stored', run.stored, 'api'),
   ].filter((observation): observation is Observation => observation !== null);
 }
@@ -97,9 +105,16 @@ function runsScopes(pageId: string, runs: BackupRun[]): SemanticScopeSnapshot[] 
   }).scopes;
 }
 
-function destinationRowScope(policyPageId: string, d: BackupPolicyDestination): SemanticScopeSnapshot {
+function destinationRowScope(
+  policyPageId: string,
+  d: BackupPolicyDestination,
+): SemanticScopeSnapshot {
   const label = d.destination?.name ?? d.destinationId;
-  const entity: EntityReference = { ref: destinationEntityRef(d.destinationId), label, role: 'related' };
+  const entity: EntityReference = {
+    ref: destinationEntityRef(d.destinationId),
+    label,
+    role: 'related',
+  };
   return {
     id: `${policyPageId}:destinations:${d.destinationId}`,
     parentId: `${policyPageId}:destinations`,
@@ -107,7 +122,11 @@ function destinationRowScope(policyPageId: string, d: BackupPolicyDestination): 
     entities: [entity],
     observations: [
       textObservation('flui.backup.policy_destination.role', d.role, 'api'),
-      textObservation('flui.backup.policy_destination.replication_status', d.lastReplicationStatus, 'api'),
+      textObservation(
+        'flui.backup.policy_destination.replication_status',
+        d.lastReplicationStatus,
+        'api',
+      ),
     ].filter((observation): observation is Observation => observation !== null),
   };
 }

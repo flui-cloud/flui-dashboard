@@ -1,8 +1,13 @@
-import { Component, computed, effect, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
 import {
-  PROJECT_PRESET_COLORS,
-  Project,
-} from '../../model/project.model';
+  Component,
+  computed,
+  effect,
+  input,
+  output,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
+import { PROJECT_PRESET_COLORS, Project } from '../../model/project.model';
 import { stripHyphenEdges } from '../../../shared/utils/slug';
 
 export interface ProjectFormValue {

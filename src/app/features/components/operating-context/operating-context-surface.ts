@@ -92,7 +92,11 @@ function keep(observations: (Observation | null)[]): Observation[] {
  * lookup the card reads, and only falls back to the raw id when the name is not (yet)
  * known, exactly like the card's own fallback.
  */
-function rowOf(listId: string, entry: ContextEntry, clusterNames: Record<string, string>): SurfaceListRow {
+function rowOf(
+  listId: string,
+  entry: ContextEntry,
+  clusterNames: Record<string, string>,
+): SurfaceListRow {
   return {
     id: `${listId}:${scopeIdPart(entry.id)}`,
     ref: contextNoteEntityRef(entry.id),
@@ -202,7 +206,9 @@ export function presentedContent(input: OperatingContextSurfaceInput): Presented
     scopes.push(...reviewScopes);
 
     const conflictId = `${PAGE_ID}:conflicts`;
-    const conflictRows = input.conflicts.flatMap((group) => group.entries.map((e) => rowOf(conflictId, e, input.clusterNames)));
+    const conflictRows = input.conflicts.flatMap((group) =>
+      group.entries.map((e) => rowOf(conflictId, e, input.clusterNames)),
+    );
     const { scopes: conflictScopes } = buildSurfaceList({
       listId: conflictId,
       parentId: PAGE_ID,

@@ -1,7 +1,10 @@
 import type { AppMetricsDto } from '../../../core/api/model/appMetricsDto';
 import { Tone } from '../dashboard/home-state';
 
-export function runStateOf(m: AppMetricsDto, appStatus: string | null | undefined): { label: string; tone: Tone } {
+export function runStateOf(
+  m: AppMetricsDto,
+  appStatus: string | null | undefined,
+): { label: string; tone: Tone } {
   if (appStatus === 'waiting_for_room') return { label: 'Waiting for room', tone: 'warn' };
   const s = m.status;
   if (s.replicas_ready == null && s.replicas_desired == null) {
@@ -15,7 +18,10 @@ export function runStateOf(m: AppMetricsDto, appStatus: string | null | undefine
   return { label: 'Healthy', tone: 'ok' };
 }
 
-export function limitPercent(usage: number | null | undefined, limit: number | null | undefined): number {
+export function limitPercent(
+  usage: number | null | undefined,
+  limit: number | null | undefined,
+): number {
   if (!limit || limit <= 0) return 0;
   return Math.min(((usage ?? 0) / limit) * 100, 100);
 }
@@ -54,16 +60,17 @@ export interface EndpointCounts<T> {
   extraInSync: number;
 }
 
-export function endpointCountsOf<T extends { applicationId?: string | null; reconciliationStatus: string }>(
-  endpoints: readonly T[],
-  appId: string | null | undefined,
-): EndpointCounts<T> {
+export function endpointCountsOf<
+  T extends { applicationId?: string | null; reconciliationStatus: string },
+>(endpoints: readonly T[], appId: string | null | undefined): EndpointCounts<T> {
   const mine = appId ? endpoints.filter((e) => e.applicationId === appId) : [];
   const inSync = mine.filter((e) => e.reconciliationStatus === 'IN_SYNC');
   return {
     count: mine.length,
     synced: inSync.length,
-    drift: mine.filter((e) => e.reconciliationStatus === 'DRIFT' || e.reconciliationStatus === 'ERROR').length,
+    drift: mine.filter(
+      (e) => e.reconciliationStatus === 'DRIFT' || e.reconciliationStatus === 'ERROR',
+    ).length,
     primary: inSync[0] ?? null,
     extraInSync: Math.max(0, inSync.length - 1),
   };

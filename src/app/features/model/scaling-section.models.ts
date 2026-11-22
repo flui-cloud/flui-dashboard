@@ -41,7 +41,15 @@ export interface GiveBackAlarm {
 }
 
 export interface GiveBackReason {
-  kind: 'data-on-node' | 'not-restarted' | 'no-interruption' | 'placed-by-machine' | 'master' | 'server' | 'copies' | 'runs-flui-api';
+  kind:
+    | 'data-on-node'
+    | 'not-restarted'
+    | 'no-interruption'
+    | 'placed-by-machine'
+    | 'master'
+    | 'server'
+    | 'copies'
+    | 'runs-flui-api';
   title: string;
   fix: string;
   items: { label: string; applicationId: string | null }[];
@@ -142,12 +150,7 @@ export interface PurchaseHold {
 }
 
 export type CatalogueReadingState =
-  | 'read'
-  | 'not-published'
-  | 'not-covered'
-  | 'unreachable'
-  | 'no-market'
-  | 'off';
+  'read' | 'not-published' | 'not-covered' | 'unreachable' | 'no-market' | 'off';
 
 export interface OrderedShape {
   shape: string;

@@ -1,5 +1,4 @@
-export type AccessRole =
-  'viewer' | 'operator' | 'maintainer' | 'owner' | 'platform_operator';
+export type AccessRole = 'viewer' | 'operator' | 'maintainer' | 'owner' | 'platform_operator';
 
 export const PLATFORM_OPERATOR_ROLE: AccessRole = 'platform_operator';
 
@@ -96,12 +95,8 @@ export function temporaryGrants(
   now: number = Date.now(),
 ): { active: GrantRecord[]; ended: GrantRecord[] } {
   const at = (g: GrantRecord) => new Date(g.expiresAt ?? 0).getTime();
-  const active = grants
-    .filter((g) => grantEnd(g, now) === 'active')
-    .sort((a, b) => at(a) - at(b));
-  const ended = grants
-    .filter((g) => grantEnd(g, now) === 'ended')
-    .sort((a, b) => at(b) - at(a));
+  const active = grants.filter((g) => grantEnd(g, now) === 'active').sort((a, b) => at(a) - at(b));
+  const ended = grants.filter((g) => grantEnd(g, now) === 'ended').sort((a, b) => at(b) - at(a));
   return { active, ended };
 }
 
@@ -137,10 +132,7 @@ export function formatWhen(value: string | Date): string {
 }
 
 export function timeLeft(value: string, now: number = Date.now()): string {
-  const min = Math.max(
-    0,
-    Math.round((new Date(value).getTime() - now) / 60_000),
-  );
+  const min = Math.max(0, Math.round((new Date(value).getTime() - now) / 60_000));
   if (min < 60) return `${min} min`;
   const hours = Math.round(min / 60);
   if (hours < 48) return `${hours} h`;
@@ -172,8 +164,7 @@ export interface GroupRecord {
   members: string[];
 }
 
-export type ScopeKind =
-  'everything' | 'cluster' | 'project' | 'app' | 'kind' | 'tag' | 'section';
+export type ScopeKind = 'everything' | 'cluster' | 'project' | 'app' | 'kind' | 'tag' | 'section';
 
 export const SECTION_LABELS: Record<string, string> = {
   home: 'Home',
@@ -192,10 +183,7 @@ export const SECTION_LABELS: Record<string, string> = {
 
 export const ALL_SECTION_KEYS = Object.keys(SECTION_LABELS);
 
-export function sectionsForPermissions(
-  perms: readonly string[],
-  isGlobal: boolean,
-): string[] {
+export function sectionsForPermissions(perms: readonly string[], isGlobal: boolean): string[] {
   const any = (p: string) => perms.includes(p);
   const global = (p: string) => isGlobal && perms.includes(p);
   const keys = new Set<string>(['home', 'settings']);
@@ -256,8 +244,7 @@ function applicationsLostLine(d: AccessDelta): string {
 
 function unknownCoverageLines(d: AccessDelta): string[] {
   return [
-    d.note ??
-      'The application inventory could not be read, so what this takes away is not known.',
+    d.note ?? 'The application inventory could not be read, so what this takes away is not known.',
     'Do not read the empty list as "nothing".',
   ];
 }
@@ -280,19 +267,11 @@ export interface AccessDeltaLineOptions {
   identityProvider?: boolean;
 }
 
-function idpCaveatLines(
-  d: AccessDelta,
-  opts?: AccessDeltaLineOptions,
-): string[] {
-  return opts?.identityProvider && d.principal.type === 'user'
-    ? [IDP_CAVEAT]
-    : [];
+function idpCaveatLines(d: AccessDelta, opts?: AccessDeltaLineOptions): string[] {
+  return opts?.identityProvider && d.principal.type === 'user' ? [IDP_CAVEAT] : [];
 }
 
-export function accessDeltaLines(
-  d: AccessDelta,
-  opts?: AccessDeltaLineOptions,
-): string[] {
+export function accessDeltaLines(d: AccessDelta, opts?: AccessDeltaLineOptions): string[] {
   if (d.coverage === 'unknown') {
     return [...unknownCoverageLines(d), ...idpCaveatLines(d, opts)];
   }
@@ -310,9 +289,7 @@ export function accessDeltaLines(
     lines.push('Sections that close: ' + sectionNames(d.sectionsClosed));
   }
   if (d.sectionsDowngraded.length) {
-    lines.push(
-      'Sections that become read-only: ' + sectionNames(d.sectionsDowngraded),
-    );
+    lines.push('Sections that become read-only: ' + sectionNames(d.sectionsDowngraded));
   }
   if (d.permissionsLost.length) {
     lines.push('Permissions given up: ' + d.permissionsLost.join(', '));

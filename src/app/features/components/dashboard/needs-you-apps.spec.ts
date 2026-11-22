@@ -39,7 +39,14 @@ describe('needsYouAppRow', () => {
   });
 
   it('leaves the slug out when it is the name, and still links an app the API gave no path for', () => {
-    const row = needsYouAppRow({ ...base, name: 'pg', slug: 'pg', open: undefined, backups: undefined, reason: 'unknown' });
+    const row = needsYouAppRow({
+      ...base,
+      name: 'pg',
+      slug: 'pg',
+      open: undefined,
+      backups: undefined,
+      reason: 'unknown',
+    });
     expect(row.secondary).toBe('wc-1');
     expect(row.why).toBeNull();
     expect(row.appPath).toBe('/apps/applications/a-1');

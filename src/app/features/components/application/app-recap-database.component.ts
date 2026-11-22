@@ -19,33 +19,35 @@ import { databaseEngineOf } from '../../model/db-engine';
   template: `
     @let db = app();
     @if (!readOnly() || sqlReader()) {
-    <section class="card-surface space-y-4 p-5" [attr.data-testid]="'recap-database-' + db.id">
-      <div class="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 class="font-semibold text-foreground">{{ heading() }}</h2>
-        <span class="text-xs text-muted-foreground">{{ subtitle() }}</span>
-      </div>
-      <div class="grid gap-3" [class.grid-cols-2]="!readOnly()">
-        <div class="rounded-lg bg-muted/40 px-3 py-2.5">
-          <p class="text-lg font-semibold text-foreground">{{ data().value }}</p>
-          <p class="text-label">{{ data().label }}</p>
+      <section class="card-surface space-y-4 p-5" [attr.data-testid]="'recap-database-' + db.id">
+        <div class="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 class="font-semibold text-foreground">{{ heading() }}</h2>
+          <span class="text-xs text-muted-foreground">{{ subtitle() }}</span>
+        </div>
+        <div class="grid gap-3" [class.grid-cols-2]="!readOnly()">
+          <div class="rounded-lg bg-muted/40 px-3 py-2.5">
+            <p class="text-lg font-semibold text-foreground">{{ data().value }}</p>
+            <p class="text-label">{{ data().label }}</p>
+          </div>
+          @if (!readOnly()) {
+            <div class="rounded-lg bg-muted/40 px-3 py-2.5">
+              <p class="text-lg font-semibold" [class]="text[lastBackup().tone]">
+                {{ lastBackup().value }}
+              </p>
+              <p class="text-label">Last backup</p>
+            </div>
+          }
         </div>
         @if (!readOnly()) {
-          <div class="rounded-lg bg-muted/40 px-3 py-2.5">
-            <p class="text-lg font-semibold" [class]="text[lastBackup().tone]">{{ lastBackup().value }}</p>
-            <p class="text-label">Last backup</p>
-          </div>
+          <app-db-connect-card [app]="db" [connInfo]="connInfo()" variant="block" />
+        } @else if (sqlReader()) {
+          <a
+            [routerLink]="['/db-console', db.id]"
+            class="inline-flex w-fit items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+            >Open SQL Console</a
+          >
         }
-      </div>
-      @if (!readOnly()) {
-        <app-db-connect-card [app]="db" [connInfo]="connInfo()" variant="block" />
-      } @else if (sqlReader()) {
-        <a
-          [routerLink]="['/db-console', db.id]"
-          class="inline-flex w-fit items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-          >Open SQL Console</a
-        >
-      }
-    </section>
+      </section>
     }
   `,
 })
@@ -56,7 +58,9 @@ export class AppRecapDatabaseComponent {
   readonly protection = input<AppProtection | undefined>(undefined);
   readonly connInfo = input<DbConnectionInfo | null>(null);
 
-  protected readonly heading = computed(() => (this.named() ? `Database · ${roleOf(this.app())}` : 'Database'));
+  protected readonly heading = computed(() =>
+    this.named() ? `Database · ${roleOf(this.app())}` : 'Database',
+  );
   protected readonly subtitle = computed(() => dbSubtitle(this.app()));
   protected readonly data = computed(() => dbData(this.metrics()));
   protected readonly lastBackup = computed(() => dbLastBackup(this.protection()));

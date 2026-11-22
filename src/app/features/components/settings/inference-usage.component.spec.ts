@@ -13,7 +13,10 @@ describe('InferenceUsageComponent', () => {
         { provide: InferenceSettingsService, useValue: { usage } },
         {
           provide: PermissionService,
-          useValue: { isAdmin: signal(false), can: (k: string) => granted && k === 'integration:manage' },
+          useValue: {
+            isAdmin: signal(false),
+            can: (k: string) => granted && k === 'integration:manage',
+          },
         },
       ],
     });

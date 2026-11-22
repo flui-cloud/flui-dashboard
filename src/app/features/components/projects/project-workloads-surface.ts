@@ -92,7 +92,10 @@ function sectionKey(section: ProjectWorkloadsSection): string {
   return scopeIdPart(section.projectId ?? UNASSIGNED_KEY);
 }
 
-function sectionScopes(section: ProjectWorkloadsSection, filtered: boolean): SemanticScopeSnapshot[] {
+function sectionScopes(
+  section: ProjectWorkloadsSection,
+  filtered: boolean,
+): SemanticScopeSnapshot[] {
   const listId = `${PAGE_ID}:section:${sectionKey(section)}`;
   // A collapsed section shows its header and its summary line and nothing else — the rows
   // are genuinely not on the screen, so they are not claimed. `completeness` then says
@@ -127,7 +130,15 @@ function sectionScopes(section: ProjectWorkloadsSection, filtered: boolean): Sem
   scopes[0] = {
     ...scopes[0],
     ...(section.projectId
-      ? { entities: [{ ref: projectEntityRef(section.projectId), label: section.name, role: 'related' as const }] }
+      ? {
+          entities: [
+            {
+              ref: projectEntityRef(section.projectId),
+              label: section.name,
+              role: 'related' as const,
+            },
+          ],
+        }
       : {}),
     state: { loading: false, empty: section.groups.length === 0 },
     completeness: {

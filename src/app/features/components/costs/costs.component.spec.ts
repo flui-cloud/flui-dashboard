@@ -26,7 +26,15 @@ const COSTS: Costs = {
       vatRatePercent: '19',
       months: [m('2026-08', false, 20.004), m('2026-09', true, 11.2449, 12.3051)],
       clusters: [
-        { clusterId: 'c2', clusterName: 'wc-1', region: 'nbg1', removed: true, months: [m('2026-08', false, 3), m('2026-09', true, 0.3, 0.3)], unpriced: 0, listPriced: 0 },
+        {
+          clusterId: 'c2',
+          clusterName: 'wc-1',
+          region: 'nbg1',
+          removed: true,
+          months: [m('2026-08', false, 3), m('2026-09', true, 0.3, 0.3)],
+          unpriced: 0,
+          listPriced: 0,
+        },
       ],
       unpriced: 0,
       listPriced: 2,
@@ -94,7 +102,10 @@ describe('the Costs page', () => {
   });
 
   it('says why the costs cannot be read', async () => {
-    const { text } = await render(null, 'Costs cover the whole installation, so only an administrator of the infrastructure can read them.');
+    const { text } = await render(
+      null,
+      'Costs cover the whole installation, so only an administrator of the infrastructure can read them.',
+    );
     expect(text).toContain('only an administrator');
   });
 });

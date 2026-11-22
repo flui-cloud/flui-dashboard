@@ -28,12 +28,15 @@ describe('reading a key as a connection', () => {
     });
 
     it('scales the phrase with the distance', () => {
-      expect(readKeyConnection(key({ lastUsedAt: ago(600_000) }), '1.0.0', NOW).seen)
-        .toBe('last used 10 minutes ago');
-      expect(readKeyConnection(key({ lastUsedAt: ago(7_200_000) }), '1.0.0', NOW).seen)
-        .toBe('last used 2 hours ago');
-      expect(readKeyConnection(key({ lastUsedAt: ago(3 * 86_400_000) }), '1.0.0', NOW).seen)
-        .toBe('last used 3 days ago');
+      expect(readKeyConnection(key({ lastUsedAt: ago(600_000) }), '1.0.0', NOW).seen).toBe(
+        'last used 10 minutes ago',
+      );
+      expect(readKeyConnection(key({ lastUsedAt: ago(7_200_000) }), '1.0.0', NOW).seen).toBe(
+        'last used 2 hours ago',
+      );
+      expect(readKeyConnection(key({ lastUsedAt: ago(3 * 86_400_000) }), '1.0.0', NOW).seen).toBe(
+        'last used 3 days ago',
+      );
     });
   });
 
@@ -49,9 +52,7 @@ describe('reading a key as a connection', () => {
       const c = readKeyConnection(key({ skillVersion: '0.9.0' }), '1.0.0', NOW);
       expect(c.everCheckedIn).toBeTrue();
       expect(c.outOfDate).toBeTrue();
-      expect(c.skill).toBe(
-        'working from skill 0.9.0 — this instance publishes 1.0.0',
-      );
+      expect(c.skill).toBe('working from skill 0.9.0 — this instance publishes 1.0.0');
     });
 
     it('says so plainly when the agent is current', () => {
@@ -67,8 +68,9 @@ describe('reading a key as a connection', () => {
     });
 
     it('treats a blank declaration as no declaration', () => {
-      expect(readKeyConnection(key({ skillVersion: '  ' }), '1.0.0', NOW).everCheckedIn)
-        .toBeFalse();
+      expect(
+        readKeyConnection(key({ skillVersion: '  ' }), '1.0.0', NOW).everCheckedIn,
+      ).toBeFalse();
     });
   });
 

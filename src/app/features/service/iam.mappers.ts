@@ -77,8 +77,7 @@ const IDENTITY_TO_ACCESS_ROLE: Record<string, AccessRole> = {
 export function statusFromState(state?: string): UserStatus {
   const s = (state ?? '').toUpperCase();
   if (s.includes('INITIAL')) return 'invited';
-  if (s.includes('INACTIVE') || s.includes('LOCKED') || s.includes('SUSPEND'))
-    return 'disabled';
+  if (s.includes('INACTIVE') || s.includes('LOCKED') || s.includes('SUSPEND')) return 'disabled';
   return 'active';
 }
 
@@ -112,10 +111,7 @@ export function toGrantRecord(b: ApiRoleBinding): GrantRecord {
   };
 }
 
-export function toCreateBody(
-  b: AccessBinding,
-  expiresAt?: Date | null,
-): CreateGrantBody {
+export function toCreateBody(b: AccessBinding, expiresAt?: Date | null): CreateGrantBody {
   const base = {
     principalType: b.principal.type,
     principalRef: b.principal.ref,
@@ -144,9 +140,7 @@ export function toGroupRecord(g: ApiGroup): GroupRecord {
 
 export function toUserRecord(u: IdentityUserDto): UserRecord {
   const displayName =
-    u.displayName ||
-    [u.firstName, u.lastName].filter(Boolean).join(' ') ||
-    u.email;
+    u.displayName || [u.firstName, u.lastName].filter(Boolean).join(' ') || u.email;
   return {
     id: u.id,
     email: u.email,

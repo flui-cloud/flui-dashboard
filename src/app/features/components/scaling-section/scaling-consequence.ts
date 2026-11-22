@@ -16,10 +16,7 @@ export interface ConsequenceReading {
  * said in nodes; the spending ceiling is the safety net under them, required
  * before Flui may buy.
  */
-export function consequenceOf(
-  draft: WriteScalingGroup,
-  currentNodes?: number,
-): ConsequenceReading {
+export function consequenceOf(draft: WriteScalingGroup, currentNodes?: number): ConsequenceReading {
   const buys = draft.provision === 'automatic';
   const cap = draft.limits?.maxMonthlyCost ?? null;
 

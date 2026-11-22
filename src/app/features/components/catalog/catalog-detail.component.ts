@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, computed, effect, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnDestroy,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
@@ -136,7 +144,10 @@ import {
 
               <div class="flex flex-wrap items-center gap-3 pt-1">
                 @if (excludedInTrial()) {
-                  <p class="w-full text-sm font-medium text-foreground" data-testid="trial-excluded">
+                  <p
+                    class="w-full text-sm font-medium text-foreground"
+                    data-testid="trial-excluded"
+                  >
                     Not part of the trial. Available on your own Flui or the managed offer.
                   </p>
                 } @else {
@@ -222,7 +233,9 @@ import {
                     >
                       {{ inst.name }}
                     </a>
-                    <div class="mt-0.5 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                    <div
+                      class="mt-0.5 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground"
+                    >
                       <span class="font-mono">{{ inst.k8sNamespace }}</span>
                       @if (inst.catalogVersion) {
                         <span>· v{{ inst.catalogVersion }}</span>
@@ -323,7 +336,9 @@ import {
                             }
                           </div>
                           @if (prompt.description) {
-                            <p class="mt-1 text-xs text-muted-foreground">{{ prompt.description }}</p>
+                            <p class="mt-1 text-xs text-muted-foreground">
+                              {{ prompt.description }}
+                            </p>
                           }
                         </li>
                       }
@@ -367,16 +382,22 @@ import {
                     <h3 class="mt-3 text-base font-semibold text-foreground">
                       {{ app.name }} is not part of the trial
                     </h3>
-                    <p class="mt-1 max-w-md text-sm text-muted-foreground" style="margin-inline:auto;">
+                    <p
+                      class="mt-1 max-w-md text-sm text-muted-foreground"
+                      style="margin-inline:auto;"
+                    >
                       It is available on your own Flui or the managed offer.
                     </p>
                   } @else {
                     <h3 class="mt-3 text-base font-semibold text-foreground">
                       Ready to deploy {{ app.name }}?
                     </h3>
-                    <p class="mt-1 max-w-md text-sm text-muted-foreground" style="margin-inline:auto;">
-                      Flui's deploy wizard will pick up this catalog entry, pre-fill the configuration,
-                      and handle secrets, DNS and TLS for you.
+                    <p
+                      class="mt-1 max-w-md text-sm text-muted-foreground"
+                      style="margin-inline:auto;"
+                    >
+                      Flui's deploy wizard will pick up this catalog entry, pre-fill the
+                      configuration, and handle secrets, DNS and TLS for you.
                     </p>
                     <button
                       type="button"
@@ -438,17 +459,18 @@ export class CatalogDetailComponent implements OnDestroy {
     if (!r) return [];
     const entries: { key: keyof Ratings; label: string; value: number }[] = [];
     if (typeof r.wow === 'number') entries.push({ key: 'wow', label: 'Wow', value: r.wow });
-    if (typeof r.utility === 'number') entries.push({ key: 'utility', label: 'Utility', value: r.utility });
-    if (typeof r.euFit === 'number') entries.push({ key: 'euFit', label: 'EU fit', value: r.euFit });
+    if (typeof r.utility === 'number')
+      entries.push({ key: 'utility', label: 'Utility', value: r.utility });
+    if (typeof r.euFit === 'number')
+      entries.push({ key: 'euFit', label: 'EU fit', value: r.euFit });
     if (typeof r.community === 'number')
       entries.push({ key: 'community', label: 'Community', value: r.community });
     return entries;
   });
 
-  private readonly slug = toSignal(
-    this.route.paramMap.pipe(map((p) => p.get('slug'))),
-    { initialValue: this.route.snapshot.paramMap.get('slug') },
-  );
+  private readonly slug = toSignal(this.route.paramMap.pipe(map((p) => p.get('slug'))), {
+    initialValue: this.route.snapshot.paramMap.get('slug'),
+  });
 
   private readonly returnTo = toSignal(
     this.route.queryParamMap.pipe(map((p) => p.get('returnTo'))),
@@ -456,9 +478,7 @@ export class CatalogDetailComponent implements OnDestroy {
   );
 
   protected readonly backLink = computed(() => this.returnTo() || '/apps/catalog');
-  protected readonly backLabel = computed(() =>
-    this.returnTo() ? 'Back' : 'Back to catalog',
-  );
+  protected readonly backLabel = computed(() => (this.returnTo() ? 'Back' : 'Back to catalog'));
 
   private readonly currentSurface = inject(CurrentSurfaceService);
   private readonly surfaceRevision = new CatalogDetailSurfaceRevision();
@@ -557,8 +577,7 @@ export class CatalogDetailComponent implements OnDestroy {
   }
 
   tabClass(active: boolean): string {
-    const base =
-      '-mb-px border-b-2 px-4 py-2.5 text-sm font-medium transition';
+    const base = '-mb-px border-b-2 px-4 py-2.5 text-sm font-medium transition';
     return active
       ? `${base} border-primary text-primary`
       : `${base} border-transparent text-muted-foreground hover:text-foreground`;

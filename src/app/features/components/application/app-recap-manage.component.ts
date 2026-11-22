@@ -25,7 +25,9 @@ const DETAIL_TABS: { label: string; route: string }[] = [
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 class="font-semibold text-foreground">Manage application</h2>
-          <p class="text-xs text-muted-foreground">Metrics, logs, configuration, releases and backups in the full panel.</p>
+          <p class="text-xs text-muted-foreground">
+            Metrics, logs, configuration, releases and backups in the full panel.
+          </p>
         </div>
         <a
           [routerLink]="['/apps/applications', appId()]"
@@ -42,7 +44,8 @@ const DETAIL_TABS: { label: string; route: string }[] = [
             [routerLink]="['/apps/applications', appId(), t.route]"
             [queryParams]="{ returnTo: recapPath() }"
             class="rounded-md bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground"
-          >{{ t.label }}</a>
+            >{{ t.label }}</a
+          >
         }
       </div>
     </section>

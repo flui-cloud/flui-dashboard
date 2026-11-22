@@ -46,8 +46,7 @@ export class UserEventsService implements OnDestroy {
   private readonly connectedSignal = signal(false);
   readonly isConnected = this.connectedSignal.asReadonly();
 
-  private githubConnectedListeners: Array<(e: GithubConnectedEvent) => void> =
-    [];
+  private githubConnectedListeners: Array<(e: GithubConnectedEvent) => void> = [];
   private alertListeners: Array<(e: AlertTransitionEvent) => void> = [];
   private scalingListeners: Array<(e: ScalingEvent) => void> = [];
 
@@ -56,9 +55,7 @@ export class UserEventsService implements OnDestroy {
     if (this.socket) this.disconnect();
 
     let wsUrl = this.appConfig.wsUrl || globalThis.window.location.origin;
-    wsUrl = wsUrl
-      .replace(/^wss:\/\//, 'https://')
-      .replace(/^ws:\/\//, 'http://');
+    wsUrl = wsUrl.replace(/^wss:\/\//, 'https://').replace(/^ws:\/\//, 'http://');
     if (globalThis.window.location.protocol === 'https:') {
       wsUrl = wsUrl.replace(/^http:\/\//, 'https://');
     }
@@ -106,9 +103,7 @@ export class UserEventsService implements OnDestroy {
   onGithubConnected(cb: (e: GithubConnectedEvent) => void): () => void {
     this.githubConnectedListeners.push(cb);
     return () => {
-      this.githubConnectedListeners = this.githubConnectedListeners.filter(
-        (fn) => fn !== cb,
-      );
+      this.githubConnectedListeners = this.githubConnectedListeners.filter((fn) => fn !== cb);
     };
   }
 

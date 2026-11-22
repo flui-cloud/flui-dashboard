@@ -8,11 +8,7 @@ import {
   sortByAttention,
   sortRunsNewestFirst,
 } from './backup-activity';
-import {
-  backupHealthBadge,
-  runStatusBadge,
-  runStoredBadge,
-} from './backup-badges';
+import { backupHealthBadge, runStatusBadge, runStoredBadge } from './backup-badges';
 import { BackupHealthState, BackupRun } from './backup-run.models';
 
 const NOW = Date.parse('2026-09-30T12:00:00.000Z');
@@ -80,7 +76,15 @@ describe('backup activity formatting', () => {
 
 describe('backup health', () => {
   it('treats only missed and failed as needing attention', () => {
-    const states: BackupHealthState[] = ['ok', 'running', 'failed', 'missed', 'paused', 'never_run', 'on_demand'];
+    const states: BackupHealthState[] = [
+      'ok',
+      'running',
+      'failed',
+      'missed',
+      'paused',
+      'never_run',
+      'on_demand',
+    ];
     expect(states.filter(healthNeedsAttention)).toEqual(['failed', 'missed']);
     expect(healthNeedsAttention(null)).toBe(false);
   });
@@ -123,7 +127,9 @@ describe('backup runs', () => {
 
   it('keeps an unknown run status readable and neutral', () => {
     expect(runStatusBadge('completed').label).toBe('Completed');
-    expect(runStatusBadge('queued_again')).toEqual(jasmine.objectContaining({ label: 'Queued again' }));
+    expect(runStatusBadge('queued_again')).toEqual(
+      jasmine.objectContaining({ label: 'Queued again' }),
+    );
     expect(runStatusBadge('queued_again').classes).toContain('gray');
   });
 

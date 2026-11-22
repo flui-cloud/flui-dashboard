@@ -1,9 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  inject,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
@@ -49,9 +44,7 @@ import { SecretsEditorComponent } from './secrets-editor.component';
         >
           <ng-icon name="lucideArrowLeft" class="h-4 w-4" />
         </button>
-        <div
-          class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary"
-        >
+        <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
           <ng-icon name="lucideShield" class="h-5 w-5" />
         </div>
         <div class="min-w-0">
@@ -126,10 +119,9 @@ export class SecretsConsolePageComponent implements OnInit {
   protected readonly s = inject(SecretsConsoleStateService);
   private readonly route = inject(ActivatedRoute);
 
-  readonly applicationId = toSignal(
-    this.route.paramMap.pipe(map((p) => p.get('applicationId'))),
-    { initialValue: this.route.snapshot.paramMap.get('applicationId') },
-  );
+  readonly applicationId = toSignal(this.route.paramMap.pipe(map((p) => p.get('applicationId'))), {
+    initialValue: this.route.snapshot.paramMap.get('applicationId'),
+  });
 
   ngOnInit(): void {
     this.s.appId.set(this.applicationId() ?? null);

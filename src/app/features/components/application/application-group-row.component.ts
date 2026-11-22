@@ -45,17 +45,29 @@ import { ApplicationRowComponent } from './application-row.component';
         <span [class]="dotClass(group().status, '2.5')" class="flex-shrink-0"></span>
 
         <div class="min-w-0 flex-1">
-          <span class="text-sm font-medium text-gray-900 dark:text-white truncate flex items-center gap-2">
+          <span
+            class="text-sm font-medium text-gray-900 dark:text-white truncate flex items-center gap-2"
+          >
             {{ group().name }}
-            <span class="text-[10px] font-normal uppercase tracking-wide px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400">bundle</span>
+            <span
+              class="text-[10px] font-normal uppercase tracking-wide px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400"
+              >bundle</span
+            >
             @if (version()) {
-              <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400">v{{ version() }}</span>
+              <span
+                class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400"
+                >v{{ version() }}</span
+              >
             }
           </span>
           @if (host()) {
-            <span class="text-xs text-gray-400 dark:text-gray-500 font-mono truncate block">{{ host() }}</span>
+            <span class="text-xs text-gray-400 dark:text-gray-500 font-mono truncate block">{{
+              host()
+            }}</span>
           } @else {
-            <span class="text-xs text-gray-400 dark:text-gray-500 truncate block">{{ group().catalogSlug }}</span>
+            <span class="text-xs text-gray-400 dark:text-gray-500 truncate block">{{
+              group().catalogSlug
+            }}</span>
           }
         </div>
 
@@ -63,26 +75,43 @@ import { ApplicationRowComponent } from './application-row.component';
           {{ group().category === 'system' ? 'SYS' : 'USR' }}
         </span>
 
-        <span [class]="getStatusBadgeClass(group().status)" class="flex-shrink-0 hidden sm:inline-flex items-center gap-1">
-          <ng-icon [name]="getStatusIcon(group().status)" [class]="getStatusIconClass(group().status)" />
+        <span
+          [class]="getStatusBadgeClass(group().status)"
+          class="flex-shrink-0 hidden sm:inline-flex items-center gap-1"
+        >
+          <ng-icon
+            [name]="getStatusIcon(group().status)"
+            [class]="getStatusIconClass(group().status)"
+          />
           {{ statusLabel(group().status) }}
         </span>
 
-        <span class="flex-shrink-0 hidden lg:flex items-center gap-1 w-24" [title]="componentsTitle()">
+        <span
+          class="flex-shrink-0 hidden lg:flex items-center gap-1 w-24"
+          [title]="componentsTitle()"
+        >
           <ng-icon name="lucidePackage" class="h-3 w-3 text-gray-400" />
           @for (component of group().components; track component.id) {
             <span [class]="dotClass(component.status, '2')"></span>
           }
           @if (replicas() !== null) {
-            <span class="ml-1 text-xs text-gray-500 dark:text-gray-400 tabular-nums" data-testid="group-replicas">{{ replicas() }}x</span>
+            <span
+              class="ml-1 text-xs text-gray-500 dark:text-gray-400 tabular-nums"
+              data-testid="group-replicas"
+              >{{ replicas() }}x</span
+            >
           }
         </span>
 
-        <span class="text-xs text-gray-500 dark:text-gray-400 font-mono flex-shrink-0 hidden lg:block w-32 truncate">
+        <span
+          class="text-xs text-gray-500 dark:text-gray-400 font-mono flex-shrink-0 hidden lg:block w-32 truncate"
+        >
           {{ namespace() }}
         </span>
 
-        <span class="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0 hidden md:block w-20 text-right">
+        <span
+          class="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0 hidden md:block w-20 text-right"
+        >
           {{ formatDate(group().createdAt) }}
         </span>
 
@@ -142,12 +171,8 @@ export class ApplicationGroupRowComponent {
 
   /** Replicas asked for across every component, as the API's grouped listing counts them. */
   protected readonly replicas = computed(() => {
-    const counted = this.group().components.filter(
-      (c) => typeof c.replicas === 'number',
-    );
-    return counted.length
-      ? counted.reduce((sum, c) => sum + (c.replicas as number), 0)
-      : null;
+    const counted = this.group().components.filter((c) => typeof c.replicas === 'number');
+    return counted.length ? counted.reduce((sum, c) => sum + (c.replicas as number), 0) : null;
   });
 
   componentsTitle(): string {

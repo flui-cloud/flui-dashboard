@@ -44,11 +44,19 @@ export interface GithubSetupWizardSurfaceContext {
   appVersion?: string;
 }
 
-function textObservation(key: string, value: string | undefined | null, source: ObservationSource): Observation | null {
+function textObservation(
+  key: string,
+  value: string | undefined | null,
+  source: ObservationSource,
+): Observation | null {
   return value ? { key, presentedAs: { text: value }, source } : null;
 }
 
-function valueObservation(key: string, value: number | boolean, source: ObservationSource): Observation {
+function valueObservation(
+  key: string,
+  value: number | boolean,
+  source: ObservationSource,
+): Observation {
   return { key, presentedAs: { value }, source };
 }
 
@@ -56,8 +64,12 @@ function pageObservations(input: GithubSetupWizardSurfaceInput): Observation[] {
   const configured = input.configuredStatus;
   return [
     valueObservation('flui.github_setup.configured', !!configured?.configured, 'api'),
-    configured?.configured ? textObservation('flui.github_setup.existing_auth_method', configured.authMethod, 'api') : null,
-    configured?.appSlug ? textObservation('flui.github_setup.existing_app_slug', configured.appSlug, 'api') : null,
+    configured?.configured
+      ? textObservation('flui.github_setup.existing_auth_method', configured.authMethod, 'api')
+      : null,
+    configured?.appSlug
+      ? textObservation('flui.github_setup.existing_app_slug', configured.appSlug, 'api')
+      : null,
     textObservation('flui.github_setup.selected_method', input.selectedMethod, 'ui'),
     input.hasError ? valueObservation('flui.github_setup.has_error', true, 'ui') : null,
   ].filter((observation): observation is Observation => observation !== null);
@@ -74,7 +86,11 @@ function stepObservations(input: GithubSetupWizardSurfaceInput): Observation[] {
       valueObservation('flui.github_setup.pat_validated', v.valid, 'derived'),
       v.valid ? textObservation('flui.github_setup.pat_login', v.login, 'api') : null,
       v.missingScopes?.length
-        ? valueObservation('flui.github_setup.pat_missing_scopes_count', v.missingScopes.length, 'api')
+        ? valueObservation(
+            'flui.github_setup.pat_missing_scopes_count',
+            v.missingScopes.length,
+            'api',
+          )
         : null,
     ].filter((observation): observation is Observation => observation !== null);
   }
@@ -144,4 +160,3 @@ export class GithubSetupWizardSurfaceRevision {
     return this.counter;
   }
 }
-

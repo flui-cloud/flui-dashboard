@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  OnInit,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { fromEvent, merge } from 'rxjs';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -25,7 +32,9 @@ import { lucideWifiOff } from '@ng-icons/lucide';
 })
 export class NetworkStatusBannerComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
-  protected readonly offline = signal(typeof navigator !== 'undefined' && navigator.onLine === false);
+  protected readonly offline = signal(
+    typeof navigator !== 'undefined' && navigator.onLine === false,
+  );
 
   ngOnInit(): void {
     merge(fromEvent(globalThis.window, 'online'), fromEvent(globalThis.window, 'offline'))

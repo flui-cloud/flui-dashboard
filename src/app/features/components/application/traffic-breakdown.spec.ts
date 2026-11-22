@@ -27,13 +27,18 @@ describe('traffic breakdown', () => {
   });
 
   it('still fills the box when nothing had a request', () => {
-    const view = breakdownOf([code('200', 0), code('404', 0), code('500', 0), code('301', 0), code('503', 0)], false);
+    const view = breakdownOf(
+      [code('200', 0), code('404', 0), code('500', 0), code('301', 0), code('503', 0)],
+      false,
+    );
     expect(view.rows).toHaveSize(4);
     expect(view.hidden).toBe(1);
   });
 
   it('reads an unknown rate as no requests', () => {
-    expect(breakdownOf([code('200', 1), { code: '500', requests_per_second: null }], false).rows).toHaveSize(1);
+    expect(
+      breakdownOf([code('200', 1), { code: '500', requests_per_second: null }], false).rows,
+    ).toHaveSize(1);
   });
 
   it('shows everything, busiest first, when asked', () => {

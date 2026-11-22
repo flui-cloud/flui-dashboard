@@ -45,8 +45,7 @@ const ALL_PROVIDERS: ReplicaProvider[] = ['hetzner', 'scaleway'];
 const STATUS_BADGE: Record<ReplicaStatus, string> = {
   active:
     'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400',
-  degraded:
-    'border-destructive/30 bg-destructive/10 text-destructive',
+  degraded: 'border-destructive/30 bg-destructive/10 text-destructive',
   pending:
     'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-400',
   populating:
@@ -159,13 +158,17 @@ const PROVIDER_LABEL: Record<ReplicaProvider, string> = {
             </button>
           </div>
 
-          <div class="space-y-1.5 rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5 dark:border-amber-800 dark:bg-amber-900/20">
-            <p class="text-xs font-medium text-amber-800 dark:text-amber-300">Don't see your domain?</p>
+          <div
+            class="space-y-1.5 rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5 dark:border-amber-800 dark:bg-amber-900/20"
+          >
+            <p class="text-xs font-medium text-amber-800 dark:text-amber-300">
+              Don't see your domain?
+            </p>
             <p class="text-xs text-amber-700 dark:text-amber-400">
               The zone is discovered directly in your
               <span class="font-semibold">{{ secondaryLabel() }}</span> account —
-              <span class="font-mono">{{ zone().zoneName }}</span> must already exist there.
-              Once registered, update the domain's NS records at your registrar to include
+              <span class="font-mono">{{ zone().zoneName }}</span> must already exist there. Once
+              registered, update the domain's NS records at your registrar to include
               <span class="font-semibold">{{ secondaryLabel() }}</span>'s nameservers.
             </p>
             @if (secondaryDelegation(); as delegation) {
@@ -186,7 +189,9 @@ const PROVIDER_LABEL: Record<ReplicaProvider, string> = {
 
       <!-- Registrar hint -->
       @if (hint()) {
-        <div class="flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
+        <div
+          class="flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300"
+        >
           <ng-icon name="lucideInfo" class="mt-0.5 h-3.5 w-3.5 shrink-0" />
           <span>{{ hint() }}</span>
         </div>
@@ -194,7 +199,9 @@ const PROVIDER_LABEL: Record<ReplicaProvider, string> = {
 
       <!-- Replica rows -->
       @if (replicas().length === 0) {
-        <p class="rounded-md border border-dashed border-border px-3 py-4 text-center text-xs text-muted-foreground">
+        <p
+          class="rounded-md border border-dashed border-border px-3 py-4 text-center text-xs text-muted-foreground"
+        >
           No redundancy configured — this zone is published on {{ primaryLabel() }} only.
         </p>
       } @else {
@@ -214,7 +221,9 @@ const PROVIDER_LABEL: Record<ReplicaProvider, string> = {
                     {{ r.status }}
                   </span>
                   @if (r.providerZoneId) {
-                    <span class="font-mono text-xs text-muted-foreground">{{ r.providerZoneId }}</span>
+                    <span class="font-mono text-xs text-muted-foreground">{{
+                      r.providerZoneId
+                    }}</span>
                   }
                 </div>
 
@@ -226,7 +235,11 @@ const PROVIDER_LABEL: Record<ReplicaProvider, string> = {
                       [disabled]="busyId() === r.id"
                       class="inline-flex items-center gap-1 rounded-md bg-primary px-2.5 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                     >
-                      <ng-icon [name]="busyId() === r.id ? 'lucideLoader' : 'lucidePlay'" class="h-3.5 w-3.5" [class.animate-spin]="busyId() === r.id" />
+                      <ng-icon
+                        [name]="busyId() === r.id ? 'lucideLoader' : 'lucidePlay'"
+                        class="h-3.5 w-3.5"
+                        [class.animate-spin]="busyId() === r.id"
+                      />
                       Populate
                     </button>
                   }
@@ -275,7 +288,9 @@ const PROVIDER_LABEL: Record<ReplicaProvider, string> = {
                 </div>
               </div>
 
-              <div class="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+              <div
+                class="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground"
+              >
                 <span>Last reconciled: {{ formatDate(r.lastReconciledAt) }}</span>
                 @if (reports()[r.id]; as report) {
                   <button
@@ -283,7 +298,12 @@ const PROVIDER_LABEL: Record<ReplicaProvider, string> = {
                     (click)="toggleReport(r.id)"
                     class="inline-flex items-center gap-1 font-medium text-foreground hover:underline"
                   >
-                    <ng-icon [name]="expandedReport() === r.id ? 'lucideChevronDown' : 'lucideChevronRight'" class="h-3 w-3" />
+                    <ng-icon
+                      [name]="
+                        expandedReport() === r.id ? 'lucideChevronDown' : 'lucideChevronRight'
+                      "
+                      class="h-3 w-3"
+                    />
                     {{ reportSummary(report) }}
                   </button>
                 }
@@ -299,10 +319,24 @@ const PROVIDER_LABEL: Record<ReplicaProvider, string> = {
               @if (expandedReport() === r.id && reports()[r.id]; as report) {
                 <div class="mt-2 space-y-1 rounded-md border border-border bg-muted/40 p-2 text-xs">
                   <div class="flex flex-wrap gap-x-4 gap-y-0.5">
-                    <span><span class="font-medium text-foreground">{{ report.created }}</span> created</span>
-                    <span><span class="font-medium text-foreground">{{ report.updated }}</span> updated</span>
-                    <span><span class="font-medium text-foreground">{{ report.orphansDeleted }}</span> removed</span>
-                    <span><span class="font-medium text-foreground">{{ report.mismatches.length }}</span> mismatches</span>
+                    <span
+                      ><span class="font-medium text-foreground">{{ report.created }}</span>
+                      created</span
+                    >
+                    <span
+                      ><span class="font-medium text-foreground">{{ report.updated }}</span>
+                      updated</span
+                    >
+                    <span
+                      ><span class="font-medium text-foreground">{{ report.orphansDeleted }}</span>
+                      removed</span
+                    >
+                    <span
+                      ><span class="font-medium text-foreground">{{
+                        report.mismatches.length
+                      }}</span>
+                      mismatches</span
+                    >
                   </div>
                   @for (m of report.mismatches; track m.name + m.type) {
                     <p class="font-mono text-muted-foreground">
@@ -483,11 +517,19 @@ export class ZoneReplicasComponent {
   }
 
   async disable(r: DnsReplica): Promise<void> {
-    await this.runSimple(r, () => this.service.disableReplica(this.zone().id, r.id), 'Replica disabled');
+    await this.runSimple(
+      r,
+      () => this.service.disableReplica(this.zone().id, r.id),
+      'Replica disabled',
+    );
   }
 
   async enable(r: DnsReplica): Promise<void> {
-    await this.runSimple(r, () => this.service.enableReplica(this.zone().id, r.id), 'Replica enabled');
+    await this.runSimple(
+      r,
+      () => this.service.enableReplica(this.zone().id, r.id),
+      'Replica enabled',
+    );
   }
 
   requestRemove(r: DnsReplica): void {

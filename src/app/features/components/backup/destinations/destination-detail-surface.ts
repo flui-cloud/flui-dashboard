@@ -27,7 +27,11 @@ export interface DestinationDetailSurfaceContext {
   appVersion?: string;
 }
 
-function textObservation(key: string, value: string | undefined | null, source: ObservationSource): Observation | null {
+function textObservation(
+  key: string,
+  value: string | undefined | null,
+  source: ObservationSource,
+): Observation | null {
   return value ? { key, presentedAs: { text: value }, source } : null;
 }
 
@@ -46,13 +50,17 @@ function pageObservations(d: BackupDestination): Observation[] {
     textObservation('flui.backup.destination.path_prefix', d.pathPrefix, 'api'),
     textObservation('flui.backup.destination.encryption_mode', d.encryptionMode, 'api'),
     textObservation('flui.backup.destination.usage', formatBytes(d.usageBytes), 'derived'),
-    cost != null ? textObservation('flui.backup.destination.estimated_cost_eur', cost.toFixed(2), 'derived') : null,
+    cost != null
+      ? textObservation('flui.backup.destination.estimated_cost_eur', cost.toFixed(2), 'derived')
+      : null,
     textObservation('flui.backup.destination.last_health_check_at', d.lastHealthCheckAt, 'api'),
     // `lastHealthError` is shown on screen, but is raw backend/network free text — same
     // exclusion as application-surface.ts's `reconciliationError` (§ "Errori già fatti" is
     // silent on this specific field, but the redaction checklist of §7 is not: raw
     // error/stack-trace text never enters the snapshot). Only whether one exists is safe.
-    d.lastHealthError ? valueObservation('flui.backup.destination.has_health_error', true, 'api') : null,
+    d.lastHealthError
+      ? valueObservation('flui.backup.destination.has_health_error', true, 'api')
+      : null,
   ].filter((observation): observation is Observation => observation !== null);
 }
 

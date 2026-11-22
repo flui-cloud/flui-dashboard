@@ -1,5 +1,11 @@
 import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCheck, lucideAlertCircle, lucideShield } from '@ng-icons/lucide';
 import { AppConfigService } from '../../../core/services/app-config.service';
@@ -47,7 +53,6 @@ function passwordMatchValidator(ctrl: AbstractControl): ValidationErrors | null 
       </div>
       <div hlmCardContent>
         <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4">
-
           <div class="space-y-1.5">
             <label hlmLabel for="currentPassword">Current password</label>
             <input
@@ -77,8 +82,11 @@ function passwordMatchValidator(ctrl: AbstractControl): ValidationErrors | null 
             />
             @if (isInvalid('newPassword')) {
               <p class="text-xs text-destructive">
-                @if (form.get('newPassword')?.hasError('required')) { New password is required. }
-                @else if (form.get('newPassword')?.hasError('minlength')) { Minimum 8 characters. }
+                @if (form.get('newPassword')?.hasError('required')) {
+                  New password is required.
+                } @else if (form.get('newPassword')?.hasError('minlength')) {
+                  Minimum 8 characters.
+                }
               </p>
             }
           </div>
@@ -102,14 +110,18 @@ function passwordMatchValidator(ctrl: AbstractControl): ValidationErrors | null 
           </div>
 
           @if (error()) {
-            <div class="flex items-center gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            <div
+              class="flex items-center gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+            >
               <ng-icon name="lucideAlertCircle" class="h-4 w-4 shrink-0" />
               {{ error() }}
             </div>
           }
 
           @if (success()) {
-            <div class="flex items-center gap-2 rounded-md bg-green-500/10 px-3 py-2 text-sm text-green-600 dark:text-green-400">
+            <div
+              class="flex items-center gap-2 rounded-md bg-green-500/10 px-3 py-2 text-sm text-green-600 dark:text-green-400"
+            >
               <ng-icon name="lucideCheck" class="h-4 w-4 shrink-0" />
               Password changed successfully.
             </div>
@@ -122,7 +134,6 @@ function passwordMatchValidator(ctrl: AbstractControl): ValidationErrors | null 
           >
             {{ saving() ? 'Updating...' : 'Update password' }}
           </button>
-
         </form>
       </div>
     </div>

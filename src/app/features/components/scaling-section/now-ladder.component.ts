@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  input,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -26,10 +19,7 @@ import { ScalingGroupStore } from './scaling-group.store';
 import { firstValueFrom } from 'rxjs';
 import { ScalingApiService } from '../../service/scaling-api.service';
 import { ToastService } from '../../../shared/services/toast.service';
-import {
-  SectionFailureComponent,
-  SectionSkeletonComponent,
-} from './section-states.component';
+import { SectionFailureComponent, SectionSkeletonComponent } from './section-states.component';
 
 const EMPTY_PREVIEW: ScalingPreview = {
   pending: null,
@@ -79,8 +69,8 @@ const EMPTY_PREVIEW: ScalingPreview = {
         >
           <span class="min-w-0 flex-1 text-[13px] leading-relaxed text-sub">
             The fleet is above its target: this manual group would remove
-            <span class="font-medium text-foreground">{{ node }}</span>. Its work
-            moves to the nodes that stay.
+            <span class="font-medium text-foreground">{{ node }}</span>. Its work moves to the nodes
+            that stay.
           </span>
           @if (!confirmRemove()) {
             <button
@@ -92,7 +82,10 @@ const EMPTY_PREVIEW: ScalingPreview = {
               Remove {{ node }}
             </button>
           } @else {
-            <span class="inline-flex flex-wrap items-center gap-2 text-[12px]" data-testid="ladder-remove-confirm">
+            <span
+              class="inline-flex flex-wrap items-center gap-2 text-[12px]"
+              data-testid="ladder-remove-confirm"
+            >
               Drain and delete {{ node }}? The group stays manual.
               <button
                 type="button"
@@ -103,7 +96,14 @@ const EMPTY_PREVIEW: ScalingPreview = {
               >
                 {{ removing() ? 'Removing…' : 'Remove' }}
               </button>
-              <button type="button" class="text-muted-foreground" [disabled]="removing()" (click)="confirmRemove.set(false)">Cancel</button>
+              <button
+                type="button"
+                class="text-muted-foreground"
+                [disabled]="removing()"
+                (click)="confirmRemove.set(false)"
+              >
+                Cancel
+              </button>
             </span>
           }
         </div>
@@ -119,11 +119,7 @@ const EMPTY_PREVIEW: ScalingPreview = {
           testid="ladder"
         />
       } @else if (failed(); as message) {
-        <app-section-failure
-          [message]="message"
-          testid="ladder"
-          (retry)="store.reload()"
-        />
+        <app-section-failure [message]="message" testid="ladder" (retry)="store.reload()" />
       } @else if (unsearchable()) {
         <div
           class="card-surface flex flex-wrap items-center gap-x-4 gap-y-3 p-4"
@@ -136,8 +132,8 @@ const EMPTY_PREVIEW: ScalingPreview = {
             Not set up
           </span>
           <span class="min-w-0 flex-1 text-[13px] leading-relaxed text-sub">
-            No machines are chosen, so there is nothing Flui may add and nothing
-            for it to name when an app has nowhere to run.
+            No machines are chosen, so there is nothing Flui may add and nothing for it to name when
+            an app has nowhere to run.
           </span>
           <a
             routerLink="../group"
@@ -148,9 +144,7 @@ const EMPTY_PREVIEW: ScalingPreview = {
           </a>
         </div>
       } @else if (rows().length) {
-        <div
-          class="card-surface flex flex-wrap items-center gap-x-4 gap-y-3 p-4"
-        >
+        <div class="card-surface flex flex-wrap items-center gap-x-4 gap-y-3 p-4">
           <span
             class="inline-flex items-center gap-1.5 text-[13px] font-medium"
             [class]="headline().tone"
@@ -178,8 +172,12 @@ const EMPTY_PREVIEW: ScalingPreview = {
                 Add this {{ machine.shape }}
               </button>
             } @else {
-              <span class="inline-flex flex-wrap items-center gap-2 text-[12px]" data-testid="ladder-buy-confirm">
-                Add one {{ machine.shape }} in {{ machine.region }}{{ machine.price }}? The group stays manual.
+              <span
+                class="inline-flex flex-wrap items-center gap-2 text-[12px]"
+                data-testid="ladder-buy-confirm"
+              >
+                Add one {{ machine.shape }} in {{ machine.region }}{{ machine.price }}? The group
+                stays manual.
                 <button
                   type="button"
                   class="rounded-md bg-primary px-2.5 py-1 font-medium text-primary-foreground disabled:opacity-50"
@@ -189,7 +187,14 @@ const EMPTY_PREVIEW: ScalingPreview = {
                 >
                   {{ buying() ? 'Adding…' : 'Add' }}
                 </button>
-                <button type="button" class="text-muted-foreground" [disabled]="buying()" (click)="confirmBuy.set(false)">Cancel</button>
+                <button
+                  type="button"
+                  class="text-muted-foreground"
+                  [disabled]="buying()"
+                  (click)="confirmBuy.set(false)"
+                >
+                  Cancel
+                </button>
               </span>
             }
           }

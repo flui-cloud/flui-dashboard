@@ -42,13 +42,18 @@ export interface PresentedContent {
 }
 
 /** The ref of a focused element, by the same grammar the page it opens uses. */
-export function topologyEntityRef(focus: TopologyFocus, t: TopologyResponseDto): string | undefined {
+export function topologyEntityRef(
+  focus: TopologyFocus,
+  t: TopologyResponseDto,
+): string | undefined {
   switch (focus.type) {
     case 'cluster':
       return clusterEntityRef(focus.id);
     case 'server': {
       const s = t.servers.find((x) => x.id === focus.id);
-      return s?.providerResourceId ? instanceEntityRef(s.provider, s.providerResourceId) : entityRef('server', focus.id);
+      return s?.providerResourceId
+        ? instanceEntityRef(s.provider, s.providerResourceId)
+        : entityRef('server', focus.id);
     }
     case 'app':
       return applicationEntityRef(focus.id);
@@ -127,7 +132,11 @@ export function presentedContent(input: TopologySurfaceInput): PresentedContent 
       parentId: PAGE_ID,
       ...(ref ? { entities: [{ ref, role: 'selected', label: labelOf(input.focus, t) }] } : {}),
     });
-    attention.splice(0, 1, { scopeId: FOCUS_ID, ...(ref ? { entityRef: ref } : {}), reason: 'selection' });
+    attention.splice(0, 1, {
+      scopeId: FOCUS_ID,
+      ...(ref ? { entityRef: ref } : {}),
+      reason: 'selection',
+    });
   }
 
   return { scopes, attention };

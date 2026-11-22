@@ -1,13 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import {
-  HttpClient,
-  provideHttpClient,
-  withInterceptors,
-} from '@angular/common/http';
-import {
-  HttpTestingController,
-  provideHttpClientTesting,
-} from '@angular/common/http/testing';
+import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { MaskModeService } from '../services/mask-mode.service';
 import { maskModeInterceptor } from './mask-mode.interceptor';
 

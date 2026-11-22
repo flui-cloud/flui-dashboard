@@ -52,8 +52,14 @@ function rowOf(zone: DnsZoneResponseDto, input: DnsZonesListSurfaceInput): Surfa
       textObservation('flui.dns_zone.provider', zone.dnsProvider, 'api'),
       textObservation('flui.dns_zone.description', zone.description, 'api'),
       valueObservation('flui.dns_zone.provider_count', input.providerCountOf(zone.id), 'derived'),
-      ttl !== undefined ? valueObservation('flui.dns_zone.ttl_seconds', ttl, 'api', 'seconds') : null,
-      valueObservation('flui.dns_zone.assigned_cluster_count', input.assignedClusterCountOf(zone.id), 'api'),
+      ttl !== undefined
+        ? valueObservation('flui.dns_zone.ttl_seconds', ttl, 'api', 'seconds')
+        : null,
+      valueObservation(
+        'flui.dns_zone.assigned_cluster_count',
+        input.assignedClusterCountOf(zone.id),
+        'api',
+      ),
       textObservation('flui.dns_zone.created_at', zone.createdAt, 'api'),
     ].filter((o): o is Observation => o !== null),
   };

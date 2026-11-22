@@ -27,7 +27,15 @@ const status = (over: Partial<BackupStatus['summary']> = {}, last?: string): Bac
 
 const coverage = (holdingData: number, protectedApps: number): FleetCoverage => ({
   generatedAt: '',
-  summary: { applications: 6, holdingData, protected: protectedApps + 2, pending: 0, toVerify: 0, unprotected: holdingData - protectedApps, alarms: 0 },
+  summary: {
+    applications: 6,
+    holdingData,
+    protected: protectedApps + 2,
+    pending: 0,
+    toVerify: 0,
+    unprotected: holdingData - protectedApps,
+    alarms: 0,
+  },
   applications: [
     ...Array.from({ length: holdingData }, (_, i) => ({
       holdsData: true,
@@ -44,7 +52,8 @@ describe('DashboardBackupsComponent', () => {
   const coverageData = signal<FleetCoverage | null>(null);
   const coverageState = signal<FleetReadState>('idle');
 
-  const q = (id: string): HTMLElement | null => fixture.nativeElement.querySelector(`[data-testid="${id}"]`);
+  const q = (id: string): HTMLElement | null =>
+    fixture.nativeElement.querySelector(`[data-testid="${id}"]`);
 
   beforeEach(async () => {
     backupStatus.set(status({}, '2026-09-27T03:00:00.000Z'));
@@ -56,7 +65,11 @@ describe('DashboardBackupsComponent', () => {
         provideRouter([]),
         {
           provide: BackupService,
-          useValue: { status: backupStatus, statusLoading: signal(false), loadStatus: () => Promise.resolve(null) },
+          useValue: {
+            status: backupStatus,
+            statusLoading: signal(false),
+            loadStatus: () => Promise.resolve(null),
+          },
         },
         { provide: FleetService, useValue: { coverage: coverageData, coverageState } },
       ],
@@ -91,7 +104,9 @@ describe('DashboardBackupsComponent', () => {
   });
 
   it('says there are no backups yet and offers to set up a policy', () => {
-    backupStatus.set(status({ activePolicies: 0, totalArtifactsLast30d: 0, clustersWithBackups: 0 }));
+    backupStatus.set(
+      status({ activePolicies: 0, totalArtifactsLast30d: 0, clustersWithBackups: 0 }),
+    );
     fixture.detectChanges();
     expect(q('backups-empty')!.textContent).toContain('No backups yet.');
     expect(q('backups-card')!.textContent).toContain('Set up a backup policy');

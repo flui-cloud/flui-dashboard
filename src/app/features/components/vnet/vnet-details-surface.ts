@@ -80,7 +80,10 @@ export function presentedContent(input: VNetDetailSurfaceInput): PresentedConten
     seenRefs.add(instRef);
     attachedEntities.push({ ref: instRef, label: i.displayName || i.name, role: 'related' });
   }
-  const entities: EntityReference[] = [{ ref, label: vnet.name, role: 'primary' }, ...attachedEntities];
+  const entities: EntityReference[] = [
+    { ref, label: vnet.name, role: 'primary' },
+    ...attachedEntities,
+  ];
 
   const pageScope: SemanticScopeSnapshot = {
     id: pageId,

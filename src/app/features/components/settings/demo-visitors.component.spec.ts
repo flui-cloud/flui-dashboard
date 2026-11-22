@@ -62,7 +62,9 @@ describe('DemoVisitorsComponent', () => {
   });
 
   it('stays hidden when the API fails', () => {
-    const el = build(jasmine.createSpy('visitorStats').and.returnValue(throwError(() => new Error('x'))));
+    const el = build(
+      jasmine.createSpy('visitorStats').and.returnValue(throwError(() => new Error('x'))),
+    );
     expect(el.querySelector('[data-testid="demo-visitors"]')).toBeNull();
   });
 

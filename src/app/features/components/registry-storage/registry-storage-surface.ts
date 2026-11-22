@@ -75,7 +75,10 @@ function backendLabel(status: RegistryStorageStatus): string {
   return status.backend === 's3' ? 'bucket' : 'volume';
 }
 
-function pageScopeOf(input: RegistryStorageSurfaceInput, status: RegistryStorageStatus | null): SemanticScopeSnapshot {
+function pageScopeOf(
+  input: RegistryStorageSurfaceInput,
+  status: RegistryStorageStatus | null,
+): SemanticScopeSnapshot {
   const keepsOwnImages = !!status?.usage;
   return {
     id: PAGE_ID,
@@ -136,7 +139,12 @@ function trafficObservations(t: RegistryTraffic | null): (Observation | null)[] 
     valueObservation('flui.registry.traffic.refused', t.outcomes.refused, 'api'),
     valueObservation('flui.registry.traffic.failed', t.outcomes.failed, 'api'),
     t.readFromBucketBytes !== null
-      ? valueObservation('flui.registry.traffic.read_from_bucket', t.readFromBucketBytes, 'api', 'B')
+      ? valueObservation(
+          'flui.registry.traffic.read_from_bucket',
+          t.readFromBucketBytes,
+          'api',
+          'B',
+        )
       : null,
   ];
 }
@@ -178,7 +186,11 @@ function applicationScopes(usage: RegistryUsage): SemanticScopeSnapshot[] {
 function connectedBucketObservations(status: RegistryStorageStatus): (Observation | null)[] {
   if (!status.connected) return [];
   return [
-    textObservation('flui.registry.bucket_provider', registryProviderLabel(status.provider), 'derived'),
+    textObservation(
+      'flui.registry.bucket_provider',
+      registryProviderLabel(status.provider),
+      'derived',
+    ),
     textObservation('flui.registry.bucket_region', status.region, 'api'),
     boolObservation('flui.registry.bucket_in_use', status.backend === 's3', 'derived'),
   ];
@@ -188,7 +200,10 @@ function bucketErrorCode(input: RegistryStorageSurfaceInput): string {
   return input.hasConnectError ? 'flui.registry.connect_failed' : 'flui.registry.remove_failed';
 }
 
-function bucketScope(status: RegistryStorageStatus, input: RegistryStorageSurfaceInput): SemanticScopeSnapshot {
+function bucketScope(
+  status: RegistryStorageStatus,
+  input: RegistryStorageSurfaceInput,
+): SemanticScopeSnapshot {
   return {
     id: BUCKET_ID,
     parentId: PAGE_ID,
@@ -201,7 +216,11 @@ function bucketScope(status: RegistryStorageStatus, input: RegistryStorageSurfac
       input.connecting ? textObservation('flui.registry.connecting', input.connecting, 'ui') : null,
       valueObservation('flui.registry.replaced_buckets', input.replacedBuckets, 'api'),
       input.replacedBuckets > 0
-        ? valueObservation('flui.registry.replaced_buckets_created_by_flui', input.replacedCreatedByFlui, 'api')
+        ? valueObservation(
+            'flui.registry.replaced_buckets_created_by_flui',
+            input.replacedCreatedByFlui,
+            'api',
+          )
         : null,
       input.removing ? boolObservation('flui.registry.removing_bucket', true, 'ui') : null,
     ]),
@@ -234,9 +253,7 @@ function overlayScope(
       parentId: PAGE_ID,
       kind: 'overlay',
       label: 'Replace the bucket',
-      observations: [
-        textObservation('flui.registry.replace_with', input.confirmReplace, 'ui')!,
-      ],
+      observations: [textObservation('flui.registry.replace_with', input.confirmReplace, 'ui')!],
     };
   }
   if (input.confirmRemove && status?.usage) {
@@ -244,9 +261,15 @@ function overlayScope(
       id: REMOVE_CONFIRM_ID,
       parentId: PAGE_ID,
       kind: 'overlay',
-      label: input.confirmRemove.createdByFlui ? 'Delete a replaced bucket' : 'Forget a replaced bucket',
+      label: input.confirmRemove.createdByFlui
+        ? 'Delete a replaced bucket'
+        : 'Forget a replaced bucket',
       observations: [
-        boolObservation('flui.registry.remove_created_by_flui', input.confirmRemove.createdByFlui, 'api'),
+        boolObservation(
+          'flui.registry.remove_created_by_flui',
+          input.confirmRemove.createdByFlui,
+          'api',
+        ),
       ],
     };
   }

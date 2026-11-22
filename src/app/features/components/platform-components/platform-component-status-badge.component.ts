@@ -1,10 +1,6 @@
 import { Component, input, ChangeDetectionStrategy } from '@angular/core';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideCircleCheck,
-  lucideCircleAlert,
-  lucideCircleMinus,
-} from '@ng-icons/lucide';
+import { lucideCircleCheck, lucideCircleAlert, lucideCircleMinus } from '@ng-icons/lucide';
 
 @Component({
   selector: 'app-platform-component-status-badge',
@@ -13,7 +9,10 @@ import {
   providers: [provideIcons({ lucideCircleCheck, lucideCircleAlert, lucideCircleMinus })],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium" [class]="badgeClass()">
+    <span
+      class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium"
+      [class]="badgeClass()"
+    >
       <ng-icon [name]="icon()" class="h-3 w-3" />
       {{ label() }}
     </span>
@@ -24,18 +23,25 @@ export class PlatformComponentStatusBadgeComponent {
 
   label() {
     switch (this.status()) {
-      case 'healthy': return 'Healthy';
-      case 'degraded': return 'Degraded';
-      case 'missing': return 'Missing';
-      default: return this.status();
+      case 'healthy':
+        return 'Healthy';
+      case 'degraded':
+        return 'Degraded';
+      case 'missing':
+        return 'Missing';
+      default:
+        return this.status();
     }
   }
 
   icon() {
     switch (this.status()) {
-      case 'healthy': return 'lucideCircleCheck';
-      case 'degraded': return 'lucideCircleAlert';
-      default: return 'lucideCircleMinus';
+      case 'healthy':
+        return 'lucideCircleCheck';
+      case 'degraded':
+        return 'lucideCircleAlert';
+      default:
+        return 'lucideCircleMinus';
     }
   }
 

@@ -1,10 +1,4 @@
-import {
-  Component,
-  OnInit,
-  inject,
-  signal,
-  ChangeDetectionStrategy,
-} from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -34,8 +28,8 @@ import { CreateRestoreJobDto } from '../../../../core/api/model/createRestoreJob
       @if (databaseMode()) {
         <section class="space-y-3">
           <p class="text-sm text-muted-foreground">
-            Restores this database backup into a new database. Nothing existing
-            is touched, and it works even if the original database was deleted.
+            Restores this database backup into a new database. Nothing existing is touched, and it
+            works even if the original database was deleted.
           </p>
           <label class="block">
             <span class="text-sm font-medium">Backup</span>
@@ -82,15 +76,17 @@ import { CreateRestoreJobDto } from '../../../../core/api/model/createRestoreJob
             <span class="font-medium">A database:</span>
             <span class="text-muted-foreground">
               open one of its backup runs under
-              <a routerLink="/management/backup/jobs" class="text-primary hover:underline">Backup jobs</a>
+              <a routerLink="/management/backup/jobs" class="text-primary hover:underline"
+                >Backup jobs</a
+              >
               and choose "Restore into a new database".
             </span>
           </p>
           <p>
             <span class="font-medium">A volume:</span>
             <span class="text-muted-foreground">
-              open the app, then Backup → Volume backups. Restore the whole
-              backup or only the files you need.
+              open the app, then Backup → Volume backups. Restore the whole backup or only the files
+              you need.
             </span>
           </p>
         </section>
@@ -105,16 +101,16 @@ import { CreateRestoreJobDto } from '../../../../core/api/model/createRestoreJob
       }
 
       @if (databaseMode()) {
-      <div class="flex justify-end">
-        <button
-          type="button"
-          class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-          [disabled]="!form.artifactId || !dbName.trim() || submitting()"
-          (click)="onSubmitDatabase()"
-        >
-          {{ submitting() ? 'Starting…' : 'Start restore' }}
-        </button>
-      </div>
+        <div class="flex justify-end">
+          <button
+            type="button"
+            class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            [disabled]="!form.artifactId || !dbName.trim() || submitting()"
+            (click)="onSubmitDatabase()"
+          >
+            {{ submitting() ? 'Starting…' : 'Start restore' }}
+          </button>
+        </div>
       }
     </div>
   `,
@@ -143,32 +139,21 @@ export class RestoreWizardComponent implements OnInit {
 
   ngOnInit(): void {
     const query = this.route.snapshot.queryParamMap;
-    if (query.get('artifact'))
-      this.form.artifactId = query.get('artifact') ?? '';
+    if (query.get('artifact')) this.form.artifactId = query.get('artifact') ?? '';
     this.databaseMode.set(query.get('kind') === 'database');
     void (async () => {
-      await Promise.all([
-        this.backup.loadDestinations(),
-        this.clusterService.loadClusters(),
-      ]);
+      await Promise.all([this.backup.loadDestinations(), this.clusterService.loadClusters()]);
     })();
   }
 
   async onSubmitDatabase(): Promise<void> {
     this.submitting.set(true);
     this.submitError.set(null);
-    const result = await this.backup.restoreDatabase(
-      this.form.artifactId.trim(),
-      {
-        name: this.dbName.trim(),
-        ...(this.form.targetClusterId
-          ? { clusterId: this.form.targetClusterId }
-          : {}),
-        ...(this.dbAt
-          ? { recoveryTargetTime: new Date(this.dbAt).toISOString() }
-          : {}),
-      },
-    );
+    const result = await this.backup.restoreDatabase(this.form.artifactId.trim(), {
+      name: this.dbName.trim(),
+      ...(this.form.targetClusterId ? { clusterId: this.form.targetClusterId } : {}),
+      ...(this.dbAt ? { recoveryTargetTime: new Date(this.dbAt).toISOString() } : {}),
+    });
     this.submitting.set(false);
     if (!result) {
       this.submitError.set(this.backup.error() ?? 'Restore failed to start');

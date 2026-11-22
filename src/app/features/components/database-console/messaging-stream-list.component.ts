@@ -1,10 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  inject,
-  signal,
-  viewChild
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -39,9 +33,7 @@ import { bytes } from './messaging-format';
     }),
   ],
   template: `
-    <div
-      class="mb-2 flex items-center gap-2 text-sm font-medium text-foreground"
-    >
+    <div class="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
       <ng-icon name="lucideLayers" class="h-4 w-4 text-muted-foreground" />
       {{ s.nouns().collection }}
       <button
@@ -49,10 +41,7 @@ import { bytes } from './messaging-format';
         (click)="showCreate.set(!showCreate())"
         class="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-2.5 text-xs font-normal text-muted-foreground hover:bg-muted"
       >
-        <ng-icon
-          [name]="showCreate() ? 'lucideX' : 'lucidePlus'"
-          class="h-3.5 w-3.5"
-        />
+        <ng-icon [name]="showCreate() ? 'lucideX' : 'lucidePlus'" class="h-3.5 w-3.5" />
         {{ showCreate() ? 'Cancel' : 'New ' + s.nouns().item }}
       </button>
     </div>
@@ -110,8 +99,8 @@ import { bytes } from './messaging-format';
       <div
         class="rounded-md border border-dashed border-border p-10 text-center text-sm text-muted-foreground"
       >
-        No {{ s.nouns().collection.toLowerCase() }} yet. Create one above so
-        producers can publish to its {{ s.nouns().routing.toLowerCase() }}.
+        No {{ s.nouns().collection.toLowerCase() }} yet. Create one above so producers can publish
+        to its {{ s.nouns().routing.toLowerCase() }}.
       </div>
     } @else {
       <div class="overflow-hidden rounded-md border border-border">
@@ -135,11 +124,7 @@ import { bytes } from './messaging-format';
               >
                 <td class="px-2 py-2 text-muted-foreground">
                   <ng-icon
-                    [name]="
-                      s.expanded() === st.name
-                        ? 'lucideChevronDown'
-                        : 'lucideChevronRight'
-                    "
+                    [name]="s.expanded() === st.name ? 'lucideChevronDown' : 'lucideChevronRight'"
                     class="h-4 w-4"
                   />
                 </td>
@@ -175,20 +160,13 @@ import { bytes } from './messaging-format';
               @if (s.expanded() === st.name) {
                 <tr class="border-t border-border bg-muted/20">
                   <td colspan="7" class="px-3 py-2">
-                    <div
-                      class="mb-2 flex flex-wrap gap-3 text-xs text-muted-foreground"
-                    >
+                    <div class="mb-2 flex flex-wrap gap-3 text-xs text-muted-foreground">
                       <span
                         >retention:
-                        <span class="text-foreground">{{
-                          st.retention || '—'
-                        }}</span></span
+                        <span class="text-foreground">{{ st.retention || '—' }}</span></span
                       >
                       <span
-                        >storage:
-                        <span class="text-foreground">{{
-                          st.storage || '—'
-                        }}</span></span
+                        >storage: <span class="text-foreground">{{ st.storage || '—' }}</span></span
                       >
                       @if (st.lastSeq > 0) {
                         <span

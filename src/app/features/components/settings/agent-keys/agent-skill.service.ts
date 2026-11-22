@@ -18,8 +18,6 @@ export class AgentSkillService {
   private readonly appConfig = inject(AppConfigService);
 
   skill(): Observable<AgentSkill> {
-    return this.http.get<AgentSkill>(
-      `${this.appConfig.apiBaseUrl}/api/v1/auth/agent-skill`,
-    );
+    return this.http.get<AgentSkill>(`${this.appConfig.apiBaseUrl}/api/v1/auth/agent-skill`);
   }
 }

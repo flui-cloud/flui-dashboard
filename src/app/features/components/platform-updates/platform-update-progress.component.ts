@@ -1,9 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  input,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCircleCheck,
@@ -70,9 +65,7 @@ import { k3sNodeRows } from './platform-upgrade-plan';
             <p class="text-sm text-muted-foreground">{{ subline() }}</p>
           </div>
           <div class="text-right shrink-0">
-            <div class="text-2xl font-semibold tracking-tight">
-              {{ operation().progress }}%
-            </div>
+            <div class="text-2xl font-semibold tracking-tight">{{ operation().progress }}%</div>
           </div>
         </div>
         <div class="h-1.5 rounded-full bg-muted overflow-hidden">
@@ -102,9 +95,7 @@ import { k3sNodeRows } from './platform-upgrade-plan';
               @if (phase.key !== 'k3s' && phase.clusters?.length) {
                 <p class="text-xs text-muted-foreground mt-1">
                   @for (c of phase.clusters; track c.clusterId) {
-                    <span class="mr-3"
-                      >{{ c.clusterName }}: {{ c.status }}</span
-                    >
+                    <span class="mr-3">{{ c.clusterName }}: {{ c.status }}</span>
                   }
                 </p>
               }
@@ -182,9 +173,7 @@ import { k3sNodeRows } from './platform-upgrade-plan';
 
       @if (operation().errorMessage) {
         <div class="px-5 py-3 border-t border-border">
-          <p
-            class="rounded-md bg-destructive/10 px-3 py-2 font-mono text-xs text-destructive"
-          >
+          <p class="rounded-md bg-destructive/10 px-3 py-2 font-mono text-xs text-destructive">
             {{ operation().errorMessage }}
           </p>
         </div>
@@ -200,12 +189,9 @@ import { k3sNodeRows } from './platform-upgrade-plan';
           class="h-4 w-4 mt-0.5 shrink-0 text-amber-700 dark:text-amber-400"
         />
         <p class="text-xs text-amber-900 dark:text-amber-200">
-          <span class="font-semibold"
-            >The API restarts during this update.</span
-          >
-          The dashboard loses its connection for about 90 seconds and reconnects
-          on its own — keep this tab open. Your applications keep serving
-          traffic throughout.
+          <span class="font-semibold">The API restarts during this update.</span>
+          The dashboard loses its connection for about 90 seconds and reconnects on its own — keep
+          this tab open. Your applications keep serving traffic throughout.
         </p>
       </div>
     }
@@ -268,9 +254,7 @@ export class PlatformUpdateProgressComponent {
       : 'No database migrations in this release.';
   }
 
-  protected componentDetail(
-    component: PlatformUpdateComponentProgress,
-  ): string {
+  protected componentDetail(component: PlatformUpdateComponentProgress): string {
     switch (component.status) {
       case 'skipped':
         return `Already on ${component.targetVersion || 'its release version'}, nothing to roll out`;

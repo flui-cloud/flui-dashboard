@@ -21,7 +21,11 @@ const BUILD_TOOLS = ['maven', 'gradle'] as const;
           <label class="text-sm font-medium">Node.js Version</label>
           <div class="flex flex-wrap gap-2">
             @for (v of nodeVersions; track v) {
-              <button type="button" (click)="setRuntime('nodeVersion', v)" [class]="getVersionButtonClass(runtime().nodeVersion === v)">
+              <button
+                type="button"
+                (click)="setRuntime('nodeVersion', v)"
+                [class]="getVersionButtonClass(runtime().nodeVersion === v)"
+              >
                 {{ v }}
               </button>
             }
@@ -32,7 +36,11 @@ const BUILD_TOOLS = ['maven', 'gradle'] as const;
           <label class="text-sm font-medium">Package Manager</label>
           <div class="flex flex-wrap gap-2">
             @for (pm of packageManagers; track pm) {
-              <button type="button" (click)="setRuntime('packageManager', pm)" [class]="getVersionButtonClass(runtime().packageManager === pm)">
+              <button
+                type="button"
+                (click)="setRuntime('packageManager', pm)"
+                [class]="getVersionButtonClass(runtime().packageManager === pm)"
+              >
                 {{ pm }}
               </button>
             }
@@ -46,7 +54,11 @@ const BUILD_TOOLS = ['maven', 'gradle'] as const;
           <label class="text-sm font-medium">Java Version</label>
           <div class="flex flex-wrap gap-2">
             @for (v of javaVersions; track v) {
-              <button type="button" (click)="setRuntime('javaVersion', v)" [class]="getVersionButtonClass(runtime().javaVersion === v)">
+              <button
+                type="button"
+                (click)="setRuntime('javaVersion', v)"
+                [class]="getVersionButtonClass(runtime().javaVersion === v)"
+              >
                 {{ v }}
               </button>
             }
@@ -57,7 +69,11 @@ const BUILD_TOOLS = ['maven', 'gradle'] as const;
           <label class="text-sm font-medium">Build Tool</label>
           <div class="flex flex-wrap gap-2">
             @for (bt of buildTools; track bt) {
-              <button type="button" (click)="setRuntime('buildTool', bt)" [class]="getVersionButtonClass(runtime().buildTool === bt)">
+              <button
+                type="button"
+                (click)="setRuntime('buildTool', bt)"
+                [class]="getVersionButtonClass(runtime().buildTool === bt)"
+              >
                 {{ bt }}
               </button>
             }
@@ -71,7 +87,11 @@ const BUILD_TOOLS = ['maven', 'gradle'] as const;
           <label class="text-sm font-medium">.NET Version</label>
           <div class="flex flex-wrap gap-2">
             @for (v of dotnetVersions; track v) {
-              <button type="button" (click)="setRuntime('dotnetVersion', v)" [class]="getVersionButtonClass(runtime().dotnetVersion === v)">
+              <button
+                type="button"
+                (click)="setRuntime('dotnetVersion', v)"
+                [class]="getVersionButtonClass(runtime().dotnetVersion === v)"
+              >
                 {{ v }}
               </button>
             }
@@ -80,7 +100,9 @@ const BUILD_TOOLS = ['maven', 'gradle'] as const;
       }
 
       @if (!state.needsRuntimeConfig()) {
-        <p class="text-sm text-muted-foreground py-2">No additional runtime configuration required for this framework.</p>
+        <p class="text-sm text-muted-foreground py-2">
+          No additional runtime configuration required for this framework.
+        </p>
       }
     </div>
   `,
@@ -97,9 +119,9 @@ export class RuntimeConfigStepComponent {
 
   setRuntime<K extends keyof ReturnType<typeof this.state.runtimeConfig>>(
     key: K,
-    value: ReturnType<typeof this.state.runtimeConfig>[K]
+    value: ReturnType<typeof this.state.runtimeConfig>[K],
   ): void {
-    this.state.runtimeConfig.update(r => ({ ...r, [key]: value }));
+    this.state.runtimeConfig.update((r) => ({ ...r, [key]: value }));
   }
 
   getVersionButtonClass(isSelected: boolean): string {

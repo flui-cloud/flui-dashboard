@@ -45,9 +45,7 @@ export const mailRoutes: Routes = [
   {
     path: 'setup',
     loadComponent: () =>
-      import('./features/components/mail/mail-setup.component').then(
-        (m) => m.MailSetupComponent,
-      ),
+      import('./features/components/mail/mail-setup.component').then((m) => m.MailSetupComponent),
     title: 'Mail setup - flui.cloud',
   },
 ];

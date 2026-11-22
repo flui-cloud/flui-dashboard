@@ -19,27 +19,29 @@ import { ReconciliationStatus, getDriftIndicator } from '../../model/firewall-v2
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.Eager,
-  styles: [`
-    :host {
-      display: block;
-    }
+  styles: [
+    `
+      :host {
+        display: block;
+      }
 
-    .in-sync {
-      @apply text-green-700 dark:text-green-400;
-    }
+      .in-sync {
+        @apply text-green-700 dark:text-green-400;
+      }
 
-    .drift {
-      @apply text-yellow-700 dark:text-yellow-400;
-    }
+      .drift {
+        @apply text-yellow-700 dark:text-yellow-400;
+      }
 
-    .pending {
-      @apply text-gray-600 dark:text-gray-400;
-    }
+      .pending {
+        @apply text-gray-600 dark:text-gray-400;
+      }
 
-    .error {
-      @apply text-red-700 dark:text-red-400;
-    }
-  `]
+      .error {
+        @apply text-red-700 dark:text-red-400;
+      }
+    `,
+  ],
 })
 export class DriftIndicatorComponent {
   // Input signals
@@ -52,7 +54,7 @@ export class DriftIndicatorComponent {
   // Computed signals
   normalizedStatus = computed(() => {
     const value = this.status();
-    return typeof value === 'string' ? value as ReconciliationStatus : value;
+    return typeof value === 'string' ? (value as ReconciliationStatus) : value;
   });
 
   message = computed(() => {

@@ -48,7 +48,8 @@ export interface FleetMetrics {
   clusters: FleetClusterMetrics[];
 }
 
-export type NeedsYouKind = 'cluster_broken' | 'cluster_operation' | 'credential' | 'apps_without_backup';
+export type NeedsYouKind =
+  'cluster_broken' | 'cluster_operation' | 'credential' | 'apps_without_backup';
 export type NeedsYouLevel = 'critical' | 'warning' | 'info';
 
 export interface NeedsYouAction {
@@ -92,7 +93,8 @@ export interface NeedsYou {
   items: NeedsYouItem[];
 }
 
-export type AppCoverageState = 'protected' | 'pending' | 'to_verify' | 'unprotected' | 'not_backed_up_by_choice';
+export type AppCoverageState =
+  'protected' | 'pending' | 'to_verify' | 'unprotected' | 'not_backed_up_by_choice';
 
 /** A person's decision that an application is not backed up. */
 export interface AppBackupDecision {
@@ -185,7 +187,9 @@ export interface AppProtection {
 export type FleetReadState = 'idle' | 'loading' | 'ready' | 'forbidden' | 'error';
 
 const isForbidden = (err: unknown) =>
-  err instanceof HttpErrorResponse ? err.status === 403 : (err as { status?: number })?.status === 403;
+  err instanceof HttpErrorResponse
+    ? err.status === 403
+    : (err as { status?: number })?.status === 403;
 
 @Injectable({ providedIn: 'root' })
 export class FleetService {

@@ -22,12 +22,8 @@ describe('matchesSelector', () => {
   });
 
   it('never lets an owner selector pick up an app that belongs to nobody', () => {
-    expect(matchesSelector(app({ owner: null }), { owner: 'user-a' })).toBe(
-      false,
-    );
-    expect(matchesSelector(app({ owner: undefined }), { owner: 'user-a' })).toBe(
-      false,
-    );
+    expect(matchesSelector(app({ owner: null }), { owner: 'user-a' })).toBe(false);
+    expect(matchesSelector(app({ owner: undefined }), { owner: 'user-a' })).toBe(false);
   });
 
   it('ignores the owner axis when the selector does not constrain it', () => {
@@ -35,12 +31,8 @@ describe('matchesSelector', () => {
   });
 
   it('still ANDs the other axes', () => {
-    expect(matchesSelector(app(), { owner: 'user-a', type: 'system' })).toBe(
-      false,
-    );
-    expect(
-      matchesSelector(app({ tags: ['showcase'] }), { tags: ['showcase'] }),
-    ).toBe(true);
+    expect(matchesSelector(app(), { owner: 'user-a', type: 'system' })).toBe(false);
+    expect(matchesSelector(app({ tags: ['showcase'] }), { tags: ['showcase'] })).toBe(true);
     expect(matchesSelector(app(), { tags: ['showcase'] })).toBe(false);
   });
 

@@ -1,16 +1,6 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  input,
-  output,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
-import {
-  AgentConcession,
-  splitAction,
-  standingConcessions,
-} from '../../model/agent-cycle.models';
+import { AgentConcession, splitAction, standingConcessions } from '../../model/agent-cycle.models';
 import { formatTimeSince } from '../../model/dns.models';
 
 @Component({
@@ -28,16 +18,24 @@ import { formatTimeSince } from '../../model/dns.models';
         <table class="w-full min-w-[660px] border-collapse">
           <thead>
             <tr>
-              <th class="border-b border-border pb-2.5 pr-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <th
+                class="border-b border-border pb-2.5 pr-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground"
+              >
                 What it can do
               </th>
-              <th class="border-b border-border pb-2.5 pr-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <th
+                class="border-b border-border pb-2.5 pr-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground"
+              >
                 On what
               </th>
-              <th class="border-b border-border pb-2.5 pr-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <th
+                class="border-b border-border pb-2.5 pr-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground"
+              >
                 Granted
               </th>
-              <th class="border-b border-border pb-2.5 pr-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <th
+                class="border-b border-border pb-2.5 pr-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground"
+              >
                 Last used
               </th>
               <th class="border-b border-border pb-2.5"></th>
@@ -46,16 +44,24 @@ import { formatTimeSince } from '../../model/dns.models';
           <tbody>
             @for (row of rows(); track row.id) {
               <tr data-testid="concession">
-                <td class="border-b border-border/60 py-3 pr-3 align-top text-sm font-medium text-foreground">
+                <td
+                  class="border-b border-border/60 py-3 pr-3 align-top text-sm font-medium text-foreground"
+                >
                   {{ row.sentence }}
                 </td>
-                <td class="border-b border-border/60 py-3 pr-3 align-top font-mono text-[12.5px] text-muted-foreground">
+                <td
+                  class="border-b border-border/60 py-3 pr-3 align-top font-mono text-[12.5px] text-muted-foreground"
+                >
                   {{ row.scope }}
                 </td>
-                <td class="border-b border-border/60 py-3 pr-3 align-top font-mono text-[12.5px] tabular-nums text-muted-foreground">
+                <td
+                  class="border-b border-border/60 py-3 pr-3 align-top font-mono text-[12.5px] tabular-nums text-muted-foreground"
+                >
                   {{ row.granted }}
                 </td>
-                <td class="border-b border-border/60 py-3 pr-3 align-top font-mono text-[12.5px] tabular-nums text-muted-foreground">
+                <td
+                  class="border-b border-border/60 py-3 pr-3 align-top font-mono text-[12.5px] tabular-nums text-muted-foreground"
+                >
                   {{ row.lastUsed }}
                 </td>
                 <td class="border-b border-border/60 py-3 text-right align-top">
@@ -92,9 +98,7 @@ export class AgentConcessionsTableComponent {
       sentence: source.sentence,
       scope: scopeOf(source),
       granted: formatTimeSince(source.createdAt),
-      lastUsed: source.lastUsedAt
-        ? formatTimeSince(source.lastUsedAt)
-        : 'Never used',
+      lastUsed: source.lastUsedAt ? formatTimeSince(source.lastUsedAt) : 'Never used',
     })),
   );
 }

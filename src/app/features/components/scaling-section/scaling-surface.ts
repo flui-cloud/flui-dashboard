@@ -54,11 +54,7 @@ function valueObservation(
   return { key, presentedAs: { value, ...(unit ? { unit } : {}) }, source };
 }
 
-function textObservation(
-  key: string,
-  value: string,
-  source: ObservationSource,
-): Observation {
+function textObservation(key: string, value: string, source: ObservationSource): Observation {
   return { key, presentedAs: { text: value }, source };
 }
 
@@ -74,18 +70,8 @@ function situationObservations(rows: ClusterScalingRow[]): Observation[] {
     : null;
 
   return [
-    valueObservation(
-      'flui.scaling.needs_person_count',
-      needing,
-      undefined,
-      'derived',
-    ),
-    valueObservation(
-      'flui.scaling.open_alarms_count',
-      alarms,
-      undefined,
-      'derived',
-    ),
+    valueObservation('flui.scaling.needs_person_count', needing, undefined, 'derived'),
+    valueObservation('flui.scaling.open_alarms_count', alarms, undefined, 'derived'),
     tracked === null
       ? textObservation('flui.scaling.billed_monthly', 'no bill', 'derived')
       : valueObservation(
@@ -102,12 +88,7 @@ function rowObservations(row: ClusterScalingRow): Observation[] {
   const observations: Observation[] = [
     textObservation('flui.scaling.mode', mode.label, 'ui'),
     valueObservation('flui.scaling.nodes', row.nodes, undefined, 'api'),
-    valueObservation(
-      'flui.scaling.has_group',
-      row.groupId !== null,
-      undefined,
-      'api',
-    ),
+    valueObservation('flui.scaling.has_group', row.groupId !== null, undefined, 'api'),
   ];
   if (row.bounds) {
     observations.push(
@@ -119,14 +100,7 @@ function rowObservations(row: ClusterScalingRow): Observation[] {
     );
   }
   if (row.monthlyEur !== null) {
-    observations.push(
-      valueObservation(
-        'flui.scaling.monthly_eur',
-        row.monthlyEur,
-        'EUR',
-        'api',
-      ),
-    );
+    observations.push(valueObservation('flui.scaling.monthly_eur', row.monthlyEur, 'EUR', 'api'));
   } else {
     observations.push(
       textObservation(
@@ -148,9 +122,7 @@ function rowObservations(row: ClusterScalingRow): Observation[] {
   // free text (backend-authored prose per row) — same redaction discipline as
   // application-surface.ts excluding app.reconciliationError.
   if (row.needsPerson !== null) {
-    observations.push(
-      valueObservation('flui.scaling.needs_person', true, undefined, 'api'),
-    );
+    observations.push(valueObservation('flui.scaling.needs_person', true, undefined, 'api'));
   }
   return observations;
 }

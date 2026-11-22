@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HlmCardContentDirective, HlmCardDirective } from '@spartan-ng/ui-card-helm';
 import { HlmBadgeDirective } from '@spartan-ng/ui-badge-helm';
@@ -33,9 +41,13 @@ export function refusalLabel(reason: string): string {
           <div class="flex items-center gap-2">
             <h4 class="text-sm font-medium">Visitors</h4>
             @if (s.entranceOpen) {
-              <span hlmBadge variant="default" class="text-xs" data-testid="entrance">Entrance open</span>
+              <span hlmBadge variant="default" class="text-xs" data-testid="entrance"
+                >Entrance open</span
+              >
             } @else {
-              <span hlmBadge variant="secondary" class="text-xs" data-testid="entrance">Entrance closed</span>
+              <span hlmBadge variant="secondary" class="text-xs" data-testid="entrance"
+                >Entrance closed</span
+              >
             }
           </div>
           <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">

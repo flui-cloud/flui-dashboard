@@ -62,9 +62,5 @@ export function refusesWholeCatalogue(
   capability: ProviderScalingCapability,
   hourlyBillingOnly: boolean,
 ): boolean {
-  return (
-    capability.canProvision &&
-    hourlyBillingOnly &&
-    capability.billing === 'monthly'
-  );
+  return capability.canProvision && hourlyBillingOnly && capability.billing === 'monthly';
 }

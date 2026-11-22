@@ -1,13 +1,11 @@
 import { Component, input, output, computed, ChangeDetectionStrategy } from '@angular/core';
 
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
+import { lucideCheck, lucideChevronLeft, lucideChevronRight, lucideRocket } from '@ng-icons/lucide';
 import {
-  lucideCheck,
-  lucideChevronLeft,
-  lucideChevronRight,
-  lucideRocket,
-} from '@ng-icons/lucide';
-import { WizardStepperComponent, WizardStepperStep } from '../wizard-stepper/wizard-stepper.component';
+  WizardStepperComponent,
+  WizardStepperStep,
+} from '../wizard-stepper/wizard-stepper.component';
 
 /**
  * Wizard Step Definition
@@ -59,16 +57,16 @@ export interface WizardStep {
             {{ wizardDescription() }}
           </p>
         </div>
-    
+
         <!-- Progress Stepper -->
         <div class="mb-4">
           <app-wizard-stepper
             [steps]="stepperSteps()"
             [currentStepIndex]="currentStepIndex()"
             [allowStepClick]="false"
-            />
+          />
         </div>
-    
+
         <!-- Step Content Card -->
         <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-5 mb-4">
           <!-- Current Step Header -->
@@ -80,56 +78,58 @@ export interface WizardStep {
               {{ currentStep().description }}
             </p>
           </div>
-    
+
           <!-- Step Content (projected) -->
           <ng-content></ng-content>
         </div>
-    
+
         <!-- Navigation Buttons -->
-        <div class="sticky bottom-0 z-10 flex items-center justify-between border-t border-slate-200 bg-background pt-3 pb-1 dark:border-slate-700">
+        <div
+          class="sticky bottom-0 z-10 flex items-center justify-between border-t border-slate-200 bg-background pt-3 pb-1 dark:border-slate-700"
+        >
           @if (currentStepIndex() > 0) {
             <button
               (click)="onPrevious()"
               class="flex items-center gap-1.5 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-              >
+            >
               <ng-icon name="lucideChevronLeft" size="16"></ng-icon>
               <span>Previous</span>
             </button>
           }
-    
+
           @if (currentStepIndex() === 0) {
             <div></div>
           }
-    
+
           <div class="flex items-center gap-3">
             @if (showCancelButton()) {
               <button
                 (click)="onCancel()"
                 class="px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-                >
+              >
                 Cancel
               </button>
             }
-    
+
             @if (!isLastStep()) {
               <button
                 (click)="onNext()"
                 [disabled]="!currentStep().isValid"
                 [class]="getNextButtonClass()"
                 class="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg transition-all duration-200"
-                >
+              >
                 <span>Next</span>
                 <ng-icon name="lucideChevronRight" size="16"></ng-icon>
               </button>
             }
-    
+
             @if (isLastStep()) {
               <button
                 (click)="onCreate()"
                 [disabled]="!canCreate()"
                 [class]="getCreateButtonClass()"
                 class="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg transition-all duration-200"
-                >
+              >
                 <ng-icon name="lucideRocket" size="16"></ng-icon>
                 <span>{{ createButtonText() }}</span>
               </button>
@@ -138,7 +138,7 @@ export interface WizardStep {
         </div>
       </div>
     </div>
-    `,
+  `,
   changeDetection: ChangeDetectionStrategy.Eager,
   styles: [],
 })
@@ -167,13 +167,13 @@ export class WizardShellComponent {
 
   // Convert WizardStep to WizardStepperStep (for app-wizard-stepper component)
   readonly stepperSteps = computed<WizardStepperStep[]>(() =>
-    this.steps().map(step => ({
+    this.steps().map((step) => ({
       id: step.id,
       title: step.title,
       icon: step.icon,
       isValid: step.isValid,
       isCompleted: step.isCompleted,
-    }))
+    })),
   );
 
   // === Methods ===

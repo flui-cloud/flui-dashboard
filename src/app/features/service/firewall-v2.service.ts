@@ -6,7 +6,7 @@ import { FirewallsService } from '../../core/api/api/firewalls.service';
 import {
   FirewallResponseDto,
   ReconciliationStatusDto,
-  UpdateFirewallRulesDto
+  UpdateFirewallRulesDto,
 } from '../../core/api/model/models';
 import {
   ReconciliationStatus,
@@ -18,11 +18,11 @@ import {
   getStatusBadgeColor,
   getStatusBadgeLabel,
   getDriftIndicator,
-  convertRuleFormDataToResponse
+  convertRuleFormDataToResponse,
 } from '../model/firewall-v2.models';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class FirewallV2Service {
   private readonly firewallsService = inject(FirewallsService);
@@ -37,7 +37,7 @@ export class FirewallV2Service {
   private readonly filterData = signal<FirewallFilterState>({
     search: '',
     status: undefined,
-    clusterId: undefined
+    clusterId: undefined,
   });
 
   readonly firewalls = this.firewallsData.asReadonly();
@@ -56,30 +56,30 @@ export class FirewallV2Service {
     if (filter.search) {
       const searchLower = filter.search.toLowerCase();
       filtered = filtered.filter(
-        fw =>
+        (fw) =>
           fw.id.toLowerCase().includes(searchLower) ||
           fw.clusterId.toLowerCase().includes(searchLower) ||
-          (fw.clusterInfo?.clusterName?.toLowerCase().includes(searchLower) ?? false)
+          (fw.clusterInfo?.clusterName?.toLowerCase().includes(searchLower) ?? false),
       );
     }
 
     if (filter.status) {
-      filtered = filtered.filter(fw => fw.reconciliationStatus === filter.status);
+      filtered = filtered.filter((fw) => fw.reconciliationStatus === filter.status);
     }
 
     if (filter.clusterId) {
-      filtered = filtered.filter(fw => fw.clusterId === filter.clusterId);
+      filtered = filtered.filter((fw) => fw.clusterId === filter.clusterId);
     }
 
     if (filter.coverage) {
-      filtered = filtered.filter(fw => fw.coverageStatus === filter.coverage);
+      filtered = filtered.filter((fw) => fw.coverageStatus === filter.coverage);
     }
 
     return filtered;
   });
 
   readonly extendedFirewalls = computed((): FirewallExtended[] => {
-    return this.filteredFirewalls().map(fw => this.extendFirewall(fw));
+    return this.filteredFirewalls().map((fw) => this.extendFirewall(fw));
   });
 
   readonly stats = computed((): FirewallStats => {
@@ -90,7 +90,10 @@ export class FirewallV2Service {
   readonly hasError = computed(() => !!this.errorData());
   readonly isLoading = computed(() => this.loadingData());
 
-  async loadFirewalls(filters?: { clusterId?: string; status?: ReconciliationStatus }): Promise<void> {
+  async loadFirewalls(filters?: {
+    clusterId?: string;
+    status?: ReconciliationStatus;
+  }): Promise<void> {
     this.loadingData.set(true);
     this.errorData.set(null);
 
@@ -98,8 +101,8 @@ export class FirewallV2Service {
       const firewalls = await firstValueFrom(
         this.firewallsService.clusterFirewallsControllerListFirewalls(
           filters?.clusterId,
-          filters?.status
-        )
+          filters?.status,
+        ),
       );
 
       this.firewallsData.set(firewalls);
@@ -117,7 +120,7 @@ export class FirewallV2Service {
 
     try {
       const firewall = await firstValueFrom(
-        this.firewallsService.clusterFirewallsControllerGetFirewall(id)
+        this.firewallsService.clusterFirewallsControllerGetFirewall(id),
       );
 
       this.selectedFirewallData.set(firewall);
@@ -137,7 +140,7 @@ export class FirewallV2Service {
 
     try {
       const firewall = await firstValueFrom(
-        this.firewallsService.clusterFirewallsControllerGetFirewallByCluster(clusterId)
+        this.firewallsService.clusterFirewallsControllerGetFirewallByCluster(clusterId),
       );
 
       this.selectedFirewallData.set(firewall);
@@ -157,18 +160,21 @@ export class FirewallV2Service {
     }
   }
 
-  async updateDesiredRules(id: string, rules: FirewallRuleFormData[]): Promise<FirewallResponseDto | null> {
+  async updateDesiredRules(
+    id: string,
+    rules: FirewallRuleFormData[],
+  ): Promise<FirewallResponseDto | null> {
     this.loadingData.set(true);
     this.errorData.set(null);
 
     try {
       const desiredRules = rules.map(convertRuleFormDataToResponse);
       const dto: UpdateFirewallRulesDto = {
-        desiredRules: desiredRules as any[]
+        desiredRules: desiredRules as any[],
       };
 
       const updatedFirewall = await firstValueFrom(
-        this.firewallsService.clusterFirewallsControllerUpdateDesiredRules(id, dto)
+        this.firewallsService.clusterFirewallsControllerUpdateDesiredRules(id, dto),
       );
 
       this.selectedFirewallData.set(updatedFirewall);
@@ -190,7 +196,7 @@ export class FirewallV2Service {
 
     try {
       const firewall = await firstValueFrom(
-        this.firewallsService.clusterFirewallsControllerEnableForCluster(clusterId)
+        this.firewallsService.clusterFirewallsControllerEnableForCluster(clusterId),
       );
 
       this.selectedFirewallData.set(firewall);
@@ -223,7 +229,7 @@ export class FirewallV2Service {
 
     try {
       const reconciledFirewall = await firstValueFrom(
-        this.firewallsService.clusterFirewallsControllerReconcile(id)
+        this.firewallsService.clusterFirewallsControllerReconcile(id),
       );
 
       this.selectedFirewallData.set(reconciledFirewall);
@@ -242,7 +248,7 @@ export class FirewallV2Service {
   async getReconciliationStatus(id: string): Promise<ReconciliationStatusDto | null> {
     try {
       const status = await firstValueFrom(
-        this.firewallsService.clusterFirewallsControllerGetReconciliationStatus(id)
+        this.firewallsService.clusterFirewallsControllerGetReconciliationStatus(id),
       );
 
       this.reconciliationStatusData.set(status);
@@ -258,11 +264,9 @@ export class FirewallV2Service {
     this.errorData.set(null);
 
     try {
-      await firstValueFrom(
-        this.firewallsService.clusterFirewallsControllerDeleteFirewall(id)
-      );
+      await firstValueFrom(this.firewallsService.clusterFirewallsControllerDeleteFirewall(id));
 
-      const updated = this.firewallsData().filter(fw => fw.id !== id);
+      const updated = this.firewallsData().filter((fw) => fw.id !== id);
       this.firewallsData.set(updated);
 
       if (this.selectedFirewallData()?.id === id) {
@@ -280,9 +284,9 @@ export class FirewallV2Service {
   }
 
   updateFilter(filter: Partial<FirewallFilterState>): void {
-    this.filterData.update(current => ({
+    this.filterData.update((current) => ({
       ...current,
-      ...filter
+      ...filter,
     }));
   }
 
@@ -291,7 +295,7 @@ export class FirewallV2Service {
       search: '',
       status: undefined,
       clusterId: undefined,
-      coverage: undefined
+      coverage: undefined,
     });
   }
 
@@ -339,8 +343,8 @@ export class FirewallV2Service {
   }
 
   private updateFirewallInList(updatedFirewall: FirewallResponseDto): void {
-    this.firewallsData.update(firewalls => {
-      const index = firewalls.findIndex(fw => fw.id === updatedFirewall.id);
+    this.firewallsData.update((firewalls) => {
+      const index = firewalls.findIndex((fw) => fw.id === updatedFirewall.id);
       if (index !== -1) {
         const updated = [...firewalls];
         updated[index] = updatedFirewall;
@@ -357,11 +361,11 @@ export class FirewallV2Service {
       ...firewall,
       statusBadgeColor: getStatusBadgeColor(status),
       statusBadgeLabel: getStatusBadgeLabel(status),
-      driftIndicator: getDriftIndicator(firewall.hasDrift, status)
+      driftIndicator: getDriftIndicator(firewall.hasDrift, status),
     };
   }
 
   private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }

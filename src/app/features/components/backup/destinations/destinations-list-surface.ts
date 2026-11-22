@@ -34,16 +34,21 @@ export interface DestinationsListSurfaceContext {
   appVersion?: string;
 }
 
-function textObservation(key: string, value: string | undefined | null, source: ObservationSource): Observation | null {
+function textObservation(
+  key: string,
+  value: string | undefined | null,
+  source: ObservationSource,
+): Observation | null {
   return value ? { key, presentedAs: { text: value }, source } : null;
 }
 
-function rowObservations(
-  d: BackupDestination,
-  presets: ObjectStoragePreset[],
-): Observation[] {
+function rowObservations(d: BackupDestination, presets: ObjectStoragePreset[]): Observation[] {
   return [
-    textObservation('flui.backup.destination.provider', providerLabel(d.provider, presets), 'derived'),
+    textObservation(
+      'flui.backup.destination.provider',
+      providerLabel(d.provider, presets),
+      'derived',
+    ),
     textObservation('flui.backup.destination.region', d.region, 'api'),
     textObservation('flui.backup.destination.bucket', d.bucket, 'api'),
     textObservation('flui.backup.destination.health', d.healthStatus, 'api'),
@@ -56,11 +61,12 @@ function rowObservations(
  * helper for yet, so it is written out per producer per the playbook's one-file-per-page
  * rule. Rows never claim `role: 'primary'`: clicking a row navigates to its own detail
  * route (destination-detail-surface.ts), it does not select in place. */
-function rowScope(
-  d: BackupDestination,
-  presets: ObjectStoragePreset[],
-): SemanticScopeSnapshot {
-  const entity: EntityReference = { ref: destinationEntityRef(d.id), label: d.name, role: 'related' };
+function rowScope(d: BackupDestination, presets: ObjectStoragePreset[]): SemanticScopeSnapshot {
+  const entity: EntityReference = {
+    ref: destinationEntityRef(d.id),
+    label: d.name,
+    role: 'related',
+  };
   return {
     id: `${LIST_ID}:${d.id}`,
     parentId: LIST_ID,
@@ -99,11 +105,7 @@ export function presentedContent(input: DestinationsListSurfaceInput): Presented
   };
 
   return {
-    scopes: [
-      pageScope,
-      listScope,
-      ...rows.map((d) => rowScope(d, input.presets ?? [])),
-    ],
+    scopes: [pageScope, listScope, ...rows.map((d) => rowScope(d, input.presets ?? []))],
     attention: [{ scopeId: PAGE_ID, reason: 'route' }],
   };
 }

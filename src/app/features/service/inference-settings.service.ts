@@ -57,7 +57,9 @@ export class InferenceSettingsService {
     if (opts.connectionId) {
       const conn = this.connections().find((c) => c.id === opts.connectionId);
       if (!conn) return undefined;
-      return rec.groups.find((g) => !!g.matchConnectionHost && !!conn.baseUrl?.includes(g.matchConnectionHost));
+      return rec.groups.find(
+        (g) => !!g.matchConnectionHost && !!conn.baseUrl?.includes(g.matchConnectionHost),
+      );
     }
     return undefined;
   }
@@ -100,9 +102,7 @@ export class InferenceSettingsService {
   }
 
   deleteConnection(id: string): Observable<void> {
-    return this.api.inferenceControllerDeleteConnection(id).pipe(
-      tap(() => this.loadConnections()),
-    );
+    return this.api.inferenceControllerDeleteConnection(id).pipe(tap(() => this.loadConnections()));
   }
 
   usage(days: number): Observable<InferenceUsage> {

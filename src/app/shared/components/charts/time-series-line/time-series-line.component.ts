@@ -1,4 +1,11 @@
-import { Component, input, computed, signal, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  input,
+  computed,
+  signal,
+  OnDestroy,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { NgxEchartsDirective, provideEcharts } from 'ngx-echarts';
 import type { EChartsOption } from 'echarts';
@@ -7,7 +14,7 @@ import {
   TimeSeriesChartData,
   DEFAULT_TIMESERIES_CONFIG,
   DEFAULT_CHART_COLORS,
-  ChartTheme
+  ChartTheme,
 } from '../chart.models';
 
 /**
@@ -38,21 +45,19 @@ import {
   providers: [provideEcharts()],
   template: `
     <div class="time-series-container" [style.height]="config().height">
-      <div echarts
-           [options]="chartOption()"
-           [theme]="currentTheme()"
-           class="w-full h-full">
-      </div>
+      <div echarts [options]="chartOption()" [theme]="currentTheme()" class="w-full h-full"></div>
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.Eager,
-  styles: [`
-    .time-series-container {
-      display: flex;
-      flex-direction: column;
-      width: 100%;
-    }
-  `]
+  styles: [
+    `
+      .time-series-container {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+      }
+    `,
+  ],
 })
 export class TimeSeriesLineComponent implements OnDestroy {
   // Inputs
@@ -76,18 +81,17 @@ export class TimeSeriesLineComponent implements OnDestroy {
   }
 
   private detectDarkMode(): boolean {
-    return typeof document !== 'undefined' &&
-      document.documentElement.classList.contains('dark');
+    return typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
   }
 
   // Computed configurations
   private readonly mergedConfig = computed(() => ({
     ...DEFAULT_TIMESERIES_CONFIG,
-    ...this.config()
+    ...this.config(),
   }));
 
-  currentTheme = computed<ChartTheme>(() =>
-    this.config().theme ?? (this.isDarkSignal() ? 'dark' : 'light')
+  currentTheme = computed<ChartTheme>(
+    () => this.config().theme ?? (this.isDarkSignal() ? 'dark' : 'light'),
   );
 
   // Get colors for series
@@ -99,7 +103,7 @@ export class TimeSeriesLineComponent implements OnDestroy {
       DEFAULT_CHART_COLORS.success[0],
       DEFAULT_CHART_COLORS.warning[0],
       DEFAULT_CHART_COLORS.danger[0],
-      DEFAULT_CHART_COLORS.neutral[0]
+      DEFAULT_CHART_COLORS.neutral[0],
     ];
 
     return colorPalette[index % colorPalette.length];
@@ -146,7 +150,7 @@ export class TimeSeriesLineComponent implements OnDestroy {
       series[0].markLine = {
         silent: true,
         symbol: 'none',
-        data: thresholdMarkLines
+        data: thresholdMarkLines,
       };
     }
 
@@ -163,17 +167,17 @@ export class TimeSeriesLineComponent implements OnDestroy {
         textStyle: {
           fontSize: 16,
           fontWeight: 600,
-          color: isDark ? '#f9fafb' : '#111827'
-        }
+          color: isDark ? '#f9fafb' : '#111827',
+        },
       },
       tooltip: {
         trigger: 'axis',
         backgroundColor: isDark ? '#1f2937' : '#ffffff',
         borderColor: isDark ? '#374151' : '#e5e7eb',
         textStyle: {
-          color: isDark ? '#f9fafb' : '#111827'
+          color: isDark ? '#f9fafb' : '#111827',
         },
-        formatter: (params: any) => this.formatTooltip(params)
+        formatter: (params: any) => this.formatTooltip(params),
       },
       legend: this.buildLegendConfig(cfg, chartData, isDark),
       grid: this.buildGridConfig(cfg, chartData),
@@ -181,7 +185,7 @@ export class TimeSeriesLineComponent implements OnDestroy {
       yAxis: this.buildYAxisConfig(cfg, isDark),
       series: series,
       animation: cfg.animated,
-      dataZoom: this.buildDataZoomConfig(cfg)
+      dataZoom: this.buildDataZoomConfig(cfg),
     };
   });
 
@@ -191,8 +195,8 @@ export class TimeSeriesLineComponent implements OnDestroy {
       top: this.titleHeight(cfg),
       left: 'left',
       textStyle: {
-        color: isDark ? '#9ca3af' : '#6b7280'
-      }
+        color: isDark ? '#9ca3af' : '#6b7280',
+      },
     };
   }
 
@@ -221,7 +225,7 @@ export class TimeSeriesLineComponent implements OnDestroy {
       right: '4%',
       bottom: '3%',
       top: this.plotTop(cfg, chartData),
-      containLabel: true
+      containLabel: true,
     };
   }
 
@@ -231,21 +235,21 @@ export class TimeSeriesLineComponent implements OnDestroy {
       boundaryGap: false as any,
       axisLine: {
         lineStyle: {
-          color: isDark ? '#374151' : '#e5e7eb'
-        }
+          color: isDark ? '#374151' : '#e5e7eb',
+        },
       },
       axisLabel: {
         color: isDark ? '#9ca3af' : '#6b7280',
         fontSize: 11,
-        formatter: (value: number) => this.formatTimestamp(new Date(value))
+        formatter: (value: number) => this.formatTimestamp(new Date(value)),
       },
       splitLine: {
         show: cfg.showGrid,
         lineStyle: {
           color: isDark ? '#374151' : '#f3f4f6',
-          type: 'dashed'
-        }
-      }
+          type: 'dashed',
+        },
+      },
     };
   }
 
@@ -255,20 +259,20 @@ export class TimeSeriesLineComponent implements OnDestroy {
       min: cfg.yMin,
       max: cfg.yMax,
       axisLine: {
-        show: false
+        show: false,
       },
       axisLabel: {
         color: isDark ? '#9ca3af' : '#6b7280',
         fontSize: 11,
-        formatter: (value: number) => this.formatValue(value)
+        formatter: (value: number) => this.formatValue(value),
       },
       splitLine: {
         show: cfg.showGrid,
         lineStyle: {
           color: isDark ? '#374151' : '#f3f4f6',
-          type: 'dashed'
-        }
-      }
+          type: 'dashed',
+        },
+      },
     };
   }
 
@@ -278,14 +282,14 @@ export class TimeSeriesLineComponent implements OnDestroy {
       {
         type: 'inside',
         start: 0,
-        end: 100
+        end: 100,
       },
       {
         start: 0,
         end: 100,
         height: 20,
-        bottom: 10
-      }
+        bottom: 10,
+      },
     ];
   }
 
@@ -299,21 +303,21 @@ export class TimeSeriesLineComponent implements OnDestroy {
         symbolSize: 6,
         lineStyle: {
           width: 2,
-          color: this.getSeriesColor(index, s.color)
+          color: this.getSeriesColor(index, s.color),
         },
         itemStyle: {
-          color: this.getSeriesColor(index, s.color)
+          color: this.getSeriesColor(index, s.color),
         },
-        data: s.data.map(point => [
+        data: s.data.map((point) => [
           typeof point.timestamp === 'number' ? point.timestamp : point.timestamp.getTime(),
-          point.value
-        ])
+          point.value,
+        ]),
       };
 
       if (s.showArea) {
         seriesConfig.areaStyle = {
           opacity: 0.15,
-          color: this.getSeriesColor(index, s.color)
+          color: this.getSeriesColor(index, s.color),
         };
       }
 
@@ -330,15 +334,15 @@ export class TimeSeriesLineComponent implements OnDestroy {
           color: DEFAULT_CHART_COLORS.warning[0],
           type: 'dashed',
           width: 1,
-          opacity: 0.6
+          opacity: 0.6,
         },
         label: {
           show: true,
           position: 'insideEndTop',
           formatter: 'Warning',
           color: DEFAULT_CHART_COLORS.warning[0],
-          fontSize: 10
-        }
+          fontSize: 10,
+        },
       });
     }
     if (cfg.thresholds?.danger !== undefined) {
@@ -348,15 +352,15 @@ export class TimeSeriesLineComponent implements OnDestroy {
           color: DEFAULT_CHART_COLORS.danger[0],
           type: 'dashed',
           width: 1,
-          opacity: 0.6
+          opacity: 0.6,
         },
         label: {
           show: true,
           position: 'insideEndTop',
           formatter: 'Danger',
           color: DEFAULT_CHART_COLORS.danger[0],
-          fontSize: 10
-        }
+          fontSize: 10,
+        },
       });
     }
     return thresholdMarkLines;
@@ -378,5 +382,4 @@ export class TimeSeriesLineComponent implements OnDestroy {
 
     return result;
   }
-
 }

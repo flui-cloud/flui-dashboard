@@ -45,7 +45,9 @@ describe('FleetService', () => {
 
   it('treats a refusal as forbidden and stops asking', async () => {
     const first = service.loadMetrics();
-    http.expectOne((r) => r.url === '/api/v1/fleet/metrics').flush({}, { status: 403, statusText: 'Forbidden' });
+    http
+      .expectOne((r) => r.url === '/api/v1/fleet/metrics')
+      .flush({}, { status: 403, statusText: 'Forbidden' });
     await first;
     expect(service.metricsState()).toBe('forbidden');
 
@@ -55,7 +57,9 @@ describe('FleetService', () => {
 
   it('keeps a failure distinct from a refusal', async () => {
     const done = service.loadCoverage();
-    http.expectOne('/api/v1/fleet/backup-protection').flush({}, { status: 500, statusText: 'Server Error' });
+    http
+      .expectOne('/api/v1/fleet/backup-protection')
+      .flush({}, { status: 500, statusText: 'Server Error' });
     await done;
     expect(service.coverageState()).toBe('error');
     expect(service.coverage()).toBeNull();
@@ -63,7 +67,9 @@ describe('FleetService', () => {
 
   it('marks backup coverage forbidden for a guest', async () => {
     const done = service.loadCoverage();
-    http.expectOne('/api/v1/fleet/backup-protection').flush({}, { status: 403, statusText: 'Forbidden' });
+    http
+      .expectOne('/api/v1/fleet/backup-protection')
+      .flush({}, { status: 403, statusText: 'Forbidden' });
     await done;
     expect(service.coverageState()).toBe('forbidden');
   });

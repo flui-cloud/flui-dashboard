@@ -98,7 +98,10 @@ export function columnsFor(count: number): number {
 }
 
 function replicasOn(apps: TopologyAppDto[] | undefined, serverId: string): number {
-  return (apps ?? []).reduce((sum, a) => sum + (a.replicas.find((r) => r.serverId === serverId)?.count ?? 0), 0);
+  return (apps ?? []).reduce(
+    (sum, a) => sum + (a.replicas.find((r) => r.serverId === serverId)?.count ?? 0),
+    0,
+  );
 }
 
 export function tileGroups(
@@ -158,7 +161,9 @@ export function tileGroups(
       tiles,
       replicas,
       clusterId: groupBy === 'cluster' ? key : null,
-      dimmed: (!!app && replicas === 0) || (!!focusCluster && groupBy === 'cluster' && key !== focusCluster),
+      dimmed:
+        (!!app && replicas === 0) ||
+        (!!focusCluster && groupBy === 'cluster' && key !== focusCluster),
     };
   });
 }
@@ -213,7 +218,8 @@ export function fullestServers(
   limit = 7,
 ): FullestRow[] {
   const by = colorBy === 'network' ? 'memory' : colorBy;
-  const siblings = (clusterId: string) => t.servers.filter((s) => s.clusterId === clusterId).map((s) => s.nodeName);
+  const siblings = (clusterId: string) =>
+    t.servers.filter((s) => s.clusterId === clusterId).map((s) => s.nodeName);
   return t.servers
     .map((server) => ({
       server,

@@ -38,9 +38,7 @@ function input(over: Partial<CatalogDetailSurfaceInput> = {}): CatalogDetailSurf
     isLoading: false,
     hasDetailError: false,
     activeTab: 'description',
-    instances: [
-      { id: 'app-1', name: 'immich-prod', status: 'running', catalogVersion: '1.139.0' },
-    ],
+    instances: [{ id: 'app-1', name: 'immich-prod', status: 'running', catalogVersion: '1.139.0' }],
     updateAvailable: true,
     ...over,
   };
@@ -81,8 +79,15 @@ describe('catalog detail surface producer', () => {
   });
 
   it('emits nothing at all while the detail is still loading — no invented empty page', () => {
-    expect(buildCatalogDetailSurface(input({ detail: null, isLoading: true }), { revision: 1, generatedAt: GENERATED_AT })).toBeNull();
-    expect(buildCatalogDetailSurface(input({ slug: null }), { revision: 1, generatedAt: GENERATED_AT })).toBeNull();
+    expect(
+      buildCatalogDetailSurface(input({ detail: null, isLoading: true }), {
+        revision: 1,
+        generatedAt: GENERATED_AT,
+      }),
+    ).toBeNull();
+    expect(
+      buildCatalogDetailSurface(input({ slug: null }), { revision: 1, generatedAt: GENERATED_AT }),
+    ).toBeNull();
   });
 
   it('does describe the failed load, because that card is what the user is looking at', () => {
@@ -107,10 +112,18 @@ describe('catalog detail surface producer', () => {
 
   it('gives every installed instance the canonical application ref, with its version and status', () => {
     const row = scope(snapshotOf(), `${PAGE_ID}:instances:app-1`)!;
-    expect(row.entities).toEqual([{ ref: applicationEntityRef('app-1'), label: 'immich-prod', role: 'related' }]);
-    expect(row.observations!.find((o) => o.key === 'flui.application.status')!.presentedAs.text).toBe('running');
-    expect(row.observations!.find((o) => o.key === 'flui.application.catalog_version')!.presentedAs.text).toBe('1.139.0');
-    expect(obsOf(snapshotOf(), PAGE_ID, 'flui.catalog_app.update_available')!.presentedAs.value).toBe(true);
+    expect(row.entities).toEqual([
+      { ref: applicationEntityRef('app-1'), label: 'immich-prod', role: 'related' },
+    ]);
+    expect(
+      row.observations!.find((o) => o.key === 'flui.application.status')!.presentedAs.text,
+    ).toBe('running');
+    expect(
+      row.observations!.find((o) => o.key === 'flui.application.catalog_version')!.presentedAs.text,
+    ).toBe('1.139.0');
+    expect(
+      obsOf(snapshotOf(), PAGE_ID, 'flui.catalog_app.update_available')!.presentedAs.value,
+    ).toBe(true);
   });
 
   it('omits the instances section the page does not draw when nothing is installed', () => {
@@ -121,7 +134,9 @@ describe('catalog detail surface producer', () => {
   it('redacts: prompt and env NAMES and defaults never travel — only how many there are', () => {
     const snapshot = snapshotOf();
     expect(obsOf(snapshot, PAGE_ID, 'flui.catalog_app.prompts')!.presentedAs.value).toBe(3);
-    expect(obsOf(snapshot, PAGE_ID, 'flui.catalog_app.prompts_sensitive')!.presentedAs.value).toBe(1);
+    expect(obsOf(snapshot, PAGE_ID, 'flui.catalog_app.prompts_sensitive')!.presentedAs.value).toBe(
+      1,
+    );
     expect(obsOf(snapshot, PAGE_ID, 'flui.catalog_app.editable_env')!.presentedAs.value).toBe(4);
     // There is no field on the input type that could carry a name or a default in the first
     // place — the redaction is structural, not a filter someone has to remember to apply.
@@ -134,7 +149,10 @@ describe('catalog detail surface producer', () => {
   it('bumps the revision on real change (a tab switch), and accepts it against the previous', () => {
     const tracker = new CatalogDetailSurfaceRevision();
     const before = input();
-    const first = buildCatalogDetailSurface(before, { revision: tracker.next(presentedContent(before)), generatedAt: GENERATED_AT })!;
+    const first = buildCatalogDetailSurface(before, {
+      revision: tracker.next(presentedContent(before)),
+      generatedAt: GENERATED_AT,
+    })!;
     const after = input({ activeTab: 'manifest' });
     const second = buildCatalogDetailSurface(after, {
       revision: tracker.next(presentedContent(after)),
@@ -151,7 +169,10 @@ describe('catalog detail surface producer', () => {
 
   it('flags a snapshot whose revision does not advance on the previous one', () => {
     const first = snapshotOf();
-    const stale = { ...snapshotOf(), surface: { ...snapshotOf().surface, revision: first.surface.revision } };
+    const stale = {
+      ...snapshotOf(),
+      surface: { ...snapshotOf().surface, revision: first.surface.revision },
+    };
     expect(validateSurfaceSemantics(stale, { previousSnapshot: first })).toEqual([
       jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' }),
     ]);

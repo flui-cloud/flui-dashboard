@@ -1,15 +1,20 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, input, output, signal, effect } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  inject,
+  input,
+  output,
+  signal,
+  effect,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { HlmCardContentDirective, HlmCardDirective } from '@spartan-ng/ui-card-helm';
 import { HlmInputDirective } from '@spartan-ng/ui-input-helm';
 import { HlmLabelDirective } from '@spartan-ng/ui-label-helm';
 import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
-import {
-  AccountProfile,
-  AccountService,
-  accountErrorMessage,
-} from '../../service/account.service';
+import { AccountProfile, AccountService, accountErrorMessage } from '../../service/account.service';
 
 @Component({
   selector: 'app-account-profile',
@@ -30,11 +35,25 @@ import {
         <div class="grid gap-4 sm:grid-cols-2">
           <div class="space-y-1.5">
             <label hlmLabel for="firstName">First name</label>
-            <input hlmInput id="firstName" name="firstName" class="w-full" [(ngModel)]="firstName" required />
+            <input
+              hlmInput
+              id="firstName"
+              name="firstName"
+              class="w-full"
+              [(ngModel)]="firstName"
+              required
+            />
           </div>
           <div class="space-y-1.5">
             <label hlmLabel for="lastName">Last name</label>
-            <input hlmInput id="lastName" name="lastName" class="w-full" [(ngModel)]="lastName" required />
+            <input
+              hlmInput
+              id="lastName"
+              name="lastName"
+              class="w-full"
+              [(ngModel)]="lastName"
+              required
+            />
           </div>
         </div>
         <div class="space-y-1.5">
@@ -59,7 +78,9 @@ import {
           <p class="text-sm text-destructive" data-testid="profile-error">{{ error() }}</p>
         }
         @if (saved()) {
-          <p class="text-sm text-green-600 dark:text-green-400" data-testid="profile-saved">Saved.</p>
+          <p class="text-sm text-green-600 dark:text-green-400" data-testid="profile-saved">
+            Saved.
+          </p>
         }
         <button hlmBtn type="submit" [disabled]="saving() || !firstName.trim() || !lastName.trim()">
           {{ saving() ? 'Saving...' : 'Save' }}

@@ -5,7 +5,7 @@ import {
   StatusTimelineData,
   DEFAULT_TIMELINE_CONFIG,
   TimelineStatus,
-  TimelineEvent
+  TimelineEvent,
 } from '../chart.models';
 
 /**
@@ -60,8 +60,7 @@ import {
             [class]="getBlockClass(day.status)"
             [title]="getBlockTooltip(day)"
             (click)="onBlockClick(day)"
-          >
-          </div>
+          ></div>
         }
       </div>
 
@@ -83,9 +82,7 @@ import {
           <div class="w-3 h-3 rounded-sm bg-blue-500"></div>
           <span>Maintenance</span>
         </div>
-        <div class="ml-auto text-xs">
-          Last {{ config().daysToShow }} days
-        </div>
+        <div class="ml-auto text-xs">Last {{ config().daysToShow }} days</div>
       </div>
 
       <!-- Selected Incident Details -->
@@ -107,10 +104,7 @@ import {
                 </p>
               }
             </div>
-            <button
-              (click)="clearSelection()"
-              class="text-muted-foreground hover:text-foreground"
-            >
+            <button (click)="clearSelection()" class="text-muted-foreground hover:text-foreground">
               ✕
             </button>
           </div>
@@ -119,57 +113,59 @@ import {
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.Eager,
-  styles: [`
-    .timeline-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(12px, 1fr));
-      gap: 3px;
-      max-width: 100%;
-    }
+  styles: [
+    `
+      .timeline-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(12px, 1fr));
+        gap: 3px;
+        max-width: 100%;
+      }
 
-    .timeline-grid.compact {
-      grid-template-columns: repeat(auto-fill, minmax(8px, 1fr));
-      gap: 2px;
-    }
+      .timeline-grid.compact {
+        grid-template-columns: repeat(auto-fill, minmax(8px, 1fr));
+        gap: 2px;
+      }
 
-    .timeline-block {
-      aspect-ratio: 1;
-      border-radius: 2px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      border: 1px solid transparent;
-    }
+      .timeline-block {
+        aspect-ratio: 1;
+        border-radius: 2px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+      }
 
-    .timeline-block:hover {
-      transform: scale(1.2);
-      border-color: currentColor;
-      z-index: 10;
-    }
+      .timeline-block:hover {
+        transform: scale(1.2);
+        border-color: currentColor;
+        z-index: 10;
+      }
 
-    .status-up {
-      background-color: #10b981;
-    }
+      .status-up {
+        background-color: #10b981;
+      }
 
-    .status-down {
-      background-color: #ef4444;
-    }
+      .status-down {
+        background-color: #ef4444;
+      }
 
-    .status-degraded {
-      background-color: #f59e0b;
-    }
+      .status-degraded {
+        background-color: #f59e0b;
+      }
 
-    .status-maintenance {
-      background-color: #3b82f6;
-    }
+      .status-maintenance {
+        background-color: #3b82f6;
+      }
 
-    .status-unknown {
-      background-color: #e5e7eb;
-    }
+      .status-unknown {
+        background-color: #e5e7eb;
+      }
 
-    :host-context(.dark) .status-unknown {
-      background-color: #374151;
-    }
-  `]
+      :host-context(.dark) .status-unknown {
+        background-color: #374151;
+      }
+    `,
+  ],
 })
 export class StatusTimelineComponent {
   // Inputs
@@ -183,7 +179,7 @@ export class StatusTimelineComponent {
   // Computed configurations
   private readonly mergedConfig = computed(() => ({
     ...DEFAULT_TIMELINE_CONFIG,
-    ...this.config()
+    ...this.config(),
   }));
 
   // Generate timeline days
@@ -204,15 +200,15 @@ export class StatusTimelineComponent {
       dayEnd.setHours(23, 59, 59, 999);
 
       // Find event for this day
-      const dayEvent = events.find(e => {
+      const dayEvent = events.find((e) => {
         const eventDate = typeof e.timestamp === 'number' ? new Date(e.timestamp) : e.timestamp;
         return eventDate >= dayStart && eventDate <= dayEnd;
       });
 
       days.push({
         date: new Date(d),
-        status: dayEvent?.status || 'up',  // Default to 'up' if no event
-        event: dayEvent
+        status: dayEvent?.status || 'up', // Default to 'up' if no event
+        event: dayEvent,
       });
     }
 
@@ -255,7 +251,7 @@ export class StatusTimelineComponent {
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
     });
   }
 

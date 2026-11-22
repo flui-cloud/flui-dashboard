@@ -1,4 +1,3 @@
-
 export type ActionBinding = Record<string, string>;
 
 export const PROPOSAL_STATUS = {
@@ -8,8 +7,7 @@ export const PROPOSAL_STATUS = {
   DENIED: 'DENIED',
 } as const;
 
-export type ProposalStatus =
-  (typeof PROPOSAL_STATUS)[keyof typeof PROPOSAL_STATUS];
+export type ProposalStatus = (typeof PROPOSAL_STATUS)[keyof typeof PROPOSAL_STATUS];
 
 export const PROPOSAL_DECISION = {
   ONCE: 'once',
@@ -17,8 +15,7 @@ export const PROPOSAL_DECISION = {
   DENY: 'deny',
 } as const;
 
-export type ProposalDecision =
-  (typeof PROPOSAL_DECISION)[keyof typeof PROPOSAL_DECISION];
+export type ProposalDecision = (typeof PROPOSAL_DECISION)[keyof typeof PROPOSAL_DECISION];
 
 export interface AgentProposal {
   id: string;
@@ -86,9 +83,7 @@ export function isProposalLive(
   return Number.isNaN(at) ? false : at > now;
 }
 
-export function offersAlways(
-  proposal: Pick<AgentProposal, 'offersAlways'>,
-): boolean {
+export function offersAlways(proposal: Pick<AgentProposal, 'offersAlways'>): boolean {
   return proposal.offersAlways === true;
 }
 
@@ -103,14 +98,11 @@ export function expiredCount(
   proposals: readonly AgentProposal[],
   now: number = Date.now(),
 ): number {
-  return proposals.filter(
-    (p) => p.status === PROPOSAL_STATUS.PENDING && !isProposalLive(p, now),
-  ).length;
+  return proposals.filter((p) => p.status === PROPOSAL_STATUS.PENDING && !isProposalLive(p, now))
+    .length;
 }
 
-export function standingConcessions(
-  concessions: readonly AgentConcession[],
-): AgentConcession[] {
+export function standingConcessions(concessions: readonly AgentConcession[]): AgentConcession[] {
   return concessions.filter((c) => !c.revokedAt);
 }
 
@@ -169,10 +161,7 @@ function holds(permissionCount: number): string {
   return `You hold ${permissionCount} permission${plural} on this instance`;
 }
 
-export function ceilingSentence(
-  isAdmin: boolean,
-  permissionCount: number,
-): string {
+export function ceilingSentence(isAdmin: boolean, permissionCount: number): string {
   const held = isAdmin ? 'You are an administrator on this instance' : holds(permissionCount);
   return `${held} — the grants below choose how much of that you lend out, and they cannot reach past it.`;
 }

@@ -43,9 +43,7 @@ export interface RawConsoleExample {
   /** Hint that this example mutates — shown so users know it needs read-only off. */
   write?: boolean;
 }
-export type RawConsoleSubmit = (
-  req: RawConsoleRequest,
-) => Observable<RawConsoleResponse>;
+export type RawConsoleSubmit = (req: RawConsoleRequest) => Observable<RawConsoleResponse>;
 
 const METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'PATCH'];
 
@@ -114,7 +112,8 @@ const METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'PATCH'];
               class="rounded border border-border px-2 py-0.5 text-[11px] text-muted-foreground hover:bg-muted"
               [title]="ex.write ? 'Needs writes allowed' : 'Read-only'"
             >
-              {{ ex.label }}@if (ex.write) {
+              {{ ex.label }}
+              @if (ex.write) {
                 <span class="ml-1 text-amber-600 dark:text-amber-400">✎</span>
               }
             </button>
@@ -160,10 +159,9 @@ const METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'PATCH'];
             </span>
             <span class="text-muted-foreground">{{ r.durationMs }} ms</span>
           </div>
-          <pre
-            class="flex-1 overflow-auto px-3 py-2 font-mono text-xs text-foreground"
-            >{{ pretty(r.body) }}</pre
-          >
+          <pre class="flex-1 overflow-auto px-3 py-2 font-mono text-xs text-foreground">{{
+            pretty(r.body)
+          }}</pre>
         </div>
       }
     </div>

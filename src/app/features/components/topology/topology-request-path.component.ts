@@ -40,7 +40,9 @@ const CHECK: Record<HopCheck, { color: string; mark: string }> = {
             @for (hop of p.data; track hop.title) {
               <ng-container *ngTemplateOutlet="card; context: { $implicit: hop }" />
             } @empty {
-              <p class="text-sub rounded-lg border border-dashed border-border p-3">Talks to no other app Flui knows of.</p>
+              <p class="text-sub rounded-lg border border-dashed border-border p-3">
+                Talks to no other app Flui knows of.
+              </p>
             }
           </li>
         </ol>
@@ -51,13 +53,19 @@ const CHECK: Record<HopCheck, { color: string; mark: string }> = {
     </section>
 
     <ng-template #card let-hop>
-      <div class="flex min-h-[8rem] w-full flex-col gap-1 rounded-lg border border-border bg-card p-3">
-        @if (hop.step) { <span class="text-label">{{ hop.step }}</span> }
+      <div
+        class="flex min-h-[8rem] w-full flex-col gap-1 rounded-lg border border-border bg-card p-3"
+      >
+        @if (hop.step) {
+          <span class="text-label">{{ hop.step }}</span>
+        }
         <span class="text-sm font-semibold text-foreground">{{ hop.title }}</span>
         @for (line of hop.lines; track $index) {
           <span class="truncate font-mono text-[11px] text-muted-foreground">{{ line }}</span>
         }
-        <span class="mt-auto text-xs font-medium" [style.color]="checkOf(hop).color">{{ checkOf(hop).mark }} {{ hop.checkText }}</span>
+        <span class="mt-auto text-xs font-medium" [style.color]="checkOf(hop).color"
+          >{{ checkOf(hop).mark }} {{ hop.checkText }}</span
+        >
       </div>
     </ng-template>
   `,

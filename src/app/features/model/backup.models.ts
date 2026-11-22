@@ -21,8 +21,7 @@ export type DestinationRole = PolicyDestinationInputDto.RoleEnum;
 export type RestoreTargetKind = CreateRestoreJobDto.TargetKindEnum;
 export type RestoreStrategy = CreateRestoreJobDto.StrategyEnum;
 
-export type DestinationHealthStatus =
-  'unknown' | 'healthy' | 'degraded' | 'failed';
+export type DestinationHealthStatus = 'unknown' | 'healthy' | 'degraded' | 'failed';
 export type BackupPolicyStatus = 'active' | 'paused' | 'degraded' | 'failed';
 export type ReplicationStatus = 'ok' | 'degraded' | 'failed' | 'never_run';
 export type BackupJobStatus =
@@ -36,13 +35,7 @@ export type BackupJobStatus =
   | 'cancelled';
 export type BackupJobTriggerType = 'scheduled' | 'on_demand' | 'pre_deploy';
 export type ArtifactLocationState =
-  | 'pending'
-  | 'uploading'
-  | 'available'
-  | 'verified'
-  | 'missing'
-  | 'expired'
-  | 'failed';
+  'pending' | 'uploading' | 'available' | 'verified' | 'missing' | 'expired' | 'failed';
 export type BackupEngineClass = 'database' | 'platform' | 'volume_copy';
 
 export type RestoreJobStatus =
@@ -126,10 +119,7 @@ export interface BackupJob {
   infrastructureOperationId?: string;
   errorMessage?: string;
   /** Per volume, seconds the application was stopped for its copy. */
-  metadata?: { stoppedSeconds?: Record<string, number> } & Record<
-    string,
-    unknown
-  >;
+  metadata?: { stoppedSeconds?: Record<string, number> } & Record<string, unknown>;
   artifact?: BackupArtifact;
   createdAt: string;
   updatedAt: string;
@@ -216,9 +206,7 @@ export interface ObjectStoragePreset {
 
 // ===== Helpers =====
 
-export function inferProfile(
-  destinations: { role: DestinationRole }[],
-): BackupPolicyProfile {
+export function inferProfile(destinations: { role: DestinationRole }[]): BackupPolicyProfile {
   if (!destinations.length) return 'custom';
   const replicas = destinations.filter((d) => d.role === 'replica').length;
   if (replicas === 0) return 'single';
@@ -234,8 +222,7 @@ export function validatePolicyDestinations(
   if (primaries.length === 0) return 'A primary destination is required';
   if (primaries.length > 1) return 'Only one primary destination is allowed';
   const ids = new Set(destinations.map((d) => d.destinationId));
-  if (ids.size !== destinations.length)
-    return 'Duplicate destinations are not allowed';
+  if (ids.size !== destinations.length) return 'Duplicate destinations are not allowed';
   return null;
 }
 
@@ -244,8 +231,7 @@ export function costEstimateMonthlyEur(
   costPerGbMonthCents: number | null | undefined,
 ): number | null {
   if (usageBytes == null || costPerGbMonthCents == null) return null;
-  const bytes =
-    typeof usageBytes === 'string' ? Number(usageBytes) : usageBytes;
+  const bytes = typeof usageBytes === 'string' ? Number(usageBytes) : usageBytes;
   if (!Number.isFinite(bytes) || bytes < 0) return null;
   const gb = bytes / 1024 / 1024 / 1024;
   return (gb * costPerGbMonthCents) / 100;

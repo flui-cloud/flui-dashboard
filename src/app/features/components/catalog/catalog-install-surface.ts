@@ -132,13 +132,23 @@ export function presentedContent(input: CatalogInstallSurfaceInput): PresentedCo
       textObservation('flui.catalog_install.status', install.status, 'api'),
       // Only while the bar is on the screen: a percentage under a finished install would be
       // an observation of something the page is not showing.
-      running ? valueObservation('flui.catalog_install.progress', input.progressPct, 'api', '%') : null,
+      running
+        ? valueObservation('flui.catalog_install.progress', input.progressPct, 'api', '%')
+        : null,
       boolObservation('flui.catalog_install.has_error', install.hasError, 'api'),
       boolObservation('flui.catalog_install.skip_endpoint', install.skipEndpoint, 'api'),
       boolObservation('flui.catalog_install.has_endpoint', install.hasEndpoint, 'api'),
-      input.endpointState ? textObservation('flui.catalog_install.endpoint_state', input.endpointState, 'api') : null,
-      input.endpointState ? boolObservation('flui.catalog_install.endpoint_ready', input.endpointReady, 'derived') : null,
-      valueObservation('flui.catalog_install.database_components', input.databaseComponentCount, 'derived'),
+      input.endpointState
+        ? textObservation('flui.catalog_install.endpoint_state', input.endpointState, 'api')
+        : null,
+      input.endpointState
+        ? boolObservation('flui.catalog_install.endpoint_ready', input.endpointReady, 'derived')
+        : null,
+      valueObservation(
+        'flui.catalog_install.database_components',
+        input.databaseComponentCount,
+        'derived',
+      ),
     ]),
     state: { loading: input.isLoading },
   };

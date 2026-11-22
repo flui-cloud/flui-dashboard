@@ -1,10 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  input,
-  output,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideRotateCw, lucideUnplug } from '@ng-icons/lucide';
 
@@ -42,9 +36,7 @@ import { lucideRotateCw, lucideUnplug } from '@ng-icons/lucide';
             }
           </div>
           @for (row of slots(); track row) {
-            <div
-              class="flex gap-4 border-b border-border/50 py-3 last:border-0"
-            >
+            <div class="flex gap-4 border-b border-border/50 py-3 last:border-0">
               @for (cell of [1, 2, 3, 4]; track cell) {
                 <div class="skeleton h-4 flex-1"></div>
               }
@@ -53,16 +45,9 @@ import { lucideRotateCw, lucideUnplug } from '@ng-icons/lucide';
         </div>
       }
       @default {
-        <div
-          class="space-y-2"
-          [attr.data-testid]="'skeleton-' + testid()"
-          aria-hidden="true"
-        >
+        <div class="space-y-2" [attr.data-testid]="'skeleton-' + testid()" aria-hidden="true">
           @for (line of slots(); track line) {
-            <div
-              class="skeleton h-4"
-              [class]="line === 1 ? 'w-2/3' : 'w-full'"
-            ></div>
+            <div class="skeleton h-4" [class]="line === 1 ? 'w-2/3' : 'w-full'"></div>
           }
         </div>
       }
@@ -94,15 +79,12 @@ export class SectionSkeletonComponent {
       role="alert"
       [attr.data-testid]="'failure-' + testid()"
     >
-      <ng-icon
-        name="lucideUnplug"
-        class="h-4 w-4 shrink-0 translate-y-0.5 text-muted-foreground"
-      />
+      <ng-icon name="lucideUnplug" class="h-4 w-4 shrink-0 translate-y-0.5 text-muted-foreground" />
       <p class="m-0 min-w-0 flex-1 max-w-prose text-sm text-foreground">
         {{ message() }}
         <span class="mt-0.5 block text-[13px] text-muted-foreground">
-          Nothing on the cluster changed because this did not load — what is
-          missing here is the reading, not the fleet.
+          Nothing on the cluster changed because this did not load — what is missing here is the
+          reading, not the fleet.
         </span>
       </p>
       <button

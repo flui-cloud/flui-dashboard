@@ -34,25 +34,15 @@ export class DocumentConsoleService {
     return this.http.get<DocumentDatabase[]>(`${this.base(appId)}/databases`);
   }
 
-  getCollections(
-    appId: string,
-    database: string,
-  ): Observable<DocumentCollection[]> {
-    return this.http.post<DocumentCollection[]>(
-      `${this.base(appId)}/collections`,
-      { database },
-    );
+  getCollections(appId: string, database: string): Observable<DocumentCollection[]> {
+    return this.http.post<DocumentCollection[]>(`${this.base(appId)}/collections`, { database });
   }
 
   findDocuments(appId: string, req: DocFindRequest): Observable<DocumentPage> {
     return this.http.post<DocumentPage>(`${this.base(appId)}/documents`, req);
   }
 
-  getFields(
-    appId: string,
-    database: string,
-    collection: string,
-  ): Observable<DocumentField[]> {
+  getFields(appId: string, database: string, collection: string): Observable<DocumentField[]> {
     return this.http.post<DocumentField[]>(`${this.base(appId)}/fields`, {
       database,
       collection,

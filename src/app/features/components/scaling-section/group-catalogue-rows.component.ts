@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  effect,
-  inject,
-  input,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideTriangleAlert } from '@ng-icons/lucide';
@@ -55,8 +48,8 @@ import { ShapeSpec } from '../../model/scaling-section.models';
             labelClass="text-[12px] text-muted-foreground"
             testid="regions-why"
           >
-            More than one region is what opens "cheapest, anywhere", and what
-            lets it find a machine when the cluster's own region is out.
+            More than one region is what opens "cheapest, anywhere", and what lets it find a machine
+            when the cluster's own region is out.
           </app-explain>
         </td>
       </tr>
@@ -77,20 +70,14 @@ import { ShapeSpec } from '../../model/scaling-section.models';
             (move)="d().moveShape($event)"
           />
         </td>
-        <td [class]="t.tdMuted">
-          In order of preference: the first is tried first.
-        </td>
+        <td [class]="t.tdMuted">In order of preference: the first is tried first.</td>
       </tr>
     } @else {
       <tr [class]="t.row" data-testid="row-requirement">
-        <th scope="row" [class]="t.td + ' font-normal'">
-          What a machine has to hold
-        </th>
+        <th scope="row" [class]="t.td + ' font-normal'">What a machine has to hold</th>
         <td [class]="t.td">
           <span class="flex flex-col gap-2">
-            <label
-              class="flex items-center gap-2 text-[12px] text-muted-foreground"
-            >
+            <label class="flex items-center gap-2 text-[12px] text-muted-foreground">
               <span class="w-14">vCPU</span>
               <input
                 [class]="t.field + ' w-24 tabular-nums'"
@@ -99,9 +86,7 @@ import { ShapeSpec } from '../../model/scaling-section.models';
                 data-testid="requirement-cpu"
               />
             </label>
-            <label
-              class="flex items-center gap-2 text-[12px] text-muted-foreground"
-            >
+            <label class="flex items-center gap-2 text-[12px] text-muted-foreground">
               <span class="w-14">Memory</span>
               <input
                 [class]="t.field + ' w-24 tabular-nums'"
@@ -119,8 +104,8 @@ import { ShapeSpec } from '../../model/scaling-section.models';
             labelClass="text-[12px] text-muted-foreground"
             testid="requirement-why"
           >
-            {{ provider() }} publishes no prices, so the alarm asks for a
-            machine with at least this much free and you decide which one.
+            {{ provider() }} publishes no prices, so the alarm asks for a machine with at least this
+            much free and you decide which one.
           </app-explain>
         </td>
       </tr>
@@ -130,11 +115,7 @@ import { ShapeSpec } from '../../model/scaling-section.models';
       <th scope="row" [class]="t.td + ' font-normal'">How it chooses</th>
       <td [class]="t.td">
         @if (d().hasCatalogue()) {
-          <span
-            class="flex flex-col gap-1"
-            role="radiogroup"
-            aria-label="How it chooses"
-          >
+          <span class="flex flex-col gap-1" role="radiogroup" aria-label="How it chooses">
             @for (option of strategies; track option.id) {
               <button
                 type="button"
@@ -150,9 +131,7 @@ import { ShapeSpec } from '../../model/scaling-section.models';
                 [attr.data-testid]="'strategy-' + option.id"
               >
                 <span>{{ option.label }}</span>
-                <span class="text-[11px] text-muted-foreground">{{
-                  option.optimises
-                }}</span>
+                <span class="text-[11px] text-muted-foreground">{{ option.optimises }}</span>
               </button>
             }
           </span>
@@ -164,24 +143,18 @@ import { ShapeSpec } from '../../model/scaling-section.models';
       </td>
       <td [class]="t.tdMuted">
         @if (d().hasCatalogue()) {
-          Only among machines that already fit. One that is too small is never a
-          candidate, whatever it costs.
+          Only among machines that already fit. One that is too small is never a candidate, whatever
+          it costs.
           @if (d().chosenStrategy(); as picked) {
-            <span
-              class="mt-1 block text-foreground"
-              data-testid="strategy-when"
-            >
+            <span class="mt-1 block text-foreground" data-testid="strategy-when">
               {{ picked.when }}
             </span>
           }
         } @else {
-          With no catalogue there is nothing to choose between: every node here
-          is whatever was attached.
+          With no catalogue there is nothing to choose between: every node here is whatever was
+          attached.
           @if (d().chosenStrategy(); as picked) {
-            <span
-              class="mt-1 block text-foreground"
-              data-testid="strategy-when"
-            >
+            <span class="mt-1 block text-foreground" data-testid="strategy-when">
               {{ picked.when }}
             </span>
           }
@@ -197,10 +170,9 @@ import { ShapeSpec } from '../../model/scaling-section.models';
           labelClass="text-[13px] text-foreground"
           testid="cap-why"
         >
-          The safety net under the node limits. Before every node is added the
-          fleet's whole monthly list price is weighed against it, not one
-          machine: what is already running counts. Required to add nodes
-          automatically; set it above the worst case below and it only ever
+          The safety net under the node limits. Before every node is added the fleet's whole monthly
+          list price is weighed against it, not one machine: what is already running counts.
+          Required to add nodes automatically; set it above the worst case below and it only ever
           stops a runaway.
         </app-explain>
       </th>
@@ -222,21 +194,13 @@ import { ShapeSpec } from '../../model/scaling-section.models';
             <span class="text-[12px] text-muted-foreground">per month</span>
           </span>
         } @else {
-          <span class="text-muted-foreground" data-testid="cost-not-applicable"
-            >—</span
-          >
+          <span class="text-muted-foreground" data-testid="cost-not-applicable">—</span>
         }
       </td>
       <td [class]="t.tdMuted">
         @if (capWarning(); as warning) {
-          <span
-            class="flex items-start gap-2 text-destructive"
-            data-testid="cap-warning"
-          >
-            <ng-icon
-              name="lucideTriangleAlert"
-              class="mt-0.5 h-4 w-4 shrink-0"
-            />
+          <span class="flex items-start gap-2 text-destructive" data-testid="cap-warning">
+            <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-4 w-4 shrink-0" />
             <span>{{ warning }}</span>
           </span>
         } @else if (d().hasCatalogue()) {
@@ -293,10 +257,7 @@ export class GroupCatalogueRowsComponent {
   }
 
   protected readonly regionChoices = computed(() =>
-    this.catalogue.regionChoices(
-      this.draft().provider(),
-      this.draft().buyableRegions(),
-    ),
+    this.catalogue.regionChoices(this.draft().provider(), this.draft().buyableRegions()),
   );
 
   /**
@@ -312,13 +273,14 @@ export class GroupCatalogueRowsComponent {
       ),
   );
 
-  protected readonly machineChoices = computed(() =>
-    this.catalogue
-      .machineChoices(this.draft().provider(), this.draft().group().regions)
-      ?.map((choice) => {
-        const spec = this.listed().get(choice.value);
-        return spec ? { ...choice, note: specNote(spec) } : choice;
-      }) ?? null,
+  protected readonly machineChoices = computed(
+    () =>
+      this.catalogue
+        .machineChoices(this.draft().provider(), this.draft().group().regions)
+        ?.map((choice) => {
+          const spec = this.listed().get(choice.value);
+          return spec ? { ...choice, note: specNote(spec) } : choice;
+        }) ?? null,
   );
 
   protected readonly architectures = computed(() => {

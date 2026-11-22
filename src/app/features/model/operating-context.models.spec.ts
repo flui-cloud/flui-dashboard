@@ -61,15 +61,8 @@ describe('what a note says about its own premise', () => {
 
   it('puts the fallen premises before the merely unconfirmed', () => {
     const order: Validity[] = ['checked', 'stale', 'broken', 'unverified'];
-    const sorted = suspectFirst(
-      order.map((confidence, i) => note({ id: `n-${i}`, confidence })),
-    );
-    expect(sorted.map((e) => e.confidence)).toEqual([
-      'broken',
-      'stale',
-      'unverified',
-      'checked',
-    ]);
+    const sorted = suspectFirst(order.map((confidence, i) => note({ id: `n-${i}`, confidence })));
+    expect(sorted.map((e) => e.confidence)).toEqual(['broken', 'stale', 'unverified', 'checked']);
   });
 
   it('leaves notes of equal standing in the order the API sent them', () => {
@@ -110,9 +103,7 @@ describe('disagreements, shown and never resolved', () => {
 describe('naming the level of an existing note', () => {
   it('names a cluster by name when the name is known and by id when it is not', () => {
     const on = note({ scopeType: 'cluster', scopeRef: 'c-1' });
-    expect(describeScope(on, (id) => (id === 'c-1' ? 'prod' : undefined))).toBe(
-      'cluster prod',
-    );
+    expect(describeScope(on, (id) => (id === 'c-1' ? 'prod' : undefined))).toBe('cluster prod');
     expect(describeScope(on)).toBe('cluster c-1');
   });
 
@@ -129,9 +120,8 @@ describe('naming the level of an existing note', () => {
 
   it('resolves a cluster in the selector by name, as it does for a cluster note', () => {
     expect(
-      describeScope(
-        note({ scopeType: 'selector', selector: { clusterId: 'c-1' } }),
-        (id) => (id === 'c-1' ? 'prod' : undefined),
+      describeScope(note({ scopeType: 'selector', selector: { clusterId: 'c-1' } }), (id) =>
+        id === 'c-1' ? 'prod' : undefined,
       ),
     ).toBe('on cluster prod');
   });
@@ -145,11 +135,9 @@ describe('naming the level of an existing note', () => {
   });
 
   it('says a principal owns it without ever putting their id on the screen', () => {
-    expect(
-      describeScope(
-        note({ scopeType: 'selector', selector: { owner: 'user-9' } }),
-      ),
-    ).toBe('owned by one principal');
+    expect(describeScope(note({ scopeType: 'selector', selector: { owner: 'user-9' } }))).toBe(
+      'owned by one principal',
+    );
   });
 
   it('still admits it cannot name a selection the delivery left empty', () => {
@@ -159,9 +147,7 @@ describe('naming the level of an existing note', () => {
   });
 
   it('names the empty region as the whole installation', () => {
-    expect(describeScope(note({ scopeType: 'global' }))).toBe(
-      'the whole installation',
-    );
+    expect(describeScope(note({ scopeType: 'global' }))).toBe('the whole installation');
   });
 });
 
@@ -197,9 +183,7 @@ describe('the two axes, which are not a hierarchy', () => {
       scopeType: 'selector',
       selector: { slugs: ['api'] },
     });
-    expect(
-      scopeOfLevel(level({ where: 'provider', provider: 'hetzner' })),
-    ).toEqual({
+    expect(scopeOfLevel(level({ where: 'provider', provider: 'hetzner' }))).toEqual({
       scopeType: 'selector',
       selector: { provider: 'hetzner' },
     });
@@ -316,8 +300,7 @@ describe('the body of the write', () => {
     });
     expect(attested?.validForDays).toBe(30);
     expect(
-      writeBodyOf({ ...EMPTY_DRAFT, topic: 't', title: 'T', body: 'B' })
-        ?.validForDays,
+      writeBodyOf({ ...EMPTY_DRAFT, topic: 't', title: 'T', body: 'B' })?.validForDays,
     ).toBeUndefined();
   });
 
@@ -415,23 +398,17 @@ describe('what a note does not yet say', () => {
 
   it('asks which fact, before asking what it should say', () => {
     expect(
-      whatIsStillNeeded(
-        writeBodyOf(drafted({ checkKind: 'probe', probeOp: 'equals' })),
-      ),
+      whatIsStillNeeded(writeBodyOf(drafted({ checkKind: 'probe', probeOp: 'equals' }))),
     ).toContain('live fact');
   });
 
   it('asks for the words when there are none', () => {
-    expect(whatIsStillNeeded(writeBodyOf(drafted({ body: '' })))).toContain(
-      'note itself',
-    );
+    expect(whatIsStillNeeded(writeBodyOf(drafted({ body: '' })))).toContain('note itself');
   });
 
   it('asks for the level when an axis the author picked is still empty', () => {
     expect(
-      whatIsStillNeeded(
-        writeBodyOf(drafted({ level: { ...EMPTY_LEVEL, about: 'apps' } })),
-      ),
+      whatIsStillNeeded(writeBodyOf(drafted({ level: { ...EMPTY_LEVEL, about: 'apps' } }))),
     ).toContain('level');
   });
 
@@ -502,9 +479,7 @@ describe('the fact a note leans on', () => {
   });
 
   it('finds nothing missing once every published parameter is answered', () => {
-    const body = writeBodyOf(
-      drafted({ probeParams: { slug: 'api', field: 'status' } }),
-    );
+    const body = writeBodyOf(drafted({ probeParams: { slug: 'api', field: 'status' } }));
     expect(whatIsStillNeeded(body, appField)).toBeNull();
   });
 
@@ -520,12 +495,9 @@ describe('the fact a note leans on', () => {
   });
 
   it('takes a single published type whatever the parameters are', () => {
-    expect(
-      answerTypeOf(
-        { id: 'cluster.appCount', describes: 'x', answers: 'number' },
-        {},
-      ),
-    ).toBe('number');
+    expect(answerTypeOf({ id: 'cluster.appCount', describes: 'x', answers: 'number' }, {})).toBe(
+      'number',
+    );
   });
 
   it('says so when the comparison could never hold against that field', () => {
@@ -573,19 +545,14 @@ describe('the fact a note leans on', () => {
 
   it('sends only the parameters the probe published, and drops the empty ones', () => {
     expect(
-      declaredParamsOf(
-        { slug: 'api', field: '', clusterId: 'left over' },
-        appField.takes ?? [],
-      ),
+      declaredParamsOf({ slug: 'api', field: '', clusterId: 'left over' }, appField.takes ?? []),
     ).toEqual({ slug: 'api' });
   });
 });
 
 describe('the hand on a retired note', () => {
   it('is read on the same terms as the other two', () => {
-    expect(describeHand({ name: 'Olive Operator', isYou: false })).toBe(
-      'Olive Operator',
-    );
+    expect(describeHand({ name: 'Olive Operator', isYou: false })).toBe('Olive Operator');
     expect(describeHand(null)).toBeNull();
   });
 

@@ -13,7 +13,9 @@ describe('the CPU architecture badge', () => {
     fixture.nativeElement.querySelector('[data-testid="architecture-badge"]');
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({ imports: [ArchitectureBadgeComponent] }).compileComponents();
+    await TestBed.configureTestingModule({
+      imports: [ArchitectureBadgeComponent],
+    }).compileComponents();
     fixture = TestBed.createComponent(ArchitectureBadgeComponent);
   });
 

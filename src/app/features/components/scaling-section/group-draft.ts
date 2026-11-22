@@ -6,10 +6,7 @@ import {
   ScalingBounds,
   StrategyCopy,
 } from '../../model/scaling-group.models';
-import {
-  NodeRequirement,
-  SectionGroup,
-} from '../../model/scaling-section.models';
+import { NodeRequirement, SectionGroup } from '../../model/scaling-section.models';
 import { refusesWholeCatalogue } from './scaling-tabs-format';
 
 export type BoundRole = keyof ScalingBounds;
@@ -40,10 +37,7 @@ export class GroupDraft {
   readonly buyableRegions = computed(() => this.group().buyableRegions);
 
   readonly refusesEverything = computed(() =>
-    refusesWholeCatalogue(
-      this.group().capability,
-      this.group().limits.hourlyBillingOnly,
-    ),
+    refusesWholeCatalogue(this.group().capability, this.group().limits.hourlyBillingOnly),
   );
 
   /** What is wrong with each node limit as typed, said beside that field. */
@@ -75,9 +69,7 @@ export class GroupDraft {
 
   addRegion(region: string): void {
     this.state.update((group) =>
-      group.regions.includes(region)
-        ? group
-        : { ...group, regions: [...group.regions, region] },
+      group.regions.includes(region) ? group : { ...group, regions: [...group.regions, region] },
     );
   }
 
@@ -90,9 +82,7 @@ export class GroupDraft {
 
   addShape(shape: string): void {
     this.state.update((group) =>
-      group.shapes.includes(shape)
-        ? group
-        : { ...group, shapes: [...group.shapes, shape] },
+      group.shapes.includes(shape) ? group : { ...group, shapes: [...group.shapes, shape] },
     );
   }
 

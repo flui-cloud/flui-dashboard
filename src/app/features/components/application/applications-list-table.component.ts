@@ -29,10 +29,12 @@ import { ListRow } from './applications-list-rows';
     </section>
     <div class="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-muted-foreground">
       <span class="inline-flex items-center gap-1.5">
-        <span class="inline-block h-1.5 w-4 rounded-full" [style.background]="cpuColor"></span>CPU of the limit
+        <span class="inline-block h-1.5 w-4 rounded-full" [style.background]="cpuColor"></span>CPU
+        of the limit
       </span>
       <span class="inline-flex items-center gap-1.5">
-        <span class="inline-block h-1.5 w-4 rounded-full" [style.background]="memoryColor"></span>Memory of the limit
+        <span class="inline-block h-1.5 w-4 rounded-full" [style.background]="memoryColor"></span
+        >Memory of the limit
       </span>
       <span>Apps that need attention are listed first.</span>
     </div>

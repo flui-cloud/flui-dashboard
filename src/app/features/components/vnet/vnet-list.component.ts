@@ -5,7 +5,16 @@
  * Follows the pattern established in ClusterListComponent.
  */
 
-import { Component, OnInit, OnDestroy, signal, computed, inject, effect, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  signal,
+  computed,
+  inject,
+  effect,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -16,7 +25,7 @@ import {
   lucideNetwork,
   lucideServer,
   lucideSearch,
-  lucideFilter
+  lucideFilter,
 } from '@ng-icons/lucide';
 
 import { VNetService } from '../../service/vnet.service';
@@ -25,7 +34,7 @@ import {
   VNetInfo,
   VNetFilterState,
   VNetStatus,
-  getAllAttachedServerIds
+  getAllAttachedServerIds,
 } from '../../model/vnet.models';
 import { ReadOnlySectionDirective } from '../../../shared/directives/read-only-section.directive';
 import { ManagementNetworkCardComponent } from './management-network-card.component';
@@ -40,7 +49,13 @@ import {
 @Component({
   selector: 'vnet-list',
   standalone: true,
-  imports: [ReadOnlySectionDirective, CommonModule, FormsModule, NgIcon, ManagementNetworkCardComponent],
+  imports: [
+    ReadOnlySectionDirective,
+    CommonModule,
+    FormsModule,
+    NgIcon,
+    ManagementNetworkCardComponent,
+  ],
   providers: [
     provideIcons({
       lucideRefreshCw,
@@ -48,17 +63,15 @@ import {
       lucideNetwork,
       lucideServer,
       lucideSearch,
-      lucideFilter
-    })
+      lucideFilter,
+    }),
   ],
   template: `
     <div class="space-y-6 p-6">
       <!-- Header -->
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
-            Virtual Networks
-          </h1>
+          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Virtual Networks</h1>
           <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
             Manage isolated private networks across cloud providers
           </p>
@@ -69,11 +82,7 @@ import {
             [disabled]="isLoading()"
             class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            <ng-icon
-              name="lucideRefreshCw"
-              class="h-4 w-4"
-              [class.animate-spin]="isLoading()"
-            />
+            <ng-icon name="lucideRefreshCw" class="h-4 w-4" [class.animate-spin]="isLoading()" />
             Refresh
           </button>
           <button
@@ -141,9 +150,7 @@ import {
       >
         <div class="flex items-center gap-2 mb-4">
           <ng-icon name="lucideFilter" class="h-4 w-4 text-gray-500" />
-          <span class="text-sm font-medium text-gray-700 dark:text-gray-300"
-            >Filters</span
-          >
+          <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Filters</span>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
           <!-- Search -->
@@ -169,7 +176,7 @@ import {
           >
             <option value="">All Providers</option>
             @for (p of availableProviders(); track p.id) {
-            <option [value]="p.id">{{ p.displayName }}</option>
+              <option [value]="p.id">{{ p.displayName }}</option>
             }
           </select>
 
@@ -227,15 +234,13 @@ import {
           class="flex flex-col items-center justify-center py-12 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
         >
           <ng-icon name="lucideNetwork" class="h-16 w-16 text-gray-400 mb-4" />
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-            No VNets found
-          </h3>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No VNets found</h3>
           <p class="text-sm text-gray-600 dark:text-gray-400 mb-4 text-center max-w-md">
             @if (hasActiveFilters()) {
               No VNets match your current filters. Try adjusting your search criteria.
             } @else {
-              Get started by creating your first Virtual Network to securely connect your
-              cloud resources.
+              Get started by creating your first Virtual Network to securely connect your cloud
+              resources.
             }
           </p>
           @if (!hasActiveFilters()) {
@@ -283,7 +288,9 @@ import {
                   <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                     <div>
                       <div class="text-xs text-gray-500 dark:text-gray-400">Provider</div>
-                      <div class="text-sm font-medium text-gray-900 dark:text-white mt-1 capitalize">
+                      <div
+                        class="text-sm font-medium text-gray-900 dark:text-white mt-1 capitalize"
+                      >
                         @if (vnet.implementation === 'wireguard') {
                           <span class="text-blue-600 dark:text-blue-400">Built by Flui</span>
                         } @else {
@@ -348,7 +355,7 @@ import {
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.Eager,
-  styles: []
+  styles: [],
 })
 export class VNetListComponent implements OnInit, OnDestroy {
   private readonly vnetService = inject(VNetService);
@@ -389,7 +396,7 @@ export class VNetListComponent implements OnInit, OnDestroy {
     search: '',
     provider: '',
     status: '',
-    clusterId: ''
+    clusterId: '',
   });
 
   readonly filtersState = this.filtersSignal.asReadonly();
@@ -414,8 +421,7 @@ export class VNetListComponent implements OnInit, OnDestroy {
         vnet.ipRange.toLowerCase().includes(filters.search.toLowerCase()) ||
         vnet.providerResourceId.toLowerCase().includes(filters.search.toLowerCase());
 
-      const matchProvider =
-        !filters.provider || vnet.provider === filters.provider;
+      const matchProvider = !filters.provider || vnet.provider === filters.provider;
 
       const matchStatus = !filters.status || vnet.status === filters.status;
 
@@ -458,7 +464,7 @@ export class VNetListComponent implements OnInit, OnDestroy {
   updateFilter(key: keyof VNetFilterState, value: string) {
     this.filtersSignal.update((current) => ({
       ...current,
-      [key]: value
+      [key]: value,
     }));
   }
 
@@ -467,7 +473,7 @@ export class VNetListComponent implements OnInit, OnDestroy {
       search: '',
       provider: '',
       status: '',
-      clusterId: ''
+      clusterId: '',
     });
   }
 

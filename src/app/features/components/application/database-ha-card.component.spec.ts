@@ -34,9 +34,7 @@ describe('DatabaseHaCardComponent', () => {
 
   function render(app: ApplicationResponseDto, current: DatabaseHaView) {
     get = jasmine.createSpy('get').and.returnValue(of(current));
-    enable = jasmine
-      .createSpy('enable')
-      .and.returnValue(of({ operationId: 'op-1' }));
+    enable = jasmine.createSpy('enable').and.returnValue(of({ operationId: 'op-1' }));
     TestBed.configureTestingModule({
       imports: [DatabaseHaCardComponent],
       providers: [{ provide: DbHaService, useValue: { get, enable } }],
@@ -56,9 +54,7 @@ describe('DatabaseHaCardComponent', () => {
 
   it('says how many copies protect it once active, and offers nothing', () => {
     const el = render(postgres, view(ha('active')));
-    expect(el.textContent).toContain(
-      'Highly available: 3 instances, one per location',
-    );
+    expect(el.textContent).toContain('Highly available: 3 instances, one per location');
     expect(el.textContent).not.toContain('Make highly available');
     expect(fixture.componentInstance.active()).toBeTrue();
   });
@@ -96,16 +92,13 @@ describe('DatabaseHaCardComponent', () => {
         ],
       },
     });
-    expect(
-      el.querySelector('[data-testid="database-ha-placement"]')!.textContent,
-    ).toContain('Primary in fsn1. Copies: nbg1 3.1 ms behind, hel1 not ready.');
+    expect(el.querySelector('[data-testid="database-ha-placement"]')!.textContent).toContain(
+      'Primary in fsn1. Copies: nbg1 3.1 ms behind, hel1 not ready.',
+    );
   });
 
   it('shows why the last attempt stopped, and lets it be tried again', () => {
-    const el = render(
-      postgres,
-      view(ha('failed', 'The copy did not catch up in time')),
-    );
+    const el = render(postgres, view(ha('failed', 'The copy did not catch up in time')));
     expect(el.textContent).toContain('The copy did not catch up in time');
     expect(el.textContent).toContain('Make highly available');
   });

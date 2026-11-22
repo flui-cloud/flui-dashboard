@@ -13,18 +13,16 @@ export class LocalAuthService {
   private readonly apiAuth = inject(ApiAuthService);
 
   login(email: string, password: string): Observable<void> {
-    return this.apiAuth
-      .authControllerLogin({ email, password })
-      .pipe(
-        tap((r) => {
-          localStorage.setItem(this.TOKEN_KEY, r.access_token);
-          const resp = r as { access_token: string; refresh_token?: string };
-          if (resp.refresh_token) {
-            localStorage.setItem(this.REFRESH_TOKEN_KEY, resp.refresh_token);
-          }
-        }),
-        map(() => void 0),
-      );
+    return this.apiAuth.authControllerLogin({ email, password }).pipe(
+      tap((r) => {
+        localStorage.setItem(this.TOKEN_KEY, r.access_token);
+        const resp = r as { access_token: string; refresh_token?: string };
+        if (resp.refresh_token) {
+          localStorage.setItem(this.REFRESH_TOKEN_KEY, resp.refresh_token);
+        }
+      }),
+      map(() => void 0),
+    );
   }
 
   refresh(): Observable<string> {

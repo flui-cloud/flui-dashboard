@@ -21,9 +21,9 @@ import { AppLogsViewerComponent } from './app-logs-viewer.component';
   template: `<app-logs-viewer />`,
 })
 export class AppLogsTabComponent implements OnInit, OnDestroy {
-  private readonly appService  = inject(ApplicationService);
+  private readonly appService = inject(ApplicationService);
   private readonly logsService = inject(ApplicationLogsService);
-  private readonly route       = inject(ActivatedRoute);
+  private readonly route = inject(ActivatedRoute);
 
   ngOnInit() {
     const app = this.appService.selectedApplication();

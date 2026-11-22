@@ -1,10 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideClock, lucideGithub, lucideStar, lucideTriangleAlert } from '@ng-icons/lucide';
 import { SandboxService } from '../../../core/services/sandbox.service';
@@ -44,9 +38,7 @@ import { FLUI_CORE_REPO_URL, INSTALL_FLUI_URL } from '../../../core/utils/instal
           </span>
         } @else {
           <span class="font-medium">Your demo space</span>
-          <span class="opacity-80">
-            Your apps are removed after a day without activity.
-          </span>
+          <span class="opacity-80"> Your apps are removed after a day without activity. </span>
           <button
             type="button"
             class="rounded border border-current/30 px-2 py-0.5 font-medium hover:bg-foreground/5 disabled:opacity-50"
@@ -66,7 +58,10 @@ import { FLUI_CORE_REPO_URL, INSTALL_FLUI_URL } from '../../../core/utils/instal
           data-testid="star-on-github"
         >
           <ng-icon name="lucideGithub" class="h-3.5 w-3.5 flex-shrink-0" />
-          <ng-icon name="lucideStar" class="h-3.5 w-3.5 flex-shrink-0 text-amber-400 [&_svg]:fill-current" />
+          <ng-icon
+            name="lucideStar"
+            class="h-3.5 w-3.5 flex-shrink-0 text-amber-400 [&_svg]:fill-current"
+          />
           <span>Star<span class="hidden sm:inline"> on GitHub</span></span>
         </a>
 

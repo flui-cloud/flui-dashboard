@@ -17,7 +17,8 @@ import { CatalogUserInputPromptDto } from '../../../../core/api/model/catalogUse
       <div>
         <h3 class="text-base font-semibold">App configuration</h3>
         <p class="text-sm text-muted-foreground">
-          Secrets and settings the app needs to run. Values marked <span class="text-red-500">*</span> are required.
+          Secrets and settings the app needs to run. Values marked
+          <span class="text-red-500">*</span> are required.
         </p>
       </div>
 
@@ -28,7 +29,8 @@ import { CatalogUserInputPromptDto } from '../../../../core/api/model/catalogUse
             <span class="text-sm font-medium">Default login</span>
           </div>
           <p class="text-xs text-muted-foreground">
-            This app ships with a built-in account — Flui does not set it. Use these credentials to sign in.
+            This app ships with a built-in account — Flui does not set it. Use these credentials to
+            sign in.
           </p>
           @if (creds.username) {
             <div>
@@ -134,9 +136,7 @@ import { CatalogUserInputPromptDto } from '../../../../core/api/model/catalogUse
 export class CatalogInputsStepComponent {
   protected readonly state = inject(DeployWizardStateService);
 
-  protected readonly prompts = computed(
-    () => this.state.catalogDetail()?.userInputPrompts ?? [],
-  );
+  protected readonly prompts = computed(() => this.state.catalogDetail()?.userInputPrompts ?? []);
 
   protected readonly defaultCredentials = computed(
     () => this.state.catalogDetail()?.defaultCredentials ?? null,

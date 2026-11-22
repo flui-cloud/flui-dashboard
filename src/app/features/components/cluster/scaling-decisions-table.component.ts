@@ -1,9 +1,4 @@
-import {
-  Component,
-  computed,
-  input,
-  ChangeDetectionStrategy,
-} from '@angular/core';
+import { Component, computed, input, ChangeDetectionStrategy } from '@angular/core';
 import { ScalingDecision } from '../../model/scaling-group.models';
 
 type Tone = 'acted' | 'alerted' | 'quiet';
@@ -30,9 +25,7 @@ interface DecisionRow {
   template: `
     <div class="card-surface" data-testid="decisions">
       <div class="flex items-baseline justify-between gap-4 px-5 pt-4 pb-3">
-        <h3 class="m-0 text-sm font-semibold text-foreground">
-          What Flui decided
-        </h3>
+        <h3 class="m-0 text-sm font-semibold text-foreground">What Flui decided</h3>
         @if (groupId(); as id) {
           <a
             [href]="'/scaling/' + id + '/history'"
@@ -45,33 +38,22 @@ interface DecisionRow {
 
       @if (rows().length === 0) {
         <p class="m-0 px-5 pb-5 text-sm text-sub">
-          Nothing decided yet. Flui writes a line here every time it looks at
-          this cluster.
+          Nothing decided yet. Flui writes a line here every time it looks at this cluster.
         </p>
       } @else {
         <div class="overflow-x-auto">
           <table class="w-full min-w-[720px] text-left">
             <thead>
-              <tr
-                class="text-[10px] font-semibold uppercase tracking-wider text-sub"
-              >
-                <th scope="col" class="px-5 pb-2 font-semibold w-[96px]">
-                  When
-                </th>
-                <th scope="col" class="px-3 pb-2 font-semibold">
-                  What Flui saw
-                </th>
-                <th scope="col" class="px-5 pb-2 font-semibold w-[280px]">
-                  What happened
-                </th>
+              <tr class="text-[10px] font-semibold uppercase tracking-wider text-sub">
+                <th scope="col" class="px-5 pb-2 font-semibold w-[96px]">When</th>
+                <th scope="col" class="px-3 pb-2 font-semibold">What Flui saw</th>
+                <th scope="col" class="px-5 pb-2 font-semibold w-[280px]">What happened</th>
               </tr>
             </thead>
             <tbody>
               @for (row of rows(); track row.id) {
                 <tr class="border-t border-border align-middle">
-                  <td
-                    class="px-5 py-3 font-mono text-xs text-muted-foreground whitespace-nowrap"
-                  >
+                  <td class="px-5 py-3 font-mono text-xs text-muted-foreground whitespace-nowrap">
                     {{ row.when }}
                   </td>
                   <td class="px-3 py-3 text-[13px] text-foreground">
@@ -85,9 +67,7 @@ interface DecisionRow {
                       >
                         {{ row.outcome.replaceAll('-', ' ') }}
                       </span>
-                      <span class="text-xs text-muted-foreground">{{
-                        row.did
-                      }}</span>
+                      <span class="text-xs text-muted-foreground">{{ row.did }}</span>
                     </div>
                   </td>
                 </tr>
@@ -135,7 +115,13 @@ export class ScalingDecisionsTableComponent {
   }
 
   private toneOf(outcome: ScalingDecision['outcome']): Tone {
-    if (outcome === 'added' || outcome === 'replaced' || outcome === 'removed' || outcome === 'node-joined' || outcome === 'node-removed')
+    if (
+      outcome === 'added' ||
+      outcome === 'replaced' ||
+      outcome === 'removed' ||
+      outcome === 'node-joined' ||
+      outcome === 'node-removed'
+    )
       return 'acted';
     return outcome === 'alerted' || outcome === 'purchase-failed' ? 'alerted' : 'quiet';
   }

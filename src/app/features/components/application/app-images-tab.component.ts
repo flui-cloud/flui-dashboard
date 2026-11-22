@@ -1,4 +1,11 @@
-import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  computed,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { LookOnlyDirective } from '../../../shared/directives/look-only.directive';
 import { accessOf } from '../../model/app-access';
 
@@ -6,10 +13,23 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
-  lucideRefreshCw, lucideLoader, lucideRocket, lucideCircleCheck,
-  lucideImage, lucideTriangleAlert, lucideTag, lucideX, lucideArrowDown,
-  lucideCalendar, lucideCpu, lucideInfo, lucideGithub, lucideArrowRight,
-  lucideRotateCcw, lucideHistory, lucideTrash2,
+  lucideRefreshCw,
+  lucideLoader,
+  lucideRocket,
+  lucideCircleCheck,
+  lucideImage,
+  lucideTriangleAlert,
+  lucideTag,
+  lucideX,
+  lucideArrowDown,
+  lucideCalendar,
+  lucideCpu,
+  lucideInfo,
+  lucideGithub,
+  lucideArrowRight,
+  lucideRotateCcw,
+  lucideHistory,
+  lucideTrash2,
 } from '@ng-icons/lucide';
 import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
 import { HlmInputDirective } from '@spartan-ng/ui-input-helm';
@@ -27,13 +47,36 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
 @Component({
   selector: 'app-images-tab',
   standalone: true,
-  imports: [FormsModule, NgIcon, RouterLink, HlmButtonDirective, HlmInputDirective, HlmLabelDirective, LookOnlyDirective],
-  providers: [provideIcons({
-    lucideRefreshCw, lucideLoader, lucideRocket, lucideCircleCheck,
-    lucideImage, lucideTriangleAlert, lucideTag, lucideX, lucideArrowDown,
-    lucideCalendar, lucideCpu, lucideInfo, lucideGithub, lucideArrowRight,
-    lucideRotateCcw, lucideHistory, lucideTrash2,
-  })],
+  imports: [
+    FormsModule,
+    NgIcon,
+    RouterLink,
+    HlmButtonDirective,
+    HlmInputDirective,
+    HlmLabelDirective,
+    LookOnlyDirective,
+  ],
+  providers: [
+    provideIcons({
+      lucideRefreshCw,
+      lucideLoader,
+      lucideRocket,
+      lucideCircleCheck,
+      lucideImage,
+      lucideTriangleAlert,
+      lucideTag,
+      lucideX,
+      lucideArrowDown,
+      lucideCalendar,
+      lucideCpu,
+      lucideInfo,
+      lucideGithub,
+      lucideArrowRight,
+      lucideRotateCcw,
+      lucideHistory,
+      lucideTrash2,
+    }),
+  ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-4" [appLookOnly]="readOnly()">
@@ -43,17 +86,23 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
           <div class="flex items-center gap-2 flex-wrap">
             <h3 class="text-base font-semibold">Releases</h3>
             @if (sourceTypeLabel()) {
-              <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground">
+              <span
+                class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground"
+              >
                 {{ sourceTypeLabel() }}
               </span>
             }
             @if (versioning.hasUpdate()) {
-              <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+              <span
+                class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+              >
                 Update available
               </span>
             }
             @if (autoDeployOnPush()) {
-              <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300">
+              <span
+                class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300"
+              >
                 <ng-icon name="lucideRefreshCw" class="h-3 w-3" /> Auto-deploy on push
               </span>
             }
@@ -62,30 +111,54 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
             Each version. Track which is currently deployed and the outcome of past releases.
           </p>
         </div>
-        <button hlmBtn variant="outline" size="sm" (click)="refresh()" [disabled]="versioning.loading()">
-          <ng-icon name="lucideRefreshCw" class="h-3.5 w-3.5 mr-1.5" [class.animate-spin]="versioning.loading()" />
+        <button
+          hlmBtn
+          variant="outline"
+          size="sm"
+          (click)="refresh()"
+          [disabled]="versioning.loading()"
+        >
+          <ng-icon
+            name="lucideRefreshCw"
+            class="h-3.5 w-3.5 mr-1.5"
+            [class.animate-spin]="versioning.loading()"
+          />
           Refresh
         </button>
       </div>
 
       @if (autoDeployOnPush()) {
-        <div class="p-3 rounded-md border border-violet-300 bg-violet-50 dark:border-violet-700/60 dark:bg-violet-950/40 space-y-2">
+        <div
+          class="p-3 rounded-md border border-violet-300 bg-violet-50 dark:border-violet-700/60 dark:bg-violet-950/40 space-y-2"
+        >
           <p class="text-sm text-violet-900 dark:text-violet-100">
             This application follows
-            @if (deployBranch(); as b) { <span class="font-mono">{{ b }}</span> } @else { its branch }
+            @if (deployBranch(); as b) {
+              <span class="font-mono">{{ b }}</span>
+            } @else {
+              its branch
+            }
             on its own: every successful build is rolled out within seconds. Releasing an older
             version from here would be undone, so those buttons are off.
           </p>
-          <button hlmBtn variant="ghost" size="sm" (click)="showPinHelp.set(!showPinHelp())"
-            class="text-violet-800 dark:text-violet-200 -ml-2">
+          <button
+            hlmBtn
+            variant="ghost"
+            size="sm"
+            (click)="showPinHelp.set(!showPinHelp())"
+            class="text-violet-800 dark:text-violet-200 -ml-2"
+          >
             {{ showPinHelp() ? 'Hide' : 'How do I change what runs?' }}
           </button>
           @if (showPinHelp()) {
             <div class="text-sm text-violet-800/90 dark:text-violet-200/80 space-y-1.5">
-              <p>Push to the branch. The build that succeeds is what runs — that is the whole update path.</p>
               <p>
-                To pin an older version instead, auto-deploy has to be off first. It is a property of
-                the application, and today it can only be changed through the API:
+                Push to the branch. The build that succeeds is what runs — that is the whole update
+                path.
+              </p>
+              <p>
+                To pin an older version instead, auto-deploy has to be off first. It is a property
+                of the application, and today it can only be changed through the API:
               </p>
               <p class="font-mono text-xs break-all">
                 PATCH /api/v1/applications/{{ appIdForHelp() }} &#123;"deployOnPush": false&#125;
@@ -96,20 +169,31 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
       }
 
       @if (githubAppMissing()) {
-        <div class="p-4 rounded-md border border-amber-300 bg-amber-50 dark:border-amber-700/60 dark:bg-amber-950/40">
+        <div
+          class="p-4 rounded-md border border-amber-300 bg-amber-50 dark:border-amber-700/60 dark:bg-amber-950/40"
+        >
           <div class="flex items-start gap-3">
-            <div class="flex h-9 w-9 items-center justify-center rounded-full bg-amber-200/70 dark:bg-amber-900/60 shrink-0">
+            <div
+              class="flex h-9 w-9 items-center justify-center rounded-full bg-amber-200/70 dark:bg-amber-900/60 shrink-0"
+            >
               <ng-icon name="lucideGithub" class="h-5 w-5 text-amber-700 dark:text-amber-300" />
             </div>
             <div class="flex-1 min-w-0 space-y-2">
               <div>
-                <p class="text-sm font-semibold text-amber-900 dark:text-amber-100">GitHub integration required</p>
+                <p class="text-sm font-semibold text-amber-900 dark:text-amber-100">
+                  GitHub integration required
+                </p>
                 <p class="text-sm text-amber-800/90 dark:text-amber-200/80 mt-0.5">
-                  Connect your GitHub account from the Repositories page to list available versions for <span class="font-mono">ghcr.io</span> images.
+                  Connect your GitHub account from the Repositories page to list available versions
+                  for <span class="font-mono">ghcr.io</span> images.
                 </p>
               </div>
-              <button hlmBtn size="sm" routerLink="/apps/repositories"
-                class="bg-amber-600 hover:bg-amber-700 text-white border-amber-600">
+              <button
+                hlmBtn
+                size="sm"
+                routerLink="/apps/repositories"
+                class="bg-amber-600 hover:bg-amber-700 text-white border-amber-600"
+              >
                 Go to Repositories
                 <ng-icon name="lucideArrowRight" class="h-3.5 w-3.5 ml-1.5" />
               </button>
@@ -117,7 +201,9 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
           </div>
         </div>
       } @else if (versioning.error()) {
-        <div class="p-3 rounded-md border border-destructive/40 bg-destructive/10 text-sm text-destructive-foreground dark:text-destructive">
+        <div
+          class="p-3 rounded-md border border-destructive/40 bg-destructive/10 text-sm text-destructive-foreground dark:text-destructive"
+        >
           {{ versioning.error() }}
         </div>
       }
@@ -139,20 +225,36 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
                 <!-- Tags row -->
                 <div class="flex items-center gap-2 flex-wrap">
                   @let st = stateFor(v);
-                  <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium" [class]="st.class">
-                    <ng-icon [name]="st.icon" class="h-3 w-3" [class.animate-spin]="st.kind === 'releasing'" />
+                  <span
+                    class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium"
+                    [class]="st.class"
+                  >
+                    <ng-icon
+                      [name]="st.icon"
+                      class="h-3 w-3"
+                      [class.animate-spin]="st.kind === 'releasing'"
+                    />
                     {{ st.label }}
                   </span>
-                  <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-mono bg-primary/10 text-primary">
+                  <span
+                    class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-mono bg-primary/10 text-primary"
+                  >
                     <ng-icon name="lucideTag" class="h-2.5 w-2.5" /> {{ v.tag }}
                   </span>
                   @for (alias of otherTags(v); track alias) {
-                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-mono bg-muted text-muted-foreground">
+                    <span
+                      class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-mono bg-muted text-muted-foreground"
+                    >
                       {{ alias }}
                     </span>
                   }
                   @if (v.deployHint && !isCurrentRow(v)) {
-                    <span [class]="'inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium ' + deployHintClass(v.deployHint)">
+                    <span
+                      [class]="
+                        'inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium ' +
+                        deployHintClass(v.deployHint)
+                      "
+                    >
                       <ng-icon name="lucideInfo" class="h-3 w-3" /> {{ v.deployHint }}
                     </span>
                   }
@@ -172,7 +274,9 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
                 <!-- Failure reason for the latest release on this image -->
                 @if (lastReleaseFor(v); as lr) {
                   @if (lr.status === 'FAILED' && lr.failureReason) {
-                    <p class="text-xs text-red-700 dark:text-red-300 whitespace-pre-wrap break-words">
+                    <p
+                      class="text-xs text-red-700 dark:text-red-300 whitespace-pre-wrap break-words"
+                    >
                       {{ lr.failureReason }}
                     </p>
                   }
@@ -182,7 +286,8 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
                 <div class="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
                   @if (v.createdAt) {
                     <span class="inline-flex items-center gap-1">
-                      <ng-icon name="lucideCalendar" class="h-3 w-3" /> {{ formatDate(v.createdAt) }}
+                      <ng-icon name="lucideCalendar" class="h-3 w-3" />
+                      {{ formatDate(v.createdAt) }}
                     </span>
                   }
                   @if (v.digest) {
@@ -194,7 +299,10 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
                     </span>
                   }
                   @if (lastReleaseFor(v); as lr) {
-                    <span class="inline-flex items-center gap-1" [title]="'Last release: ' + formatDate(lr.startedAt)">
+                    <span
+                      class="inline-flex items-center gap-1"
+                      [title]="'Last release: ' + formatDate(lr.startedAt)"
+                    >
                       <ng-icon name="lucideRocket" class="h-3 w-3" />
                       Last released {{ formatDate(lr.startedAt) }}
                     </span>
@@ -214,21 +322,47 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
                 } @else if (!isReleasable(v)) {
                   <!-- No action: offering it would deploy something this app cannot run. -->
                 } @else if (isReleasing(v)) {
-                  <span class="inline-flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400">
+                  <span
+                    class="inline-flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400"
+                  >
                     <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
-                    Releasing@if (deployState.progress(); as p) { · {{ p }}%}
+                    Releasing
+                    @if (deployState.progress(); as p) {
+                      · {{ p }}%
+                    }
                   </span>
                 } @else {
-                  <button hlmBtn variant="outline" size="sm" (click)="openDeploy(v)"
-                    [disabled]="autoDeployOnPush() || busy() || !!deployState.deployInFlight() || deletingVersionId() !== null"
-                    [title]="autoDeployOnPush() ? 'Auto-deploy on push is on: this application always runs the newest successful build of its branch.' : ''">
+                  <button
+                    hlmBtn
+                    variant="outline"
+                    size="sm"
+                    (click)="openDeploy(v)"
+                    [disabled]="
+                      autoDeployOnPush() ||
+                      busy() ||
+                      !!deployState.deployInFlight() ||
+                      deletingVersionId() !== null
+                    "
+                    [title]="
+                      autoDeployOnPush()
+                        ? 'Auto-deploy on push is on: this application always runs the newest successful build of its branch.'
+                        : ''
+                    "
+                  >
                     <ng-icon name="lucideRocket" class="h-3 w-3 mr-1" /> Deploy
                   </button>
                   @if (v.versionId != null) {
-                    <button hlmBtn variant="ghost" size="sm" (click)="openDelete(v)"
-                      [disabled]="busy() || !!deployState.deployInFlight() || deletingVersionId() !== null"
+                    <button
+                      hlmBtn
+                      variant="ghost"
+                      size="sm"
+                      (click)="openDelete(v)"
+                      [disabled]="
+                        busy() || !!deployState.deployInFlight() || deletingVersionId() !== null
+                      "
                       class="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
-                      title="Delete image version from GHCR">
+                      title="Delete image version from GHCR"
+                    >
                       <ng-icon name="lucideTrash2" class="h-3.5 w-3.5" />
                     </button>
                   }
@@ -240,11 +374,22 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
 
         @if (hiddenCount() > 0) {
           <div class="flex justify-center pt-1">
-            <button hlmBtn variant="ghost" size="sm" (click)="showAll.set(!showAll())"
-              class="text-muted-foreground">
-              {{ showAll()
-                ? 'Hide versions this application cannot run'
-                : 'Show ' + hiddenCount() + ' version' + (hiddenCount() === 1 ? '' : 's') + ' it cannot run' }}
+            <button
+              hlmBtn
+              variant="ghost"
+              size="sm"
+              (click)="showAll.set(!showAll())"
+              class="text-muted-foreground"
+            >
+              {{
+                showAll()
+                  ? 'Hide versions this application cannot run'
+                  : 'Show ' +
+                    hiddenCount() +
+                    ' version' +
+                    (hiddenCount() === 1 ? '' : 's') +
+                    ' it cannot run'
+              }}
             </button>
           </div>
         }
@@ -252,7 +397,13 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
         <!-- Load more (DockerHub pagination) -->
         @if (versioning.hasMore()) {
           <div class="flex justify-center pt-2">
-            <button hlmBtn variant="outline" size="sm" (click)="loadMore()" [disabled]="versioning.loadingMore()">
+            <button
+              hlmBtn
+              variant="outline"
+              size="sm"
+              (click)="loadMore()"
+              [disabled]="versioning.loadingMore()"
+            >
               @if (versioning.loadingMore()) {
                 <ng-icon name="lucideLoader" class="h-3.5 w-3.5 mr-1.5 animate-spin" /> Loading...
               } @else {
@@ -264,7 +415,10 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
       }
 
       @if (statusMessage()) {
-        <p class="text-xs" [class]="statusMessage()!.type === 'error' ? 'text-destructive' : 'text-green-600'">
+        <p
+          class="text-xs"
+          [class]="statusMessage()!.type === 'error' ? 'text-destructive' : 'text-green-600'"
+        >
           {{ statusMessage()!.text }}
         </p>
       }
@@ -272,19 +426,26 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
       <!-- Deploy modal with optional reason -->
       @if (deleteTarget(); as dt) {
         <div class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm" (click)="cancelDelete()">
-          <div class="fixed left-[50%] top-[50%] z-50 w-full max-w-lg translate-x-[-50%] translate-y-[-50%] p-4">
-            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl"
-              (click)="$event.stopPropagation()">
+          <div
+            class="fixed left-[50%] top-[50%] z-50 w-full max-w-lg translate-x-[-50%] translate-y-[-50%] p-4"
+          >
+            <div
+              class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl"
+              (click)="$event.stopPropagation()"
+            >
               <div class="flex items-start justify-between p-6 pb-4 gap-4">
                 <div class="flex items-start gap-4 flex-1 min-w-0">
-                  <div class="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20 shrink-0">
+                  <div
+                    class="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20 shrink-0"
+                  >
                     <ng-icon name="lucideTrash2" class="h-6 w-6 text-red-600 dark:text-red-400" />
                   </div>
                   <div class="flex-1 min-w-0 space-y-3">
                     <div>
                       <h3 class="text-lg font-semibold">Delete image version</h3>
                       <p class="text-sm text-muted-foreground mt-1">
-                        This will permanently remove the image from GitHub Container Registry. This action cannot be undone.
+                        This will permanently remove the image from GitHub Container Registry. This
+                        action cannot be undone.
                       </p>
                     </div>
                     <div class="space-y-1 text-xs">
@@ -294,7 +455,9 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
                           <ng-icon name="lucideTag" class="h-3 w-3" /> {{ dt.tag }}
                         </span>
                         @if (dt.digest) {
-                          <span class="font-mono" [title]="dt.digest">{{ shortDigest(dt.digest) }}</span>
+                          <span class="font-mono" [title]="dt.digest">{{
+                            shortDigest(dt.digest)
+                          }}</span>
                         }
                         @if (releaseCount(dt) > 0) {
                           <span class="inline-flex items-center gap-1">
@@ -308,33 +471,62 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
                       </div>
                     </div>
                     @if (dt.isLatestRelease) {
-                      <div class="rounded-md border border-amber-300 bg-amber-50 dark:border-amber-700/60 dark:bg-amber-950/40 p-3 space-y-2">
+                      <div
+                        class="rounded-md border border-amber-300 bg-amber-50 dark:border-amber-700/60 dark:bg-amber-950/40 p-3 space-y-2"
+                      >
                         <div class="flex items-start gap-2">
-                          <ng-icon name="lucideTriangleAlert" class="h-4 w-4 text-amber-700 dark:text-amber-300 mt-0.5 shrink-0" />
+                          <ng-icon
+                            name="lucideTriangleAlert"
+                            class="h-4 w-4 text-amber-700 dark:text-amber-300 mt-0.5 shrink-0"
+                          />
                           <p class="text-xs text-amber-900 dark:text-amber-100">
-                            This is the latest release of the app (even if no longer deployed). Deleting it makes a fast rollback to this version impossible.
+                            This is the latest release of the app (even if no longer deployed).
+                            Deleting it makes a fast rollback to this version impossible.
                           </p>
                         </div>
-                        <label class="flex items-center gap-2 text-xs text-amber-900 dark:text-amber-100 cursor-pointer">
-                          <input type="checkbox" [checked]="forceOverride()"
+                        <label
+                          class="flex items-center gap-2 text-xs text-amber-900 dark:text-amber-100 cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            [checked]="forceOverride()"
                             (change)="forceOverride.set($any($event.target).checked)"
-                            [disabled]="deletingVersionId() !== null" />
+                            [disabled]="deletingVersionId() !== null"
+                          />
                           Yes, I want to delete it anyway.
                         </label>
                       </div>
                     }
                   </div>
                 </div>
-                <button hlmBtn variant="ghost" size="sm" (click)="cancelDelete()"
-                  [disabled]="deletingVersionId() !== null" class="h-8 w-8 p-0 shrink-0">
+                <button
+                  hlmBtn
+                  variant="ghost"
+                  size="sm"
+                  (click)="cancelDelete()"
+                  [disabled]="deletingVersionId() !== null"
+                  class="h-8 w-8 p-0 shrink-0"
+                >
                   <ng-icon name="lucideX" class="h-4 w-4" />
                 </button>
               </div>
               <div class="flex items-center justify-end gap-3 px-6 pb-6">
-                <button hlmBtn variant="outline" (click)="cancelDelete()" [disabled]="deletingVersionId() !== null">Cancel</button>
-                <button hlmBtn (click)="confirmDelete()"
-                  [disabled]="deletingVersionId() !== null || (dt.isLatestRelease && !forceOverride())"
-                  class="bg-red-600 hover:bg-red-700 text-white">
+                <button
+                  hlmBtn
+                  variant="outline"
+                  (click)="cancelDelete()"
+                  [disabled]="deletingVersionId() !== null"
+                >
+                  Cancel
+                </button>
+                <button
+                  hlmBtn
+                  (click)="confirmDelete()"
+                  [disabled]="
+                    deletingVersionId() !== null || (dt.isLatestRelease && !forceOverride())
+                  "
+                  class="bg-red-600 hover:bg-red-700 text-white"
+                >
                   @if (deletingVersionId() !== null) {
                     <ng-icon name="lucideLoader" class="h-4 w-4 mr-2 animate-spin" /> Deleting...
                   } @else {
@@ -349,12 +541,18 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
 
       @if (deployTarget()) {
         <div class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm" (click)="cancelDeploy()">
-          <div class="fixed left-[50%] top-[50%] z-50 w-full max-w-lg translate-x-[-50%] translate-y-[-50%] p-4">
-            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl"
-              (click)="$event.stopPropagation()">
+          <div
+            class="fixed left-[50%] top-[50%] z-50 w-full max-w-lg translate-x-[-50%] translate-y-[-50%] p-4"
+          >
+            <div
+              class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl"
+              (click)="$event.stopPropagation()"
+            >
               <div class="flex items-start justify-between p-6 pb-4 gap-4">
                 <div class="flex items-start gap-4 flex-1 min-w-0">
-                  <div class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/20 shrink-0">
+                  <div
+                    class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/20 shrink-0"
+                  >
                     <ng-icon name="lucideRocket" class="h-6 w-6 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div class="flex-1 min-w-0 space-y-3">
@@ -367,22 +565,39 @@ import { ApplicationReleaseDto } from '../../../core/api/model/applicationReleas
                     </div>
                     <div class="space-y-1.5">
                       <label hlmLabel for="deploy-reason" class="text-xs">Reason (optional)</label>
-                      <input hlmInput id="deploy-reason" type="text"
-                        [(ngModel)]="deployReason" maxlength="200"
+                      <input
+                        hlmInput
+                        id="deploy-reason"
+                        type="text"
+                        [(ngModel)]="deployReason"
+                        maxlength="200"
                         placeholder="e.g. Bumping to v1.2.3 for hotfix"
-                        [disabled]="busy()" />
+                        [disabled]="busy()"
+                      />
                     </div>
                   </div>
                 </div>
-                <button hlmBtn variant="ghost" size="sm" (click)="cancelDeploy()"
-                  [disabled]="busy()" class="h-8 w-8 p-0 shrink-0">
+                <button
+                  hlmBtn
+                  variant="ghost"
+                  size="sm"
+                  (click)="cancelDeploy()"
+                  [disabled]="busy()"
+                  class="h-8 w-8 p-0 shrink-0"
+                >
                   <ng-icon name="lucideX" class="h-4 w-4" />
                 </button>
               </div>
               <div class="flex items-center justify-end gap-3 px-6 pb-6">
-                <button hlmBtn variant="outline" (click)="cancelDeploy()" [disabled]="busy()">Cancel</button>
-                <button hlmBtn (click)="confirmDeploy()" [disabled]="busy()"
-                  class="bg-blue-600 hover:bg-blue-700 text-white">
+                <button hlmBtn variant="outline" (click)="cancelDeploy()" [disabled]="busy()">
+                  Cancel
+                </button>
+                <button
+                  hlmBtn
+                  (click)="confirmDeploy()"
+                  [disabled]="busy()"
+                  class="bg-blue-600 hover:bg-blue-700 text-white"
+                >
                   @if (busy()) {
                     <ng-icon name="lucideLoader" class="h-4 w-4 mr-2 animate-spin" /> Deploying...
                   } @else {
@@ -437,7 +652,9 @@ export class AppImagesTabComponent implements OnInit {
     () => this.versioning.versions().filter((v) => !this.isReleasable(v)).length,
   );
 
-  protected readonly readOnly = computed(() => accessOf(this.appService.selectedApplication())?.readOnly === true);
+  protected readonly readOnly = computed(
+    () => accessOf(this.appService.selectedApplication())?.readOnly === true,
+  );
 
   /**
    * The application redeploys itself from its branch, so a release chosen here
@@ -450,14 +667,11 @@ export class AppImagesTabComponent implements OnInit {
 
   readonly deployBranch = computed(() => {
     const cfg = this.appService.selectedApplication()?.sourceConfig as
-      | { branch?: string }
-      | undefined;
+      { branch?: string } | undefined;
     return cfg?.branch ?? null;
   });
 
-  readonly appIdForHelp = computed(
-    () => this.appService.selectedApplication()?.id ?? '<app-id>',
-  );
+  readonly appIdForHelp = computed(() => this.appService.selectedApplication()?.id ?? '<app-id>');
 
   deleteTarget = signal<AvailableVersionDto | null>(null);
   forceOverride = signal<boolean>(false);
@@ -580,14 +794,18 @@ export class AppImagesTabComponent implements OnInit {
     if (!this.appId) return;
     try {
       await this.versioning.loadAvailableVersions(this.appId);
-    } catch { /* surfaced via service.error */ }
+    } catch {
+      /* surfaced via service.error */
+    }
   }
 
   async loadMore(): Promise<void> {
     if (!this.appId) return;
     try {
       await this.versioning.loadMore(this.appId);
-    } catch { /* surfaced via service.error */ }
+    } catch {
+      /* surfaced via service.error */
+    }
   }
 
   otherTags(v: AvailableVersionDto): string[] {
@@ -596,8 +814,11 @@ export class AppImagesTabComponent implements OnInit {
 
   formatDate(iso: string): string {
     return new Date(iso).toLocaleDateString(undefined, {
-      month: 'short', day: 'numeric', year: 'numeric',
-      hour: '2-digit', minute: '2-digit',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
   }
 
@@ -662,7 +883,9 @@ export class AppImagesTabComponent implements OnInit {
       const status = e?.status;
       const msg: string = e?.error?.message ?? e?.message ?? '';
       if (status === 400 && /currently deployed/i.test(msg)) {
-        this.toast.showError("Can't delete the image currently deployed. Deploy another version first.");
+        this.toast.showError(
+          "Can't delete the image currently deployed. Deploy another version first.",
+        );
         this.deleteTarget.set(null);
         await this.versioning.loadAvailableVersions(this.appId);
       } else if (status === 400 && /latest release/i.test(msg)) {
@@ -701,7 +924,10 @@ export class AppImagesTabComponent implements OnInit {
           targetDigest: target.digest ?? null,
         });
       }
-      this.statusMessage.set({ text: 'Release in progress. The image will become current once the rollout finishes.', type: 'success' });
+      this.statusMessage.set({
+        text: 'Release in progress. The image will become current once the rollout finishes.',
+        type: 'success',
+      });
     } catch (e: any) {
       this.statusMessage.set({
         text: e?.error?.message ?? e?.message ?? 'Release failed',

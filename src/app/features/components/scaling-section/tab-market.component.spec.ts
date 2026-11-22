@@ -72,7 +72,9 @@ describe('the catalogue tab of a scaling group', () => {
 
   it('names the architecture of every machine', () => {
     const badge = (shape: string) =>
-      find('shape-' + shape)?.querySelector('[data-testid="architecture-badge"]')?.textContent?.trim();
+      find('shape-' + shape)
+        ?.querySelector('[data-testid="architecture-badge"]')
+        ?.textContent?.trim();
     expect(badge('cx33')).toBe('x86');
     expect(badge('cax21')).toBe('Arm');
   });
@@ -89,6 +91,8 @@ describe('the catalogue tab of a scaling group', () => {
 
   it('warns once under the table when an arm machine is listed', () => {
     expect(find('market-architecture-warning')?.textContent?.trim()).toBe(ARM_WARNING);
-    expect(fixture.nativeElement.querySelectorAll('[data-testid="market-architecture-warning"]').length).toBe(1);
+    expect(
+      fixture.nativeElement.querySelectorAll('[data-testid="market-architecture-warning"]').length,
+    ).toBe(1);
   });
 });

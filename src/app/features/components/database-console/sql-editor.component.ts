@@ -10,7 +10,7 @@ import {
   input,
   signal,
   viewChild,
-  output
+  output,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DbEngine } from '../../model/db-engine';
@@ -35,11 +35,7 @@ interface MinimalEditorView {
     <div
       class="flex min-h-[240px] flex-col overflow-hidden rounded-lg border border-border bg-card"
     >
-      <div
-        #editorHost
-        [hidden]="!editorReady()"
-        class="min-h-0 flex-1 overflow-auto text-sm"
-      ></div>
+      <div #editorHost [hidden]="!editorReady()" class="min-h-0 flex-1 overflow-auto text-sm"></div>
       @if (!editorReady()) {
         <textarea
           #sqlTextarea
@@ -69,8 +65,7 @@ export class SqlEditorComponent implements AfterViewInit, OnDestroy {
 
   private editorView: MinimalEditorView | null = null;
   private sqlCompartment: { reconfigure(ext: unknown): unknown } | null = null;
-  private cmSql: ((cfg: { dialect: unknown; upperCaseKeywords: boolean }) => unknown) | null =
-    null;
+  private cmSql: ((cfg: { dialect: unknown; upperCaseKeywords: boolean }) => unknown) | null = null;
   private cmDialects: Partial<Record<DbEngine, unknown>> = {};
 
   constructor() {
@@ -139,17 +134,13 @@ export class SqlEditorComponent implements AfterViewInit, OnDestroy {
 
   private async tryMountEditor(): Promise<void> {
     try {
-      const [
-        { EditorState, Prec, Compartment },
-        view,
-        { sql, PostgreSQL, MySQL },
-        { basicSetup },
-      ] = await Promise.all([
-        import('@codemirror/state'),
-        import('@codemirror/view'),
-        import('@codemirror/lang-sql'),
-        import('codemirror'),
-      ]);
+      const [{ EditorState, Prec, Compartment }, view, { sql, PostgreSQL, MySQL }, { basicSetup }] =
+        await Promise.all([
+          import('@codemirror/state'),
+          import('@codemirror/view'),
+          import('@codemirror/lang-sql'),
+          import('codemirror'),
+        ]);
       const { EditorView, keymap } = view;
       const langCompartment = new Compartment();
       const dialects = { postgres: PostgreSQL, mariadb: MySQL };
@@ -234,9 +225,7 @@ export class SqlEditorComponent implements AfterViewInit, OnDestroy {
     const dialect = this.cmDialects[this.engine()];
     if (!dialect) return;
     this.editorView.dispatch({
-      effects: this.sqlCompartment.reconfigure(
-        this.cmSql({ dialect, upperCaseKeywords: true }),
-      ),
+      effects: this.sqlCompartment.reconfigure(this.cmSql({ dialect, upperCaseKeywords: true })),
     });
   }
 }

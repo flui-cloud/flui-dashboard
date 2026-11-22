@@ -1,5 +1,15 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, OnDestroy, signal, computed, inject, viewChild, effect, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  signal,
+  computed,
+  inject,
+  viewChild,
+  effect,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -25,7 +35,12 @@ import {
 import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
 import { VirtualInstancesService, InfrastructureServersService } from '../../../core/api';
 import { MaskModeService } from '../../../core/services/mask-mode.service';
-import { InstanceWithLabels, isManagedByFlui, getOwnership, getClusterInfo } from '../../model/instance.models';
+import {
+  InstanceWithLabels,
+  isManagedByFlui,
+  getOwnership,
+  getClusterInfo,
+} from '../../model/instance.models';
 import { InstanceDeleteDialogComponent } from './instance-delete-dialog.component';
 import { SshTerminalComponent } from './ssh-terminal.component';
 import { ClusterService } from '../../service/cluster.service';
@@ -96,12 +111,7 @@ const OWNERSHIP_LABEL: Record<string, string> = {
     <div class="p-6 space-y-4">
       <!-- Header -->
       <div class="flex items-center gap-4">
-        <button
-          hlmBtn
-          variant="outline"
-          size="sm"
-          [routerLink]="['/infrastructure/compute']"
-        >
+        <button hlmBtn variant="outline" size="sm" [routerLink]="['/infrastructure/compute']">
           <ng-icon name="lucideArrowLeft" class="h-4 w-4 mr-2" />
           Back to Instances
         </button>
@@ -130,7 +140,9 @@ const OWNERSHIP_LABEL: Record<string, string> = {
                       {{ instance()!.displayName || instance()!.name }}
                     </h1>
                     @if (instance()!.displayName && instance()!.displayName !== instance()!.name) {
-                      <p class="m-0 text-xs font-mono text-muted-foreground">{{ instance()!.name }}</p>
+                      <p class="m-0 text-xs font-mono text-muted-foreground">
+                        {{ instance()!.name }}
+                      </p>
                     }
                   </div>
                 </div>
@@ -143,7 +155,11 @@ const OWNERSHIP_LABEL: Record<string, string> = {
                     class="text-destructive hover:text-destructive"
                     (click)="openDeleteDialog()"
                     [disabled]="isDeleting() || isObservabilityInstance()"
-                    [title]="isObservabilityInstance() ? 'Control instance can only be managed via CLI' : 'Delete instance'"
+                    [title]="
+                      isObservabilityInstance()
+                        ? 'Control instance can only be managed via CLI'
+                        : 'Delete instance'
+                    "
                   >
                     @if (isDeleting()) {
                       <ng-icon name="lucideLoader" class="h-4 w-4 mr-2 animate-spin" />
@@ -157,25 +173,37 @@ const OWNERSHIP_LABEL: Record<string, string> = {
               </div>
 
               <div class="mt-4 flex flex-wrap items-center gap-2">
-                <span class="inline-flex items-center gap-1.5 mr-1 text-xs font-medium" [class]="statusTextClass()">
+                <span
+                  class="inline-flex items-center gap-1.5 mr-1 text-xs font-medium"
+                  [class]="statusTextClass()"
+                >
                   <span class="h-1.5 w-1.5 rounded-full" [class]="statusDotClass()"></span>
                   {{ instance()!.status }}
                 </span>
-                <span class="inline-flex items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground" [attr.title]="ownershipHint()">
+                <span
+                  class="inline-flex items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+                  [attr.title]="ownershipHint()"
+                >
                   @if (ownership() !== 'self') {
                     <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
                   }
                   {{ ownershipLabel() }}
                 </span>
-                <span class="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                <span
+                  class="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+                >
                   {{ instance()!.provider }}
                 </span>
-                <span class="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                <span
+                  class="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+                >
                   <ng-icon name="lucideMapPin" class="h-3 w-3" />
                   {{ instance()!.regionName || instance()!.region }}
                 </span>
                 @if (instance()!.dataCenter) {
-                  <span class="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11px] font-mono text-muted-foreground">
+                  <span
+                    class="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11px] font-mono text-muted-foreground"
+                  >
                     {{ instance()!.dataCenter }}
                   </span>
                 }
@@ -186,33 +214,57 @@ const OWNERSHIP_LABEL: Record<string, string> = {
               <h2 class="m-0 mb-4 text-label">Overview</h2>
               <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
                 <div class="card-inner px-3 py-2.5">
-                  <p class="m-0 flex items-center gap-1.5 text-label"><ng-icon name="lucideCpu" class="h-3.5 w-3.5" />CPU Cores</p>
-                  <p class="m-0 mt-1 text-lg font-semibold text-foreground tabular-nums">{{ instance()!.cpuCores }}</p>
+                  <p class="m-0 flex items-center gap-1.5 text-label">
+                    <ng-icon name="lucideCpu" class="h-3.5 w-3.5" />CPU Cores
+                  </p>
+                  <p class="m-0 mt-1 text-lg font-semibold text-foreground tabular-nums">
+                    {{ instance()!.cpuCores }}
+                  </p>
                 </div>
                 <div class="card-inner px-3 py-2.5">
-                  <p class="m-0 flex items-center gap-1.5 text-label"><ng-icon name="lucideMemoryStick" class="h-3.5 w-3.5" />RAM</p>
-                  <p class="m-0 mt-1 text-lg font-semibold text-foreground tabular-nums">{{ formatMemory(instance()!.ramMb) }}</p>
+                  <p class="m-0 flex items-center gap-1.5 text-label">
+                    <ng-icon name="lucideMemoryStick" class="h-3.5 w-3.5" />RAM
+                  </p>
+                  <p class="m-0 mt-1 text-lg font-semibold text-foreground tabular-nums">
+                    {{ formatMemory(instance()!.ramMb) }}
+                  </p>
                 </div>
                 <div class="card-inner px-3 py-2.5">
-                  <p class="m-0 flex items-center gap-1.5 text-label"><ng-icon name="lucideHardDrive" class="h-3.5 w-3.5" />Storage</p>
-                  <p class="m-0 mt-1 text-lg font-semibold text-foreground tabular-nums">{{ formatDisk(instance()!.diskMb) }}</p>
+                  <p class="m-0 flex items-center gap-1.5 text-label">
+                    <ng-icon name="lucideHardDrive" class="h-3.5 w-3.5" />Storage
+                  </p>
+                  <p class="m-0 mt-1 text-lg font-semibold text-foreground tabular-nums">
+                    {{ formatDisk(instance()!.diskMb) }}
+                  </p>
                 </div>
                 @if (instance()!.ipConfig?.v4?.ip) {
                   <div class="card-inner px-3 py-2.5">
-                    <p class="m-0 flex items-center gap-1.5 text-label"><ng-icon name="lucideGlobe" class="h-3.5 w-3.5" />IPv4 Address</p>
-                    <p class="m-0 mt-1 text-sm font-mono font-semibold text-foreground">{{ instance()!.ipConfig?.v4?.ip }}</p>
+                    <p class="m-0 flex items-center gap-1.5 text-label">
+                      <ng-icon name="lucideGlobe" class="h-3.5 w-3.5" />IPv4 Address
+                    </p>
+                    <p class="m-0 mt-1 text-sm font-mono font-semibold text-foreground">
+                      {{ instance()!.ipConfig?.v4?.ip }}
+                    </p>
                   </div>
                 }
                 @if (instance()!.ipConfig?.v6?.ip) {
                   <div class="card-inner px-3 py-2.5">
-                    <p class="m-0 flex items-center gap-1.5 text-label"><ng-icon name="lucideGlobe" class="h-3.5 w-3.5" />IPv6 Address</p>
-                    <p class="m-0 mt-1 text-xs font-mono font-semibold text-foreground break-all">{{ instance()!.ipConfig?.v6?.ip }}</p>
+                    <p class="m-0 flex items-center gap-1.5 text-label">
+                      <ng-icon name="lucideGlobe" class="h-3.5 w-3.5" />IPv6 Address
+                    </p>
+                    <p class="m-0 mt-1 text-xs font-mono font-semibold text-foreground break-all">
+                      {{ instance()!.ipConfig?.v6?.ip }}
+                    </p>
                   </div>
                 }
                 @if (instance()!.macAddress) {
                   <div class="card-inner px-3 py-2.5">
-                    <p class="m-0 flex items-center gap-1.5 text-label"><ng-icon name="lucideNetwork" class="h-3.5 w-3.5" />MAC Address</p>
-                    <p class="m-0 mt-1 text-sm font-mono font-semibold text-foreground">{{ instance()!.macAddress }}</p>
+                    <p class="m-0 flex items-center gap-1.5 text-label">
+                      <ng-icon name="lucideNetwork" class="h-3.5 w-3.5" />MAC Address
+                    </p>
+                    <p class="m-0 mt-1 text-sm font-mono font-semibold text-foreground">
+                      {{ instance()!.macAddress }}
+                    </p>
                   </div>
                 }
               </div>
@@ -220,7 +272,10 @@ const OWNERSHIP_LABEL: Record<string, string> = {
 
             @if (isObservabilityInstance()) {
               <div class="card-surface px-4 py-3 flex items-start gap-3">
-                <ng-icon name="lucideCircleAlert" class="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                <ng-icon
+                  name="lucideCircleAlert"
+                  class="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400"
+                />
                 <div>
                   <p class="m-0 text-sm font-medium text-foreground">Observability Instance</p>
                   <p class="m-0 mt-0.5 text-sm text-muted-foreground">
@@ -236,9 +291,12 @@ const OWNERSHIP_LABEL: Record<string, string> = {
                   <ng-icon name="lucideBox" class="h-4 w-4 shrink-0 text-muted-foreground" />
                   <div class="min-w-0">
                     <p class="m-0 text-sm text-foreground">
-                      Part of <span class="font-semibold">{{ clusterInfo()!.clusterName }}</span> cluster
+                      Part of
+                      <span class="font-semibold">{{ clusterInfo()!.clusterName }}</span> cluster
                     </p>
-                    <p class="m-0 text-xs text-muted-foreground">{{ clusterInfo()!.nodeType }} node</p>
+                    <p class="m-0 text-xs text-muted-foreground">
+                      {{ clusterInfo()!.nodeType }} node
+                    </p>
                   </div>
                 </div>
                 <a
@@ -264,10 +322,18 @@ const OWNERSHIP_LABEL: Record<string, string> = {
                         <h2 class="m-0 text-sm font-semibold text-foreground">SSH Terminal</h2>
                         @if (!canConnectSsh()) {
                           <p class="text-xs text-muted-foreground">
-                            {{ instance()?.status !== 'running' ? 'Instance must be running' : 'No IP address available' }}
+                            {{
+                              instance()?.status !== 'running'
+                                ? 'Instance must be running'
+                                : 'No IP address available'
+                            }}
                           </p>
                         } @else if (isTerminalVisible()) {
-                          <p class="inline-flex items-center gap-1.5 text-xs font-medium text-green-700 dark:text-green-400"><span class="h-1.5 w-1.5 rounded-full bg-green-500"></span>Connected</p>
+                          <p
+                            class="inline-flex items-center gap-1.5 text-xs font-medium text-green-700 dark:text-green-400"
+                          >
+                            <span class="h-1.5 w-1.5 rounded-full bg-green-500"></span>Connected
+                          </p>
                         } @else {
                           <p class="text-xs text-muted-foreground">Ready to connect</p>
                         }
@@ -282,23 +348,39 @@ const OWNERSHIP_LABEL: Record<string, string> = {
                             type="button"
                             (click)="toggleBootstrapKey()"
                             class="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors select-none"
-                            [class]="useBootstrapKey()
-                              ? 'border-amber-400/60 bg-amber-500/10 text-amber-600 dark:text-amber-400'
-                              : 'border-border bg-transparent text-muted-foreground hover:text-foreground hover:border-border/80'"
+                            [class]="
+                              useBootstrapKey()
+                                ? 'border-amber-400/60 bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                                : 'border-border bg-transparent text-muted-foreground hover:text-foreground hover:border-border/80'
+                            "
                           >
                             <ng-icon name="lucideKey" class="h-3 w-3" />
                             Bootstrap key
                           </button>
                           <!-- Info tooltip -->
                           <div class="relative group">
-                            <button type="button" class="flex items-center justify-center h-5 w-5 rounded-full text-muted-foreground hover:text-foreground transition-colors">
+                            <button
+                              type="button"
+                              class="flex items-center justify-center h-5 w-5 rounded-full text-muted-foreground hover:text-foreground transition-colors"
+                            >
                               <ng-icon name="lucideInfo" class="h-3.5 w-3.5" />
                             </button>
-                            <div class="absolute right-0 bottom-full mb-2 w-64 rounded-md border border-border bg-popover text-popover-foreground shadow-md px-3 py-2 text-xs leading-relaxed opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
+                            <div
+                              class="absolute right-0 bottom-full mb-2 w-64 rounded-md border border-border bg-popover text-popover-foreground shadow-md px-3 py-2 text-xs leading-relaxed opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50"
+                            >
                               <p class="font-semibold mb-1">Bootstrap key authentication</p>
-                              <p class="text-muted-foreground">Bypasses ephemeral certificates and uses the cluster bootstrap SSH key instead. Enable this as a fallback when the ephemeral certificate system is not working.</p>
-                              <div class="absolute right-2 top-full border-4 border-transparent border-t-border" style="margin-top:-1px"></div>
-                              <div class="absolute right-2 top-full border-4 border-transparent border-t-popover"></div>
+                              <p class="text-muted-foreground">
+                                Bypasses ephemeral certificates and uses the cluster bootstrap SSH
+                                key instead. Enable this as a fallback when the ephemeral
+                                certificate system is not working.
+                              </p>
+                              <div
+                                class="absolute right-2 top-full border-4 border-transparent border-t-border"
+                                style="margin-top:-1px"
+                              ></div>
+                              <div
+                                class="absolute right-2 top-full border-4 border-transparent border-t-popover"
+                              ></div>
                             </div>
                           </div>
                         </div>
@@ -325,7 +407,9 @@ const OWNERSHIP_LABEL: Record<string, string> = {
                 @if (isTerminalVisible() && canConnectSsh()) {
                   <div class="px-5 pb-5">
                     @if (useBootstrapKey()) {
-                      <div class="flex items-center gap-1.5 mb-2 rounded-md border border-amber-400/40 bg-amber-500/8 px-3 py-1.5 text-xs text-amber-600 dark:text-amber-400">
+                      <div
+                        class="flex items-center gap-1.5 mb-2 rounded-md border border-amber-400/40 bg-amber-500/8 px-3 py-1.5 text-xs text-amber-600 dark:text-amber-400"
+                      >
                         <ng-icon name="lucideKey" class="h-3.5 w-3.5 shrink-0" />
                         <span>Using bootstrap key — ephemeral certificates bypassed</span>
                       </div>
@@ -352,35 +436,47 @@ const OWNERSHIP_LABEL: Record<string, string> = {
                 @if (instance()!.osType) {
                   <div>
                     <p class="m-0 text-label">Operating System</p>
-                    <p class="m-0 mt-0.5 text-sm font-semibold text-foreground">{{ instance()!.osType }}</p>
+                    <p class="m-0 mt-0.5 text-sm font-semibold text-foreground">
+                      {{ instance()!.osType }}
+                    </p>
                   </div>
                 }
                 @if (instance()!.productType) {
                   <div>
                     <p class="m-0 text-label">Product Type</p>
-                    <p class="m-0 mt-0.5 text-sm font-semibold text-foreground">{{ instance()!.productType }}</p>
+                    <p class="m-0 mt-0.5 text-sm font-semibold text-foreground">
+                      {{ instance()!.productType }}
+                    </p>
                   </div>
                 }
                 @if (instance()!.productName) {
                   <div>
                     <p class="m-0 text-label">Product Name</p>
-                    <p class="m-0 mt-0.5 text-sm font-semibold text-foreground">{{ instance()!.productName }}</p>
+                    <p class="m-0 mt-0.5 text-sm font-semibold text-foreground">
+                      {{ instance()!.productName }}
+                    </p>
                   </div>
                 }
                 @if (instance()!.defaultUser) {
                   <div>
                     <p class="m-0 text-label">Default User</p>
-                    <p class="m-0 mt-0.5 text-sm font-mono font-semibold text-foreground">{{ instance()!.defaultUser }}</p>
+                    <p class="m-0 mt-0.5 text-sm font-mono font-semibold text-foreground">
+                      {{ instance()!.defaultUser }}
+                    </p>
                   </div>
                 }
                 <div class="border-t border-border pt-3 space-y-3">
                   <div>
                     <p class="m-0 text-label">Created</p>
-                    <p class="m-0 mt-0.5 text-sm text-foreground">{{ instance()!.createdAt | date: 'short' }}</p>
+                    <p class="m-0 mt-0.5 text-sm text-foreground">
+                      {{ instance()!.createdAt | date: 'short' }}
+                    </p>
                   </div>
                   <div>
                     <p class="m-0 text-label">Last Updated</p>
-                    <p class="m-0 mt-0.5 text-sm text-foreground">{{ instance()!.updatedAt | date: 'short' }}</p>
+                    <p class="m-0 mt-0.5 text-sm text-foreground">
+                      {{ instance()!.updatedAt | date: 'short' }}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -394,9 +490,7 @@ const OWNERSHIP_LABEL: Record<string, string> = {
           <p class="text-muted-foreground mb-4">
             The instance you're looking for doesn't exist or has been deleted.
           </p>
-          <button hlmBtn [routerLink]="['/infrastructure/compute']">
-            Go back to instances
-          </button>
+          <button hlmBtn [routerLink]="['/infrastructure/compute']">Go back to instances</button>
         </div>
       }
 
@@ -504,9 +598,7 @@ export class InstanceDetailComponent implements OnInit, OnDestroy {
   useBootstrapKey = signal(false);
   canConnectSsh = computed(() => {
     const inst = this.instance();
-    return inst?.status === 'running' &&
-           inst?.ipConfig?.v4?.ip &&
-           this.isManaged();
+    return inst?.status === 'running' && inst?.ipConfig?.v4?.ip && this.isManaged();
   });
 
   ngOnInit() {
@@ -536,31 +628,31 @@ export class InstanceDetailComponent implements OnInit, OnDestroy {
         undefined, // search
         undefined, // clusterId
         undefined, // ownership
-        true       // skipCache - always fetch fresh data from providers
+        true, // skipCache - always fetch fresh data from providers
       )
       .subscribe({
-      next: async (response) => {
-        const foundInstance = response.data?.find(
-          (inst) => inst.provider === provider && inst.providerId === providerId
-        );
-        this.instance.set(foundInstance || null);
+        next: async (response) => {
+          const foundInstance = response.data?.find(
+            (inst) => inst.provider === provider && inst.providerId === providerId,
+          );
+          this.instance.set(foundInstance || null);
 
-        // Load cluster type if instance belongs to a cluster
-        if (foundInstance) {
-          const clusterInfo = getClusterInfo(foundInstance);
-          if (clusterInfo?.clusterId) {
-            await this.loadClusterType(clusterInfo.clusterId);
+          // Load cluster type if instance belongs to a cluster
+          if (foundInstance) {
+            const clusterInfo = getClusterInfo(foundInstance);
+            if (clusterInfo?.clusterId) {
+              await this.loadClusterType(clusterInfo.clusterId);
+            }
           }
-        }
 
-        this.isLoading.set(false);
-      },
-      error: (error) => {
-        console.error('Failed to load instance:', error);
-        this.instance.set(null);
-        this.isLoading.set(false);
-      },
-    });
+          this.isLoading.set(false);
+        },
+        error: (error) => {
+          console.error('Failed to load instance:', error);
+          this.instance.set(null);
+          this.isLoading.set(false);
+        },
+      });
   }
 
   /**
@@ -609,7 +701,7 @@ export class InstanceDetailComponent implements OnInit, OnDestroy {
       .serversControllerDeleteServer(
         instance.providerId,
         instance.provider as 'contabo' | 'hetzner',
-        force
+        force,
       )
       .subscribe({
         next: () => {
@@ -632,7 +724,7 @@ export class InstanceDetailComponent implements OnInit, OnDestroy {
    * Toggle SSH terminal visibility
    */
   toggleTerminal(): void {
-    this.isTerminalVisible.update(visible => !visible);
+    this.isTerminalVisible.update((visible) => !visible);
   }
 
   /**
@@ -640,7 +732,7 @@ export class InstanceDetailComponent implements OnInit, OnDestroy {
    * Collapses terminal to force a fresh reconnect with new settings.
    */
   toggleBootstrapKey(): void {
-    this.useBootstrapKey.update(v => !v);
+    this.useBootstrapKey.update((v) => !v);
     if (this.isTerminalVisible()) {
       this.isTerminalVisible.set(false);
     }
@@ -677,7 +769,9 @@ export class InstanceDetailComponent implements OnInit, OnDestroy {
   readonly statusDotClass = computed(() => STATUS_DOT[this.statusTone()]);
   readonly statusTextClass = computed(() => STATUS_TEXT[this.statusTone()]);
 
-  readonly ownershipLabel = computed(() => OWNERSHIP_LABEL[this.ownership()] ?? OWNERSHIP_LABEL['unmanaged']);
+  readonly ownershipLabel = computed(
+    () => OWNERSHIP_LABEL[this.ownership()] ?? OWNERSHIP_LABEL['unmanaged'],
+  );
   readonly ownershipHint = computed(() =>
     this.ownership() === 'other-flui'
       ? 'Provisioned by another Flui installation sharing this cloud provider account'

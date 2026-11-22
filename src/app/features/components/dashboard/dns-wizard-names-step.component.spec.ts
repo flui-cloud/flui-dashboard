@@ -7,7 +7,8 @@ describe('DnsWizardNamesStepComponent', () => {
   let fixture: ComponentFixture<DnsWizardNamesStepComponent>;
   let wiz: DnsSetupWizardService;
 
-  const q = (id: string): HTMLElement | null => fixture.nativeElement.querySelector(`[data-testid="${id}"]`);
+  const q = (id: string): HTMLElement | null =>
+    fixture.nativeElement.querySelector(`[data-testid="${id}"]`);
 
   const type = (app: string, value: string) => {
     const input = q(`name-input-${app}`) as HTMLInputElement;
@@ -21,9 +22,30 @@ describe('DnsWizardNamesStepComponent', () => {
       hostnames: {
         zoneName: 'flui.cloud',
         hostnames: [
-          { app: 'flui-web', applicationId: 'w', defaultLabel: 'dashboard', label: 'dashboard', fqdn: 'dashboard.flui.cloud', currentFqdn: null },
-          { app: 'flui-api', applicationId: 'a', defaultLabel: 'api', label: 'api', fqdn: 'api.flui.cloud', currentFqdn: null },
-          { app: 'zitadel', applicationId: 'z', defaultLabel: 'auth', label: 'auth', fqdn: 'auth.flui.cloud', currentFqdn: null },
+          {
+            app: 'flui-web',
+            applicationId: 'w',
+            defaultLabel: 'dashboard',
+            label: 'dashboard',
+            fqdn: 'dashboard.flui.cloud',
+            currentFqdn: null,
+          },
+          {
+            app: 'flui-api',
+            applicationId: 'a',
+            defaultLabel: 'api',
+            label: 'api',
+            fqdn: 'api.flui.cloud',
+            currentFqdn: null,
+          },
+          {
+            app: 'zitadel',
+            applicationId: 'z',
+            defaultLabel: 'auth',
+            label: 'auth',
+            fqdn: 'auth.flui.cloud',
+            currentFqdn: null,
+          },
         ],
       },
     });
@@ -56,7 +78,7 @@ describe('DnsWizardNamesStepComponent', () => {
     type('flui-web', 'dashboard.demo');
 
     expect(q('name-error-flui-web')!.textContent).toContain(
-      'One name, no dots: the certificate for *.flui.cloud covers a single level.'
+      'One name, no dots: the certificate for *.flui.cloud covers a single level.',
     );
   });
 

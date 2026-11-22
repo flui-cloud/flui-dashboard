@@ -74,7 +74,9 @@ describe('ProviderCardComponent', () => {
     const emitted: string[] = [];
     fixture.componentInstance.configure.subscribe((id) => emitted.push(id));
 
-    expect(el.querySelector('[data-testid="provider-state"]')?.textContent).toContain('Not connected');
+    expect(el.querySelector('[data-testid="provider-state"]')?.textContent).toContain(
+      'Not connected',
+    );
     expect(el.textContent).toContain('Key and secret');
     (el.querySelector('[data-testid="provider-connect"]') as HTMLButtonElement).click();
 
@@ -82,8 +84,15 @@ describe('ProviderCardComponent', () => {
   });
 
   it('colours nothing but the state', () => {
-    const { el } = build({ status: 'active', enabledRegions: ['GRA'] } as Partial<ProviderConfigurationDto>);
-    const coloured = Array.from(el.querySelectorAll('[class*="text-green"], [class*="text-orange"], [class*="text-purple"], [class*="text-blue"]'));
+    const { el } = build({
+      status: 'active',
+      enabledRegions: ['GRA'],
+    } as Partial<ProviderConfigurationDto>);
+    const coloured = Array.from(
+      el.querySelectorAll(
+        '[class*="text-green"], [class*="text-orange"], [class*="text-purple"], [class*="text-blue"]',
+      ),
+    );
 
     expect(coloured.map((node) => node.getAttribute('data-testid'))).toEqual(['provider-state']);
     expect(el.textContent).toContain('Connected');

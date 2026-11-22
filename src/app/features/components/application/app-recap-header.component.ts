@@ -1,7 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideArrowLeft, lucideArrowUpRight, lucideFileText, lucideSettings2 } from '@ng-icons/lucide';
+import {
+  lucideArrowLeft,
+  lucideArrowUpRight,
+  lucideFileText,
+  lucideSettings2,
+} from '@ng-icons/lucide';
 import { AppGroupView } from '../../model/application.models';
 import { statusOf } from './app-recap-bundle';
 import { HeaderPart } from './app-recap-header';
@@ -12,7 +17,9 @@ import { TONE_DOT, TONE_PILL } from './app-recap-view';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterLink, NgIcon],
-  providers: [provideIcons({ lucideArrowLeft, lucideArrowUpRight, lucideFileText, lucideSettings2 })],
+  providers: [
+    provideIcons({ lucideArrowLeft, lucideArrowUpRight, lucideFileText, lucideSettings2 }),
+  ],
   host: { class: 'block' },
   template: `
     @let g = group();
@@ -30,18 +37,34 @@ import { TONE_DOT, TONE_PILL } from './app-recap-view';
         <div class="min-w-0">
           <div class="flex flex-wrap items-center gap-2.5">
             <h1 class="text-3xl font-bold tracking-tight text-foreground">{{ g.name }}</h1>
-            <span class="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">{{ kindChip() }}</span>
-            <span class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium" [class]="pill[s.tone]" data-testid="recap-status">
+            <span
+              class="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
+              >{{ kindChip() }}</span
+            >
+            <span
+              class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium"
+              [class]="pill[s.tone]"
+              data-testid="recap-status"
+            >
               <span class="h-1.5 w-1.5 rounded-full" [class]="dot[s.tone]"></span>
               {{ s.label }}
             </span>
           </div>
-          <div class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground" data-testid="recap-meta">
+          <div
+            class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground"
+            data-testid="recap-meta"
+          >
             @for (part of meta(); track $index) {
               @if ($index > 0) {
                 <span aria-hidden="true">·</span>
               }
-              <span [class.font-mono]="part.mono" [class.text-xs]="part.mono" class="truncate" [title]="part.text">{{ part.text }}</span>
+              <span
+                [class.font-mono]="part.mono"
+                [class.text-xs]="part.mono"
+                class="truncate"
+                [title]="part.text"
+                >{{ part.text }}</span
+              >
             }
           </div>
         </div>

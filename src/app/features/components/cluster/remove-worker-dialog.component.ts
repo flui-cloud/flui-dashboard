@@ -1,4 +1,13 @@
-import { Component, computed, effect, inject, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -32,7 +41,9 @@ import { OperationWarning, WorkerError } from '../../model/worker-operation.mode
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm" (click)="onCancel()">
-      <div class="fixed left-[50%] top-[50%] z-50 w-full max-w-md translate-x-[-50%] translate-y-[-50%] p-4">
+      <div
+        class="fixed left-[50%] top-[50%] z-50 w-full max-w-md translate-x-[-50%] translate-y-[-50%] p-4"
+      >
         <div class="card-surface p-5 space-y-4" (click)="$event.stopPropagation()">
           <div class="flex items-start justify-between">
             <div class="flex items-center gap-2.5">
@@ -61,16 +72,18 @@ import { OperationWarning, WorkerError } from '../../model/worker-operation.mode
               <p class="font-mono font-semibold text-foreground mt-0.5">{{ workerName() }}</p>
             </div>
 
-            <div class="rounded-md border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20 px-3 py-2 text-xs text-yellow-800 dark:text-yellow-300">
+            <div
+              class="rounded-md border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20 px-3 py-2 text-xs text-yellow-800 dark:text-yellow-300"
+            >
               <p class="font-medium">This action cannot be undone.</p>
               <p class="mt-0.5">
-                Apps will be moved to other nodes when possible. Apps with strict availability
-                rules may be stopped without a graceful shutdown.
+                Apps will be moved to other nodes when possible. Apps with strict availability rules
+                may be stopped without a graceful shutdown.
               </p>
               @if (isByos()) {
                 <p class="mt-1">
-                  Flui drains the node and uninstalls k3s over SSH. The server itself
-                  stays — it's yours — so you can repurpose or reconnect it later.
+                  Flui drains the node and uninstalls k3s over SSH. The server itself stays — it's
+                  yours — so you can repurpose or reconnect it later.
                 </p>
               }
             </div>
@@ -90,7 +103,9 @@ import { OperationWarning, WorkerError } from '../../model/worker-operation.mode
             </div>
 
             @if (submitError(); as err) {
-              <div class="rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-3 py-2 text-xs text-red-800 dark:text-red-300">
+              <div
+                class="rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-3 py-2 text-xs text-red-800 dark:text-red-300"
+              >
                 {{ err.message }}
               </div>
             }
@@ -125,14 +140,22 @@ import { OperationWarning, WorkerError } from '../../model/worker-operation.mode
             <div class="space-y-3">
               <div class="flex items-center gap-2">
                 @if (t.status === 'completed') {
-                  <ng-icon name="lucideCircleCheck" class="h-5 w-5 text-green-600 dark:text-green-400" />
+                  <ng-icon
+                    name="lucideCircleCheck"
+                    class="h-5 w-5 text-green-600 dark:text-green-400"
+                  />
                   <p class="text-sm font-medium text-foreground">Worker removed.</p>
                 } @else if (t.status === 'failed') {
-                  <ng-icon name="lucideCircleAlert" class="h-5 w-5 text-red-600 dark:text-red-400" />
+                  <ng-icon
+                    name="lucideCircleAlert"
+                    class="h-5 w-5 text-red-600 dark:text-red-400"
+                  />
                   <p class="text-sm font-medium text-foreground">Remove worker failed.</p>
                 } @else {
                   <ng-icon name="lucideLoader" class="h-5 w-5 text-blue-600 animate-spin" />
-                  <p class="text-sm font-medium text-foreground">Freeing up the node and removing it…</p>
+                  <p class="text-sm font-medium text-foreground">
+                    Freeing up the node and removing it…
+                  </p>
                 }
               </div>
 
@@ -154,7 +177,13 @@ import { OperationWarning, WorkerError } from '../../model/worker-operation.mode
                 <div class="h-2 rounded-full bg-muted overflow-hidden">
                   <div
                     class="h-full transition-all"
-                    [class]="t.status === 'failed' ? 'bg-red-500' : t.status === 'completed' ? 'bg-green-500' : 'bg-blue-500'"
+                    [class]="
+                      t.status === 'failed'
+                        ? 'bg-red-500'
+                        : t.status === 'completed'
+                          ? 'bg-green-500'
+                          : 'bg-blue-500'
+                    "
                     [style.width.%]="t.progress"
                   ></div>
                 </div>
@@ -164,7 +193,9 @@ import { OperationWarning, WorkerError } from '../../model/worker-operation.mode
               </div>
 
               @if (t.status === 'failed' && t.error) {
-                <div class="rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-3 py-2 text-xs text-red-800 dark:text-red-300">
+                <div
+                  class="rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-3 py-2 text-xs text-red-800 dark:text-red-300"
+                >
                   {{ t.error }}
                 </div>
               }
@@ -212,22 +243,24 @@ export class RemoveWorkerDialogComponent {
 
   protected tracking = computed(() => {
     const opId = this.operationId();
-    return this.workersService.trackedStates()[opId ?? ''] ?? {
-      operationId: null,
-      clusterId: null,
-      type: null,
-      progress: 0,
-      currentStepIndex: 0,
-      totalSteps: 0,
-      stepDescription: '',
-      warnings: [] as OperationWarning[],
-      status: 'pending' as const,
-      error: null,
-    };
+    return (
+      this.workersService.trackedStates()[opId ?? ''] ?? {
+        operationId: null,
+        clusterId: null,
+        type: null,
+        progress: 0,
+        currentStepIndex: 0,
+        totalSteps: 0,
+        stepDescription: '',
+        warnings: [] as OperationWarning[],
+        status: 'pending' as const,
+        error: null,
+      }
+    );
   });
 
-  protected canSubmit = computed(() =>
-    !this.submitting() && this.typed().trim() === this.workerName()
+  protected canSubmit = computed(
+    () => !this.submitting() && this.typed().trim() === this.workerName(),
   );
 
   constructor() {
@@ -245,7 +278,11 @@ export class RemoveWorkerDialogComponent {
     this.submitError.set(null);
     this.submitting.set(true);
     try {
-      const env = await this.workersService.removeWorker(this.clusterId(), this.nodeId(), this.workerName());
+      const env = await this.workersService.removeWorker(
+        this.clusterId(),
+        this.nodeId(),
+        this.workerName(),
+      );
       this.operationId.set(env.operationId);
       this.phase.set('tracking');
     } catch (err) {
@@ -284,7 +321,8 @@ export class RemoveWorkerDialogComponent {
       case 'CORDON_FAILED':
         this.toast.showWarning({
           title: 'Worker removed with warnings',
-          message: 'Could not stop new apps from being scheduled on the node before removal (master unreachable). Please verify your apps were rebalanced.',
+          message:
+            'Could not stop new apps from being scheduled on the node before removal (master unreachable). Please verify your apps were rebalanced.',
           persistent: true,
         });
         break;

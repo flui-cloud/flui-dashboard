@@ -9,12 +9,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideAlertCircle,
-  lucideLoader,
-  lucideSend,
-  lucideTrash2,
-} from '@ng-icons/lucide';
+import { lucideAlertCircle, lucideLoader, lucideSend, lucideTrash2 } from '@ng-icons/lucide';
 import { AssistantChatService } from '../../service/assistant.service';
 import { InferenceSettingsService } from '../../service/inference-settings.service';
 
@@ -30,11 +25,12 @@ interface PickerOption {
   providers: [provideIcons({ lucideAlertCircle, lucideLoader, lucideSend, lucideTrash2 })],
   template: `
     <div class="flex flex-col h-full max-h-[calc(100vh-120px)]">
-
       <div class="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
         <div>
           <h1 class="text-lg font-semibold text-foreground">Flui Assistant</h1>
-          <p class="text-xs text-muted-foreground">EU-hosted inference · no data leaves your cluster</p>
+          <p class="text-xs text-muted-foreground">
+            EU-hosted inference · no data leaves your cluster
+          </p>
         </div>
         @if (chatService.messages().length > 0) {
           <button
@@ -63,9 +59,11 @@ interface PickerOption {
           >
             <div
               class="max-w-[80%] rounded-2xl px-4 py-2.5 text-sm"
-              [class]="msg.role === 'user'
-                ? 'bg-primary text-primary-foreground rounded-br-sm'
-                : 'bg-muted text-foreground rounded-bl-sm'"
+              [class]="
+                msg.role === 'user'
+                  ? 'bg-primary text-primary-foreground rounded-br-sm'
+                  : 'bg-muted text-foreground rounded-bl-sm'
+              "
             >
               <p class="whitespace-pre-wrap break-words">{{ msg.content }}</p>
             </div>
@@ -81,7 +79,9 @@ interface PickerOption {
         }
 
         @if (chatService.error()) {
-          <div class="flex items-center gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          <div
+            class="flex items-center gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+          >
             <ng-icon name="lucideAlertCircle" class="h-4 w-4 shrink-0" />
             {{ chatService.error() }}
           </div>
@@ -125,7 +125,6 @@ interface PickerOption {
           </button>
         </div>
       </div>
-
     </div>
   `,
 })

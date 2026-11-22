@@ -24,42 +24,32 @@ export class MessagingConsoleService {
   }
 
   getConnectionInfo(appId: string): Observable<MessagingConnectionInfo> {
-    return this.http.get<MessagingConnectionInfo>(
-      `${this.base(appId)}/connection-info`,
-    );
+    return this.http.get<MessagingConnectionInfo>(`${this.base(appId)}/connection-info`);
   }
 
   getServerInfo(appId: string): Observable<MessagingServerInfo> {
-    return this.http.get<MessagingServerInfo>(
-      `${this.base(appId)}/server-info`,
-    );
+    return this.http.get<MessagingServerInfo>(`${this.base(appId)}/server-info`);
   }
 
   getStreams(appId: string): Observable<JsStream[]> {
     return this.http.get<JsStream[]>(`${this.base(appId)}/streams`);
   }
 
-  publish(
-    appId: string,
-    req: MessagingPublishRequest,
-  ): Observable<MessagingPublishResult> {
+  publish(appId: string, req: MessagingPublishRequest): Observable<MessagingPublishResult> {
     // Explicit user action behind a button; the messaging console has no
     // read-only toggle, so it opts into the write. The backend gate (default
     // read-only) is honored for API/agent callers that omit or set the flag.
-    return this.http.post<MessagingPublishResult>(
-      `${this.base(appId)}/publish`,
-      { ...req, readOnly: false },
-    );
+    return this.http.post<MessagingPublishResult>(`${this.base(appId)}/publish`, {
+      ...req,
+      readOnly: false,
+    });
   }
 
   peek(appId: string, req: MessagingPeekRequest): Observable<QueueMessage[]> {
     return this.http.post<QueueMessage[]>(`${this.base(appId)}/peek`, req);
   }
 
-  createStream(
-    appId: string,
-    req: MessagingCreateStreamRequest,
-  ): Observable<QueueStream> {
+  createStream(appId: string, req: MessagingCreateStreamRequest): Observable<QueueStream> {
     return this.http.post<QueueStream>(`${this.base(appId)}/streams`, {
       ...req,
       readOnly: false,

@@ -3,10 +3,7 @@ import { firstValueFrom } from 'rxjs';
 import { ClusterService } from './cluster.service';
 import { ClusterMetricsLogsService } from '../../core/api/api/clusterMetricsLogs.service';
 import { ClusterHealthService } from '../../core/api/api/clusterHealth.service';
-import {
-  ClusterHealthResponseDto,
-  ClusterMetricsResponseDto,
-} from '../../core/api/model/models';
+import { ClusterHealthResponseDto, ClusterMetricsResponseDto } from '../../core/api/model/models';
 import { StatItem } from '../../shared/components/charts';
 
 export interface ServerMetricsState {
@@ -75,7 +72,11 @@ export class ClusterMonitoringService {
     const avgDisk = servers.reduce((sum, s) => sum + s.disk.current, 0) / servers.length;
     const totalCores = servers.reduce((sum, s) => sum + s.cpu.cores, 0);
 
-    const severityFor = (value: number, danger: number, warning: number): 'danger' | 'warning' | 'success' => {
+    const severityFor = (
+      value: number,
+      danger: number,
+      warning: number,
+    ): 'danger' | 'warning' | 'success' => {
       if (value > danger) return 'danger';
       if (value > warning) return 'warning';
       return 'success';
@@ -138,7 +139,7 @@ export class ClusterMonitoringService {
     }
     if (this.isPollingPaused()) {
       this.consecutiveErrorCount.set(0);
-      this.manualRefreshCountSignal.update(count => count + 1);
+      this.manualRefreshCountSignal.update((count) => count + 1);
     }
     await this.loadMetrics(true);
   }
@@ -158,7 +159,9 @@ export class ClusterMonitoringService {
 
   /** Health only adds a badge to the charts: without it they still stand. */
   private readHealth(clusterId: string): Promise<ClusterHealthResponseDto | null> {
-    return firstValueFrom(this.healthApi.clusterHealthControllerGetClusterHealth(clusterId)).catch(() => null);
+    return firstValueFrom(this.healthApi.clusterHealthControllerGetClusterHealth(clusterId)).catch(
+      () => null,
+    );
   }
 
   private async loadMetrics(_isManualRefresh: boolean = false): Promise<void> {
@@ -218,7 +221,7 @@ export class ClusterMonitoringService {
         if (newCount >= this.MAX_CONSECUTIVE_ERRORS) {
           this.isPollingPaused.set(true);
           this.errorSignal.set(
-            `API failed multiple times. Auto-refresh paused. Click "Retry" to resume.`
+            `API failed multiple times. Auto-refresh paused. Click "Retry" to resume.`,
           );
         } else {
           this.errorSignal.set('Failed to load metrics. Will retry automatically...');
@@ -241,7 +244,7 @@ export class ClusterMonitoringService {
     const currentServers = this.serverMetrics();
     const updatedServers: ServerMetricsState[] = response.servers.map((server) => {
       const previousServer = currentServers.find(
-        (s) => s.instance === server.instance || s.serverId === server.server_id
+        (s) => s.instance === server.instance || s.serverId === server.server_id,
       );
 
       return {

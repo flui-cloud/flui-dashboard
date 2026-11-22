@@ -3,10 +3,7 @@ import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideRadio } from '@ng-icons/lucide';
 import { DeployWizardStateService } from '../../../service/deploy-wizard-state.service';
-import {
-  UDP_STATE_TEXT,
-  udpPortsAdvice,
-} from '../../../service/app-udp-ports.service';
+import { UDP_STATE_TEXT, udpPortsAdvice } from '../../../service/app-udp-ports.service';
 
 @Component({
   selector: 'app-catalog-udp-ports-notice',
@@ -47,7 +44,8 @@ import {
           </ul>
           @if (taken()) {
             <p class="mt-1 text-xs text-muted-foreground">
-              Two apps cannot share a UDP port on one cluster. Pick another cluster, or remove the other app first.
+              Two apps cannot share a UDP port on one cluster. Pick another cluster, or remove the
+              other app first.
             </p>
           } @else if (advice()) {
             <p class="mt-1 text-xs text-muted-foreground">
@@ -76,9 +74,7 @@ export class CatalogUdpPortsNoticeComponent {
     () => this.state.catalogUdpPorts()?.ports.some((p) => !!p.takenBy) ?? false,
   );
   protected readonly allOpen = computed(
-    () =>
-      this.state.catalogUdpPorts()?.ports.every((p) => p.state === 'open') ??
-      true,
+    () => this.state.catalogUdpPorts()?.ports.every((p) => p.state === 'open') ?? true,
   );
   protected readonly advice = computed(() => {
     const v = this.state.catalogUdpPorts();

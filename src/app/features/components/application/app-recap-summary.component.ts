@@ -24,10 +24,15 @@ import { BackupBand, RecapFact, RunState, TONE_DOT, TONE_PILL, TONE_TEXT } from 
               rel="noopener noreferrer"
               class="mt-0.5 block truncate font-mono text-base font-medium text-primary hover:underline"
               data-testid="recap-endpoint"
-            >{{ endpointHost() }}</a>
+              >{{ endpointHost() }}</a
+            >
           </div>
           @if (h.label) {
-            <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium" [class]="pill[h.tone]" data-testid="recap-endpoint-health">
+            <span
+              class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium"
+              [class]="pill[h.tone]"
+              data-testid="recap-endpoint-health"
+            >
               <span class="h-1.5 w-1.5 rounded-full" [class]="dot[h.tone]"></span>
               {{ h.label }}
             </span>
@@ -37,11 +42,20 @@ import { BackupBand, RecapFact, RunState, TONE_DOT, TONE_PILL, TONE_TEXT } from 
         <p class="text-sm text-muted-foreground">Not published outside the cluster.</p>
       }
 
-      <div class="grid gap-4 border-t border-border pt-5 sm:grid-cols-2 lg:grid-cols-4" data-testid="recap-facts">
+      <div
+        class="grid gap-4 border-t border-border pt-5 sm:grid-cols-2 lg:grid-cols-4"
+        data-testid="recap-facts"
+      >
         @for (f of facts(); track f.key) {
           <div class="min-w-0">
             <p class="text-label">{{ f.key }}</p>
-            <p class="mt-1 truncate text-base font-semibold" [class]="text[f.tone]" [title]="f.value">{{ f.value }}</p>
+            <p
+              class="mt-1 truncate text-base font-semibold"
+              [class]="text[f.tone]"
+              [title]="f.value"
+            >
+              {{ f.value }}
+            </p>
             <p class="truncate text-xs text-muted-foreground">{{ f.sub }}</p>
           </div>
         }

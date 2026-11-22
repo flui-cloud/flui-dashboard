@@ -55,8 +55,8 @@ import {
         <div>
           <h1 class="text-xl font-semibold">Updates</h1>
           <p class="text-sm text-muted-foreground mt-0.5">
-            The Flui release running on this installation — API, dashboard and
-            authorization service.
+            The Flui release running on this installation — API, dashboard and authorization
+            service.
           </p>
         </div>
         <div class="flex items-center gap-3">
@@ -99,26 +99,18 @@ import {
 
       @if (updates.status(); as status) {
         @if (!updates.running()) {
-          <div
-            class="card-surface"
-            [class.border-primary]="status.updateAvailable"
-          >
+          <div class="card-surface" [class.border-primary]="status.updateAvailable">
             <div class="flex flex-wrap items-start justify-between gap-5 p-5">
               <div class="space-y-1.5">
                 @if (updates.checkFailed()) {
                   <span class="badge badge-in-progress">Not checked</span>
-                  <h2 class="text-lg font-semibold">
-                    Could not check for updates
-                  </h2>
+                  <h2 class="text-lg font-semibold">Could not check for updates</h2>
                   <p class="text-sm text-muted-foreground">
                     This installation runs Flui
-                    <span class="font-mono">{{ status.installedVersion }}</span
-                    >.
+                    <span class="font-mono">{{ status.installedVersion }}</span>.
                   </p>
                 } @else if (status.updateAvailable) {
-                  <span class="badge bg-primary/10 text-primary"
-                    >Update available</span
-                  >
+                  <span class="badge bg-primary/10 text-primary">Update available</span>
                   @if (status.requiredCliVersion) {
                     <span
                       class="badge badge-in-progress ml-1.5"
@@ -127,9 +119,7 @@ import {
                       CLI {{ status.requiredCliVersion }}
                     </span>
                   }
-                  <h2 class="text-lg font-semibold">
-                    Flui {{ status.availableVersion }}
-                  </h2>
+                  <h2 class="text-lg font-semibold">Flui {{ status.availableVersion }}</h2>
                   <p class="text-sm text-muted-foreground">
                     You are on
                     <span class="font-mono">{{ status.installedVersion }}</span>
@@ -139,9 +129,7 @@ import {
                   </p>
                 } @else {
                   <span class="badge badge-success">Up to date</span>
-                  <h2 class="text-lg font-semibold">
-                    You are on the latest release
-                  </h2>
+                  <h2 class="text-lg font-semibold">You are on the latest release</h2>
                   <p class="text-sm text-muted-foreground">
                     Flui
                     <span class="font-mono">{{ status.installedVersion }}</span>
@@ -177,9 +165,7 @@ import {
               <ul class="space-y-1.5 border-t border-border px-5 py-4">
                 @for (note of status.notes; track note) {
                   <li class="flex gap-2.5 text-sm text-foreground/90">
-                    <span
-                      class="mt-2 h-1 w-1 shrink-0 rounded-full bg-muted-foreground/40"
-                    ></span>
+                    <span class="mt-2 h-1 w-1 shrink-0 rounded-full bg-muted-foreground/40"></span>
                     <span>{{ note }}</span>
                   </li>
                 }
@@ -214,10 +200,7 @@ import {
     </div>
 
     @if (confirming()) {
-      <app-platform-upgrade-confirm
-        [(acknowledged)]="acknowledged"
-        (closed)="closeConfirm()"
-      />
+      <app-platform-upgrade-confirm [(acknowledged)]="acknowledged" (closed)="closeConfirm()" />
     }
   `,
 })

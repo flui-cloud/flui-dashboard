@@ -57,9 +57,9 @@ describe('DemoSignInComponent', () => {
           }),
         ),
       ),
-      disconnect: jasmine.createSpy('disconnect').and.returnValue(
-        of(status({ provider: 'google', name: 'Google' })),
-      ),
+      disconnect: jasmine
+        .createSpy('disconnect')
+        .and.returnValue(of(status({ provider: 'google', name: 'Google' }))),
     };
     await TestBed.configureTestingModule({
       imports: [DemoSignInComponent],
@@ -164,7 +164,9 @@ describe('DemoSignInComponent', () => {
 
   it('names where a visitor who signs in comes back, to register at both providers', async () => {
     await build({ ...VIEW, intentCallbackUrl: 'https://auth.demo.example.com/idps/callback' });
-    const line = fixture.nativeElement.querySelector('[data-testid="intent-callback-url"]').textContent;
+    const line = fixture.nativeElement.querySelector(
+      '[data-testid="intent-callback-url"]',
+    ).textContent;
     expect(line).toContain('https://auth.demo.example.com/idps/callback');
     expect(line).toContain('GitHub and Google');
   });

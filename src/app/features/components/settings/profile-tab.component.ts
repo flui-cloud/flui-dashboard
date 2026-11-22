@@ -1,4 +1,11 @@
-import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  computed,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -39,7 +46,6 @@ import { HlmLabelDirective } from '@spartan-ng/ui-label-helm';
         <p hlmCardDescription>Update your display name.</p>
       </div>
       <div hlmCardContent class="space-y-5">
-
         <!-- Email (read-only) -->
         <div class="space-y-1.5">
           <label hlmLabel>Email</label>
@@ -62,21 +68,28 @@ import { HlmLabelDirective } from '@spartan-ng/ui-label-helm';
               />
               @if (isInvalid('name')) {
                 <p class="text-xs text-destructive">
-                  @if (form.get('name')?.hasError('required')) { Name is required. }
-                  @else if (form.get('name')?.hasError('minlength')) { Minimum 2 characters. }
+                  @if (form.get('name')?.hasError('required')) {
+                    Name is required.
+                  } @else if (form.get('name')?.hasError('minlength')) {
+                    Minimum 2 characters.
+                  }
                 </p>
               }
             </div>
 
             @if (error()) {
-              <div class="flex items-center gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              <div
+                class="flex items-center gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+              >
                 <ng-icon name="lucideAlertCircle" class="h-4 w-4 shrink-0" />
                 {{ error() }}
               </div>
             }
 
             @if (saved()) {
-              <div class="flex items-center gap-2 rounded-md bg-green-500/10 px-3 py-2 text-sm text-green-600 dark:text-green-400">
+              <div
+                class="flex items-center gap-2 rounded-md bg-green-500/10 px-3 py-2 text-sm text-green-600 dark:text-green-400"
+              >
                 <ng-icon name="lucideCheck" class="h-4 w-4 shrink-0" />
                 Profile updated successfully.
               </div>
@@ -98,7 +111,11 @@ import { HlmLabelDirective } from '@spartan-ng/ui-label-helm';
           </div>
           <p class="text-sm text-muted-foreground">
             Change your name, password and sign-in options in
-            <a routerLink="/account" class="font-medium text-primary underline-offset-4 hover:underline">your account</a>.
+            <a
+              routerLink="/account"
+              class="font-medium text-primary underline-offset-4 hover:underline"
+              >your account</a
+            >.
           </p>
         }
       </div>

@@ -89,7 +89,9 @@ describe('OidcAuthService and its two clients', () => {
     await service.dropVisit();
 
     expect(oauth.logOut.calls.mostRecent().args[0] as unknown).toBe(true);
-    TestBed.inject(HttpTestingController).expectOne('/api/v1/auth/oidc-logout').flush({ success: true });
+    TestBed.inject(HttpTestingController)
+      .expectOne('/api/v1/auth/oidc-logout')
+      .flush({ success: true });
     expect(service.isVisitorSession()).toBeFalse();
     expect(lastConfig().clientId).toBe('web');
     expect(oauth.loadDiscoveryDocument).toHaveBeenCalled();

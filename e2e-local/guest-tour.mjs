@@ -28,9 +28,7 @@ const DASH = trimSlashes(process.env.FLUI_DASHBOARD_URL || 'http://localhost:420
 const args = process.argv.slice(2);
 const HEADED = args.includes('--headed');
 const outFlag = args.indexOf('--out');
-const OUT = path.resolve(
-  outFlag >= 0 ? args[outFlag + 1] : process.env.FLUI_TOUR_OUT || 'out',
-);
+const OUT = path.resolve(outFlag >= 0 ? args[outFlag + 1] : process.env.FLUI_TOUR_OUT || 'out');
 
 const STOPS = [
   ['00-home', '/dashboard', 'full', 'Dashboard'],
@@ -103,9 +101,7 @@ async function claim() {
   });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error(
-      `claim failed: ${res.status} ${body.code || ''} ${body.message || ''}`.trim(),
-    );
+    throw new Error(`claim failed: ${res.status} ${body.code || ''} ${body.message || ''}`.trim());
   }
   if (!body.apiKey) {
     throw new Error(
@@ -133,9 +129,14 @@ function readPage() {
   };
   const txt = (el) => (el.innerText || el.textContent || '').trim().replace(/\s+/g, ' ');
 
-  const headings = [...document.querySelectorAll('h1,h2')].filter(vis).map(txt).filter(Boolean).slice(0, 12);
+  const headings = [...document.querySelectorAll('h1,h2')]
+    .filter(vis)
+    .map(txt)
+    .filter(Boolean)
+    .slice(0, 12);
 
-  const NOTICE = /(read-only in the trial|example data|not part of the trial|in the trial|sandbox|trial)/i;
+  const NOTICE =
+    /(read-only in the trial|example data|not part of the trial|in the trial|sandbox|trial)/i;
   const notices = [...document.querySelectorAll('*')]
     .filter((el) => el.children.length === 0 && vis(el) && NOTICE.test(txt(el)))
     .map(txt)
@@ -147,26 +148,25 @@ function readPage() {
     .map(txt)
     .filter((t) => t && t.length < 300);
 
-  const FAIL = /(failed|error|forbidden|unauthori[sz]ed|denied|not allowed|something went wrong|403|500)/i;
+  const FAIL =
+    /(failed|error|forbidden|unauthori[sz]ed|denied|not allowed|something went wrong|403|500)/i;
   const failWords = [...document.querySelectorAll('*')]
     .filter((el) => el.children.length === 0 && vis(el) && FAIL.test(txt(el)))
     .map(txt)
     .filter((t) => t.length < 300);
 
-  const buttons = [...document.querySelectorAll('button, a[role=button]')]
-    .filter(vis)
-    .map((b) => ({
-      label: (
-        txt(b) ||
-        b.getAttribute('aria-label') ||
-        b.getAttribute('title') ||
-        '(icon-only)'
-      ).slice(0, 60),
-      disabled:
-        b.matches(':disabled') ||
-        b.getAttribute('aria-disabled') === 'true' ||
-        getComputedStyle(b).pointerEvents === 'none',
-    }));
+  const buttons = [...document.querySelectorAll('button, a[role=button]')].filter(vis).map((b) => ({
+    label: (
+      txt(b) ||
+      b.getAttribute('aria-label') ||
+      b.getAttribute('title') ||
+      '(icon-only)'
+    ).slice(0, 60),
+    disabled:
+      b.matches(':disabled') ||
+      b.getAttribute('aria-disabled') === 'true' ||
+      getComputedStyle(b).pointerEvents === 'none',
+  }));
 
   const nav = [...document.querySelectorAll('nav a[href], aside a[href]')]
     .filter(vis)
@@ -211,13 +211,19 @@ async function main() {
   page.on('console', (msg) => {
     if (msg.type() === 'error') consoleErrors.push(redact(msg.text(), token).slice(0, 300));
   });
-  page.on('pageerror', (err) => consoleErrors.push(redact(`pageerror: ${err.message}`, token).slice(0, 300)));
+  page.on('pageerror', (err) =>
+    consoleErrors.push(redact(`pageerror: ${err.message}`, token).slice(0, 300)),
+  );
 
   const report = {
     startedAt: new Date().toISOString(),
     api: API,
     dashboard: DASH,
-    entry: { via: 'GET /api/v1/sandbox/resume', tokenSource: claimed.source, resumed: claimed.resumed },
+    entry: {
+      via: 'GET /api/v1/sandbox/resume',
+      tokenSource: claimed.source,
+      resumed: claimed.resumed,
+    },
     stops: [],
   };
 
@@ -238,9 +244,7 @@ async function main() {
     .filter(Boolean);
   const own = await ownApplicationStop(page).catch(() => null);
   const all = own ? [...STOPS, own] : STOPS;
-  const stops = only.length
-    ? all.filter(([slug]) => only.some((o) => slug.startsWith(o)))
-    : all;
+  const stops = only.length ? all.filter(([slug]) => only.some((o) => slug.startsWith(o))) : all;
   report.ownApplicationFound = Boolean(own);
 
   for (const [slug, route, expected, name] of stops) {
@@ -266,7 +270,9 @@ async function main() {
     report.stops.push(stop);
     const refusals = stop.http.filter((h) => h.status === 401 || h.status === 403).length;
     console.log(
-      `${slug.padEnd(18)} ${String(stop.title || '').slice(0, 34).padEnd(36)} ` +
+      `${slug.padEnd(18)} ${String(stop.title || '')
+        .slice(0, 34)
+        .padEnd(36)} ` +
         `notices=${(stop.notices || []).length} red=${(stop.reds || []).length} ` +
         `4xx/5xx=${stop.http.length} (401/403=${refusals})` +
         (stop.error ? `  ERROR ${stop.error}` : ''),

@@ -8,7 +8,11 @@ import { RepositoryService } from '../../service/repository.service';
 import { ClusterService } from '../../service/cluster.service';
 import { RepositoryMapResponseDto } from '../../../core/api/model/repositoryMapResponseDto';
 
-const unit = (id: string, healthPath: unknown, port: unknown = { value: 8080, source: 'Dockerfile:EXPOSE' }) => ({
+const unit = (
+  id: string,
+  healthPath: unknown,
+  port: unknown = { value: 8080, source: 'Dockerfile:EXPOSE' },
+) => ({
   id,
   name: id,
   root: id,
@@ -46,7 +50,14 @@ const responseWith = (units: unknown[], questions: unknown[]) =>
       remedy: null,
       evidence: [],
       units: [],
-      capacity: { assessed: false, clusterId: null, notAssessedReason: 'no-cluster-in-request', assessment: { known: false }, components: [], uncounted: [] },
+      capacity: {
+        assessed: false,
+        clusterId: null,
+        notAssessedReason: 'no-cluster-in-request',
+        assessment: { known: false },
+        components: [],
+        uncounted: [],
+      },
     },
     render: null,
   }) as unknown as RepositoryMapResponseDto;
@@ -72,12 +83,26 @@ describe('an undetermined health path stays a question', () => {
             clearApply: () => undefined,
           },
         },
-        { provide: RepositoryService, useValue: { repositories: signal([]), loadRepositories: () => Promise.resolve() } },
-        { provide: ClusterService, useValue: { clusters: signal([]), loadClusters: () => Promise.resolve() } },
-        { provide: Router, useValue: { navigate: jasmine.createSpy('navigate').and.resolveTo(true) } },
+        {
+          provide: RepositoryService,
+          useValue: { repositories: signal([]), loadRepositories: () => Promise.resolve() },
+        },
+        {
+          provide: ClusterService,
+          useValue: { clusters: signal([]), loadClusters: () => Promise.resolve() },
+        },
+        {
+          provide: Router,
+          useValue: { navigate: jasmine.createSpy('navigate').and.resolveTo(true) },
+        },
         {
           provide: ActivatedRoute,
-          useValue: { snapshot: { paramMap: convertToParamMap({ id: 'r-1' }), queryParamMap: convertToParamMap({}) } },
+          useValue: {
+            snapshot: {
+              paramMap: convertToParamMap({ id: 'r-1' }),
+              queryParamMap: convertToParamMap({}),
+            },
+          },
         },
       ],
     });
@@ -95,7 +120,11 @@ describe('an undetermined health path stays a question', () => {
     // This used to be a global "don't ask twice" guard keyed off /health/i on the question text.
     // It was dead — cartographer files no health question anywhere — and it was harmful: any
     // map-level question that happened to contain the word silenced every unit's own question.
-    const engineQuestion = { id: 'q1', question: 'Is this worker meant to be deployed?', options: ['yes', 'no'] };
+    const engineQuestion = {
+      id: 'q1',
+      question: 'Is this worker meant to be deployed?',
+      options: ['yes', 'no'],
+    };
     const questions = build(responseWith([unit('.', null)], [engineQuestion])).questions();
     expect(questions.map((q) => q.id)).toEqual(['q1', 'health:.']);
   });

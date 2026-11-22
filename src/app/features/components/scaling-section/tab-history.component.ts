@@ -11,24 +11,14 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { firstValueFrom } from 'rxjs';
 import { HistoryWindow, HistoryZoom, ScalingApiService } from '../../service/scaling-api.service';
 import { ScalingDecision } from '../../model/scaling-group.models';
-import {
-  operationDetail,
-  operationLabel,
-  operationTone,
-} from '../scaling/decision-operation';
-import {
-  FleetHistoryPoint,
-  SectionGroup,
-} from '../../model/scaling-section.models';
+import { operationDetail, operationLabel, operationTone } from '../scaling/decision-operation';
+import { FleetHistoryPoint, SectionGroup } from '../../model/scaling-section.models';
 import { FleetLoadChartComponent } from '../scaling/fleet-load-chart.component';
 import { FleetHistoryComponent } from '../scaling/fleet-history.component';
 import { outcomeText } from '../scaling/fleet-history.geometry';
 import { ScalingGroupStore } from './scaling-group.store';
 import { TABLE, ago } from './now-format';
-import {
-  SectionFailureComponent,
-  SectionSkeletonComponent,
-} from './section-states.component';
+import { SectionFailureComponent, SectionSkeletonComponent } from './section-states.component';
 
 interface LogRow {
   decision: ScalingDecision;
@@ -52,10 +42,7 @@ const PAGE = 50;
   template: `
     @if (group(); as g) {
       <div class="space-y-6" data-testid="tab-history">
-        <p
-          class="m-0 max-w-prose text-[13px] text-muted-foreground"
-          data-testid="history-lead"
-        >
+        <p class="m-0 max-w-prose text-[13px] text-muted-foreground" data-testid="history-lead">
           {{ lead() }}
         </p>
 
@@ -73,29 +60,47 @@ const PAGE = 50;
             (retry)="store.reload()"
           />
         } @else {
-          <div class="mb-2 flex flex-wrap gap-1.5" role="group" aria-label="Span" data-testid="history-window">
+          <div
+            class="mb-2 flex flex-wrap gap-1.5"
+            role="group"
+            aria-label="Span"
+            data-testid="history-window"
+          >
             @for (w of windows; track w) {
               <button
                 type="button"
                 class="rounded-full border px-2.5 py-0.5 text-[12px]"
-                [class]="store.historyWindow() === w ? 'border-primary bg-primary/10 text-foreground' : 'border-border text-muted-foreground hover:text-foreground'"
+                [class]="
+                  store.historyWindow() === w
+                    ? 'border-primary bg-primary/10 text-foreground'
+                    : 'border-border text-muted-foreground hover:text-foreground'
+                "
                 (click)="store.historyWindow.set(w); store.historyZoom.set(null)"
                 [attr.data-testid]="'history-window-' + w"
-              >{{ windowLabel[w] }}</button>
+              >
+                {{ windowLabel[w] }}
+              </button>
             }
           </div>
           @if (store.historyZoom(); as z) {
-            <p class="m-0 mb-2 flex flex-wrap items-center gap-2 text-[12px] text-muted-foreground" data-testid="history-zoom">
+            <p
+              class="m-0 mb-2 flex flex-wrap items-center gap-2 text-[12px] text-muted-foreground"
+              data-testid="history-zoom"
+            >
               <span>Zoomed to {{ zoomLabel(z) }}</span>
               <button
                 type="button"
                 class="rounded-full border border-border px-2.5 py-0.5 text-foreground hover:bg-muted"
                 (click)="store.historyZoom.set(null)"
                 data-testid="history-zoom-reset"
-              >Reset</button>
+              >
+                Reset
+              </button>
             </p>
           } @else {
-            <p class="m-0 mb-2 text-[12px] text-muted-foreground">Drag across the chart to zoom into a stretch.</p>
+            <p class="m-0 mb-2 text-[12px] text-muted-foreground">
+              Drag across the chart to zoom into a stretch.
+            </p>
           }
           <app-fleet-history
             [points]="points()"
@@ -115,10 +120,7 @@ const PAGE = 50;
           }
 
           @if (orphanNote(); as note) {
-            <p
-              class="m-0 max-w-prose text-[13px] text-muted-foreground"
-              data-testid="orphan-note"
-            >
+            <p class="m-0 max-w-prose text-[13px] text-muted-foreground" data-testid="orphan-note">
               {{ note }}
             </p>
           }
@@ -141,15 +143,26 @@ const PAGE = 50;
               (retry)="store.reload()"
             />
           } @else {
-            <div class="mb-2 flex flex-wrap gap-1.5" role="group" aria-label="Show" data-testid="decision-filter">
+            <div
+              class="mb-2 flex flex-wrap gap-1.5"
+              role="group"
+              aria-label="Show"
+              data-testid="decision-filter"
+            >
               @for (f of filters; track f.key) {
                 <button
                   type="button"
                   class="rounded-full border px-2.5 py-0.5 text-[12px]"
-                  [class]="filter() === f.key ? 'border-primary bg-primary/10 text-foreground' : 'border-border text-muted-foreground hover:text-foreground'"
+                  [class]="
+                    filter() === f.key
+                      ? 'border-primary bg-primary/10 text-foreground'
+                      : 'border-border text-muted-foreground hover:text-foreground'
+                  "
                   (click)="setFilter(f.key)"
                   [attr.data-testid]="'decision-filter-' + f.key"
-                >{{ f.label }}</button>
+                >
+                  {{ f.label }}
+                </button>
               }
             </div>
             <div [class]="t.card">
@@ -173,10 +186,7 @@ const PAGE = 50;
                         [attr.data-testid]="'decision-row-' + row.decision.id"
                         [attr.data-outcome]="row.decision.outcome"
                       >
-                        <th
-                          scope="row"
-                          [class]="t.td + ' whitespace-nowrap font-normal'"
-                        >
+                        <th scope="row" [class]="t.td + ' whitespace-nowrap font-normal'">
                           <span class="tabular-nums">{{ row.when }}</span>
                         </th>
                         <td [class]="t.td">
@@ -199,9 +209,7 @@ const PAGE = 50;
                                   operationLabel(op)
                                 }}</span>
                                 @if (operationDetail(op); as detail) {
-                                  <span class="text-muted-foreground"
-                                    >— {{ detail }}</span
-                                  >
+                                  <span class="text-muted-foreground">— {{ detail }}</span>
                                 }
                               </span>
                             }
@@ -210,11 +218,7 @@ const PAGE = 50;
                       </tr>
                     } @empty {
                       <tr [class]="t.row">
-                        <td
-                          [class]="t.tdMuted"
-                          colspan="4"
-                          data-testid="log-empty"
-                        >
+                        <td [class]="t.tdMuted" colspan="4" data-testid="log-empty">
                           Nothing decided yet — it has never had to act.
                         </td>
                       </tr>
@@ -230,16 +234,15 @@ const PAGE = 50;
                 [disabled]="paging()"
                 (click)="loadOlder()"
                 data-testid="decisions-older"
-              >{{ paging() ? 'Loading…' : 'Load older' }}</button>
+              >
+                {{ paging() ? 'Loading…' : 'Load older' }}
+              </button>
             }
           }
         </section>
       </div>
     } @else {
-      <p
-        class="m-0 text-sm text-muted-foreground"
-        data-testid="tab-history-no-group"
-      >
+      <p class="m-0 text-sm text-muted-foreground" data-testid="tab-history-no-group">
         No such group.
       </p>
     }
@@ -272,28 +275,16 @@ export class ScalingHistoryTabComponent {
 
   protected readonly t = TABLE;
 
-  protected readonly group = computed<SectionGroup | null>(
-    () => this.store.group().data,
-  );
+  protected readonly group = computed<SectionGroup | null>(() => this.store.group().data);
 
-  protected readonly historyLoading = computed(
-    () => this.store.history().loading,
-  );
-  protected readonly historyFailed = computed(
-    () => this.store.history().failed,
-  );
-  protected readonly decisionsLoading = computed(
-    () => this.store.decisions().loading,
-  );
-  protected readonly decisionsFailed = computed(
-    () => this.store.decisions().failed,
-  );
+  protected readonly historyLoading = computed(() => this.store.history().loading);
+  protected readonly historyFailed = computed(() => this.store.history().failed);
+  protected readonly decisionsLoading = computed(() => this.store.decisions().loading);
+  protected readonly decisionsFailed = computed(() => this.store.decisions().failed);
 
   private readonly history = computed(() => this.store.history().data);
 
-  protected readonly points = computed<FleetHistoryPoint[]>(
-    () => this.history()?.points ?? [],
-  );
+  protected readonly points = computed<FleetHistoryPoint[]>(() => this.history()?.points ?? []);
 
   protected readonly decisions = computed<ScalingDecision[]>(
     () => this.store.decisions().data ?? [],
@@ -304,7 +295,9 @@ export class ScalingHistoryTabComponent {
     params: () => {
       const g = this.group();
       const z = this.store.historyZoom();
-      return g && z ? { id: g.id, since: z.from.toISOString(), until: z.to.toISOString() } : undefined;
+      return g && z
+        ? { id: g.id, since: z.from.toISOString(), until: z.to.toISOString() }
+        : undefined;
     },
     stream: ({ params }) =>
       this.api.decisions(params.id, 200, { since: params.since, until: params.until }),
@@ -328,9 +321,7 @@ export class ScalingHistoryTabComponent {
     this.filter() === 'all' && this.extra() === null ? this.decisions() : (this.extra() ?? []),
   );
 
-  protected readonly more = computed(
-    () => !this.exhausted() && this.shown().length >= PAGE,
-  );
+  protected readonly more = computed(() => !this.exhausted() && this.shown().length >= PAGE);
 
   constructor() {
     effect(() => {

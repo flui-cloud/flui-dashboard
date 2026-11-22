@@ -9,10 +9,7 @@ import {
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideAlertCircle, lucideLoader } from '@ng-icons/lucide';
-import {
-  HlmCardContentDirective,
-  HlmCardDirective,
-} from '@spartan-ng/ui-card-helm';
+import { HlmCardContentDirective, HlmCardDirective } from '@spartan-ng/ui-card-helm';
 import { HlmBadgeDirective } from '@spartan-ng/ui-badge-helm';
 import { HlmInputDirective } from '@spartan-ng/ui-input-helm';
 import { HlmLabelDirective } from '@spartan-ng/ui-label-helm';
@@ -42,7 +39,9 @@ import {
   template: `
     <div class="space-y-4">
       @if (error()) {
-        <div class="flex items-center gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <div
+          class="flex items-center gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+        >
           <ng-icon name="lucideAlertCircle" class="h-4 w-4 shrink-0" />
           {{ error() }}
         </div>
@@ -57,7 +56,11 @@ import {
           @if (v.callbackUrl) {
             <p class="text-sm text-muted-foreground">
               Callback URL to register at GitHub or Google:
-              <span class="font-mono text-xs text-foreground break-all" data-testid="callback-url">{{ v.callbackUrl }}</span>
+              <span
+                class="font-mono text-xs text-foreground break-all"
+                data-testid="callback-url"
+                >{{ v.callbackUrl }}</span
+              >
             </p>
             <p class="text-xs text-muted-foreground" data-testid="callback-note">
               If you change the sign-in address, update the callback at GitHub and Google.
@@ -65,7 +68,8 @@ import {
             @if (v.intentCallbackUrl) {
               <p class="text-xs text-muted-foreground" data-testid="intent-callback-url">
                 Visitors who sign in come back to
-                <span class="font-mono break-all">{{ v.intentCallbackUrl }}</span>. Add it at GitHub and Google as well.
+                <span class="font-mono break-all">{{ v.intentCallbackUrl }}</span>. Add it at GitHub
+                and Google as well.
               </p>
             }
           }
@@ -80,17 +84,24 @@ import {
                         <div class="flex items-center gap-2 flex-wrap">
                           <span class="text-sm font-medium">{{ p.name }}</span>
                           @if (p.connected) {
-                            <span hlmBadge variant="default" class="text-xs">{{ statusLabel(p) }}</span>
+                            <span hlmBadge variant="default" class="text-xs">{{
+                              statusLabel(p)
+                            }}</span>
                           } @else {
-                            <span hlmBadge variant="secondary" class="text-xs">{{ statusLabel(p) }}</span>
+                            <span hlmBadge variant="secondary" class="text-xs">{{
+                              statusLabel(p)
+                            }}</span>
                           }
                         </div>
                         @if (p.clientId) {
-                          <p class="font-mono text-xs text-muted-foreground truncate">{{ p.clientId }}</p>
+                          <p class="font-mono text-xs text-muted-foreground truncate">
+                            {{ p.clientId }}
+                          </p>
                         }
                         @if (p.source === 'environment') {
                           <p class="text-xs text-muted-foreground">
-                            Its secret sits in plain configuration. Connect it here, then remove the old variables.
+                            Its secret sits in plain configuration. Connect it here, then remove the
+                            old variables.
                           </p>
                         } @else if (p.source === 'identity-provider') {
                           <p class="text-xs text-muted-foreground">
@@ -125,7 +136,13 @@ import {
                         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                           <div class="space-y-1.5">
                             <label hlmLabel for="sign-in-client-id">Client ID</label>
-                            <input hlmInput id="sign-in-client-id" formControlName="clientId" class="w-full" autocomplete="off" />
+                            <input
+                              hlmInput
+                              id="sign-in-client-id"
+                              formControlName="clientId"
+                              class="w-full"
+                              autocomplete="off"
+                            />
                           </div>
                           <div class="space-y-1.5">
                             <label hlmLabel for="sign-in-client-secret">Client secret</label>

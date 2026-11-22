@@ -13,7 +13,9 @@
   </div>
 
   @if (isAddingNew()) {
-    <div class="mb-4 p-4 bg-blue-50 dark:bg-blue-900/10 border-2 border-blue-300 dark:border-blue-700 rounded-lg shadow-md">
+    <div
+      class="mb-4 p-4 bg-blue-50 dark:bg-blue-900/10 border-2 border-blue-300 dark:border-blue-700 rounded-lg shadow-md"
+    >
       <div class="flex items-center justify-between mb-3">
         <h4 class="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
           <span class="text-blue-600">+</span> New Rule
@@ -35,7 +37,9 @@
       </div>
 
       @if (newRuleErrors().length > 0) {
-        <div class="mb-3 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-sm">
+        <div
+          class="mb-3 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-sm"
+        >
           <ul class="list-disc list-inside text-red-700 dark:text-red-400">
             @for (error of newRuleErrors(); track error) {
               <li>{{ error }}</li>
@@ -55,7 +59,11 @@
 
         <select
           [value]="newRuleForm().direction"
-          (change)="updateNewRuleField('direction', $any($event.target).value); sourceIpsText.set(''); destinationIpsText.set('')"
+          (change)="
+            updateNewRuleField('direction', $any($event.target).value);
+            sourceIpsText.set('');
+            destinationIpsText.set('')
+          "
           class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
         >
           <option value="in">Inbound</option>
@@ -86,28 +94,63 @@
           <input
             type="text"
             [value]="newRuleForm().direction === 'in' ? sourceIpsText() : destinationIpsText()"
-            (input)="newRuleForm().direction === 'in' ? sourceIpsText.set($any($event.target).value) : destinationIpsText.set($any($event.target).value)"
-            [placeholder]="newRuleForm().direction === 'in' ? 'Source IPs (CIDR)' : 'Destination IPs (CIDR)'"
+            (input)="
+              newRuleForm().direction === 'in'
+                ? sourceIpsText.set($any($event.target).value)
+                : destinationIpsText.set($any($event.target).value)
+            "
+            [placeholder]="
+              newRuleForm().direction === 'in' ? 'Source IPs (CIDR)' : 'Destination IPs (CIDR)'
+            "
             class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
           />
 
           <div class="mt-1 flex flex-wrap gap-1">
             @if (newRuleForm().direction === 'in') {
-              <button type="button" (click)="detectCurrentIp(true)" [disabled]="detectingIp()"
-                class="text-xs px-2 py-0.5 border border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-400 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 disabled:opacity-50">
+              <button
+                type="button"
+                (click)="detectCurrentIp(true)"
+                [disabled]="detectingIp()"
+                class="text-xs px-2 py-0.5 border border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-400 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 disabled:opacity-50"
+              >
                 {{ detectingIp() ? 'Detecting...' : '🌐 My IP' }}
               </button>
             }
-            <button type="button" (click)="setIpPreset('0.0.0.0/0', true)"
-              class="text-xs px-2 py-0.5 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700">All IPs</button>
-            <button type="button" (click)="setIpPreset('192.168.0.0/16', true)"
-              class="text-xs px-2 py-0.5 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700">192.168.x.x</button>
-            <button type="button" (click)="setIpPreset('10.0.0.0/8', true)"
-              class="text-xs px-2 py-0.5 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700">10.x.x.x</button>
-            <button type="button" (click)="setIpPreset('172.16.0.0/12', true)"
-              class="text-xs px-2 py-0.5 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700">172.16-31.x.x</button>
-            <button type="button" (click)="clearIpField(true)"
-              class="text-xs px-2 py-0.5 border border-red-300 dark:border-red-600 text-red-700 dark:text-red-400 rounded hover:bg-red-50 dark:hover:bg-red-900/20">Clear</button>
+            <button
+              type="button"
+              (click)="setIpPreset('0.0.0.0/0', true)"
+              class="text-xs px-2 py-0.5 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
+            >
+              All IPs
+            </button>
+            <button
+              type="button"
+              (click)="setIpPreset('192.168.0.0/16', true)"
+              class="text-xs px-2 py-0.5 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
+            >
+              192.168.x.x
+            </button>
+            <button
+              type="button"
+              (click)="setIpPreset('10.0.0.0/8', true)"
+              class="text-xs px-2 py-0.5 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
+            >
+              10.x.x.x
+            </button>
+            <button
+              type="button"
+              (click)="setIpPreset('172.16.0.0/12', true)"
+              class="text-xs px-2 py-0.5 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
+            >
+              172.16-31.x.x
+            </button>
+            <button
+              type="button"
+              (click)="clearIpField(true)"
+              class="text-xs px-2 py-0.5 border border-red-300 dark:border-red-600 text-red-700 dark:text-red-400 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
+            >
+              Clear
+            </button>
           </div>
         </div>
       </div>
@@ -123,9 +166,7 @@
     } @else {
       @for (rule of workingRules(); track $index) {
         <div
-          [class]="expandedIndex() === $index ?
-            'rule-card rule-card--editing' :
-            'rule-card'"
+          [class]="expandedIndex() === $index ? 'rule-card rule-card--editing' : 'rule-card'"
           [class.rule-card--dirty]="isRuleModified($index)"
         >
           @if (expandedIndex() !== $index) {
@@ -150,7 +191,8 @@
                   <span
                     class="text-[10px] uppercase tracking-wide px-1.5 py-0.5 mr-1 rounded-full border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 cursor-help"
                     [title]="badgeTitle(rule)"
-                  >{{ badge }}</span>
+                    >{{ badge }}</span
+                  >
                 }
                 @if (!isManagedSshRule(rule)) {
                   <button
@@ -200,7 +242,9 @@
               </div>
 
               @if (ruleErrors().has($index)) {
-                <div class="mb-3 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-sm">
+                <div
+                  class="mb-3 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-sm"
+                >
                   <ul class="list-disc list-inside text-red-700 dark:text-red-400">
                     @for (error of ruleErrors().get($index); track error) {
                       <li>{{ error }}</li>
@@ -220,7 +264,11 @@
 
                 <select
                   [value]="rule.direction"
-                  (change)="updateRuleField($index, 'direction', $any($event.target).value); sourceIpsText.set(''); destinationIpsText.set('')"
+                  (change)="
+                    updateRuleField($index, 'direction', $any($event.target).value);
+                    sourceIpsText.set('');
+                    destinationIpsText.set('')
+                  "
                   class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                 >
                   <option value="in">Inbound</option>
@@ -251,28 +299,63 @@
                   <input
                     type="text"
                     [value]="rule.direction === 'in' ? sourceIpsText() : destinationIpsText()"
-                    (input)="rule.direction === 'in' ? sourceIpsText.set($any($event.target).value) : destinationIpsText.set($any($event.target).value)"
-                    [placeholder]="rule.direction === 'in' ? 'Source IPs (CIDR)' : 'Destination IPs (CIDR)'"
+                    (input)="
+                      rule.direction === 'in'
+                        ? sourceIpsText.set($any($event.target).value)
+                        : destinationIpsText.set($any($event.target).value)
+                    "
+                    [placeholder]="
+                      rule.direction === 'in' ? 'Source IPs (CIDR)' : 'Destination IPs (CIDR)'
+                    "
                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                   />
 
                   <div class="mt-1 flex flex-wrap gap-1">
                     @if (rule.direction === 'in') {
-                      <button type="button" (click)="detectCurrentIp(false)" [disabled]="detectingIp()"
-                        class="text-xs px-2 py-0.5 border border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-400 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 disabled:opacity-50">
+                      <button
+                        type="button"
+                        (click)="detectCurrentIp(false)"
+                        [disabled]="detectingIp()"
+                        class="text-xs px-2 py-0.5 border border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-400 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 disabled:opacity-50"
+                      >
                         {{ detectingIp() ? 'Detecting...' : '🌐 My IP' }}
                       </button>
                     }
-                    <button type="button" (click)="setIpPreset('0.0.0.0/0', false)"
-                      class="text-xs px-2 py-0.5 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700">All IPs</button>
-                    <button type="button" (click)="setIpPreset('192.168.0.0/16', false)"
-                      class="text-xs px-2 py-0.5 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700">192.168.x.x</button>
-                    <button type="button" (click)="setIpPreset('10.0.0.0/8', false)"
-                      class="text-xs px-2 py-0.5 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700">10.x.x.x</button>
-                    <button type="button" (click)="setIpPreset('172.16.0.0/12', false)"
-                      class="text-xs px-2 py-0.5 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700">172.16-31.x.x</button>
-                    <button type="button" (click)="clearIpField(false)"
-                      class="text-xs px-2 py-0.5 border border-red-300 dark:border-red-600 text-red-700 dark:text-red-400 rounded hover:bg-red-50 dark:hover:bg-red-900/20">Clear</button>
+                    <button
+                      type="button"
+                      (click)="setIpPreset('0.0.0.0/0', false)"
+                      class="text-xs px-2 py-0.5 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
+                    >
+                      All IPs
+                    </button>
+                    <button
+                      type="button"
+                      (click)="setIpPreset('192.168.0.0/16', false)"
+                      class="text-xs px-2 py-0.5 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
+                    >
+                      192.168.x.x
+                    </button>
+                    <button
+                      type="button"
+                      (click)="setIpPreset('10.0.0.0/8', false)"
+                      class="text-xs px-2 py-0.5 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
+                    >
+                      10.x.x.x
+                    </button>
+                    <button
+                      type="button"
+                      (click)="setIpPreset('172.16.0.0/12', false)"
+                      class="text-xs px-2 py-0.5 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
+                    >
+                      172.16-31.x.x
+                    </button>
+                    <button
+                      type="button"
+                      (click)="clearIpField(false)"
+                      class="text-xs px-2 py-0.5 border border-red-300 dark:border-red-600 text-red-700 dark:text-red-400 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
+                    >
+                      Clear
+                    </button>
                   </div>
                 </div>
               </div>
@@ -284,7 +367,9 @@
   </div>
 
   @if (isDirty()) {
-    <div class="sticky bottom-0 left-0 right-0 mt-6 p-4 bg-white dark:bg-gray-800 border-t-2 border-orange-500 shadow-lg rounded-t-lg">
+    <div
+      class="sticky bottom-0 left-0 right-0 mt-6 p-4 bg-white dark:bg-gray-800 border-t-2 border-orange-500 shadow-lg rounded-t-lg"
+    >
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
           <span class="text-orange-600 dark:text-orange-400 font-medium flex items-center gap-2">

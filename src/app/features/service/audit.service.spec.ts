@@ -1,9 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient, withXhr } from '@angular/common/http';
-import {
-  HttpTestingController,
-  provideHttpClientTesting,
-} from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { AppConfigService } from '../../core/services/app-config.service';
 import { AuditService } from './audit.service';
 
@@ -31,9 +28,7 @@ describe('AuditService', () => {
     audit
       .list({ email: 'bob@acme.com', refusedOnly: true, limit: 20 })
       .subscribe((r) => (rows = r));
-    const req = http.expectOne(
-      (r) => r.url === 'http://api/api/v1/audit/events',
-    );
+    const req = http.expectOne((r) => r.url === 'http://api/api/v1/audit/events');
     expect(req.request.method).toBe('GET');
     expect(req.request.params.get('email')).toBe('bob@acme.com');
     expect(req.request.params.get('outcome')).toBe('refused');

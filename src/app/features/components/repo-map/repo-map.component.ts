@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  OnDestroy,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
@@ -34,7 +43,6 @@ import {
 import { VerdictDto } from '../../../core/api/model/verdictDto';
 import { RenderedUnitDto } from '../../../core/api/model/renderedUnitDto';
 
-
 /** Every field the generator typed as bare `object` because the OpenAPI spec left it
  * `nullable: true` with no `type` — it is really `string | null` on the wire. */
 function str(v: unknown): string {
@@ -50,7 +58,12 @@ function firstSentence(text: string): string {
 }
 
 /** Outcomes that mean something is standing in the way — the card must never be empty under one. */
-export const BAD_OUTCOMES = new Set<string>(['blocked', 'insufficient_capacity', 'partial', 'not_assessed']);
+export const BAD_OUTCOMES = new Set<string>([
+  'blocked',
+  'insufficient_capacity',
+  'partial',
+  'not_assessed',
+]);
 
 /** The verdicts the apply endpoint refuses outright. Deliberately not `BAD_OUTCOMES`: `partial`
  * is a verdict it acts on — the ready units go, the blocked ones are held back — and disabling
@@ -117,11 +130,18 @@ interface NeededThing {
       </div>
 
       <!-- Controls -->
-      <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 flex flex-wrap items-end gap-3">
+      <div
+        class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 flex flex-wrap items-end gap-3"
+      >
         <div>
-          <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Branch</label>
+          <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1"
+            >Branch</label
+          >
           <div class="relative">
-            <ng-icon name="lucideGitBranch" class="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none z-10" />
+            <ng-icon
+              name="lucideGitBranch"
+              class="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none z-10"
+            />
             @if (branches().length > 0) {
               <select
                 [value]="branchInput()"
@@ -129,7 +149,9 @@ interface NeededThing {
                 class="pl-7 pr-2 py-1.5 text-sm border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-900 dark:text-white min-w-[10rem] max-w-[16rem]"
               >
                 @for (b of branches(); track b.name) {
-                  <option [value]="b.name" [selected]="b.name === branchInput()">{{ b.name }}</option>
+                  <option [value]="b.name" [selected]="b.name === branchInput()">
+                    {{ b.name }}
+                  </option>
                 }
               </select>
             } @else {
@@ -144,12 +166,15 @@ interface NeededThing {
           </div>
           @if (branchesError()) {
             <p class="mt-1 text-xs text-amber-700 dark:text-amber-400 max-w-[16rem]">
-              Branches could not be listed — type one, or leave it empty for the repository's default.
+              Branches could not be listed — type one, or leave it empty for the repository's
+              default.
             </p>
           }
         </div>
         <div>
-          <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Cluster</label>
+          <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1"
+            >Cluster</label
+          >
           <select
             [value]="clusterIdInput()"
             (change)="clusterIdInput.set($any($event.target).value)"
@@ -161,7 +186,9 @@ interface NeededThing {
                  cluster. A selected binding is evaluated when the option is created, so it holds. -->
             <option value="" [selected]="clusterIdInput() === ''">Choose a cluster</option>
             @for (c of activeClusters(); track c.id) {
-              <option [value]="c.id" [selected]="c.id === clusterIdInput()">{{ c.name || c.id }}</option>
+              <option [value]="c.id" [selected]="c.id === clusterIdInput()">
+                {{ c.name || c.id }}
+              </option>
             }
           </select>
         </div>
@@ -170,14 +197,23 @@ interface NeededThing {
           [disabled]="loading()"
           class="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:opacity-60"
         >
-          <ng-icon [name]="loading() ? 'lucideLoader' : 'lucideRefreshCw'" class="h-4 w-4" [class.animate-spin]="loading()" />
+          <ng-icon
+            [name]="loading() ? 'lucideLoader' : 'lucideRefreshCw'"
+            class="h-4 w-4"
+            [class.animate-spin]="loading()"
+          />
           {{ hasRun() ? 'Check again' : 'Check' }}
         </button>
       </div>
 
       @if (error()) {
-        <div class="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-center gap-3">
-          <ng-icon name="lucideCircleAlert" class="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+        <div
+          class="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-center gap-3"
+        >
+          <ng-icon
+            name="lucideCircleAlert"
+            class="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0"
+          />
           <p class="text-sm text-red-900 dark:text-red-200">{{ error() }}</p>
         </div>
       }
@@ -190,10 +226,14 @@ interface NeededThing {
 
       @if (result(); as r) {
         @if (!r.read.ok) {
-          <div class="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-5">
+          <div
+            class="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-5"
+          >
             <div class="flex items-center gap-2">
               <ng-icon name="lucideCircleX" class="h-5 w-5 text-red-600 dark:text-red-400" />
-              <h2 class="text-base font-semibold text-red-900 dark:text-red-200">This repository could not be read</h2>
+              <h2 class="text-base font-semibold text-red-900 dark:text-red-200">
+                This repository could not be read
+              </h2>
             </div>
             <p class="mt-1 text-sm text-red-800 dark:text-red-300">
               <span class="font-mono">{{ r.read.reason || 'unknown' }}</span> — branch
@@ -201,7 +241,6 @@ interface NeededThing {
             </p>
           </div>
         } @else {
-
           <!-- 1. Can this be deployed? -->
           <section class="rounded-xl border p-5" [class]="outcomeCardClasses()">
             <div class="flex items-center gap-2">
@@ -215,24 +254,32 @@ interface NeededThing {
           </section>
 
           <!-- 2. What is needed from the user -->
-          <section class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5">
+          <section
+            class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5"
+          >
             <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <ng-icon name="lucideKey" class="h-5 w-5 text-slate-400" />
               What you need to provide
             </h2>
             @if (needed(); as list) {
               @if (list.length === 0) {
-                <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">No environment values or keys are needed.</p>
+                <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                  No environment values or keys are needed.
+                </p>
               } @else {
                 <ul class="mt-3 space-y-2">
                   @for (n of list; track n.name) {
                     <li class="flex flex-wrap items-center gap-2 text-sm">
                       <span class="font-mono text-slate-900 dark:text-white">{{ n.name }}</span>
                       @for (t of n.tags; track t) {
-                        <span class="text-xs px-1.5 py-0.5 rounded" [class]="tagClasses(t)">{{ t }}</span>
+                        <span class="text-xs px-1.5 py-0.5 rounded" [class]="tagClasses(t)">{{
+                          t
+                        }}</span>
                       }
                       @if (n.detail) {
-                        <span class="text-xs font-mono text-slate-500 dark:text-slate-400">{{ n.detail }}</span>
+                        <span class="text-xs font-mono text-slate-500 dark:text-slate-400">{{
+                          n.detail
+                        }}</span>
                       }
                     </li>
                   }
@@ -243,8 +290,12 @@ interface NeededThing {
 
           <!-- 3. What is in the way -->
           @if (obstacles().length > 0) {
-            <section class="rounded-xl border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-900/10 p-5">
-              <h2 class="text-base font-bold text-red-900 dark:text-red-200 flex items-center gap-2">
+            <section
+              class="rounded-xl border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-900/10 p-5"
+            >
+              <h2
+                class="text-base font-bold text-red-900 dark:text-red-200 flex items-center gap-2"
+              >
                 <ng-icon name="lucideTriangleAlert" class="h-5 w-5" />
                 In the way
               </h2>
@@ -254,7 +305,9 @@ interface NeededThing {
                     <p class="text-sm text-slate-900 dark:text-slate-100">
                       {{ o.summary }}
                       @if (o.unit) {
-                        <span class="font-mono text-xs text-slate-500 dark:text-slate-400">({{ o.unit }})</span>
+                        <span class="font-mono text-xs text-slate-500 dark:text-slate-400"
+                          >({{ o.unit }})</span
+                        >
                       }
                     </p>
                     @if (o.remedy) {
@@ -271,8 +324,12 @@ interface NeededThing {
           <!-- Uncertainty stays a question — never a blank field, never a green tick -->
           @if (questions(); as qs) {
             @if (qs.length > 0) {
-              <section class="rounded-xl border border-amber-200 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-900/10 p-5">
-                <h2 class="text-base font-bold text-amber-900 dark:text-amber-200 flex items-center gap-2">
+              <section
+                class="rounded-xl border border-amber-200 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-900/10 p-5"
+              >
+                <h2
+                  class="text-base font-bold text-amber-900 dark:text-amber-200 flex items-center gap-2"
+                >
                   <ng-icon name="lucideCircleHelp" class="h-5 w-5" />
                   We could not tell
                 </h2>
@@ -283,7 +340,10 @@ interface NeededThing {
                       @if (q.options.length > 0) {
                         <span class="ml-1 inline-flex flex-wrap gap-1 align-middle">
                           @for (opt of shortOptions(q.options); track opt) {
-                            <span class="text-xs font-mono px-1.5 py-0.5 rounded bg-white/70 dark:bg-black/20 text-slate-600 dark:text-slate-300">{{ opt }}</span>
+                            <span
+                              class="text-xs font-mono px-1.5 py-0.5 rounded bg-white/70 dark:bg-black/20 text-slate-600 dark:text-slate-300"
+                              >{{ opt }}</span
+                            >
                           }
                           @if (longOptionCount(q.options) > 0) {
                             <span class="text-xs text-slate-500 dark:text-slate-400">
@@ -300,21 +360,32 @@ interface NeededThing {
           }
 
           <!-- What would run -->
-          <section class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5">
+          <section
+            class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5"
+          >
             <h2 class="text-base font-bold text-slate-900 dark:text-white">What would run</h2>
             <ul class="mt-3 space-y-1.5 text-sm">
               @for (u of r.map!.units; track u.id) {
                 <li class="flex flex-wrap items-center gap-2">
                   <span class="font-mono text-slate-900 dark:text-white">{{ unitName(u.id) }}</span>
-                  <span class="text-xs text-slate-500 dark:text-slate-400">{{ u.build.strategy }}</span>
+                  <span class="text-xs text-slate-500 dark:text-slate-400">{{
+                    u.build.strategy
+                  }}</span>
                   @if (u.port) {
-                    <span class="text-xs font-mono text-slate-500 dark:text-slate-400">:{{ u.port.value }}</span>
+                    <span class="text-xs font-mono text-slate-500 dark:text-slate-400"
+                      >:{{ u.port.value }}</span
+                    >
                   }
-                  <span class="text-xs px-1.5 py-0.5 rounded" [class]="readinessClasses(readinessOf(r.verdict, u.id))">
+                  <span
+                    class="text-xs px-1.5 py-0.5 rounded"
+                    [class]="readinessClasses(readinessOf(r.verdict, u.id))"
+                  >
                     {{ readinessLabel(readinessOf(r.verdict, u.id)) }}
                   </span>
                   @if (skippedUnitIds().has(u.id)) {
-                    <span class="text-xs text-amber-700 dark:text-amber-400">not in the flui.yaml</span>
+                    <span class="text-xs text-amber-700 dark:text-amber-400"
+                      >not in the flui.yaml</span
+                    >
                   }
                 </li>
               }
@@ -332,14 +403,19 @@ interface NeededThing {
           </section>
 
           <!-- 4. The next step -->
-          <section class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5">
+          <section
+            class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5"
+          >
             @if (applied(); as done) {
-
               <div class="flex items-center gap-2">
                 <ng-icon
                   [name]="done.partial ? 'lucideTriangleAlert' : 'lucideCircleCheck'"
                   class="h-5 w-5"
-                  [class]="done.partial ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'"
+                  [class]="
+                    done.partial
+                      ? 'text-amber-600 dark:text-amber-400'
+                      : 'text-emerald-600 dark:text-emerald-400'
+                  "
                 />
                 <h2 class="text-base font-bold text-slate-900 dark:text-white">
                   {{ done.partial ? 'Applied, but not everything was armed' : 'Applied' }}
@@ -350,17 +426,19 @@ interface NeededThing {
                    that costs money if it is missed: the next apply creates a second one beside it. -->
               @if (unmarkedUnits(); as unmarked) {
                 @if (unmarked.length > 0) {
-                  <div class="mt-3 rounded-lg border-2 border-red-500 dark:border-red-600 bg-red-50 dark:bg-red-900/20 p-4">
+                  <div
+                    class="mt-3 rounded-lg border-2 border-red-500 dark:border-red-600 bg-red-50 dark:bg-red-900/20 p-4"
+                  >
                     <p class="text-sm font-bold text-red-900 dark:text-red-200">
-                      {{ unmarked.length }} application{{ unmarked.length === 1 ? '' : 's' }} could not be
-                      marked for reuse.
+                      {{ unmarked.length }} application{{ unmarked.length === 1 ? '' : 's' }} could
+                      not be marked for reuse.
                     </p>
                     <p class="mt-1 text-sm text-red-800 dark:text-red-300">
                       The next apply of this repository will not recognise
-                      {{ unmarked.length === 1 ? 'it' : 'them' }} and will create a second application
-                      beside {{ unmarked.length === 1 ? 'it' : 'each of them' }} — with a second database
-                      if this one attached any. Remove {{ unmarked.length === 1 ? 'it' : 'them' }} by hand
-                      first.
+                      {{ unmarked.length === 1 ? 'it' : 'them' }} and will create a second
+                      application beside {{ unmarked.length === 1 ? 'it' : 'each of them' }} — with
+                      a second database if this one attached any. Remove
+                      {{ unmarked.length === 1 ? 'it' : 'them' }} by hand first.
                     </p>
                     <ul class="mt-2 space-y-1">
                       @for (u of unmarked; track u.unitId) {
@@ -368,8 +446,11 @@ interface NeededThing {
                           <a
                             [routerLink]="['/apps/applications', u.applicationId]"
                             class="font-medium text-red-900 dark:text-red-200 underline"
-                          >{{ u.name }}</a>
-                          <span class="ml-2 text-xs font-mono text-red-700 dark:text-red-400">{{ u.slug }}</span>
+                            >{{ u.name }}</a
+                          >
+                          <span class="ml-2 text-xs font-mono text-red-700 dark:text-red-400">{{
+                            u.slug
+                          }}</span>
                         </li>
                       }
                     </ul>
@@ -378,20 +459,28 @@ interface NeededThing {
               }
 
               <p class="mt-3 text-sm text-slate-700 dark:text-slate-300">
-                <ng-icon name="lucideGitBranch" class="h-3.5 w-3.5 inline-block align-middle text-slate-400" />
+                <ng-icon
+                  name="lucideGitBranch"
+                  class="h-3.5 w-3.5 inline-block align-middle text-slate-400"
+                />
                 <a
                   [href]="done.branchUrl"
                   target="_blank"
                   rel="noopener"
                   class="font-mono text-blue-700 dark:text-blue-400 hover:underline"
-                >{{ done.branch }}</a>
-                <ng-icon name="lucideGitCommitHorizontal" class="ml-2 h-3.5 w-3.5 inline-block align-middle text-slate-400" />
+                  >{{ done.branch }}</a
+                >
+                <ng-icon
+                  name="lucideGitCommitHorizontal"
+                  class="ml-2 h-3.5 w-3.5 inline-block align-middle text-slate-400"
+                />
                 <a
                   [href]="done.commitUrl"
                   target="_blank"
                   rel="noopener"
                   class="font-mono text-blue-700 dark:text-blue-400 hover:underline"
-                >{{ shortSha(done.commitSha) }}</a>
+                  >{{ shortSha(done.commitSha) }}</a
+                >
                 <span class="ml-2 text-slate-500 dark:text-slate-400">
                   cut from {{ done.baseBranch }}, which was not written to.
                 </span>
@@ -404,25 +493,34 @@ interface NeededThing {
                       <a
                         [routerLink]="['/apps/applications', u.applicationId]"
                         class="font-medium text-blue-700 dark:text-blue-400 hover:underline"
-                      >{{ u.name }}</a>
-                      <span class="text-xs font-mono text-slate-500 dark:text-slate-400">{{ u.slug }}</span>
+                        >{{ u.name }}</a
+                      >
+                      <span class="text-xs font-mono text-slate-500 dark:text-slate-400">{{
+                        u.slug
+                      }}</span>
                       <span
                         class="text-xs px-1.5 py-0.5 rounded"
-                        [class]="u.armed
-                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400'
-                          : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'"
-                      >{{ u.armed ? 'building' : 'not armed' }}</span>
+                        [class]="
+                          u.armed
+                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400'
+                            : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
+                        "
+                        >{{ u.armed ? 'building' : 'not armed' }}</span
+                      >
                       @if (u.workflowRunUrl) {
                         <a
                           [href]="u.workflowRunUrl"
                           target="_blank"
                           rel="noopener"
                           class="text-xs text-slate-500 dark:text-slate-400 hover:underline"
-                        >build run</a>
+                          >build run</a
+                        >
                       }
                     </div>
                     @if (!u.armed && u.reason) {
-                      <p class="mt-0.5 text-sm text-amber-800 dark:text-amber-300">{{ u.reason }}</p>
+                      <p class="mt-0.5 text-sm text-amber-800 dark:text-amber-300">
+                        {{ u.reason }}
+                      </p>
                     }
                   </li>
                 }
@@ -432,8 +530,7 @@ interface NeededThing {
                 <p class="mt-3 text-sm text-slate-500 dark:text-slate-400">
                   Nothing was committed for
                   @for (s of done.skipped; track s.unitId) {
-                    <span class="font-mono">{{ unitName(s.unitId) }}</span
-                    >{{ $last ? '' : ', ' }}
+                    <span class="font-mono">{{ unitName(s.unitId) }}</span>{{ $last ? '' : ', ' }}
                   }
                   — {{ done.skipped[0].reason }}
                 </p>
@@ -444,7 +541,10 @@ interface NeededThing {
                   (click)="toggle('files')"
                   class="inline-flex items-center gap-1 text-slate-500 dark:text-slate-400 hover:underline"
                 >
-                  <ng-icon [name]="isExpanded('files') ? 'lucideChevronDown' : 'lucideChevronRight'" class="h-3.5 w-3.5" />
+                  <ng-icon
+                    [name]="isExpanded('files') ? 'lucideChevronDown' : 'lucideChevronRight'"
+                    class="h-3.5 w-3.5"
+                  />
                   {{ done.files.length }} file{{ done.files.length === 1 ? '' : 's' }} written
                 </button>
               </div>
@@ -455,42 +555,54 @@ interface NeededThing {
                   }
                 </ul>
               }
-
             } @else {
-
               <p class="text-sm text-slate-700 dark:text-slate-300">
-                This writes a branch and a commit to your repository, and builds on your Actions minutes.
+                This writes a branch and a commit to your repository, and builds on your Actions
+                minutes.
               </p>
               <button
                 (click)="toggle('apply-detail')"
                 class="mt-1 inline-flex items-center gap-1 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
               >
-                <ng-icon [name]="isExpanded('apply-detail') ? 'lucideChevronDown' : 'lucideChevronRight'" class="h-3.5 w-3.5" />
+                <ng-icon
+                  [name]="isExpanded('apply-detail') ? 'lucideChevronDown' : 'lucideChevronRight'"
+                  class="h-3.5 w-3.5"
+                />
                 exactly what it does
               </button>
               @if (isExpanded('apply-detail')) {
-                <div class="mt-1.5 space-y-1.5 border-l-2 border-slate-200 dark:border-slate-700 pl-2.5 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                <div
+                  class="mt-1.5 space-y-1.5 border-l-2 border-slate-200 dark:border-slate-700 pl-2.5 text-xs text-slate-600 dark:text-slate-400 leading-relaxed"
+                >
                   <p>
-                    Flui cuts <span class="font-mono">flui/deploy-{{ shortSha(r.read.commitSha || '') }}</span>
-                    from <span class="font-mono">{{ r.branch }}</span> and puts one commit on it with the
-                    flui.yaml below and one workflow per unit. Your own branch is only read.
+                    Flui cuts
+                    <span class="font-mono"
+                      >flui/deploy-{{ shortSha(r.read.commitSha || '') }}</span
+                    >
+                    from <span class="font-mono">{{ r.branch }}</span> and puts one commit on it
+                    with the flui.yaml below and one workflow per unit. Your own branch is only
+                    read.
                   </p>
                   <p>
-                    Each unit then builds on GitHub Actions — {{ renderedUnits().length }}
-                    build{{ renderedUnits().length === 1 ? '' : 's' }}, on your minutes — and deploys.
+                    Each unit then builds on GitHub Actions — {{ renderedUnits().length }} build{{
+                      renderedUnits().length === 1 ? '' : 's'
+                    }}, on your minutes — and deploys.
                   </p>
                   <p>
-                    It also creates {{ renderedUnits().length }}
-                    application{{ renderedUnits().length === 1 ? '' : 's' }} in Flui. If the apply fails
-                    halfway they stay: Flui never removes an application on its own, and it tells you
-                    which ones are there.
+                    It also creates {{ renderedUnits().length }} application{{
+                      renderedUnits().length === 1 ? '' : 's'
+                    }}
+                    in Flui. If the apply fails halfway they stay: Flui never removes an application
+                    on its own, and it tells you which ones are there.
                   </p>
                   @if (r.map!.services.length > 0) {
                     <p>
-                      The {{ r.map!.services.length }} service{{ r.map!.services.length === 1 ? '' : 's' }}
+                      The {{ r.map!.services.length }} service{{
+                        r.map!.services.length === 1 ? '' : 's'
+                      }}
                       this repository declares
-                      {{ r.map!.services.length === 1 ? 'is' : 'are' }} installed from the catalog before
-                      anything is committed, and stay if the apply fails.
+                      {{ r.map!.services.length === 1 ? 'is' : 'are' }} installed from the catalog
+                      before anything is committed, and stay if the apply fails.
                     </p>
                   }
                 </div>
@@ -508,9 +620,11 @@ interface NeededThing {
                   [disabled]="applyDisabled()"
                   [attr.aria-disabled]="applyDisabled()"
                   [attr.aria-label]="applyBlockedReason() || null"
-                  [class]="applyDisabled()
-                    ? 'inline-flex items-center gap-2 px-4 py-2 rounded-md bg-slate-200 dark:bg-slate-700/60 text-slate-500 dark:text-slate-500 text-sm font-semibold cursor-not-allowed'
-                    : 'inline-flex items-center gap-2 px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold'"
+                  [class]="
+                    applyDisabled()
+                      ? 'inline-flex items-center gap-2 px-4 py-2 rounded-md bg-slate-200 dark:bg-slate-700/60 text-slate-500 dark:text-slate-500 text-sm font-semibold cursor-not-allowed'
+                      : 'inline-flex items-center gap-2 px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold'
+                  "
                 >
                   <ng-icon
                     [name]="applying() ? 'lucideLoader' : 'lucideRocket'"
@@ -527,30 +641,38 @@ interface NeededThing {
                    unchosen, and a disabled button receives no pointer events, so the title never
                    came. -->
               @if (!applying() && applyBlockedReason(); as why) {
-                <p class="mt-1.5 text-sm text-amber-700 dark:text-amber-400 max-w-prose">{{ why }}</p>
+                <p class="mt-1.5 text-sm text-amber-700 dark:text-amber-400 max-w-prose">
+                  {{ why }}
+                </p>
               }
 
               @if (applying()) {
                 <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                  Cutting the branch, committing the manifests, and installing the services they declare.
-                  This can take a few minutes — leave the page open.
+                  Cutting the branch, committing the manifests, and installing the services they
+                  declare. This can take a few minutes — leave the page open.
                 </p>
               }
-
             }
 
             @if (applyRefusal(); as refusal) {
               @if (refusal.stranded; as left) {
                 <!-- Not a red row like any other: something exists on the cluster, and only this
                      message says what. -->
-                <div class="mt-4 rounded-xl border-2 border-red-500 dark:border-red-600 bg-red-50 dark:bg-red-900/20 p-4">
+                <div
+                  class="mt-4 rounded-xl border-2 border-red-500 dark:border-red-600 bg-red-50 dark:bg-red-900/20 p-4"
+                >
                   <div class="flex items-center gap-2">
-                    <ng-icon name="lucideTriangleAlert" class="h-5 w-5 text-red-600 dark:text-red-400" />
+                    <ng-icon
+                      name="lucideTriangleAlert"
+                      class="h-5 w-5 text-red-600 dark:text-red-400"
+                    />
                     <h3 class="text-base font-bold text-red-900 dark:text-red-200">
                       The apply failed and left something behind
                     </h3>
                   </div>
-                  <p class="mt-2 text-sm text-red-900 dark:text-red-200 whitespace-pre-wrap">{{ refusal.message }}</p>
+                  <p class="mt-2 text-sm text-red-900 dark:text-red-200 whitespace-pre-wrap">
+                    {{ refusal.message }}
+                  </p>
                   @if (left.applications.length > 0) {
                     <ul class="mt-3 space-y-1">
                       @for (a of left.applications; track a.applicationId) {
@@ -558,8 +680,11 @@ interface NeededThing {
                           <a
                             [routerLink]="['/apps/applications', a.applicationId]"
                             class="font-medium text-red-900 dark:text-red-200 underline"
-                          >{{ a.name }}</a>
-                          <span class="ml-2 text-xs font-mono text-red-700 dark:text-red-400">{{ a.slug }}</span>
+                            >{{ a.name }}</a
+                          >
+                          <span class="ml-2 text-xs font-mono text-red-700 dark:text-red-400">{{
+                            a.slug
+                          }}</span>
                           @if (a.attachedServices.length > 0) {
                             <span class="ml-2 text-xs text-red-700 dark:text-red-400">
                               with {{ a.attachedServices.join(', ') }}
@@ -571,8 +696,12 @@ interface NeededThing {
                   }
                 </div>
               } @else {
-                <div class="mt-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10 p-4">
-                  <p class="text-sm text-red-900 dark:text-red-200 whitespace-pre-wrap">{{ refusal.message }}</p>
+                <div
+                  class="mt-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10 p-4"
+                >
+                  <p class="text-sm text-red-900 dark:text-red-200 whitespace-pre-wrap">
+                    {{ refusal.message }}
+                  </p>
                 </div>
               }
             }
@@ -583,7 +712,10 @@ interface NeededThing {
                   (click)="toggle('yaml')"
                   class="inline-flex items-center gap-1 font-medium text-blue-700 dark:text-blue-400 hover:underline"
                 >
-                  <ng-icon [name]="isExpanded('yaml') ? 'lucideChevronDown' : 'lucideChevronRight'" class="h-3.5 w-3.5" />
+                  <ng-icon
+                    [name]="isExpanded('yaml') ? 'lucideChevronDown' : 'lucideChevronRight'"
+                    class="h-3.5 w-3.5"
+                  />
                   flui.yaml
                 </button>
               }
@@ -591,12 +723,16 @@ interface NeededThing {
                 (click)="toggle('raw')"
                 class="inline-flex items-center gap-1 text-slate-500 dark:text-slate-400 hover:underline"
               >
-                <ng-icon [name]="isExpanded('raw') ? 'lucideChevronDown' : 'lucideChevronRight'" class="h-3.5 w-3.5" />
+                <ng-icon
+                  [name]="isExpanded('raw') ? 'lucideChevronDown' : 'lucideChevronRight'"
+                  class="h-3.5 w-3.5"
+                />
                 raw map
               </button>
               @if (r.map!.caveats.length > 0) {
                 <span class="text-slate-400 dark:text-slate-500">
-                  {{ r.map!.caveats.length }} note{{ r.map!.caveats.length === 1 ? '' : 's' }} in the raw map
+                  {{ r.map!.caveats.length }} note{{ r.map!.caveats.length === 1 ? '' : 's' }} in
+                  the raw map
                 </span>
               }
             </div>
@@ -605,14 +741,20 @@ interface NeededThing {
               <div class="mt-3 space-y-3">
                 @for (ru of renderedUnits(); track ru.unitId) {
                   <div>
-                    <p class="text-xs font-mono text-slate-500 dark:text-slate-400 mb-1">{{ unitName(ru.unitId) }}</p>
-                    <pre class="text-xs font-mono bg-slate-900 text-slate-100 rounded-lg p-3 overflow-x-auto">{{ ru.yaml }}</pre>
+                    <p class="text-xs font-mono text-slate-500 dark:text-slate-400 mb-1">
+                      {{ unitName(ru.unitId) }}
+                    </p>
+                    <pre
+                      class="text-xs font-mono bg-slate-900 text-slate-100 rounded-lg p-3 overflow-x-auto"
+                      >{{ ru.yaml }}</pre>
                   </div>
                 }
               </div>
             }
             @if (isExpanded('raw')) {
-              <pre class="mt-3 text-[11px] font-mono bg-slate-900 text-slate-100 rounded-lg p-3 overflow-x-auto max-h-96 overflow-y-auto leading-5">{{ rawJson() }}</pre>
+              <pre
+                class="mt-3 text-[11px] font-mono bg-slate-900 text-slate-100 rounded-lg p-3 overflow-x-auto max-h-96 overflow-y-auto leading-5"
+                >{{ rawJson() }}</pre>
             }
           </section>
         }
@@ -646,36 +788,49 @@ export class RepoMapComponent implements OnInit, OnDestroy {
    * send the user off a verdict they were never shown. */
   private readonly ranWith = signal<{ branch: string; clusterId: string } | null>(null);
 
-  readonly repo = computed(() =>
-    this.repoService.repositories().find((r) => r.id === this.repositoryId()) ?? null
+  readonly repo = computed(
+    () => this.repoService.repositories().find((r) => r.id === this.repositoryId()) ?? null,
   );
 
   readonly activeClusters = computed(() =>
-    this.clusterService.clusters().filter((c) => c.status === ClusterStatus.ACTIVE)
+    this.clusterService.clusters().filter((c) => c.status === ClusterStatus.ACTIVE),
   );
 
   private readonly expandedKeys = signal<Set<string>>(new Set());
 
   readonly outcomeLabel = computed(() => {
     switch (this.result()?.verdict.outcome) {
-      case VerdictDto.OutcomeEnum.Deployable: return 'Ready to deploy';
-      case VerdictDto.OutcomeEnum.DeployablePendingInputs: return 'Ready once you fill in the values below';
-      case VerdictDto.OutcomeEnum.Partial: return 'Partly ready';
-      case VerdictDto.OutcomeEnum.Blocked: return 'Not deployable yet';
-      case VerdictDto.OutcomeEnum.InsufficientCapacity: return 'Too big for this cluster';
-      case VerdictDto.OutcomeEnum.NotAssessed: return 'Not assessed';
-      default: return 'Unknown';
+      case VerdictDto.OutcomeEnum.Deployable:
+        return 'Ready to deploy';
+      case VerdictDto.OutcomeEnum.DeployablePendingInputs:
+        return 'Ready once you fill in the values below';
+      case VerdictDto.OutcomeEnum.Partial:
+        return 'Partly ready';
+      case VerdictDto.OutcomeEnum.Blocked:
+        return 'Not deployable yet';
+      case VerdictDto.OutcomeEnum.InsufficientCapacity:
+        return 'Too big for this cluster';
+      case VerdictDto.OutcomeEnum.NotAssessed:
+        return 'Not assessed';
+      default:
+        return 'Unknown';
     }
   });
 
   readonly outcomeIcon = computed(() => {
     switch (this.result()?.verdict.outcome) {
-      case VerdictDto.OutcomeEnum.Deployable: return 'lucideCircleCheck';
-      case VerdictDto.OutcomeEnum.DeployablePendingInputs: return 'lucideCircleAlert';
-      case VerdictDto.OutcomeEnum.Partial: return 'lucideTriangleAlert';
-      case VerdictDto.OutcomeEnum.Blocked: return 'lucideCircleX';
-      case VerdictDto.OutcomeEnum.InsufficientCapacity: return 'lucideCircleX';
-      default: return 'lucideCircleHelp';
+      case VerdictDto.OutcomeEnum.Deployable:
+        return 'lucideCircleCheck';
+      case VerdictDto.OutcomeEnum.DeployablePendingInputs:
+        return 'lucideCircleAlert';
+      case VerdictDto.OutcomeEnum.Partial:
+        return 'lucideTriangleAlert';
+      case VerdictDto.OutcomeEnum.Blocked:
+        return 'lucideCircleX';
+      case VerdictDto.OutcomeEnum.InsufficientCapacity:
+        return 'lucideCircleX';
+      default:
+        return 'lucideCircleHelp';
     }
   });
 
@@ -774,11 +929,13 @@ export class RepoMapComponent implements OnInit, OnDestroy {
     if (fromBlockers.length > 0) return fromBlockers;
 
     if (BAD_OUTCOMES.has(verdict.outcome)) {
-      return [{
-        summary: firstSentence(verdict.reason),
-        remedy: verdict.remedy ? firstSentence(verdict.remedy) : '',
-        unit: '',
-      }];
+      return [
+        {
+          summary: firstSentence(verdict.reason),
+          remedy: verdict.remedy ? firstSentence(verdict.remedy) : '',
+          unit: '',
+        },
+      ];
     }
     return [];
   });
@@ -861,7 +1018,14 @@ export class RepoMapComponent implements OnInit, OnDestroy {
       hasRun: this.hasRun(),
       loading: this.loading(),
       hasLoadError: Boolean(this.error()),
-      read: r ? { branch: r.branch, ok: r.read.ok, reason: r.read.reason, commitShortSha: r.read.commitSha ? this.shortSha(r.read.commitSha) : undefined } : null,
+      read: r
+        ? {
+            branch: r.branch,
+            ok: r.read.ok,
+            reason: r.read.reason,
+            commitShortSha: r.read.commitSha ? this.shortSha(r.read.commitSha) : undefined,
+          }
+        : null,
       assessment:
         r?.read.ok && r.map && verdict
           ? {
@@ -885,11 +1049,16 @@ export class RepoMapComponent implements OnInit, OnDestroy {
               },
               neededCount: needed.length,
               neededSecretCount: needed.filter((n) => n.tags.includes('secret')).length,
-              neededBlocksStartCount: needed.filter((n) => n.tags.includes('needed to start')).length,
+              neededBlocksStartCount: needed.filter((n) => n.tags.includes('needed to start'))
+                .length,
               externalCount: needed.filter((n) => n.tags.includes('external service')).length,
-              obstacles: this.obstacles().map((o) => ({ hasRemedy: Boolean(o.remedy), unit: o.unit })),
+              obstacles: this.obstacles().map((o) => ({
+                hasRemedy: Boolean(o.remedy),
+                unit: o.unit,
+              })),
               questionCount: this.questions().length,
-              questionsWithOptionsCount: this.questions().filter((q) => q.options.length > 0).length,
+              questionsWithOptionsCount: this.questions().filter((q) => q.options.length > 0)
+                .length,
               units: r.map.units.map((u) => ({
                 id: u.id,
                 name: this.unitName(u.id),
@@ -966,7 +1135,11 @@ export class RepoMapComponent implements OnInit, OnDestroy {
 
     void (async () => {
       if (this.repoService.repositories().length === 0) {
-        try { await this.repoService.loadRepositories(); } catch { /* surfaced via repo() being null */ }
+        try {
+          await this.repoService.loadRepositories();
+        } catch {
+          /* surfaced via repo() being null */
+        }
       }
       // Nothing here invents `main`. The order is: what the URL asked for, then the branch this
       // repository is connected on, then whatever the provider lists first — and if none of those
@@ -982,7 +1155,11 @@ export class RepoMapComponent implements OnInit, OnDestroy {
       }
 
       if (this.clusterService.clusters().length === 0) {
-        try { await this.clusterService.loadClusters(); } catch { /* cluster picker just stays empty */ }
+        try {
+          await this.clusterService.loadClusters();
+        } catch {
+          /* cluster picker just stays empty */
+        }
       }
 
       await this.runMap();
@@ -1024,7 +1201,8 @@ export class RepoMapComponent implements OnInit, OnDestroy {
   toggle(key: string): void {
     this.expandedKeys.update((set) => {
       const next = new Set(set);
-      if (next.has(key)) next.delete(key); else next.add(key);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
       return next;
     });
   }
@@ -1039,19 +1217,27 @@ export class RepoMapComponent implements OnInit, OnDestroy {
 
   readinessLabel(readiness: string): string {
     switch (readiness) {
-      case 'deployable': return 'ready';
-      case 'deployable_pending_inputs': return 'needs values';
-      case 'blocked': return 'blocked';
-      default: return 'not assessed';
+      case 'deployable':
+        return 'ready';
+      case 'deployable_pending_inputs':
+        return 'needs values';
+      case 'blocked':
+        return 'blocked';
+      default:
+        return 'not assessed';
     }
   }
 
   readinessClasses(readiness: string): string {
     switch (readiness) {
-      case 'deployable': return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400';
-      case 'deployable_pending_inputs': return 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400';
-      case 'blocked': return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
-      default: return 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300';
+      case 'deployable':
+        return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400';
+      case 'deployable_pending_inputs':
+        return 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400';
+      case 'blocked':
+        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
+      default:
+        return 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300';
     }
   }
 
@@ -1084,9 +1270,10 @@ export class RepoMapComponent implements OnInit, OnDestroy {
     const head = a.fits ? 'Fits the cluster' : 'Does not fit the cluster';
     // A fit computed with parts left out is not a fit. The engine names what it could not weigh,
     // and counting those as zero is exactly how a `fits` that does not hold gets produced.
-    const unweighed = cap.uncounted.length > 0
-      ? ` ${cap.uncounted.length} thing${cap.uncounted.length === 1 ? '' : 's'} could not be weighed, so this may not hold.`
-      : '';
+    const unweighed =
+      cap.uncounted.length > 0
+        ? ` ${cap.uncounted.length} thing${cap.uncounted.length === 1 ? '' : 's'} could not be weighed, so this may not hold.`
+        : '';
     return `${head}: needs ${a.requiredCpuMillicores}m CPU and ${a.requiredMemoryMebibytes}Mi, ${a.availableCpuMillicores}m and ${a.availableMemoryMebibytes}Mi free.${unweighed}`;
   }
 

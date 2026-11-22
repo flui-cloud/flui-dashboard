@@ -1,4 +1,14 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+  untracked,
+} from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { ToastService } from '../../../shared/services/toast.service';
 import { ClusterScalingRow, RemovalPreview } from '../../model/scaling-section.models';
@@ -41,7 +51,10 @@ type Step =
           <span aria-hidden="true" class="text-base leading-none">&minus;</span>
         </button>
 
-        <span class="text-2xl font-semibold tracking-tight text-foreground min-w-7 text-center" data-testid="tile-value-fleet">
+        <span
+          class="text-2xl font-semibold tracking-tight text-foreground min-w-7 text-center"
+          data-testid="tile-value-fleet"
+        >
           {{ nodes() }}
         </span>
 
@@ -60,7 +73,10 @@ type Step =
 
       @switch (step().kind) {
         @case ('confirm') {
-          <div class="flex flex-col gap-1.5 text-[11px] leading-relaxed" data-testid="tile-fleet-confirm">
+          <div
+            class="flex flex-col gap-1.5 text-[11px] leading-relaxed"
+            data-testid="tile-fleet-confirm"
+          >
             <span>{{ confirmText() }}</span>
             @if (removal(); as preview) {
               <app-removal-preview-note [preview]="preview" />
@@ -68,44 +84,103 @@ type Step =
               <span class="text-sub">Checking which node would go and what runs on it…</span>
             }
             <span class="flex gap-2">
-              <button type="button" class="rounded-md bg-primary px-2 py-0.5 font-medium text-primary-foreground disabled:opacity-50" [disabled]="busy()" (click)="moveFloor()" data-testid="tile-fleet-confirm-yes">
+              <button
+                type="button"
+                class="rounded-md bg-primary px-2 py-0.5 font-medium text-primary-foreground disabled:opacity-50"
+                [disabled]="busy()"
+                (click)="moveFloor()"
+                data-testid="tile-fleet-confirm-yes"
+              >
                 {{ busy() ? 'Saving…' : 'Confirm' }}
               </button>
-              <button type="button" class="text-muted-foreground" [disabled]="busy()" (click)="reset()">Cancel</button>
+              <button
+                type="button"
+                class="text-muted-foreground"
+                [disabled]="busy()"
+                (click)="reset()"
+              >
+                Cancel
+              </button>
             </span>
           </div>
         }
         @case ('buy') {
-          <div class="flex flex-col gap-1.5 text-[11px] leading-relaxed" data-testid="tile-fleet-buy">
-            <span>Add one {{ buyStep()?.shape }} in {{ buyStep()?.region }}{{ buyStep()?.price }}? The group stays manual.</span>
+          <div
+            class="flex flex-col gap-1.5 text-[11px] leading-relaxed"
+            data-testid="tile-fleet-buy"
+          >
+            <span
+              >Add one {{ buyStep()?.shape }} in {{ buyStep()?.region }}{{ buyStep()?.price }}? The
+              group stays manual.</span
+            >
             <span class="flex gap-2">
-              <button type="button" class="rounded-md bg-primary px-2 py-0.5 font-medium text-primary-foreground disabled:opacity-50" [disabled]="busy()" (click)="buy()" data-testid="tile-fleet-buy-yes">
+              <button
+                type="button"
+                class="rounded-md bg-primary px-2 py-0.5 font-medium text-primary-foreground disabled:opacity-50"
+                [disabled]="busy()"
+                (click)="buy()"
+                data-testid="tile-fleet-buy-yes"
+              >
                 {{ busy() ? 'Adding…' : 'Add' }}
               </button>
-              <button type="button" class="text-muted-foreground" [disabled]="busy()" (click)="later()">Later</button>
+              <button
+                type="button"
+                class="text-muted-foreground"
+                [disabled]="busy()"
+                (click)="later()"
+              >
+                Later
+              </button>
             </span>
           </div>
         }
         @case ('give-back') {
-          <div class="flex flex-col gap-1.5 text-[11px] leading-relaxed" data-testid="tile-fleet-give-back">
-            <span>Drain and delete {{ giveBackStep()?.node }}? Its work moves to the nodes that stay.</span>
+          <div
+            class="flex flex-col gap-1.5 text-[11px] leading-relaxed"
+            data-testid="tile-fleet-give-back"
+          >
+            <span
+              >Drain and delete {{ giveBackStep()?.node }}? Its work moves to the nodes that
+              stay.</span
+            >
             <span class="flex gap-2">
-              <button type="button" class="rounded-md bg-primary px-2 py-0.5 font-medium text-primary-foreground disabled:opacity-50" [disabled]="busy()" (click)="giveBack()" data-testid="tile-fleet-give-back-yes">
+              <button
+                type="button"
+                class="rounded-md bg-primary px-2 py-0.5 font-medium text-primary-foreground disabled:opacity-50"
+                [disabled]="busy()"
+                (click)="giveBack()"
+                data-testid="tile-fleet-give-back-yes"
+              >
                 {{ busy() ? 'Removing…' : 'Remove' }}
               </button>
-              <button type="button" class="text-muted-foreground" [disabled]="busy()" (click)="later()">Later</button>
+              <button
+                type="button"
+                class="text-muted-foreground"
+                [disabled]="busy()"
+                (click)="later()"
+              >
+                Later
+              </button>
             </span>
           </div>
         }
         @case ('waiting') {
-          <p class="m-0 text-[11px] leading-relaxed text-sub" data-testid="tile-fleet-waiting">{{ waitingText() }}</p>
+          <p class="m-0 text-[11px] leading-relaxed text-sub" data-testid="tile-fleet-waiting">
+            {{ waitingText() }}
+          </p>
         }
       }
 
       <p class="m-0 mt-auto text-[11px] leading-relaxed text-sub">{{ note() }}</p>
     </div>
   `,
-  styles: [`:host { display: block; }`],
+  styles: [
+    `
+      :host {
+        display: block;
+      }
+    `,
+  ],
 })
 export class ScalingFleetTileComponent {
   private readonly api = inject(ScalingApiService);
@@ -178,7 +253,9 @@ export class ScalingFleetTileComponent {
   protected readonly removeTooltip = computed(() =>
     this.lowerTo() < 1
       ? 'Only the master is left: it cannot be removed'
-      : this.tooltip(this.lowerTo() === this.nodes() ? 'Back to the nodes the cluster has' : 'One node fewer'),
+      : this.tooltip(
+          this.lowerTo() === this.nodes() ? 'Back to the nodes the cluster has' : 'One node fewer',
+        ),
   );
 
   protected readonly buyStep = computed(() => {
@@ -201,7 +278,8 @@ export class ScalingFleetTileComponent {
     if (s.kind !== 'confirm') return '';
     const more = s.to > this.nodes();
     const head = `Hold ${s.to} ${s.to === 1 ? 'node' : 'nodes'}, master included.`;
-    if (s.to === this.nodes()) return `${head} Nothing is added or removed: the + not yet acted on is undone.`;
+    if (s.to === this.nodes())
+      return `${head} Nothing is added or removed: the + not yet acted on is undone.`;
     if (!this.manual()) {
       return more
         ? `${head} The group adds the machine on its own, within its ceilings.`
@@ -231,7 +309,9 @@ export class ScalingFleetTileComponent {
   private async readRemoval(groupId: string, to: number): Promise<void> {
     this.removalLoading.set(true);
     try {
-      const preview = await firstValueFrom(this.api.removalPreview(groupId, { min: to, desired: to }));
+      const preview = await firstValueFrom(
+        this.api.removalPreview(groupId, { min: to, desired: to }),
+      );
       const s = this.step();
       if (s.kind === 'confirm' && s.to === to) this.removal.set(preview);
     } catch {
@@ -267,7 +347,10 @@ export class ScalingFleetTileComponent {
         return;
       }
       if (s.to === this.nodes()) {
-        this.step.set({ kind: 'waiting', says: `Back to ${s.to} ${s.to === 1 ? 'node' : 'nodes'}. Nothing added or removed.` });
+        this.step.set({
+          kind: 'waiting',
+          says: `Back to ${s.to} ${s.to === 1 ? 'node' : 'nodes'}. Nothing added or removed.`,
+        });
         return;
       }
       await this.nextApproval(groupId, more);
@@ -293,9 +376,7 @@ export class ScalingFleetTileComponent {
     }
     this.step.set({
       kind: 'waiting',
-      says:
-        preview.blocked?.headline ??
-        'The group proposes nothing yet. Its Now tab says why.',
+      says: preview.blocked?.headline ?? 'The group proposes nothing yet. Its Now tab says why.',
     });
   }
 
@@ -321,7 +402,11 @@ export class ScalingFleetTileComponent {
     );
   }
 
-  private async approve(call: () => Promise<{ did: string }>, done: string, failed: string): Promise<void> {
+  private async approve(
+    call: () => Promise<{ did: string }>,
+    done: string,
+    failed: string,
+  ): Promise<void> {
     this.busy.set(true);
     try {
       const decision = await call();

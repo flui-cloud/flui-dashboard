@@ -6,7 +6,9 @@
       <div class="flex items-center gap-2 mt-1">
         <p class="text-sm text-sub">
           @if (pollingPaused()) {
-            <span class="text-orange-600 dark:text-orange-400 font-medium">Auto-refresh paused</span>
+            <span class="text-orange-600 dark:text-orange-400 font-medium"
+              >Auto-refresh paused</span
+            >
           } @else {
             Live values every 5 seconds · history over the {{ history.rangeLabel() }}
           }
@@ -25,9 +27,11 @@
             (click)="setRange(range.value)"
             [attr.aria-pressed]="history.range() === range.value"
             class="px-3 py-1 rounded-md text-xs font-semibold transition-colors"
-            [class]="history.range() === range.value
-              ? 'bg-card text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'"
+            [class]="
+              history.range() === range.value
+                ? 'bg-card text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            "
           >
             {{ range.label }}
           </button>
@@ -40,9 +44,11 @@
         [title]="pollingPaused() ? 'Retry' : 'Refresh'"
         [attr.aria-label]="pollingPaused() ? 'Retry' : 'Refresh'"
         class="inline-flex items-center justify-center h-8 w-8 rounded-lg border transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-        [class]="pollingPaused() && canRetry()
-          ? 'border-orange-300 dark:border-orange-700 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20'
-          : 'border-border text-muted-foreground hover:text-foreground hover:bg-muted'"
+        [class]="
+          pollingPaused() && canRetry()
+            ? 'border-orange-300 dark:border-orange-700 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20'
+            : 'border-border text-muted-foreground hover:text-foreground hover:bg-muted'
+        "
       >
         <ng-icon name="lucideRefreshCw" [class.animate-spin]="isLoading()" class="h-3.5 w-3.5" />
       </button>
@@ -55,9 +61,10 @@
     (addWorker)="goToScaling()"
   />
 
-
   @if (error()) {
-    <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+    <div
+      class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4"
+    >
       <p class="text-red-700 dark:text-red-400">{{ error() }}</p>
     </div>
   }
@@ -94,8 +101,8 @@
         <ng-icon name="lucideActivity" class="h-12 w-12 text-muted-foreground mx-auto mb-3" />
         <p class="text-foreground font-medium">No metrics received from this cluster yet</p>
         <p class="text-sub text-sm mt-1 max-w-md mx-auto">
-          A new cluster starts sending them within a few minutes; a cluster on another provider
-          than the control sends them through the Flui network. This page keeps checking.
+          A new cluster starts sending them within a few minutes; a cluster on another provider than
+          the control sends them through the Flui network. This page keeps checking.
         </p>
       </div>
     </div>

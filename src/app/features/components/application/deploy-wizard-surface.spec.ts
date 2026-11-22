@@ -26,7 +26,10 @@ function input(over: Partial<DeployWizardSurfaceInput> = {}): DeployWizardSurfac
 }
 
 function snapshotOf(over: Partial<DeployWizardSurfaceInput> = {}): SurfaceSnapshot {
-  const snapshot = buildDeployWizardSurface(input(over), { revision: 1, generatedAt: '2026-08-20T09:13:00.000Z' });
+  const snapshot = buildDeployWizardSurface(input(over), {
+    revision: 1,
+    generatedAt: '2026-08-20T09:13:00.000Z',
+  });
   if (!snapshot) throw new Error('the producer described nothing');
   return snapshot;
 }
@@ -47,10 +50,18 @@ describe('deploy wizard surface producer', () => {
 
   it('bumps the revision on real change, and validateSurfaceSemantics accepts it against the previous snapshot', () => {
     const tracker = new DeployWizardSurfaceRevision();
-    const first = buildDeployWizardSurface(input(), { revision: tracker.next(presentedContent(input())!), generatedAt: '2026-08-20T09:13:00.000Z' })!;
+    const first = buildDeployWizardSurface(input(), {
+      revision: tracker.next(presentedContent(input())!),
+      generatedAt: '2026-08-20T09:13:00.000Z',
+    })!;
     const second = buildDeployWizardSurface(
       input({ currentStepId: 'cluster', currentStepTitle: 'Cluster' }),
-      { revision: tracker.next(presentedContent(input({ currentStepId: 'cluster', currentStepTitle: 'Cluster' }))!), generatedAt: '2026-08-20T09:14:00.000Z' },
+      {
+        revision: tracker.next(
+          presentedContent(input({ currentStepId: 'cluster', currentStepTitle: 'Cluster' }))!,
+        ),
+        generatedAt: '2026-08-20T09:14:00.000Z',
+      },
     )!;
     expect(second.surface.revision).toBe(first.surface.revision + 1);
     expect(validateSurfaceSemantics(second, { previousSnapshot: first })).toEqual([]);
@@ -58,7 +69,10 @@ describe('deploy wizard surface producer', () => {
 
   it('flags a snapshot whose revision does not advance on the previous one', () => {
     const first = snapshotOf();
-    const stale = { ...snapshotOf(), surface: { ...snapshotOf().surface, revision: first.surface.revision } };
+    const stale = {
+      ...snapshotOf(),
+      surface: { ...snapshotOf().surface, revision: first.surface.revision },
+    };
     const issues = validateSurfaceSemantics(stale, { previousSnapshot: first });
     expect(issues).toEqual([
       jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' }),
@@ -66,8 +80,12 @@ describe('deploy wizard surface producer', () => {
   });
 
   it('produces no snapshot at all before the stepper has resolved a step id — no invented state', () => {
-    expect(buildDeployWizardSurface(input({ currentStepId: '' }), { revision: 1, generatedAt: '2026-08-20T09:13:00.000Z' }))
-      .toBeNull();
+    expect(
+      buildDeployWizardSurface(input({ currentStepId: '' }), {
+        revision: 1,
+        generatedAt: '2026-08-20T09:13:00.000Z',
+      }),
+    ).toBeNull();
   });
 
   it('names only the page in attention, never an entity — nothing deployed exists yet', () => {
@@ -79,8 +97,11 @@ describe('deploy wizard surface producer', () => {
     expect(snapshot.attention).toEqual([{ scopeId: 'deploy-wizard', reason: 'route' }]);
   });
 
-  it('adds one step region scope for the active step, owned by the page, mirroring application-surface\'s tab scope', () => {
-    const snapshot = snapshotOf({ currentStepId: 'runtime-config', currentStepTitle: 'Runtime Config' });
+  it("adds one step region scope for the active step, owned by the page, mirroring application-surface's tab scope", () => {
+    const snapshot = snapshotOf({
+      currentStepId: 'runtime-config',
+      currentStepTitle: 'Runtime Config',
+    });
     const step = stepScope(snapshot);
     expect(step).toEqual({
       id: 'deploy-wizard:step:runtime-config',
@@ -93,7 +114,7 @@ describe('deploy wizard surface producer', () => {
     });
   });
 
-  it('matches the brief\'s own example: on the runtime-config step, source is a git repo, target cluster named', () => {
+  it("matches the brief's own example: on the runtime-config step, source is a git repo, target cluster named", () => {
     const snapshot = snapshotOf({
       currentStepId: 'runtime-config',
       currentStepTitle: 'Runtime Config',
@@ -104,7 +125,9 @@ describe('deploy wizard surface producer', () => {
     });
     expect(observation(snapshot, 'flui.deploy.source_type')?.presentedAs.text).toBe('git_build');
     expect(observation(snapshot, 'flui.deploy.cluster')?.presentedAs.text).toBe('prod-eu');
-    expect(observation(snapshot, 'flui.deploy.repository')?.presentedAs.text).toBe('flui-cloud/billing-api');
+    expect(observation(snapshot, 'flui.deploy.repository')?.presentedAs.text).toBe(
+      'flui-cloud/billing-api',
+    );
   });
 
   it('says nothing about source/flow/cluster before any pick has been made', () => {
@@ -128,7 +151,9 @@ describe('deploy wizard surface producer', () => {
       selectedRepositoryFullName: 'flui-cloud/billing-api',
       selectedTemplate: { framework: 'nextjs', displayName: 'Next.js' },
     });
-    expect(observation(repoFlow, 'flui.deploy.repository')?.presentedAs.text).toBe('flui-cloud/billing-api');
+    expect(observation(repoFlow, 'flui.deploy.repository')?.presentedAs.text).toBe(
+      'flui-cloud/billing-api',
+    );
     expect(observation(repoFlow, 'flui.deploy.template')).toBeUndefined();
   });
 

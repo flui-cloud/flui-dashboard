@@ -1,9 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  inject,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
@@ -129,11 +124,7 @@ import { bytes } from './messaging-format';
             <div class="rounded-md border border-border p-3">
               <div class="text-xs text-muted-foreground">Storage</div>
               <div class="text-sm font-semibold text-foreground">
-                {{
-                  info.jetStream.enabled
-                    ? size(info.jetStream.storageBytes) + ' stored'
-                    : 'off'
-                }}
+                {{ info.jetStream.enabled ? size(info.jetStream.storageBytes) + ' stored' : 'off' }}
               </div>
             </div>
           </div>
@@ -153,10 +144,9 @@ export class MessagingConsolePageComponent implements OnInit {
   protected readonly s = inject(MessagingConsoleStateService);
   private readonly route = inject(ActivatedRoute);
 
-  readonly applicationId = toSignal(
-    this.route.paramMap.pipe(map((p) => p.get('applicationId'))),
-    { initialValue: this.route.snapshot.paramMap.get('applicationId') },
-  );
+  readonly applicationId = toSignal(this.route.paramMap.pipe(map((p) => p.get('applicationId'))), {
+    initialValue: this.route.snapshot.paramMap.get('applicationId'),
+  });
 
   protected size(n: number): string {
     return bytes(n);

@@ -23,10 +23,9 @@ export class CostsService {
     try {
       this.data.set(
         await firstValueFrom(
-          this.http.get<Costs>(
-            `${this.appConfig.apiBaseUrl}/api/v1/infrastructure/costs`,
-            { params: { months } },
-          ),
+          this.http.get<Costs>(`${this.appConfig.apiBaseUrl}/api/v1/infrastructure/costs`, {
+            params: { months },
+          }),
         ),
       );
     } catch (error: unknown) {
@@ -40,8 +39,10 @@ export class CostsService {
 
 function messageOf(error: unknown): string {
   if (error instanceof HttpErrorResponse) {
-    if (error.status === 403) return 'Costs cover the whole installation, so only an administrator of the infrastructure can read them.';
-    if (error.status === 404) return 'This installation’s API does not serve costs yet: it is running an older build.';
+    if (error.status === 403)
+      return 'Costs cover the whole installation, so only an administrator of the infrastructure can read them.';
+    if (error.status === 404)
+      return 'This installation’s API does not serve costs yet: it is running an older build.';
     const message = (error.error as { message?: unknown } | null)?.message;
     if (typeof message === 'string') return message;
   }

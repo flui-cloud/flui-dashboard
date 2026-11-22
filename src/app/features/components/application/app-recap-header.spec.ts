@@ -1,9 +1,31 @@
 import type { AppGroupView, Application } from '../../model/application.models';
-import { backLabel, backLink, endpointHostOf, headerMeta, hostnameOf, kindChip, openUrlOf } from './app-recap-header';
+import {
+  backLabel,
+  backLink,
+  endpointHostOf,
+  headerMeta,
+  hostnameOf,
+  kindChip,
+  openUrlOf,
+} from './app-recap-header';
 
-const primary = { id: 'p', kind: 'DATABASE', sourceType: 'docker_image', imageRef: 'postgres:16', labels: {} } as unknown as Application;
+const primary = {
+  id: 'p',
+  kind: 'DATABASE',
+  sourceType: 'docker_image',
+  imageRef: 'postgres:16',
+  labels: {},
+} as unknown as Application;
 const group = (over: Partial<AppGroupView> = {}): AppGroupView =>
-  ({ id: 'g', type: 'standalone', name: 'g', clusterId: 'c1', createdAt: 'not a date', components: [primary], ...over }) as AppGroupView;
+  ({
+    id: 'g',
+    type: 'standalone',
+    name: 'g',
+    clusterId: 'c1',
+    createdAt: 'not a date',
+    components: [primary],
+    ...over,
+  }) as AppGroupView;
 
 describe('app recap header', () => {
   it('goes back to the list the app belongs to, or to the catalog it came from', () => {
@@ -15,7 +37,12 @@ describe('app recap header', () => {
   });
 
   it('labels a bundle by its component count and a single app by its kind', () => {
-    expect(kindChip(group({ type: 'composed' as AppGroupView['type'], components: [primary, primary] }), primary)).toBe('Bundle · 2 components');
+    expect(
+      kindChip(
+        group({ type: 'composed' as AppGroupView['type'], components: [primary, primary] }),
+        primary,
+      ),
+    ).toBe('Bundle · 2 components');
     expect(kindChip(group(), primary)).toBe('Database');
   });
 

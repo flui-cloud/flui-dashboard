@@ -1,10 +1,29 @@
-import { Component, inject, input, output, signal, OnChanges, computed, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  inject,
+  input,
+  output,
+  signal,
+  OnChanges,
+  computed,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
-  lucideX, lucideShieldCheck, lucideShieldAlert, lucideCopy, lucideCheck,
-  lucideLoader, lucideCircleCheck, lucideCircleX, lucideWand2,
-  lucideZap, lucideGlobe, lucidePencil, lucideTriangleAlert,
+  lucideX,
+  lucideShieldCheck,
+  lucideShieldAlert,
+  lucideCopy,
+  lucideCheck,
+  lucideLoader,
+  lucideCircleCheck,
+  lucideCircleX,
+  lucideWand2,
+  lucideZap,
+  lucideGlobe,
+  lucidePencil,
+  lucideTriangleAlert,
 } from '@ng-icons/lucide';
 import { firstValueFrom } from 'rxjs';
 import { ClusterDnsZoneResponseDto } from '../../../core/api/model/clusterDnsZoneResponseDto';
@@ -34,7 +53,23 @@ export interface AppOption {
   selector: 'app-cluster-endpoint-form',
   standalone: true,
   imports: [FormsModule, NgIconComponent],
-  providers: [provideIcons({ lucideX, lucideShieldCheck, lucideShieldAlert, lucideCopy, lucideCheck, lucideLoader, lucideCircleCheck, lucideCircleX, lucideWand2, lucideZap, lucideGlobe, lucidePencil, lucideTriangleAlert })],
+  providers: [
+    provideIcons({
+      lucideX,
+      lucideShieldCheck,
+      lucideShieldAlert,
+      lucideCopy,
+      lucideCheck,
+      lucideLoader,
+      lucideCircleCheck,
+      lucideCircleX,
+      lucideWand2,
+      lucideZap,
+      lucideGlobe,
+      lucidePencil,
+      lucideTriangleAlert,
+    }),
+  ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="p-4 border border-border rounded-lg card-inner space-y-4">
@@ -55,7 +90,9 @@ export interface AppOption {
         <div>
           <label class="block text-xs font-medium text-muted-foreground mb-1">Application</label>
           @if (endpoint()) {
-            <div class="w-full px-3 py-2 border border-border rounded-md bg-muted text-sm text-muted-foreground">
+            <div
+              class="w-full px-3 py-2 border border-border rounded-md bg-muted text-sm text-muted-foreground"
+            >
               {{ selectedAppName() }}
               <span class="ml-1 text-xs text-muted-foreground">(cannot be changed)</span>
             </div>
@@ -84,7 +121,12 @@ export interface AppOption {
             type="button"
             (click)="onEndpointTypeChange('public')"
             [disabled]="isEditMode()"
-            [class]="modeCardClass(endpointType() === 'public', isEditMode() && endpointType() !== 'public')"
+            [class]="
+              modeCardClass(
+                endpointType() === 'public',
+                isEditMode() && endpointType() !== 'public'
+              )
+            "
             [title]="isEditMode() ? 'Endpoint type cannot be changed after creation' : ''"
           >
             <div class="flex items-center gap-1.5">
@@ -99,7 +141,12 @@ export interface AppOption {
             type="button"
             (click)="onEndpointTypeChange('internal')"
             [disabled]="!internalAvailable() || (isEditMode() && endpointType() !== 'internal')"
-            [class]="modeCardClass(endpointType() === 'internal', !internalAvailable() || (isEditMode() && endpointType() !== 'internal'))"
+            [class]="
+              modeCardClass(
+                endpointType() === 'internal',
+                !internalAvailable() || (isEditMode() && endpointType() !== 'internal')
+              )
+            "
             [title]="internalTypeTooltip()"
           >
             <div class="flex items-center gap-1.5">
@@ -107,13 +154,17 @@ export interface AppOption {
               <span class="text-xs font-medium">Internal</span>
             </div>
             <p class="mt-1 text-[11px] text-muted-foreground">
-              Private URL on the cluster's <span class="font-mono">.internal.&lt;zone&gt;</span> wildcard, gated by the Flui Auth Proxy.
+              Private URL on the cluster's
+              <span class="font-mono">.internal.&lt;zone&gt;</span> wildcard, gated by the Flui Auth
+              Proxy.
             </p>
           </button>
         </div>
 
         @if (endpointType() === 'internal' && !internalHostingAvailable()) {
-          <div class="mt-2 flex items-start gap-2 p-3 rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 text-xs text-amber-800 dark:text-amber-300">
+          <div
+            class="mt-2 flex items-start gap-2 p-3 rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 text-xs text-amber-800 dark:text-amber-300"
+          >
             <ng-icon name="lucideTriangleAlert" class="h-3.5 w-3.5 mt-0.5 shrink-0" />
             <div class="flex-1 space-y-1">
               <div class="font-medium">Internal endpoints not available on this cluster</div>
@@ -122,17 +173,24 @@ export interface AppOption {
                 type="button"
                 (click)="configureInternalHosting.emit()"
                 class="underline hover:no-underline font-medium"
-              >Configure now →</button>
+              >
+                Configure now →
+              </button>
             </div>
           </div>
         }
 
         @if (endpointType() === 'internal' && internalHostingAvailable() && !authzReady()) {
-          <div class="mt-2 flex items-start gap-2 p-3 rounded-md border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/10 text-xs text-amber-800 dark:text-amber-300">
+          <div
+            class="mt-2 flex items-start gap-2 p-3 rounded-md border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/10 text-xs text-amber-800 dark:text-amber-300"
+          >
             <ng-icon name="lucideShieldAlert" class="h-3.5 w-3.5 mt-0.5 shrink-0" />
             <div class="flex-1 space-y-1">
               <div class="font-medium">Auth Proxy not running</div>
-              <div>Internal endpoints require the Flui Auth Proxy to be installed and running on this cluster.</div>
+              <div>
+                Internal endpoints require the Flui Auth Proxy to be installed and running on this
+                cluster.
+              </div>
               <button
                 type="button"
                 (click)="installAuthz.emit()"
@@ -151,382 +209,480 @@ export interface AppOption {
       </div>
 
       @if (endpointType() === 'public') {
-      <!-- Hostname source — explicit choice -->
-      <div>
-        <label class="block text-xs font-medium text-muted-foreground mb-2">
-          Hostname source <span class="text-red-500 ml-0.5">*</span>
-        </label>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-          <button
-            type="button"
-            (click)="onHostnameModeChange('ip')"
-            [disabled]="!masterIp()"
-            [class]="modeCardClass(form.hostnameMode === 'ip', !masterIp())"
-            [title]="!masterIp() ? 'Cluster IP not available yet' : 'Auto-generated test address'"
-          >
-            <div class="flex items-center gap-1.5">
-              <ng-icon name="lucideZap" class="h-3.5 w-3.5 text-primary" />
-              <span class="text-xs font-medium">Test address</span>
-            </div>
-            <p class="mt-1 text-[11px] text-muted-foreground">
-              Instant address derived from your cluster IP — no DNS setup required.
-            </p>
-          </button>
-          <button
-            type="button"
-            (click)="onHostnameModeChange('domain')"
-            [class]="modeCardClass(form.hostnameMode === 'domain')"
-          >
-            <div class="flex items-center gap-1.5">
-              <ng-icon name="lucideGlobe" class="h-3.5 w-3.5 text-primary" />
-              <span class="text-xs font-medium">Your domain</span>
-            </div>
-            <p class="mt-1 text-[11px] text-muted-foreground">
-              {{ effectiveAssignment() ? 'Pick a subdomain under your cluster zone or use a different one.' : 'Use a domain you own — point its DNS to the cluster.' }}
-            </p>
-          </button>
-        </div>
-      </div>
-
-      <!-- Test address preview -->
-      @if (form.hostnameMode === 'ip') {
+        <!-- Hostname source — explicit choice -->
         <div>
-          <label class="block text-xs font-medium text-muted-foreground mb-1">
-            Public address
+          <label class="block text-xs font-medium text-muted-foreground mb-2">
+            Hostname source <span class="text-red-500 ml-0.5">*</span>
           </label>
-          @if (masterIp()) {
-            @if (ipSlugEditing()) {
-              <div class="flex items-stretch">
-                <input
-                  type="text"
-                  [(ngModel)]="form.ipSlugOverride"
-                  (ngModelChange)="onIpSlugChange()"
-                  [placeholder]="currentSlug() || 'app'"
-                  [class]="'flex-1 min-w-0 px-3 py-2 border rounded-l-md bg-background text-sm text-foreground font-mono focus:outline-none focus:ring-2 focus:ring-inset focus:border-transparent ' +
-                    (ipSlugError() ? 'border-red-400 dark:border-red-500 focus:ring-red-500' : 'border-border focus:ring-blue-500')"
-                />
-                <span class="inline-flex items-center px-3 py-2 border border-l-0 rounded-r-md bg-muted text-sm text-muted-foreground font-mono whitespace-nowrap select-none">
-                  .{{ ipDashed() }}.nip.io
-                </span>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <button
+              type="button"
+              (click)="onHostnameModeChange('ip')"
+              [disabled]="!masterIp()"
+              [class]="modeCardClass(form.hostnameMode === 'ip', !masterIp())"
+              [title]="!masterIp() ? 'Cluster IP not available yet' : 'Auto-generated test address'"
+            >
+              <div class="flex items-center gap-1.5">
+                <ng-icon name="lucideZap" class="h-3.5 w-3.5 text-primary" />
+                <span class="text-xs font-medium">Test address</span>
               </div>
-              @if (ipSlugError()) {
-                <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ ipSlugError() }}</p>
+              <p class="mt-1 text-[11px] text-muted-foreground">
+                Instant address derived from your cluster IP — no DNS setup required.
+              </p>
+            </button>
+            <button
+              type="button"
+              (click)="onHostnameModeChange('domain')"
+              [class]="modeCardClass(form.hostnameMode === 'domain')"
+            >
+              <div class="flex items-center gap-1.5">
+                <ng-icon name="lucideGlobe" class="h-3.5 w-3.5 text-primary" />
+                <span class="text-xs font-medium">Your domain</span>
+              </div>
+              <p class="mt-1 text-[11px] text-muted-foreground">
+                {{
+                  effectiveAssignment()
+                    ? 'Pick a subdomain under your cluster zone or use a different one.'
+                    : 'Use a domain you own — point its DNS to the cluster.'
+                }}
+              </p>
+            </button>
+          </div>
+        </div>
+
+        <!-- Test address preview -->
+        @if (form.hostnameMode === 'ip') {
+          <div>
+            <label class="block text-xs font-medium text-muted-foreground mb-1">
+              Public address
+            </label>
+            @if (masterIp()) {
+              @if (ipSlugEditing()) {
+                <div class="flex items-stretch">
+                  <input
+                    type="text"
+                    [(ngModel)]="form.ipSlugOverride"
+                    (ngModelChange)="onIpSlugChange()"
+                    [placeholder]="currentSlug() || 'app'"
+                    [class]="
+                      'flex-1 min-w-0 px-3 py-2 border rounded-l-md bg-background text-sm text-foreground font-mono focus:outline-none focus:ring-2 focus:ring-inset focus:border-transparent ' +
+                      (ipSlugError()
+                        ? 'border-red-400 dark:border-red-500 focus:ring-red-500'
+                        : 'border-border focus:ring-blue-500')
+                    "
+                  />
+                  <span
+                    class="inline-flex items-center px-3 py-2 border border-l-0 rounded-r-md bg-muted text-sm text-muted-foreground font-mono whitespace-nowrap select-none"
+                  >
+                    .{{ ipDashed() }}.nip.io
+                  </span>
+                </div>
+                @if (ipSlugError()) {
+                  <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ ipSlugError() }}</p>
+                } @else {
+                  <p class="mt-1 text-xs text-muted-foreground">
+                    Edit only the app name. Leave empty to use the default ({{
+                      currentSlug() || 'app'
+                    }}).
+                  </p>
+                }
               } @else {
+                <div class="flex items-stretch">
+                  <div
+                    class="flex-1 min-w-0 px-3 py-2 border border-border rounded-l-md bg-muted text-sm text-foreground font-mono break-all"
+                  >
+                    {{ ipFqdnPreview() }}
+                  </div>
+                  <button
+                    type="button"
+                    (click)="ipSlugEditing.set(true)"
+                    class="inline-flex items-center gap-1 px-2 py-2 border border-l-0 border-border rounded-r-md bg-muted text-xs text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
+                    title="Edit app name"
+                  >
+                    <ng-icon name="lucidePencil" class="h-3.5 w-3.5" />
+                  </button>
+                </div>
                 <p class="mt-1 text-xs text-muted-foreground">
-                  Edit only the app name. Leave empty to use the default ({{ currentSlug() || 'app' }}).
+                  Auto-generated from the cluster IP. Includes a free Let's Encrypt certificate.
                 </p>
               }
             } @else {
+              <div
+                class="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg"
+              >
+                <p class="text-xs text-amber-800 dark:text-amber-300">
+                  Cluster IP not ready yet. Wait until the cluster finishes setting up, then come
+                  back here.
+                </p>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- FQDN / Subdomain (only when domain mode) -->
+        @if (form.hostnameMode === 'domain') {
+          <div>
+            <label class="block text-xs font-medium text-muted-foreground mb-1">
+              Domain (FQDN) <span class="text-red-500 ml-0.5">*</span>
+            </label>
+
+            @if (effectiveAssignment(); as zone) {
+              <!-- Zone mode: split pill — user types only the subdomain prefix -->
               <div class="flex items-stretch">
-                <div class="flex-1 min-w-0 px-3 py-2 border border-border rounded-l-md bg-muted text-sm text-foreground font-mono break-all">
-                  {{ ipFqdnPreview() }}
-                </div>
+                <input
+                  type="text"
+                  [(ngModel)]="form.subdomainPrefix"
+                  (ngModelChange)="onSubdomainChange()"
+                  [placeholder]="subdomainPlaceholder()"
+                  [class]="
+                    'flex-1 min-w-0 px-3 py-2 border rounded-l-md bg-background text-sm text-foreground font-mono focus:outline-none focus:ring-2 focus:ring-inset focus:border-transparent ' +
+                    (subdomainError()
+                      ? 'border-red-400 dark:border-red-500 focus:ring-red-500'
+                      : 'border-border focus:ring-blue-500')
+                  "
+                />
                 <button
                   type="button"
-                  (click)="ipSlugEditing.set(true)"
-                  class="inline-flex items-center gap-1 px-2 py-2 border border-l-0 border-border rounded-r-md bg-muted text-xs text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
-                  title="Edit app name"
+                  (click)="autoGenerate()"
+                  [disabled]="!currentSlug()"
+                  class="inline-flex items-center gap-1 px-2 py-2 border border-l-0 bg-muted text-xs text-muted-foreground hover:text-foreground hover:bg-muted/80 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  title="Auto-generate from app slug"
                 >
-                  <ng-icon name="lucidePencil" class="h-3.5 w-3.5" />
+                  <ng-icon name="lucideWand2" class="h-3.5 w-3.5" />
                 </button>
-              </div>
-              <p class="mt-1 text-xs text-muted-foreground">
-                Auto-generated from the cluster IP. Includes a free Let's Encrypt certificate.
-              </p>
-            }
-          } @else {
-            <div class="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-              <p class="text-xs text-amber-800 dark:text-amber-300">
-                Cluster IP not ready yet. Wait until the cluster finishes setting up, then come back here.
-              </p>
-            </div>
-          }
-        </div>
-      }
-
-      <!-- FQDN / Subdomain (only when domain mode) -->
-      @if (form.hostnameMode === 'domain') {
-      <div>
-        <label class="block text-xs font-medium text-muted-foreground mb-1">
-          Domain (FQDN) <span class="text-red-500 ml-0.5">*</span>
-        </label>
-
-        @if (effectiveAssignment(); as zone) {
-          <!-- Zone mode: split pill — user types only the subdomain prefix -->
-          <div class="flex items-stretch">
-            <input
-              type="text"
-              [(ngModel)]="form.subdomainPrefix"
-              (ngModelChange)="onSubdomainChange()"
-              [placeholder]="subdomainPlaceholder()"
-              [class]="'flex-1 min-w-0 px-3 py-2 border rounded-l-md bg-background text-sm text-foreground font-mono focus:outline-none focus:ring-2 focus:ring-inset focus:border-transparent ' +
-                (subdomainError() ? 'border-red-400 dark:border-red-500 focus:ring-red-500' : 'border-border focus:ring-blue-500')"
-            />
-            <button
-              type="button"
-              (click)="autoGenerate()"
-              [disabled]="!currentSlug()"
-              class="inline-flex items-center gap-1 px-2 py-2 border border-l-0 bg-muted text-xs text-muted-foreground hover:text-foreground hover:bg-muted/80 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              title="Auto-generate from app slug"
-            >
-              <ng-icon name="lucideWand2" class="h-3.5 w-3.5" />
-            </button>
-            @if (assignments().length > 1) {
-              <select
-                [ngModel]="$safeNavigationMigration(selectedAssignment()?.id)"
-                (ngModelChange)="onZoneSelect($event)"
-                class="px-2 py-2 border border-l-0 rounded-r-md bg-muted text-sm text-muted-foreground font-mono whitespace-nowrap cursor-pointer focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
-                title="Choose the DNS zone for this endpoint"
-              >
-                @for (a of assignments(); track a.id) {
-                  <option [value]="a.id">.{{ a.dnsZone.zoneName }}</option>
-                }
-              </select>
-            } @else {
-              <span class="inline-flex items-center px-3 py-2 border border-l-0 rounded-r-md bg-muted text-sm text-muted-foreground font-mono whitespace-nowrap select-none">
-                .{{ zoneSuffix() }}
-              </span>
-            }
-          </div>
-          @if (subdomainError()) {
-            <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ subdomainError() }}</p>
-          } @else if (!form.subdomainPrefix.trim()) {
-            <p class="mt-1 text-xs text-muted-foreground">Required — or click <ng-icon name="lucideWand2" class="h-3 w-3 inline" /> to generate from app slug.</p>
-          }
-
-        } @else {
-          <!-- BYOD mode: full FQDN free-text -->
-          <div class="flex items-stretch">
-            <input
-              type="text"
-              [(ngModel)]="form.fqdn"
-              (ngModelChange)="onFqdnChange()"
-              [placeholder]="fqdnPlaceholder()"
-              [class]="'flex-1 min-w-0 px-3 py-2 border rounded-l-md bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-inset focus:border-transparent font-mono ' +
-                (fqdnError() ? 'border-red-400 dark:border-red-500 focus:ring-red-500' : 'border-border focus:ring-blue-500')"
-            />
-            <button
-              type="button"
-              (click)="autoGenerate()"
-              [disabled]="!currentSlug()"
-              class="inline-flex items-center gap-1 px-2 py-2 border border-l-0 rounded-r-md bg-muted text-xs text-muted-foreground hover:text-foreground hover:bg-muted/80 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              title="Auto-generate from app slug"
-            >
-              <ng-icon name="lucideWand2" class="h-3.5 w-3.5" />
-            </button>
-          </div>
-          @if (fqdnError()) {
-            <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ fqdnError() }}</p>
-          }
-          @if (masterIp() && form.fqdn.trim() && !fqdnError()) {
-            <div class="mt-1.5 flex items-center gap-1.5 text-xs">
-              @if (dnsChecking()) {
-                <ng-icon name="lucideLoader" class="h-3 w-3 animate-spin text-muted-foreground" />
-                <span class="text-muted-foreground">Verifying DNS…</span>
-              } @else if (dnsResult()) {
-                @if (dnsResult()!.ok) {
-                  <ng-icon name="lucideCircleCheck" class="h-3 w-3 text-[hsl(var(--ok))]" />
-                  <span class="text-muted-foreground">Resolves correctly to {{ masterIp() }}</span>
-                } @else {
-                  <ng-icon name="lucideCircleX" class="h-3 w-3 text-red-500 dark:text-red-400" />
-                  <span class="text-red-700 dark:text-red-400">
-                    Does not point to {{ masterIp() }}
-                    @if (dnsResult()!.resolvedAddresses.length > 0) {
-                      — found: {{ dnsResult()!.resolvedAddresses.join(', ') }}
-                    } @else {
-                      — no A record found
+                @if (assignments().length > 1) {
+                  <select
+                    [ngModel]="$safeNavigationMigration(selectedAssignment()?.id)"
+                    (ngModelChange)="onZoneSelect($event)"
+                    class="px-2 py-2 border border-l-0 rounded-r-md bg-muted text-sm text-muted-foreground font-mono whitespace-nowrap cursor-pointer focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+                    title="Choose the DNS zone for this endpoint"
+                  >
+                    @for (a of assignments(); track a.id) {
+                      <option [value]="a.id">.{{ a.dnsZone.zoneName }}</option>
                     }
+                  </select>
+                } @else {
+                  <span
+                    class="inline-flex items-center px-3 py-2 border border-l-0 rounded-r-md bg-muted text-sm text-muted-foreground font-mono whitespace-nowrap select-none"
+                  >
+                    .{{ zoneSuffix() }}
                   </span>
                 }
-              }
-            </div>
-          }
-        }
-        @if (assignment() && endpointType() === 'public') {
-          <button
-            type="button"
-            (click)="toggleByodOverride()"
-            class="mt-1.5 text-xs text-blue-600 dark:text-blue-400 hover:underline"
-          >
-            @if (byodOverride()) {
-              @if (assignments().length > 1) {
-                ← Use a cluster zone
-              } @else {
-                ← Use the cluster zone ({{ assignment()!.dnsZone.zoneName }})
+              </div>
+              @if (subdomainError()) {
+                <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ subdomainError() }}</p>
+              } @else if (!form.subdomainPrefix.trim()) {
+                <p class="mt-1 text-xs text-muted-foreground">
+                  Required — or click <ng-icon name="lucideWand2" class="h-3 w-3 inline" /> to
+                  generate from app slug.
+                </p>
               }
             } @else {
-              Use a different domain (BYOD) →
+              <!-- BYOD mode: full FQDN free-text -->
+              <div class="flex items-stretch">
+                <input
+                  type="text"
+                  [(ngModel)]="form.fqdn"
+                  (ngModelChange)="onFqdnChange()"
+                  [placeholder]="fqdnPlaceholder()"
+                  [class]="
+                    'flex-1 min-w-0 px-3 py-2 border rounded-l-md bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-inset focus:border-transparent font-mono ' +
+                    (fqdnError()
+                      ? 'border-red-400 dark:border-red-500 focus:ring-red-500'
+                      : 'border-border focus:ring-blue-500')
+                  "
+                />
+                <button
+                  type="button"
+                  (click)="autoGenerate()"
+                  [disabled]="!currentSlug()"
+                  class="inline-flex items-center gap-1 px-2 py-2 border border-l-0 rounded-r-md bg-muted text-xs text-muted-foreground hover:text-foreground hover:bg-muted/80 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  title="Auto-generate from app slug"
+                >
+                  <ng-icon name="lucideWand2" class="h-3.5 w-3.5" />
+                </button>
+              </div>
+              @if (fqdnError()) {
+                <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ fqdnError() }}</p>
+              }
+              @if (masterIp() && form.fqdn.trim() && !fqdnError()) {
+                <div class="mt-1.5 flex items-center gap-1.5 text-xs">
+                  @if (dnsChecking()) {
+                    <ng-icon
+                      name="lucideLoader"
+                      class="h-3 w-3 animate-spin text-muted-foreground"
+                    />
+                    <span class="text-muted-foreground">Verifying DNS…</span>
+                  } @else if (dnsResult()) {
+                    @if (dnsResult()!.ok) {
+                      <ng-icon name="lucideCircleCheck" class="h-3 w-3 text-[hsl(var(--ok))]" />
+                      <span class="text-muted-foreground"
+                        >Resolves correctly to {{ masterIp() }}</span
+                      >
+                    } @else {
+                      <ng-icon
+                        name="lucideCircleX"
+                        class="h-3 w-3 text-red-500 dark:text-red-400"
+                      />
+                      <span class="text-red-700 dark:text-red-400">
+                        Does not point to {{ masterIp() }}
+                        @if (dnsResult()!.resolvedAddresses.length > 0) {
+                          — found: {{ dnsResult()!.resolvedAddresses.join(', ') }}
+                        } @else {
+                          — no A record found
+                        }
+                      </span>
+                    }
+                  }
+                </div>
+              }
             }
-          </button>
-        }
-      </div>
-
-      <!-- BYOD instructions (no zone assigned, or zone assigned + user opted out via byodOverride) -->
-      @if (!effectiveAssignment()) {
-        <div class="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg space-y-2">
-          <p class="text-xs text-amber-800 dark:text-amber-300 font-medium">No DNS zone — manual configuration required</p>
-          <p class="text-xs text-amber-700 dark:text-amber-400">
-            Create an <strong>A record</strong> on your DNS provider pointing the FQDN above to the cluster master IP:
-          </p>
-          @if (masterIp()) {
-            <div class="inline-flex items-center gap-1.5">
-              <code class="px-2 py-0.5 bg-background border border-amber-200 dark:border-amber-700 rounded text-xs font-mono text-foreground select-all">{{ masterIp() }}</code>
+            @if (assignment() && endpointType() === 'public') {
               <button
                 type="button"
-                (click)="copyIp()"
-                class="p-1 rounded text-amber-500 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 transition-colors"
-                [title]="copied() ? 'Copied!' : 'Copy IP'"
+                (click)="toggleByodOverride()"
+                class="mt-1.5 text-xs text-blue-600 dark:text-blue-400 hover:underline"
               >
-                <ng-icon [name]="copied() ? 'lucideCheck' : 'lucideCopy'" class="h-3 w-3" />
+                @if (byodOverride()) {
+                  @if (assignments().length > 1) {
+                    ← Use a cluster zone
+                  } @else {
+                    ← Use the cluster zone ({{ assignment()!.dnsZone.zoneName }})
+                  }
+                } @else {
+                  Use a different domain (BYOD) →
+                }
+              </button>
+            }
+          </div>
+
+          <!-- BYOD instructions (no zone assigned, or zone assigned + user opted out via byodOverride) -->
+          @if (!effectiveAssignment()) {
+            <div
+              class="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg space-y-2"
+            >
+              <p class="text-xs text-amber-800 dark:text-amber-300 font-medium">
+                No DNS zone — manual configuration required
+              </p>
+              <p class="text-xs text-amber-700 dark:text-amber-400">
+                Create an <strong>A record</strong> on your DNS provider pointing the FQDN above to
+                the cluster master IP:
+              </p>
+              @if (masterIp()) {
+                <div class="inline-flex items-center gap-1.5">
+                  <code
+                    class="px-2 py-0.5 bg-background border border-amber-200 dark:border-amber-700 rounded text-xs font-mono text-foreground select-all"
+                    >{{ masterIp() }}</code
+                  >
+                  <button
+                    type="button"
+                    (click)="copyIp()"
+                    class="p-1 rounded text-amber-500 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 transition-colors"
+                    [title]="copied() ? 'Copied!' : 'Copy IP'"
+                  >
+                    <ng-icon [name]="copied() ? 'lucideCheck' : 'lucideCopy'" class="h-3 w-3" />
+                  </button>
+                </div>
+              } @else {
+                <p class="text-xs text-amber-600 dark:text-amber-500 italic">
+                  Master IP not yet available.
+                </p>
+              }
+            </div>
+          }
+
+          <!-- Certificate type (domain mode only) -->
+          <div>
+            <label class="block text-xs font-medium text-muted-foreground mb-2">
+              Certificate
+            </label>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <button
+                type="button"
+                (click)="form.certChallenge = 'http-01'"
+                [class]="modeCardClass(form.certChallenge === 'http-01')"
+              >
+                <span class="text-xs font-medium">Single domain</span>
+                <p class="mt-1 text-[11px] text-muted-foreground">
+                  One certificate just for this address. Works with any DNS setup.
+                </p>
+              </button>
+              <button
+                type="button"
+                (click)="onCertChallengeChange('dns-01')"
+                [disabled]="!canUseDns01()"
+                [class]="modeCardClass(form.certChallenge === 'dns-01', !canUseDns01())"
+                [title]="wildcardButtonTooltip()"
+              >
+                <span class="text-xs font-medium">Wildcard</span>
+                <p class="mt-1 text-[11px] text-muted-foreground">
+                  Covers all subdomains of your cluster zone in one certificate. Requires managed
+                  DNS.
+                </p>
               </button>
             </div>
-          } @else {
-            <p class="text-xs text-amber-600 dark:text-amber-500 italic">Master IP not yet available.</p>
-          }
-        </div>
-      }
-
-      <!-- Certificate type (domain mode only) -->
-      <div>
-        <label class="block text-xs font-medium text-muted-foreground mb-2">
-          Certificate
-        </label>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-          <button
-            type="button"
-            (click)="form.certChallenge = 'http-01'"
-            [class]="modeCardClass(form.certChallenge === 'http-01')"
-          >
-            <span class="text-xs font-medium">Single domain</span>
-            <p class="mt-1 text-[11px] text-muted-foreground">
-              One certificate just for this address. Works with any DNS setup.
-            </p>
-          </button>
-          <button
-            type="button"
-            (click)="onCertChallengeChange('dns-01')"
-            [disabled]="!canUseDns01()"
-            [class]="modeCardClass(form.certChallenge === 'dns-01', !canUseDns01())"
-            [title]="wildcardButtonTooltip()"
-          >
-            <span class="text-xs font-medium">Wildcard</span>
-            <p class="mt-1 text-[11px] text-muted-foreground">
-              Covers all subdomains of your cluster zone in one certificate. Requires managed DNS.
-            </p>
-          </button>
-        </div>
-        @if (wildcardIssuersMissing()) {
-          <div class="mt-2 flex items-start gap-2 p-3 rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 text-xs text-amber-800 dark:text-amber-300">
-            <ng-icon name="lucideTriangleAlert" class="h-3.5 w-3.5 mt-0.5 shrink-0" />
-            <div class="flex-1 space-y-1">
-              <div class="font-medium">Wildcard issuers not ready on this cluster</div>
-              <div>The zone is wildcard-enabled, but the DNS-01 certificate issuers are not configured in cert-manager yet.</div>
-              <button
-                type="button"
-                (click)="configureWildcardIssuers.emit()"
-                class="underline hover:no-underline font-medium"
-              >Configure wildcard issuers →</button>
-            </div>
-          </div>
-        }
-      </div>
-      } <!-- end @if hostnameMode === 'domain' -->
-
-      <!-- TLS -->
-      <div class="space-y-3">
-        <label class="flex items-center gap-2 text-sm text-foreground cursor-pointer select-none">
-          <input type="checkbox" [(ngModel)]="form.certificateRequired" class="rounded" />
-          <ng-icon name="lucideShieldCheck" class="h-4 w-4 text-muted-foreground" />
-          Provision TLS certificate (HTTPS)
-        </label>
-
-        @if (!effectiveAssignment() && form.certificateRequired) {
-          <p class="ml-6 text-xs text-amber-600 dark:text-amber-400">
-            Single-domain certificate only — wildcard requires a managed DNS zone.
-          </p>
-        }
-
-        @if (form.certificateRequired && !issuersReady()) {
-          <div class="ml-6 flex items-start gap-1.5 text-xs text-red-700 dark:text-red-400">
-            <ng-icon name="lucideShieldAlert" class="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
-            <span>
-              No certificate issuer ready — TLS provisioning will fail.
-              <button
-                type="button"
-                (click)="configureIssuers.emit()"
-                class="ml-1 underline hover:no-underline"
-              >Configure issuers →</button>
-            </span>
-          </div>
-        }
-
-        @if (form.certificateRequired) {
-          <div class="ml-6 space-y-2">
-            <!-- CREATE MODE: callout depends on certificateMode config -->
-            @if (!isEditMode()) {
-              @switch (certificateMode) {
-                @case ('staging') {
-                  <div class="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg text-xs text-blue-800 dark:text-blue-300">
-                    <ng-icon name="lucideShieldCheck" class="h-3.5 w-3.5 mt-0.5 flex-shrink-0 text-blue-600 dark:text-blue-400" />
-                    <span>
-                      A <strong>staging</strong> certificate will be issued (Let's Encrypt Staging — not trusted by browsers).
-                      It will not auto-promote to production.
-                    </span>
+            @if (wildcardIssuersMissing()) {
+              <div
+                class="mt-2 flex items-start gap-2 p-3 rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 text-xs text-amber-800 dark:text-amber-300"
+              >
+                <ng-icon name="lucideTriangleAlert" class="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                <div class="flex-1 space-y-1">
+                  <div class="font-medium">Wildcard issuers not ready on this cluster</div>
+                  <div>
+                    The zone is wildcard-enabled, but the DNS-01 certificate issuers are not
+                    configured in cert-manager yet.
                   </div>
-                }
-                @case ('preflight') {
-                  <div class="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg text-xs text-blue-800 dark:text-blue-300">
-                    <ng-icon name="lucideShieldCheck" class="h-3.5 w-3.5 mt-0.5 flex-shrink-0 text-blue-600 dark:text-blue-400" />
-                    <span>
-                      Configured for <strong>preflight</strong>: a staging certificate will be issued first.
-                      Once it's valid, promote to production from the endpoint details.
-                    </span>
-                  </div>
-                }
-                @default {
-                  <div class="flex items-start gap-2 p-3 bg-muted/30 border border-border rounded-lg text-xs text-muted-foreground">
-                    <ng-icon name="lucideShieldCheck" class="h-3.5 w-3.5 mt-0.5 flex-shrink-0 text-[hsl(var(--ok))]" />
-                    <span>
-                      A <strong>production</strong> certificate will be issued (Let's Encrypt — browser-trusted).
-                    </span>
-                  </div>
-                }
-              }
-            }
-            <!-- EDIT: staging provider -->
-            @if (isEditMode() && isStagingCert()) {
-              <!-- Staging not yet valid -->
-              @if (!stagingCertValid()) {
-                <div class="flex items-start gap-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg text-xs text-yellow-800 dark:text-yellow-300">
-                  <ng-icon name="lucideShieldAlert" class="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
-                  <span>Using <strong>staging</strong> certificate (Let's Encrypt Staging). Promote to production once the staging cert is valid.</span>
+                  <button
+                    type="button"
+                    (click)="configureWildcardIssuers.emit()"
+                    class="underline hover:no-underline font-medium"
+                  >
+                    Configure wildcard issuers →
+                  </button>
                 </div>
-              }
-              <!-- Staging valid → show promote callout -->
-              @if (stagingCertValid()) {
-                <div class="p-3 border rounded-lg"
-                  [class]="promoteToProd() ? 'border-primary bg-primary/5' : 'border-border bg-muted/30'">
-                  <label class="flex items-start gap-2 cursor-pointer select-none">
-                    <input type="checkbox" [checked]="promoteToProd()" (change)="promoteToProd.set(!promoteToProd())" class="mt-0.5 rounded" />
-                    <div>
-                      <p class="text-sm font-medium text-foreground">Promote to Production</p>
-                      <p class="text-xs text-muted-foreground mt-0.5">Staging certificate is valid. Switch to a browser-trusted Let's Encrypt production certificate.</p>
-                    </div>
-                  </label>
-                </div>
-              }
-            }
-            <!-- EDIT: already on production -->
-            @if (isEditMode() && isProdCert()) {
-              <div class="flex items-center gap-2 p-3 bg-muted/30 border border-border rounded-lg text-xs text-muted-foreground">
-                <ng-icon name="lucideShieldCheck" class="h-3.5 w-3.5 flex-shrink-0 text-[hsl(var(--ok))]" />
-                <span>Using <strong>production</strong> certificate (Let's Encrypt).</span>
               </div>
             }
           </div>
         }
-      </div>
-      } <!-- end @if endpointType === 'public' -->
+        <!-- end @if hostnameMode === 'domain' -->
+
+        <!-- TLS -->
+        <div class="space-y-3">
+          <label class="flex items-center gap-2 text-sm text-foreground cursor-pointer select-none">
+            <input type="checkbox" [(ngModel)]="form.certificateRequired" class="rounded" />
+            <ng-icon name="lucideShieldCheck" class="h-4 w-4 text-muted-foreground" />
+            Provision TLS certificate (HTTPS)
+          </label>
+
+          @if (!effectiveAssignment() && form.certificateRequired) {
+            <p class="ml-6 text-xs text-amber-600 dark:text-amber-400">
+              Single-domain certificate only — wildcard requires a managed DNS zone.
+            </p>
+          }
+
+          @if (form.certificateRequired && !issuersReady()) {
+            <div class="ml-6 flex items-start gap-1.5 text-xs text-red-700 dark:text-red-400">
+              <ng-icon name="lucideShieldAlert" class="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
+              <span>
+                No certificate issuer ready — TLS provisioning will fail.
+                <button
+                  type="button"
+                  (click)="configureIssuers.emit()"
+                  class="ml-1 underline hover:no-underline"
+                >
+                  Configure issuers →
+                </button>
+              </span>
+            </div>
+          }
+
+          @if (form.certificateRequired) {
+            <div class="ml-6 space-y-2">
+              <!-- CREATE MODE: callout depends on certificateMode config -->
+              @if (!isEditMode()) {
+                @switch (certificateMode) {
+                  @case ('staging') {
+                    <div
+                      class="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg text-xs text-blue-800 dark:text-blue-300"
+                    >
+                      <ng-icon
+                        name="lucideShieldCheck"
+                        class="h-3.5 w-3.5 mt-0.5 flex-shrink-0 text-blue-600 dark:text-blue-400"
+                      />
+                      <span>
+                        A <strong>staging</strong> certificate will be issued (Let's Encrypt Staging
+                        — not trusted by browsers). It will not auto-promote to production.
+                      </span>
+                    </div>
+                  }
+                  @case ('preflight') {
+                    <div
+                      class="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg text-xs text-blue-800 dark:text-blue-300"
+                    >
+                      <ng-icon
+                        name="lucideShieldCheck"
+                        class="h-3.5 w-3.5 mt-0.5 flex-shrink-0 text-blue-600 dark:text-blue-400"
+                      />
+                      <span>
+                        Configured for <strong>preflight</strong>: a staging certificate will be
+                        issued first. Once it's valid, promote to production from the endpoint
+                        details.
+                      </span>
+                    </div>
+                  }
+                  @default {
+                    <div
+                      class="flex items-start gap-2 p-3 bg-muted/30 border border-border rounded-lg text-xs text-muted-foreground"
+                    >
+                      <ng-icon
+                        name="lucideShieldCheck"
+                        class="h-3.5 w-3.5 mt-0.5 flex-shrink-0 text-[hsl(var(--ok))]"
+                      />
+                      <span>
+                        A <strong>production</strong> certificate will be issued (Let's Encrypt —
+                        browser-trusted).
+                      </span>
+                    </div>
+                  }
+                }
+              }
+              <!-- EDIT: staging provider -->
+              @if (isEditMode() && isStagingCert()) {
+                <!-- Staging not yet valid -->
+                @if (!stagingCertValid()) {
+                  <div
+                    class="flex items-start gap-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg text-xs text-yellow-800 dark:text-yellow-300"
+                  >
+                    <ng-icon name="lucideShieldAlert" class="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
+                    <span
+                      >Using <strong>staging</strong> certificate (Let's Encrypt Staging). Promote
+                      to production once the staging cert is valid.</span
+                    >
+                  </div>
+                }
+                <!-- Staging valid → show promote callout -->
+                @if (stagingCertValid()) {
+                  <div
+                    class="p-3 border rounded-lg"
+                    [class]="
+                      promoteToProd() ? 'border-primary bg-primary/5' : 'border-border bg-muted/30'
+                    "
+                  >
+                    <label class="flex items-start gap-2 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        [checked]="promoteToProd()"
+                        (change)="promoteToProd.set(!promoteToProd())"
+                        class="mt-0.5 rounded"
+                      />
+                      <div>
+                        <p class="text-sm font-medium text-foreground">Promote to Production</p>
+                        <p class="text-xs text-muted-foreground mt-0.5">
+                          Staging certificate is valid. Switch to a browser-trusted Let's Encrypt
+                          production certificate.
+                        </p>
+                      </div>
+                    </label>
+                  </div>
+                }
+              }
+              <!-- EDIT: already on production -->
+              @if (isEditMode() && isProdCert()) {
+                <div
+                  class="flex items-center gap-2 p-3 bg-muted/30 border border-border rounded-lg text-xs text-muted-foreground"
+                >
+                  <ng-icon
+                    name="lucideShieldCheck"
+                    class="h-3.5 w-3.5 flex-shrink-0 text-[hsl(var(--ok))]"
+                  />
+                  <span>Using <strong>production</strong> certificate (Let's Encrypt).</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+      <!-- end @if endpointType === 'public' -->
 
       @if (endpointType() === 'internal') {
         <div>
@@ -539,8 +695,12 @@ export interface AppOption {
                 (ngModelChange)="onSubdomainChange()"
                 [placeholder]="subdomainPlaceholder()"
                 [disabled]="isEditMode()"
-                [class]="'flex-1 min-w-0 px-3 py-2 border rounded-l-md bg-background text-sm text-foreground font-mono disabled:bg-muted disabled:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-inset focus:border-transparent ' +
-                  (subdomainError() ? 'border-red-400 dark:border-red-500 focus:ring-red-500' : 'border-border focus:ring-blue-500')"
+                [class]="
+                  'flex-1 min-w-0 px-3 py-2 border rounded-l-md bg-background text-sm text-foreground font-mono disabled:bg-muted disabled:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-inset focus:border-transparent ' +
+                  (subdomainError()
+                    ? 'border-red-400 dark:border-red-500 focus:ring-red-500'
+                    : 'border-border focus:ring-blue-500')
+                "
               />
               <button
                 type="button"
@@ -551,7 +711,9 @@ export interface AppOption {
               >
                 <ng-icon name="lucideWand2" class="h-3.5 w-3.5" />
               </button>
-              <span class="inline-flex items-center px-3 py-2 border border-l-0 rounded-r-md bg-muted text-sm text-muted-foreground font-mono whitespace-nowrap select-none">
+              <span
+                class="inline-flex items-center px-3 py-2 border border-l-0 rounded-r-md bg-muted text-sm text-muted-foreground font-mono whitespace-nowrap select-none"
+              >
                 .internal.{{ zone.dnsZone.zoneName }}
               </span>
             </div>
@@ -559,13 +721,17 @@ export interface AppOption {
               <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ subdomainError() }}</p>
             } @else {
               <p class="mt-1 text-xs text-muted-foreground">
-                Reachable only through the Flui Auth Proxy. The TLS certificate is provisioned by the cluster wildcard issuer — no per-endpoint cert configuration needed.
+                Reachable only through the Flui Auth Proxy. The TLS certificate is provisioned by
+                the cluster wildcard issuer — no per-endpoint cert configuration needed.
               </p>
             }
           } @else {
-            <div class="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+            <div
+              class="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg"
+            >
               <p class="text-xs text-amber-800 dark:text-amber-300">
-                No DNS zone assigned. Internal endpoints require a managed DNS zone with a wildcard certificate on the cluster.
+                No DNS zone assigned. Internal endpoints require a managed DNS zone with a wildcard
+                certificate on the cluster.
               </p>
             </div>
           }
@@ -618,7 +784,9 @@ export class ClusterEndpointFormComponent implements OnChanges {
   /** True while an Auth Proxy install request is in flight. */
   authzInstalling = input<boolean>(false);
 
-  save = output<{ clusterId: string; dto: CreateAppEndpointDto } | { id: string; dto: UpdateAppEndpointDto }>();
+  save = output<
+    { clusterId: string; dto: CreateAppEndpointDto } | { id: string; dto: UpdateAppEndpointDto }
+  >();
   cancelled = output<void>();
   configureIssuers = output<void>();
   /** Fired when the user clicks "Configure wildcard issuers" on the DNS-01 missing banner. */
@@ -633,7 +801,8 @@ export class ClusterEndpointFormComponent implements OnChanges {
   private dnsDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
   protected certificateMode = this.appConfig.certificateMode;
-  protected startsInStaging = this.certificateMode === 'staging' || this.certificateMode === 'preflight';
+  protected startsInStaging =
+    this.certificateMode === 'staging' || this.certificateMode === 'preflight';
 
   // Declared above `form`: emptyForm() reads effectiveAssignment().
   protected byodOverride = signal(false);
@@ -641,8 +810,8 @@ export class ClusterEndpointFormComponent implements OnChanges {
   protected selectedZoneId = signal('');
   /** Primary (first-assigned) zone — internal endpoints and cluster-wide hints use it. */
   protected assignment = computed(() => this.assignments()[0] ?? null);
-  protected selectedAssignment = computed(() =>
-    this.assignments().find(a => a.id === this.selectedZoneId()) ?? this.assignment(),
+  protected selectedAssignment = computed(
+    () => this.assignments().find((a) => a.id === this.selectedZoneId()) ?? this.assignment(),
   );
   protected effectiveAssignment = computed(() =>
     this.byodOverride() ? null : this.selectedAssignment(),
@@ -671,12 +840,16 @@ export class ClusterEndpointFormComponent implements OnChanges {
   );
 
   protected internalHostingMissingLabel = computed(() => {
-    const labels = this.internalHostingMissing().map(m => {
+    const labels = this.internalHostingMissing().map((m) => {
       switch (m) {
-        case 'dns_zone': return 'DNS zone';
-        case 'wildcard_issuer': return 'wildcard TLS issuer';
-        case 'internal_wildcard_dns': return 'internal wildcard DNS';
-        default: return m;
+        case 'dns_zone':
+          return 'DNS zone';
+        case 'wildcard_issuer':
+          return 'wildcard TLS issuer';
+        case 'internal_wildcard_dns':
+          return 'internal wildcard DNS';
+        default:
+          return m;
       }
     });
     return labels.length ? labels.join(', ') : 'cluster prerequisites';
@@ -724,7 +897,7 @@ export class ClusterEndpointFormComponent implements OnChanges {
     return !!zone && !!zone.wildcardCertificate && !this.wildcardIssuersReady();
   });
 
-  protected ipDashed = computed(() => this.masterIp().replaceAll('.',  '-'));
+  protected ipDashed = computed(() => this.masterIp().replaceAll('.', '-'));
 
   protected effectiveIpSlug = computed(() => {
     const override = this.form.ipSlugOverride.trim();
@@ -734,7 +907,7 @@ export class ClusterEndpointFormComponent implements OnChanges {
   protected ipFqdnPreview = computed(() => {
     const ip = this.masterIp();
     if (!ip) return '';
-    return `${this.effectiveIpSlug()}.${ip.replaceAll('.',  '-')}.nip.io`;
+    return `${this.effectiveIpSlug()}.${ip.replaceAll('.', '-')}.nip.io`;
   });
 
   protected modeCardClass(active: boolean, disabled = false): string {
@@ -768,14 +941,12 @@ export class ClusterEndpointFormComponent implements OnChanges {
   }
 
   protected isEditMode = computed(() => !!this.endpoint());
-  protected isStagingCert = computed(() =>
-    this.endpoint()?.certificateProvider === 'lets_encrypt_staging'
+  protected isStagingCert = computed(
+    () => this.endpoint()?.certificateProvider === 'lets_encrypt_staging',
   );
-  protected isProdCert = computed(() =>
-    this.endpoint()?.certificateProvider === 'lets_encrypt'
-  );
-  protected stagingCertValid = computed(() =>
-    this.isStagingCert() && this.endpoint()?.certificateStatus === 'valid'
+  protected isProdCert = computed(() => this.endpoint()?.certificateProvider === 'lets_encrypt');
+  protected stagingCertValid = computed(
+    () => this.isStagingCert() && this.endpoint()?.certificateStatus === 'valid',
   );
 
   protected fqdnPlaceholder = computed(() => {
@@ -793,16 +964,16 @@ export class ClusterEndpointFormComponent implements OnChanges {
 
   protected selectedAppName = computed(() => {
     const id = this.form.applicationId;
-    return this.applications().find(a => a.id === id)?.name ?? id;
+    return this.applications().find((a) => a.id === id)?.name ?? id;
   });
 
   private slugFromSelect(): string {
-    return this.applications().find(a => a.id === this.form.applicationId)?.slug ?? '';
+    return this.applications().find((a) => a.id === this.form.applicationId)?.slug ?? '';
   }
 
   protected currentSlug = computed(() => {
     const slug = this.fixedAppSlug() || this.slugFromSelect();
-    return slug.replaceAll('_',  '-').toLowerCase();
+    return slug.replaceAll('_', '-').toLowerCase();
   });
 
   protected toggleByodOverride(): void {
@@ -826,7 +997,7 @@ export class ClusterEndpointFormComponent implements OnChanges {
   private prefillZoneFromExistingFqdn(): void {
     const fqdn = (this.endpoint()?.fqdn ?? '').toLowerCase();
     const match = this.assignments()
-      .filter(a => fqdn === a.dnsZone.zoneName || fqdn.endsWith('.' + a.dnsZone.zoneName))
+      .filter((a) => fqdn === a.dnsZone.zoneName || fqdn.endsWith('.' + a.dnsZone.zoneName))
       .sort((x, y) => y.dnsZone.zoneName.length - x.dnsZone.zoneName.length)[0];
     if (!match) return;
     this.selectedZoneId.set(match.id);
@@ -966,7 +1137,7 @@ export class ClusterEndpointFormComponent implements OnChanges {
   private async runDnsCheck(hostname: string, expectedIp: string): Promise<void> {
     try {
       const res = await firstValueFrom(
-        this.dnsZonesApi.dnsZoneControllerVerifyDns(hostname, expectedIp)
+        this.dnsZonesApi.dnsZoneControllerVerifyDns(hostname, expectedIp),
       );
       this.dnsResult.set({ ok: res.matches, resolvedAddresses: res.resolvedAddresses });
     } catch {
@@ -1002,7 +1173,7 @@ export class ClusterEndpointFormComponent implements OnChanges {
   protected onAppChange(appId: string): void {
     this.selectedAppId.set(appId);
     const zone = this.effectiveAssignment();
-    const slug = this.applications().find(a => a.id === appId)?.slug ?? '';
+    const slug = this.applications().find((a) => a.id === appId)?.slug ?? '';
     if (zone) {
       if (!this.form.subdomainPrefix && slug) this.form.subdomainPrefix = slug;
     } else if (!this.form.fqdn && slug) {
@@ -1028,10 +1199,7 @@ export class ClusterEndpointFormComponent implements OnChanges {
     // (Internal always uses the cluster zone — byodOverride is ignored here.)
     if (this.endpointType() === 'internal') {
       const zone = this.assignment();
-      const subdomainOk =
-        !!zone &&
-        !!this.form.subdomainPrefix.trim() &&
-        !this.subdomainError();
+      const subdomainOk = !!zone && !!this.form.subdomainPrefix.trim() && !this.subdomainError();
       // In edit mode the capability/authz gates were enforced at create time.
       const gatesOk = this.isEditMode() || this.internalAvailable();
       return subdomainOk && gatesOk;
@@ -1078,9 +1246,7 @@ export class ClusterEndpointFormComponent implements OnChanges {
     if (this.form.hostnameMode === 'ip') {
       const slugOverride = this.form.ipSlugOverride.trim();
       const ip = this.masterIp();
-      return (slugOverride && ip)
-        ? `${slugOverride}.${ip.replaceAll('.',  '-')}.nip.io`
-        : undefined;
+      return slugOverride && ip ? `${slugOverride}.${ip.replaceAll('.', '-')}.nip.io` : undefined;
     }
     if (this.effectiveAssignment()) {
       const prefix = this.form.subdomainPrefix.trim();
@@ -1098,9 +1264,10 @@ export class ClusterEndpointFormComponent implements OnChanges {
   private buildUpdateDto(ep: AppEndpointResponseDto): UpdateAppEndpointDto {
     const resolvedFqdn = this.resolveFqdn();
     const zone = this.zoneForSubmit();
-    const providerForSubmit = (this.form.certificateRequired && this.promoteToProd())
-      ? 'lets_encrypt'
-      : this.form.certificateProvider;
+    const providerForSubmit =
+      this.form.certificateRequired && this.promoteToProd()
+        ? 'lets_encrypt'
+        : this.form.certificateProvider;
     // Explicit null detaches a previously linked zone (generated client
     // still types the field as string — backend accepts null for BYOD).
     let zoneIdUpdate: Partial<UpdateAppEndpointDto> = {};
@@ -1131,7 +1298,10 @@ export class ClusterEndpointFormComponent implements OnChanges {
       ...(zone ? { clusterDnsZoneId: zone.id } : {}),
       certificateRequired: this.form.certificateRequired,
       ...(this.form.certificateRequired
-        ? { certificateProvider: this.form.certificateProvider as CreateAppEndpointDto.CertificateProviderEnum }
+        ? {
+            certificateProvider: this.form
+              .certificateProvider as CreateAppEndpointDto.CertificateProviderEnum,
+          }
         : {}),
       hostnameMode: this.form.hostnameMode as CreateAppEndpointDto.HostnameModeEnum,
       certChallenge: this.form.certChallenge as CreateAppEndpointDto.CertChallengeEnum,
@@ -1149,7 +1319,9 @@ export class ClusterEndpointFormComponent implements OnChanges {
       subdomainPrefix: '',
       ipSlugOverride: '',
       certificateRequired: false,
-      certificateProvider: (this.startsInStaging ? 'lets_encrypt_staging' : 'lets_encrypt') as string,
+      certificateProvider: (this.startsInStaging
+        ? 'lets_encrypt_staging'
+        : 'lets_encrypt') as string,
       hostnameMode: defaultHostname,
       certChallenge: defaultChallenge,
     };

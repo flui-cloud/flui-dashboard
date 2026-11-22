@@ -1,7 +1,11 @@
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideLoader, lucideRotateCcw } from '@ng-icons/lucide';
-import { DnsSetupWizardService, SYSTEM_APP_TITLES, SystemNameRow } from './dns-setup-wizard.service';
+import {
+  DnsSetupWizardService,
+  SYSTEM_APP_TITLES,
+  SystemNameRow,
+} from './dns-setup-wizard.service';
 
 @Component({
   selector: 'app-dns-wizard-names-step',
@@ -21,7 +25,11 @@ import { DnsSetupWizardService, SYSTEM_APP_TITLES, SystemNameRow } from './dns-s
       <div class="flex flex-col gap-3 p-2">
         @for (row of wiz.systemNames(); track row.app) {
           <div [attr.data-testid]="'name-row-' + row.app">
-            <label class="text-xs font-medium text-foreground block mb-1" [attr.for]="'name-' + row.app">{{ title(row) }}</label>
+            <label
+              class="text-xs font-medium text-foreground block mb-1"
+              [attr.for]="'name-' + row.app"
+              >{{ title(row) }}</label
+            >
             <div class="flex items-stretch">
               <input
                 type="text"
@@ -35,7 +43,9 @@ import { DnsSetupWizardService, SYSTEM_APP_TITLES, SystemNameRow } from './dns-s
                 class="flex-1 min-w-0 px-3 py-1.5 border rounded-l-md bg-background text-sm text-foreground font-mono focus:outline-none focus:ring-1 focus:ring-primary"
                 [class.border-destructive]="row.error"
               />
-              <span class="inline-flex items-center px-2 py-1.5 border border-l-0 rounded-r-md bg-muted text-sm text-muted-foreground font-mono whitespace-nowrap select-none">
+              <span
+                class="inline-flex items-center px-2 py-1.5 border border-l-0 rounded-r-md bg-muted text-sm text-muted-foreground font-mono whitespace-nowrap select-none"
+              >
                 .{{ wiz.namesZoneName() }}
               </span>
               @if (row.label !== row.defaultLabel) {
@@ -51,7 +61,9 @@ import { DnsSetupWizardService, SYSTEM_APP_TITLES, SystemNameRow } from './dns-s
               }
             </div>
             @if (row.error) {
-              <p class="mt-1 text-xs text-destructive" [attr.data-testid]="'name-error-' + row.app">{{ row.error }}</p>
+              <p class="mt-1 text-xs text-destructive" [attr.data-testid]="'name-error-' + row.app">
+                {{ row.error }}
+              </p>
             }
           </div>
         }

@@ -1,10 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom, map } from 'rxjs';
@@ -18,28 +12,25 @@ import { ScalingGroupStore } from './scaling-group.store';
 import { ToastService } from '../../../shared/services/toast.service';
 import { RemovalPreview, SectionGroup } from '../../model/scaling-section.models';
 import { RemovalPreviewNoteComponent } from './removal-preview-note.component';
-import {
-  ScalingCostDraft,
-  WriteScalingGroup,
-} from '../../model/scaling-group.models';
+import { ScalingCostDraft, WriteScalingGroup } from '../../model/scaling-group.models';
 
 @Component({
   selector: 'app-scaling-group-tab',
   standalone: true,
-  imports: [RouterLink, GroupSettingsTableComponent, GroupCostComponent, RemovalPreviewNoteComponent],
+  imports: [
+    RouterLink,
+    GroupSettingsTableComponent,
+    GroupCostComponent,
+    RemovalPreviewNoteComponent,
+  ],
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (draft(); as d) {
       <section class="space-y-3" data-testid="group-tab">
-        <div
-          class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1"
-        >
+        <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
           <h2 class="text-label m-0">Configuration</h2>
-          <a
-            [routerLink]="['/cluster', d.group().clusterId, 'scaling']"
-            class="card-link"
-          >
+          <a [routerLink]="['/cluster', d.group().clusterId, 'scaling']" class="card-link">
             Open this cluster's scaling →
           </a>
         </div>
@@ -70,10 +61,7 @@ import {
 
           <div class="flex shrink-0 items-center gap-2">
             @if (problem(d); as message) {
-              <span
-                class="text-xs text-red-600 dark:text-red-400"
-                data-testid="group-save-error"
-              >
+              <span class="text-xs text-red-600 dark:text-red-400" data-testid="group-save-error">
                 {{ message }}
               </span>
             }
@@ -128,28 +116,27 @@ import {
               >
                 {{ removing() ? 'Removing…' : 'Remove' }}
               </button>
-              <button type="button" class="text-muted-foreground" [disabled]="removing()" (click)="confirmRemove.set(false)">Cancel</button>
+              <button
+                type="button"
+                class="text-muted-foreground"
+                [disabled]="removing()"
+                (click)="confirmRemove.set(false)"
+              >
+                Cancel
+              </button>
             </span>
           }
         </div>
       </section>
     } @else {
       <section class="card-surface p-6" data-testid="group-tab-unknown">
-        <h2 class="m-0 text-base font-medium text-foreground">
-          No such scaling group
-        </h2>
+        <h2 class="m-0 text-base font-medium text-foreground">No such scaling group</h2>
         <p class="mt-1.5 max-w-prose text-sm text-muted-foreground">
           Nothing is configured under
-          <span class="font-mono text-foreground">{{
-            groupId() ?? 'no id'
-          }}</span
-          >. A group that was removed, or a link that outlived it.
+          <span class="font-mono text-foreground">{{ groupId() ?? 'no id' }}</span>. A group that
+          was removed, or a link that outlived it.
         </p>
-        <a
-          routerLink="/scaling"
-          class="card-link"
-          data-testid="back-to-scaling"
-        >
+        <a routerLink="/scaling" class="card-link" data-testid="back-to-scaling">
           Back to every cluster
         </a>
       </section>
@@ -204,19 +191,14 @@ export class ScalingGroupTabComponent {
     }
   }
 
-  protected readonly groupId = toSignal(
-    this.params.pipe(map((p) => p.get('groupId'))),
-    {
-      initialValue:
-        this.route.parent?.snapshot.paramMap.get('groupId') ??
-        this.route.snapshot.paramMap.get('groupId') ??
-        null,
-    },
-  );
+  protected readonly groupId = toSignal(this.params.pipe(map((p) => p.get('groupId'))), {
+    initialValue:
+      this.route.parent?.snapshot.paramMap.get('groupId') ??
+      this.route.snapshot.paramMap.get('groupId') ??
+      null,
+  });
 
-  protected readonly draft = computed<GroupDraft | null>(() =>
-    this.drafts.draft(this.groupId()),
-  );
+  protected readonly draft = computed<GroupDraft | null>(() => this.drafts.draft(this.groupId()));
 
   /**
    * What this group will do once saved, in the same words the cluster page
@@ -254,10 +236,7 @@ export class ScalingGroupTabComponent {
     const bounds = draft.boundProblems();
     const first = bounds.min ?? bounds.desired ?? bounds.max;
     if (first) return first;
-    if (
-      group.provision === 'automatic' &&
-      !isPositiveAmount(group.limits.maxMonthlyCost)
-    ) {
+    if (group.provision === 'automatic' && !isPositiveAmount(group.limits.maxMonthlyCost)) {
       return 'Adding nodes automatically needs a spending ceiling, the safety net under the node limits.';
     }
     return null;
@@ -265,10 +244,7 @@ export class ScalingGroupTabComponent {
 
   protected changed(draft: GroupDraft): boolean {
     const saved = this.store.group().data;
-    return (
-      !saved ||
-      JSON.stringify(bodyOf(draft.group())) !== JSON.stringify(bodyOf(saved))
-    );
+    return !saved || JSON.stringify(bodyOf(draft.group())) !== JSON.stringify(bodyOf(saved));
   }
 
   /** The preview, only while the limits on screen are still the ones it was read for. */
@@ -314,17 +290,14 @@ export class ScalingGroupTabComponent {
     this.failure.set(null);
     this.saving.set(true);
     try {
-      await firstValueFrom(
-        this.api.updateGroup(draft.group().id, bodyOf(draft.group())),
-      );
+      await firstValueFrom(this.api.updateGroup(draft.group().id, bodyOf(draft.group())));
       this.store.reload();
       this.toast.showSuccess({
         title: 'Group saved',
         message: this.consequence(draft).sentence,
       });
     } catch (error: unknown) {
-      const body = (error as { error?: { message?: string | string[] } })?.error
-        ?.message;
+      const body = (error as { error?: { message?: string | string[] } })?.error?.message;
       const message = Array.isArray(body)
         ? body.join('. ')
         : (body ?? 'This group could not be saved.');

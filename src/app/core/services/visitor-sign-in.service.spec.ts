@@ -31,13 +31,23 @@ describe('VisitorSignInService', () => {
   let forget: jasmine.Spy;
   let probe: jasmine.Spy;
 
-  const build = (opts: { visitor?: boolean; url?: string; visitorSession?: boolean; signedIn?: boolean } = {}) => {
+  const build = (
+    opts: { visitor?: boolean; url?: string; visitorSession?: boolean; signedIn?: boolean } = {},
+  ) => {
     leave = jasmine.createSpy('leave');
-    oidc = jasmine.createSpyObj<OidcAuthService>('OidcAuthService', ['login', 'renewToken', 'isVisitorSession']);
+    oidc = jasmine.createSpyObj<OidcAuthService>('OidcAuthService', [
+      'login',
+      'renewToken',
+      'isVisitorSession',
+    ]);
     oidc.login.and.resolveTo();
     oidc.renewToken.and.returnValue(of('t'));
     oidc.isVisitorSession.and.returnValue(opts.visitorSession ?? false);
-    auth = jasmine.createSpyObj<AuthService>('AuthService', ['refreshAuthState', 'loadCurrentUser', 'isUserAuthenticated']);
+    auth = jasmine.createSpyObj<AuthService>('AuthService', [
+      'refreshAuthState',
+      'loadCurrentUser',
+      'isUserAuthenticated',
+    ]);
     auth.loadCurrentUser.and.returnValue(of(void 0));
     auth.isUserAuthenticated.and.returnValue(opts.signedIn ?? true);
     toast = jasmine.createSpyObj<ToastService>('ToastService', ['showError', 'showSuccess']);
@@ -53,7 +63,10 @@ describe('VisitorSignInService', () => {
         { provide: AuthService, useValue: auth },
         { provide: ToastService, useValue: toast },
         { provide: AppConfigService, useValue: { apiBaseUrl: 'http://api' } },
-        { provide: SandboxService, useValue: { visitor: signal(opts.visitor ?? true), forget, probe } },
+        {
+          provide: SandboxService,
+          useValue: { visitor: signal(opts.visitor ?? true), forget, probe },
+        },
       ],
     });
     http = TestBed.inject(HttpTestingController);
@@ -69,7 +82,10 @@ describe('VisitorSignInService', () => {
     sessionStorage.clear();
   });
 
-  const navigatedTo = () => navigateByUrl.calls.allArgs().map(([u]) => router.serializeUrl(typeof u === 'string' ? router.parseUrl(u) : u));
+  const navigatedTo = () =>
+    navigateByUrl.calls
+      .allArgs()
+      .map(([u]) => router.serializeUrl(typeof u === 'string' ? router.parseUrl(u) : u));
 
   it('opens the dialog for a visitor and remembers where they were going', fakeAsync(() => {
     const gate = build();
@@ -136,7 +152,9 @@ describe('VisitorSignInService', () => {
     oidc.renewToken.and.returnValue(throwError(() => new Error('no')));
     void gate.handleReturn();
     flushMicrotasks();
-    http.expectOne(`${API}/upgrade/finish`).flush({ outcome: 'upgraded', reason: null, returnTo: null, linkNonce: null });
+    http
+      .expectOne(`${API}/upgrade/finish`)
+      .flush({ outcome: 'upgraded', reason: null, returnTo: null, linkNonce: null });
     flushMicrotasks();
     expect(toast.showSuccess).toHaveBeenCalled();
   }));
@@ -146,7 +164,10 @@ describe('VisitorSignInService', () => {
     void gate.handleReturn();
     flushMicrotasks();
     http.expectOne(`${API}/upgrade/finish`).flush({
-      outcome: 'signin-as-existing', reason: null, returnTo: '/apps/deploy/new', linkNonce: 'n-1',
+      outcome: 'signin-as-existing',
+      reason: null,
+      returnTo: '/apps/deploy/new',
+      linkNonce: 'n-1',
     });
     flushMicrotasks();
     expect(JSON.parse(sessionStorage.getItem(LINK_KEY)!)).toEqual({ nonce: 'n-1' });
@@ -159,7 +180,9 @@ describe('VisitorSignInService', () => {
     const gate = build({ url: '/?visitor=finish&flow=f-1', visitorSession: true });
     void gate.handleReturn();
     flushMicrotasks();
-    http.expectOne(`${API}/upgrade/finish`).flush({ outcome: 'signin-as-existing', reason: null, returnTo: null, linkNonce: null });
+    http
+      .expectOne(`${API}/upgrade/finish`)
+      .flush({ outcome: 'signin-as-existing', reason: null, returnTo: null, linkNonce: null });
     flushMicrotasks();
     expect(sessionStorage.getItem(LINK_KEY)).toBeNull();
     expect(oidc.login).toHaveBeenCalled();
@@ -169,7 +192,9 @@ describe('VisitorSignInService', () => {
     const gate = build({ url: '/?visitor=finish&flow=f-1', visitorSession: true });
     void gate.handleReturn();
     flushMicrotasks();
-    http.expectOne(`${API}/upgrade/finish`).flush({ outcome: 'refused', reason: 'failed', returnTo: null, linkNonce: null });
+    http
+      .expectOne(`${API}/upgrade/finish`)
+      .flush({ outcome: 'refused', reason: 'failed', returnTo: null, linkNonce: null });
     flushMicrotasks();
     expect(toast.showError).toHaveBeenCalledWith(SIGN_IN_FAILED);
     expect(oidc.login).not.toHaveBeenCalled();

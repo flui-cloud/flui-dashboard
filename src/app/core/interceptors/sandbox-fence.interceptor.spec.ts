@@ -12,7 +12,11 @@ describe('sandboxFenceInterceptor', () => {
   let backend: HttpTestingController;
   let allowed: boolean;
   let signInNeeded: boolean;
-  let notices: Array<{ title?: string; message: string; action?: { label: string; onClick: () => void } }>;
+  let notices: Array<{
+    title?: string;
+    message: string;
+    action?: { label: string; onClick: () => void };
+  }>;
   let visitInstallPage: jasmine.Spy;
 
   beforeEach(() => {
@@ -30,7 +34,16 @@ describe('sandboxFenceInterceptor', () => {
           useValue: { allows: () => allowed, needsSignIn: () => signInNeeded },
         },
         { provide: InstallPromptService, useValue: { visitInstallPage } },
-        { provide: ToastService, useValue: { showInfo: (n: { title?: string; message: string; action?: { label: string; onClick: () => void } }) => notices.push(n) } },
+        {
+          provide: ToastService,
+          useValue: {
+            showInfo: (n: {
+              title?: string;
+              message: string;
+              action?: { label: string; onClick: () => void };
+            }) => notices.push(n),
+          },
+        },
       ],
     });
     http = TestBed.inject(HttpClient);
@@ -104,24 +117,33 @@ describe('sandboxFenceInterceptor', () => {
 
   it('says nothing about the read-only demo for any other refusal', () => {
     allowed = true;
-    http.post('https://api.example.test/api/v1/applications/a/deploy', {}).subscribe({ error: () => undefined });
+    http
+      .post('https://api.example.test/api/v1/applications/a/deploy', {})
+      .subscribe({ error: () => undefined });
     backend
       .expectOne('https://api.example.test/api/v1/applications/a/deploy')
-      .flush({ statusCode: 401, message: 'jwt expired' }, { status: 401, statusText: 'Unauthorized' });
+      .flush(
+        { statusCode: 401, message: 'jwt expired' },
+        { status: 401, statusText: 'Unauthorized' },
+      );
     expect(notices).toEqual([]);
   });
 
   it('leaves other hosts alone', () => {
     let body: unknown;
-    http.get('https://auth.example.test/.well-known/openid-configuration').subscribe((b) => (body = b));
-    backend.expectOne('https://auth.example.test/.well-known/openid-configuration').flush({ issuer: 'x' });
+    http
+      .get('https://auth.example.test/.well-known/openid-configuration')
+      .subscribe((b) => (body = b));
+    backend
+      .expectOne('https://auth.example.test/.well-known/openid-configuration')
+      .flush({ issuer: 'x' });
     expect(body).toEqual({ issuer: 'x' });
   });
 
   it('reads the API path out of the full address', () => {
-    expect(apiPath('https://api.example.test/api/v1/applications/a?x=1', 'https://api.example.test/')).toBe(
-      '/applications/a?x=1',
-    );
+    expect(
+      apiPath('https://api.example.test/api/v1/applications/a?x=1', 'https://api.example.test/'),
+    ).toBe('/applications/a?x=1');
     expect(apiPath('https://elsewhere.test/api/v1/a', 'https://api.example.test')).toBeNull();
   });
 });

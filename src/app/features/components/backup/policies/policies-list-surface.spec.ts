@@ -41,11 +41,15 @@ function input(over: Partial<PoliciesListSurfaceInput> = {}): PoliciesListSurfac
 }
 
 function snapshotOf(over: Partial<PoliciesListSurfaceInput> = {}): SurfaceSnapshot {
-  return buildPoliciesListSurface(input(over), { revision: 1, generatedAt: '2026-09-02T09:00:00.000Z' });
+  return buildPoliciesListSurface(input(over), {
+    revision: 1,
+    generatedAt: '2026-09-02T09:00:00.000Z',
+  });
 }
 
 const listScope = (s: SurfaceSnapshot) => s.scopes.find((x) => x.kind === 'list')!;
-const rowScope = (s: SurfaceSnapshot, id: string) => s.scopes.find((x) => x.id === `backup-policies:list:${id}`)!;
+const rowScope = (s: SurfaceSnapshot, id: string) =>
+  s.scopes.find((x) => x.id === `backup-policies:list:${id}`)!;
 
 describe('policies list surface producer', () => {
   it('emits a snapshot that validates against the real schema and passes semantic checks', () => {
@@ -58,32 +62,49 @@ describe('policies list surface producer', () => {
 
   it('bumps the revision on real change', () => {
     const tracker = new PoliciesListSurfaceRevision();
-    const first = buildPoliciesListSurface(input(), { revision: tracker.next(presentedContent(input())), generatedAt: '2026-09-02T09:13:00.000Z' });
+    const first = buildPoliciesListSurface(input(), {
+      revision: tracker.next(presentedContent(input())),
+      generatedAt: '2026-09-02T09:13:00.000Z',
+    });
     const changed = input({ rows: [{ ...ROW, policy: { ...POLICY, status: 'paused' } }] });
-    const second = buildPoliciesListSurface(changed, { revision: tracker.next(presentedContent(changed)), generatedAt: '2026-09-02T09:14:00.000Z' });
+    const second = buildPoliciesListSurface(changed, {
+      revision: tracker.next(presentedContent(changed)),
+      generatedAt: '2026-09-02T09:14:00.000Z',
+    });
     expect(second.surface.revision).toBe(first.surface.revision + 1);
     expect(validateSurfaceSemantics(second, { previousSnapshot: first })).toEqual([]);
   });
 
   it('flags a snapshot whose revision does not advance on the previous one', () => {
     const first = snapshotOf();
-    const stale = { ...snapshotOf(), surface: { ...snapshotOf().surface, revision: first.surface.revision } };
+    const stale = {
+      ...snapshotOf(),
+      surface: { ...snapshotOf().surface, revision: first.surface.revision },
+    };
     const issues = validateSurfaceSemantics(stale, { previousSnapshot: first });
-    expect(issues).toEqual([jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' })]);
+    expect(issues).toEqual([
+      jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' }),
+    ]);
   });
 
   it('is a list page with no selection: every row is related, never primary', () => {
     const snapshot = snapshotOf();
     expect(snapshot.attention).toEqual([{ scopeId: 'backup-policies', reason: 'route' }]);
     const row = rowScope(snapshot, 'pol-1');
-    expect(row.entities).toEqual([{ ref: policyEntityRef('pol-1'), label: 'nightly', role: 'related' }]);
+    expect(row.entities).toEqual([
+      { ref: policyEntityRef('pol-1'), label: 'nightly', role: 'related' },
+    ]);
   });
 
   it('declares the cluster filter as narrowing the count, not the whole fleet', () => {
     const snapshot = snapshotOf({ clusterFilterName: 'prod-eu', totalPolicies: 5 });
     expect(listScope(snapshot).completeness).toEqual({ shown: 1, total: 5, filtered: true });
     expect(listScope(snapshot).observations).toEqual([
-      { key: 'flui.backup.policies.cluster_filter', presentedAs: { text: 'prod-eu' }, source: 'ui' },
+      {
+        key: 'flui.backup.policies.cluster_filter',
+        presentedAs: { text: 'prod-eu' },
+        source: 'ui',
+      },
     ]);
   });
 
@@ -107,9 +128,27 @@ describe('policies list surface producer', () => {
       policyName: 'nightly',
       engineClass: 'volume_copy',
       status: 'active',
-      schedule: { cron: '0 2 * * *', description: 'Every day at 02:00 UTC', timezone: 'UTC', nextRunAt: '2026-10-01T02:00:00.000Z', previousDueAt: null },
+      schedule: {
+        cron: '0 2 * * *',
+        description: 'Every day at 02:00 UTC',
+        timezone: 'UTC',
+        nextRunAt: '2026-10-01T02:00:00.000Z',
+        previousDueAt: null,
+      },
       health: { state: 'failed', detail: 'Last run failed', lastSuccessAt: null },
-      lastRun: { jobId: 'j1', trigger: 'scheduled', status: 'failed', startedAt: '2026-09-30T02:00:00.000Z', finishedAt: null, durationSeconds: null, sizeBytes: null, encrypted: null, expiresAt: null, stored: 'unknown', errorMessage: 'boom' },
+      lastRun: {
+        jobId: 'j1',
+        trigger: 'scheduled',
+        status: 'failed',
+        startedAt: '2026-09-30T02:00:00.000Z',
+        finishedAt: null,
+        durationSeconds: null,
+        sizeBytes: null,
+        encrypted: null,
+        expiresAt: null,
+        stored: 'unknown',
+        errorMessage: 'boom',
+      },
       runs: [],
     } as BackupPolicyActivity;
     const snapshot = snapshotOf({ rows: [{ ...ROW, activity }] });
@@ -117,8 +156,14 @@ describe('policies list surface producer', () => {
     const row = rowScope(snapshot, 'pol-1');
     const obs = (key: string) => row.observations?.find((o) => o.key === key);
     expect(obs('flui.backup.policy.health')?.presentedAs.text).toBe('failed');
-    expect(obs('flui.backup.policy.last_run_at')?.presentedAs.text).toBe('2026-09-30T02:00:00.000Z');
-    expect(obs('flui.backup.policy.next_run_at')?.presentedAs.text).toBe('2026-10-01T02:00:00.000Z');
-    expect(obs('flui.backup.policy.schedule_description')?.presentedAs.text).toBe('Every day at 02:00 UTC');
+    expect(obs('flui.backup.policy.last_run_at')?.presentedAs.text).toBe(
+      '2026-09-30T02:00:00.000Z',
+    );
+    expect(obs('flui.backup.policy.next_run_at')?.presentedAs.text).toBe(
+      '2026-10-01T02:00:00.000Z',
+    );
+    expect(obs('flui.backup.policy.schedule_description')?.presentedAs.text).toBe(
+      'Every day at 02:00 UTC',
+    );
   });
 });

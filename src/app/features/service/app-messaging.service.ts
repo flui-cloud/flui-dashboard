@@ -53,7 +53,10 @@ export class AppMessagingService {
     return this.http.get<QueueView[]>(`${this.url(appId)}/queues`);
   }
 
-  createQueue(appId: string, q: { name: string; maxAgeHours: number; maxDeliver: number; deadLetter: boolean }): Observable<QueueView[]> {
+  createQueue(
+    appId: string,
+    q: { name: string; maxAgeHours: number; maxDeliver: number; deadLetter: boolean },
+  ): Observable<QueueView[]> {
     return this.http.post<QueueView[]>(`${this.url(appId)}/queues`, q);
   }
 

@@ -81,9 +81,7 @@ describe('the workflow consent screen', () => {
       consentOf({
         webhookSecretName: null,
         webhookSecretNote: null,
-        writes: [
-          { target: '.github/workflows/flui-their-app.yml', what: 'The workflow.' },
-        ],
+        writes: [{ target: '.github/workflows/flui-their-app.yml', what: 'The workflow.' }],
       }),
     );
     fixture.detectChanges();
@@ -101,9 +99,7 @@ describe('the workflow consent screen', () => {
   it('offers to commit to the named branch when that is what would happen', () => {
     ref.setInput('consent', consentOf({ delivery: 'push', branch: 'trunk' }));
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('button').textContent).toContain(
-      'Commit to trunk',
-    );
+    expect(fixture.nativeElement.querySelector('button').textContent).toContain('Commit to trunk');
   });
 
   it('offers no button at all until the server has said what would be written', () => {

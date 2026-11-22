@@ -2,10 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { InfrastructureClustersService } from '../../../core/api/api/infrastructureClusters.service';
 import { SandboxService } from '../../../core/services/sandbox.service';
-import {
-  ContextDelivery,
-  ContextEntry,
-} from '../../model/operating-context.models';
+import { ContextDelivery, ContextEntry } from '../../model/operating-context.models';
 import { OperatingContextService } from '../../service/operating-context.service';
 import { OperatingContextComponent } from './operating-context.component';
 
@@ -45,40 +42,35 @@ describe('how this installation is run', () => {
   let api: jasmine.SpyObj<OperatingContextService>;
   let level: 'full' | 'read-only';
 
-  const build = async (opts: {
-    entries?: ContextEntry[];
-    delivery?: ContextDelivery;
-    adviceFails?: boolean;
-    trial?: boolean;
-    retired?: ContextEntry[];
-    retiredFails?: boolean;
-  } = {}): Promise<void> => {
+  const build = async (
+    opts: {
+      entries?: ContextEntry[];
+      delivery?: ContextDelivery;
+      adviceFails?: boolean;
+      trial?: boolean;
+      retired?: ContextEntry[];
+      retiredFails?: boolean;
+    } = {},
+  ): Promise<void> => {
     level = opts.trial ? 'read-only' : 'full';
-    api = jasmine.createSpyObj<OperatingContextService>(
-      'OperatingContextService',
-      [
-        'list',
-        'advice',
-        'probes',
-        'reach',
-        'create',
-        'edit',
-        'confirm',
-        'archive',
-        'retired',
-      ],
-    );
+    api = jasmine.createSpyObj<OperatingContextService>('OperatingContextService', [
+      'list',
+      'advice',
+      'probes',
+      'reach',
+      'create',
+      'edit',
+      'confirm',
+      'archive',
+      'retired',
+    ]);
     api.list.and.returnValue(of(opts.entries ?? []));
     api.advice.and.returnValue(
-      opts.adviceFails
-        ? throwError(() => new Error('closed'))
-        : of(opts.delivery ?? delivery()),
+      opts.adviceFails ? throwError(() => new Error('closed')) : of(opts.delivery ?? delivery()),
     );
     api.probes.and.returnValue(of([]));
     api.retired.and.returnValue(
-      opts.retiredFails
-        ? throwError(() => new Error('closed'))
-        : of(opts.retired ?? []),
+      opts.retiredFails ? throwError(() => new Error('closed')) : of(opts.retired ?? []),
     );
 
     await TestBed.configureTestingModule({
@@ -112,9 +104,7 @@ describe('how this installation is run', () => {
     fixture.nativeElement.querySelector(`[data-testid="${testid}"]`);
 
   const within = (parent: string, testid: string): HTMLElement[] =>
-    Array.from(
-      find(parent)?.querySelectorAll(`[data-testid="${testid}"]`) ?? [],
-    );
+    Array.from(find(parent)?.querySelectorAll(`[data-testid="${testid}"]`) ?? []);
 
   const text = (testid: string): string =>
     find(testid)?.textContent?.trim().replace(/\s+/g, ' ') ?? '';
@@ -169,21 +159,18 @@ describe('how this installation is run', () => {
       ],
     });
 
-    expect(
-      within('group-review', 'note').map((el) =>
-        el.getAttribute('data-confidence'),
-      ),
-    ).toEqual(['broken', 'stale']);
+    expect(within('group-review', 'note').map((el) => el.getAttribute('data-confidence'))).toEqual([
+      'broken',
+      'stale',
+    ]);
     expect(find('group-holding')).toBeNull();
 
     (find('tab-holding') as HTMLButtonElement).click();
     fixture.detectChanges();
 
-    expect(
-      within('group-holding', 'note').map((el) =>
-        el.getAttribute('data-confidence'),
-      ),
-    ).toEqual(['checked']);
+    expect(within('group-holding', 'note').map((el) => el.getAttribute('data-confidence'))).toEqual(
+      ['checked'],
+    );
     expect(find('group-review')).toBeNull();
   });
 
@@ -209,15 +196,9 @@ describe('how this installation is run', () => {
     await build({
       entries: [note({ id: 'fell', confidence: 'broken', checkedBy: 'probe' })],
     });
-    expect(within('group-review', 'verdict')[0].textContent).toContain(
-      'premise fell',
-    );
-    expect(within('group-review', 'verdict')[0].getAttribute('title')).toContain(
-      'suspect',
-    );
-    expect(within('group-review', 'body')[0].textContent).toContain(
-      'The API runs on it.',
-    );
+    expect(within('group-review', 'verdict')[0].textContent).toContain('premise fell');
+    expect(within('group-review', 'verdict')[0].getAttribute('title')).toContain('suspect');
+    expect(within('group-review', 'body')[0].textContent).toContain('The API runs on it.');
   });
 
   it('shows both sides of a disagreement and ranks neither', async () => {
@@ -231,17 +212,13 @@ describe('how this installation is run', () => {
     await build({
       entries: [narrow, wide],
       delivery: delivery({
-        conflicts: [
-          { topic: 'master-node-scaling', entryIds: ['wide', 'narrow'] },
-        ],
+        conflicts: [{ topic: 'master-node-scaling', entryIds: ['wide', 'narrow'] }],
       }),
     });
     const shown = within('conflict', 'title').map((el) => el.textContent?.trim());
     expect(shown).toEqual(['The master is not resized', 'On prod it is resized']);
     expect(text('conflict')).toContain('neither wins');
-    expect(
-      find('conflict-why-master-node-scaling-toggle'),
-    ).toBeTruthy();
+    expect(find('conflict-why-master-node-scaling-toggle')).toBeTruthy();
   });
 
   it('keeps the re-reading list when the disagreements cannot be read', async () => {
@@ -259,9 +236,7 @@ describe('how this installation is run', () => {
     await build({
       entries: [note({ id: 'n', scopeType: 'cluster', scopeRef: 'c-1' })],
     });
-    expect(within('group-holding', 'level')[0].textContent).toContain(
-      'cluster prod',
-    );
+    expect(within('group-holding', 'level')[0].textContent).toContain('cluster prod');
   });
 
   it('asks both axes at once when a reader focuses on one thing', async () => {
@@ -370,14 +345,10 @@ describe('how this installation is run', () => {
         note({ id: 'holds' }),
       ],
       delivery: delivery({
-        conflicts: [
-          { topic: 'master-node-scaling', entryIds: ['fell', 'holds'] },
-        ],
+        conflicts: [{ topic: 'master-node-scaling', entryIds: ['fell', 'holds'] }],
       }),
     });
-    const words = (
-      (fixture.nativeElement as HTMLElement).textContent ?? ''
-    ).toLowerCase();
+    const words = ((fixture.nativeElement as HTMLElement).textContent ?? '').toLowerCase();
     for (const forbidden of [
       'allowed',
       'denied',

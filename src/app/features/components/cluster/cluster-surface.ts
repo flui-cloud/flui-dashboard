@@ -47,7 +47,11 @@ function textObservation(
   return value ? { key, presentedAs: { text: value }, source } : null;
 }
 
-function boolObservation(key: string, value: boolean, source: ObservationSource): Observation | null {
+function boolObservation(
+  key: string,
+  value: boolean,
+  source: ObservationSource,
+): Observation | null {
   return value ? { key, presentedAs: { value: true }, source } : null;
 }
 

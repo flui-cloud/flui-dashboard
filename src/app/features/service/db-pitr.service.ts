@@ -44,13 +44,7 @@ export class DbPitrService {
   }
 
   /** Restore as-of a point in time into a NEW install (non-destructive). */
-  restore(
-    appId: string,
-    input: DbPitrRestoreInput,
-  ): Observable<DbPitrRestoreResult> {
-    return this.http.post<DbPitrRestoreResult>(
-      `${this.base(appId)}/restore`,
-      input,
-    );
+  restore(appId: string, input: DbPitrRestoreInput): Observable<DbPitrRestoreResult> {
+    return this.http.post<DbPitrRestoreResult>(`${this.base(appId)}/restore`, input);
   }
 }

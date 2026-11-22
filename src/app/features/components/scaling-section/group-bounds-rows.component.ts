@@ -1,9 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  input,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ExplainComponent } from '../../../shared/components/explain.component';
 import { ProvisionMode } from '../../model/scaling-group.models';
@@ -34,8 +29,8 @@ import { TABLE } from './scaling-tabs-format';
           testid="provision-why"
         >
           @if (d().canProvision()) {
-            Automatic stays inside the node limits below, and under the
-            spending ceiling, and never asks again.
+            Automatic stays inside the node limits below, and under the spending ceiling, and never
+            asks again.
           } @else {
             Not a choice here: Flui cannot create a machine on
             {{ provider() }}.
@@ -68,9 +63,7 @@ import { TABLE } from './scaling-tabs-format';
             }
           </span>
         } @else {
-          <span class="text-foreground" data-testid="provision-fixed"
-            >Manual</span
-          >
+          <span class="text-foreground" data-testid="provision-fixed">Manual</span>
         }
       </td>
       <td [class]="t.tdMuted">
@@ -90,8 +83,7 @@ import { TABLE } from './scaling-tabs-format';
           labelClass="text-[13px] text-foreground"
           testid="floor-why"
         >
-          Below it the installation is broken, so this is the one bound that
-          acts without waiting.
+          Below it the installation is broken, so this is the one bound that acts without waiting.
         </app-explain>
         <span class="font-mono text-[11px] text-muted-foreground">min</span>
       </th>
@@ -126,8 +118,7 @@ import { TABLE } from './scaling-tabs-format';
           labelClass="text-[13px] text-foreground"
           testid="target-why"
         >
-          Nothing is added to reach it — the fleet only drifts back to it when
-          load subsides.
+          Nothing is added to reach it — the fleet only drifts back to it when load subsides.
         </app-explain>
         <span class="font-mono text-[11px] text-muted-foreground">desired</span>
       </th>
@@ -163,12 +154,11 @@ import { TABLE } from './scaling-tabs-format';
           testid="ceiling-why"
         >
           @if (d().canProvision()) {
-            Reached with whatever fits, not with a preferred machine. What it
-            can cost is shown below, from min to max.
+            Reached with whatever fits, not with a preferred machine. What it can cost is shown
+            below, from min to max.
           } @else {
             <span data-testid="max-meaning-manual">
-              Machines arrive by hand here, so going past it is reported rather
-              than prevented.
+              Machines arrive by hand here, so going past it is reported rather than prevented.
             </span>
           }
         </app-explain>
@@ -211,8 +201,8 @@ import { TABLE } from './scaling-tabs-format';
           labelClass="text-[13px] text-foreground"
           testid="settle-why"
         >
-          Long enough to be sure the app is really stuck and not just starting.
-          It never waits for a cheaper machine.
+          Long enough to be sure the app is really stuck and not just starting. It never waits for a
+          cheaper machine.
         </app-explain>
       </th>
       <td [class]="t.td">
@@ -245,10 +235,7 @@ export class GroupBoundsRowsComponent {
   readonly draft = input.required<GroupDraft>();
 
   protected readonly t = TABLE;
-  protected readonly provisionModes: readonly ProvisionMode[] = [
-    'automatic',
-    'manual',
-  ];
+  protected readonly provisionModes: readonly ProvisionMode[] = ['automatic', 'manual'];
 
   protected readonly d = this.draft;
   protected readonly g = computed(() => this.draft().group());

@@ -36,10 +36,16 @@ import { DashboardClustersTableComponent } from './dashboard-clusters-table.comp
 import { GuestAppReading, appTiles, copiesOf, historyRange, primaryOf } from './guest-home';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
 import { DashboardSurfaceRevision } from './dashboard-surface';
-import { buildGuestHomeSurface, guestHomeContent, GuestHomeSurfaceInput } from './guest-home-surface';
+import {
+  buildGuestHomeSurface,
+  guestHomeContent,
+  GuestHomeSurfaceInput,
+} from './guest-home-surface';
 
-const EXPLORE_TEXT = 'The apps here are real and running. Open them, read their logs and metrics, look inside their database.';
-const INSTALL_TEXT = 'This demo is read-only. Install Flui on your own server: it is free and open source.';
+const EXPLORE_TEXT =
+  'The apps here are real and running. Open them, read their logs and metrics, look inside their database.';
+const INSTALL_TEXT =
+  'This demo is read-only. Install Flui on your own server: it is free and open source.';
 
 const REFRESH_MS = 60_000;
 
@@ -51,8 +57,23 @@ const REFRESH_MS = 60_000;
 @Component({
   selector: 'app-guest-home',
   standalone: true,
-  imports: [RouterLink, NgIcon, ExplainComponent, StatTileComponent, DashboardFleetTilesComponent, DashboardClustersTableComponent],
-  providers: [provideIcons({ lucideArrowUpRight, lucideExternalLink, lucideKeyRound, lucideServer, lucideTerminal })],
+  imports: [
+    RouterLink,
+    NgIcon,
+    ExplainComponent,
+    StatTileComponent,
+    DashboardFleetTilesComponent,
+    DashboardClustersTableComponent,
+  ],
+  providers: [
+    provideIcons({
+      lucideArrowUpRight,
+      lucideExternalLink,
+      lucideKeyRound,
+      lucideServer,
+      lucideTerminal,
+    }),
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex flex-col gap-4 md:gap-5" data-testid="guest-home">
@@ -74,7 +95,11 @@ const REFRESH_MS = 60_000;
                   @if (copiesOf(item.id); as copies) {
                     <span class="text-xs text-muted-foreground">{{ copies }} copies ready</span>
                   }
-                  <a [routerLink]="['/apps/recap', item.groupId]" class="text-xs font-medium text-primary hover:underline">How it is built</a>
+                  <a
+                    [routerLink]="['/apps/recap', item.groupId]"
+                    class="text-xs font-medium text-primary hover:underline"
+                    >How it is built</a
+                  >
                   @if (item.url) {
                     <a
                       [href]="item.url"
@@ -102,14 +127,24 @@ const REFRESH_MS = 60_000;
           @if (sandbox.hasArea()) {
             <section class="card-surface p-5 flex flex-col gap-3" data-testid="guest-space">
               <p class="text-label">Your space</p>
-              <app-explain [label]="ownApps().length === 1 ? '1 application' : ownApps().length + ' applications'" labelClass="font-semibold text-foreground" floating>
-                They stay while you use them: removed after {{ sandbox.workloadTtlHours() ?? 24 }} hours without activity.
+              <app-explain
+                [label]="
+                  ownApps().length === 1 ? '1 application' : ownApps().length + ' applications'
+                "
+                labelClass="font-semibold text-foreground"
+                floating
+              >
+                They stay while you use them: removed after
+                {{ sandbox.workloadTtlHours() ?? 24 }} hours without activity.
               </app-explain>
               @if (ownApps().length > 0) {
                 <ul class="flex flex-col -mx-2">
                   @for (own of ownApps(); track own.id) {
                     <li>
-                      <a [routerLink]="['/apps/recap', own.groupId]" class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted/40">
+                      <a
+                        [routerLink]="['/apps/recap', own.groupId]"
+                        class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted/40"
+                      >
                         <span class="flex-1 truncate text-foreground">{{ own.name }}</span>
                         <span class="text-xs text-muted-foreground">{{ own.status }}</span>
                       </a>
@@ -119,9 +154,18 @@ const REFRESH_MS = 60_000;
               }
               @if (sandbox.quota(); as q) {
                 <dl class="grid grid-cols-3 gap-2 pt-1 border-t border-border">
-                  <div class="pt-2"><dt class="text-label">CPU</dt><dd class="text-sm font-semibold text-foreground">{{ q.cpu }}</dd></div>
-                  <div class="pt-2"><dt class="text-label">Memory</dt><dd class="text-sm font-semibold text-foreground">{{ q.memory }}</dd></div>
-                  <div class="pt-2"><dt class="text-label">Disk</dt><dd class="text-sm font-semibold text-foreground">{{ q.storage }}</dd></div>
+                  <div class="pt-2">
+                    <dt class="text-label">CPU</dt>
+                    <dd class="text-sm font-semibold text-foreground">{{ q.cpu }}</dd>
+                  </div>
+                  <div class="pt-2">
+                    <dt class="text-label">Memory</dt>
+                    <dd class="text-sm font-semibold text-foreground">{{ q.memory }}</dd>
+                  </div>
+                  <div class="pt-2">
+                    <dt class="text-label">Disk</dt>
+                    <dd class="text-sm font-semibold text-foreground">{{ q.storage }}</dd>
+                  </div>
                 </dl>
               }
             </section>
@@ -152,8 +196,12 @@ const REFRESH_MS = 60_000;
               <p class="text-label">Three ways to install</p>
               @for (way of installWays; track way.label) {
                 <a [href]="installUrl" target="_blank" rel="noopener" class="guest-way">
-                  <ng-icon [name]="way.icon" class="h-4 w-4 text-muted-foreground" /> {{ way.label }}
-                  <ng-icon name="lucideArrowUpRight" class="h-3.5 w-3.5 ml-auto text-muted-foreground" />
+                  <ng-icon [name]="way.icon" class="h-4 w-4 text-muted-foreground" />
+                  {{ way.label }}
+                  <ng-icon
+                    name="lucideArrowUpRight"
+                    class="h-3.5 w-3.5 ml-auto text-muted-foreground"
+                  />
                 </a>
               }
             </div>
@@ -231,7 +279,12 @@ export class GuestHomeComponent implements OnInit {
 
   private readonly surfaceInput = computed<GuestHomeSurfaceInput>(() => ({
     loading: !this.loaded(),
-    showcase: this.showcase().map((item) => ({ id: item.id, name: item.name, note: item.note, hasLink: !!item.url })),
+    showcase: this.showcase().map((item) => ({
+      id: item.id,
+      name: item.name,
+      note: item.note,
+      hasLink: !!item.url,
+    })),
     hasArea: this.sandbox.hasArea(),
     visitor: this.sandbox.visitor(),
     ownApps: this.ownApps(),
@@ -261,7 +314,12 @@ export class GuestHomeComponent implements OnInit {
     effect(() => {
       this.currentSurface.set(this.surface());
     });
-    const asked = computed(() => `${this.fleet.window()}|${this.showcase().map((item) => item.id).join(',')}`);
+    const asked = computed(
+      () =>
+        `${this.fleet.window()}|${this.showcase()
+          .map((item) => item.id)
+          .join(',')}`,
+    );
     effect(() => {
       asked();
       untracked(() => this.read());
@@ -286,8 +344,12 @@ export class GuestHomeComponent implements OnInit {
     for (const item of this.showcase()) {
       const app = `${this.base}/observability/applications/${item.id}`;
       forkJoin({
-        history: this.http.get<Record<string, unknown>>(`${app}/metrics/history`, { params }).pipe(catchError(() => of(null))),
-        traffic: this.http.get<Record<string, unknown>>(`${app}/traffic/history`, { params }).pipe(catchError(() => of(null))),
+        history: this.http
+          .get<Record<string, unknown>>(`${app}/metrics/history`, { params })
+          .pipe(catchError(() => of(null))),
+        traffic: this.http
+          .get<Record<string, unknown>>(`${app}/traffic/history`, { params })
+          .pipe(catchError(() => of(null))),
       }).subscribe((reading) => this.readings.update((all) => ({ ...all, [item.id]: reading })));
     }
   }

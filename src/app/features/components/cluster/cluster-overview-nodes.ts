@@ -52,7 +52,9 @@ export function findNodeMetrics(
   );
   const byId = servers.find((s) => keys.has(s.serverId));
   if (byId) return byId;
-  const ips = new Set([node.ipConfig?.v4?.ip, ...(node.additionalIps ?? [])].filter((ip): ip is string => !!ip));
+  const ips = new Set(
+    [node.ipConfig?.v4?.ip, ...(node.additionalIps ?? [])].filter((ip): ip is string => !!ip),
+  );
   if (ips.size === 0) return undefined;
   return servers.find((s) => ips.has(s.instance.split(':')[0]));
 }
@@ -109,7 +111,9 @@ export function buildOverviewNodeRows(
   limit = OVERVIEW_NODE_LIMIT,
 ): OverviewNodeRow[] {
   const ordered = [...nodes].sort(
-    (a, b) => Number(getClusterInfo(b)?.nodeType === 'master') - Number(getClusterInfo(a)?.nodeType === 'master'),
+    (a, b) =>
+      Number(getClusterInfo(b)?.nodeType === 'master') -
+      Number(getClusterInfo(a)?.nodeType === 'master'),
   );
   return ordered.slice(0, limit).map((node) => buildOverviewNodeRow(node, servers));
 }

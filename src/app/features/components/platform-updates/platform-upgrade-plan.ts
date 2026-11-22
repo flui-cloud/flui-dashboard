@@ -40,9 +40,7 @@ export function k3sNodeRows(operation: PlatformUpdateOperation): K3sNodeRow[] {
   const rows: K3sNodeRow[] = [];
   for (const cluster of phase?.clusters ?? []) {
     const steps = cluster.steps ?? [];
-    const step = steps.length
-      ? steps[Math.min(cluster.stepIndex ?? 0, steps.length - 1)]
-      : null;
+    const step = steps.length ? steps[Math.min(cluster.stepIndex ?? 0, steps.length - 1)] : null;
     for (const node of cluster.nodes ?? []) {
       rows.push({
         cluster: cluster.clusterName,

@@ -9,13 +9,7 @@ import {
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideLock } from '@ng-icons/lucide';
 import { PermissionGroupDto } from '../../../../core/api/model/permissionGroupDto';
-import {
-  AREA_LABEL,
-  DEPTH_WORD,
-  areasOf,
-  heldGroups,
-  scopesAfter,
-} from './agent-key-scopes-edit';
+import { AREA_LABEL, DEPTH_WORD, areasOf, heldGroups, scopesAfter } from './agent-key-scopes-edit';
 
 /** What a key may do, area by area, for a key that already exists. */
 @Component({
@@ -27,9 +21,16 @@ import {
   template: `
     <div class="space-y-2">
       @for (area of areas(); track area.key) {
-        <div class="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-background p-2.5" [attr.data-testid]="'perm-area-' + area.key">
+        <div
+          class="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-background p-2.5"
+          [attr.data-testid]="'perm-area-' + area.key"
+        >
           <span class="text-sm text-foreground">{{ area.label }}</span>
-          <div class="inline-flex rounded-md border border-border bg-muted/40 p-0.5" role="radiogroup" [attr.aria-label]="area.label">
+          <div
+            class="inline-flex rounded-md border border-border bg-muted/40 p-0.5"
+            role="radiogroup"
+            [attr.aria-label]="area.label"
+          >
             <button
               type="button"
               role="radio"
@@ -37,8 +38,14 @@ import {
               [disabled]="saving()"
               (click)="choose(area.groups, null)"
               class="rounded px-3 py-1 text-xs font-medium transition-colors"
-              [class]="!chosenIn(area.groups) ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
-            >None</button>
+              [class]="
+                !chosenIn(area.groups)
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              "
+            >
+              None
+            </button>
             @for (g of area.groups; track g.key) {
               <button
                 type="button"
@@ -49,7 +56,11 @@ import {
                 [title]="g.grantable ? g.summary : 'Not yours to grant'"
                 (click)="choose(area.groups, g.key)"
                 class="inline-flex items-center gap-1 rounded px-3 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-                [class]="picked().has(g.key) ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+                [class]="
+                  picked().has(g.key)
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                "
               >
                 @if (!g.grantable) {
                   <ng-icon name="lucideLock" class="h-3 w-3" />

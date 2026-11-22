@@ -12,12 +12,17 @@ import { DnsSetupWizardService, CertMode } from './dns-setup-wizard.service';
   template: `
     <h3 class="text-sm font-semibold text-foreground mb-1">How do you want to secure your apps?</h3>
     <p class="text-xs text-muted-foreground mb-4">
-      Choose the method that best fits your setup. You can change it later from the cluster's DNS section.
+      Choose the method that best fits your setup. You can change it later from the cluster's DNS
+      section.
     </p>
 
     <div class="flex flex-col gap-3 flex-1">
       <!-- Wildcard option -->
-      <button type="button" (click)="wiz.certMode.set('wildcard')" [class]="modeCardClass('wildcard')">
+      <button
+        type="button"
+        (click)="wiz.certMode.set('wildcard')"
+        [class]="modeCardClass('wildcard')"
+      >
         <div [class]="modeRadioClass('wildcard')">
           @if (wiz.certMode() === 'wildcard') {
             <div class="h-2 w-2 rounded-full bg-primary"></div>
@@ -36,14 +41,20 @@ import { DnsSetupWizardService, CertMode } from './dns-setup-wizard.service';
                 <ng-icon name="lucideInfo" class="h-3.5 w-3.5" />
               </button>
               @if (activeInfo === 'wildcard') {
-                <div class="absolute right-0 top-5 z-20 w-72 rounded-lg bg-popover border border-border shadow-lg px-3 py-2.5 text-xs text-muted-foreground" (click)="$event.stopPropagation()">
-                  Uses DNS-01 challenge — the platform adds a TXT record to your domain via your DNS provider's API. Requires API support from your DNS provider (e.g. Hetzner DNS, Cloudflare).
+                <div
+                  class="absolute right-0 top-5 z-20 w-72 rounded-lg bg-popover border border-border shadow-lg px-3 py-2.5 text-xs text-muted-foreground"
+                  (click)="$event.stopPropagation()"
+                >
+                  Uses DNS-01 challenge — the platform adds a TXT record to your domain via your DNS
+                  provider's API. Requires API support from your DNS provider (e.g. Hetzner DNS,
+                  Cloudflare).
                 </div>
               }
             </div>
           </div>
           <p class="text-xs text-muted-foreground mt-0.5">
-            Covers all apps with a single wildcard cert (DNS-01). Faster to activate and easier to manage.
+            Covers all apps with a single wildcard cert (DNS-01). Faster to activate and easier to
+            manage.
           </p>
         </div>
       </button>
@@ -67,14 +78,19 @@ import { DnsSetupWizardService, CertMode } from './dns-setup-wizard.service';
                 <ng-icon name="lucideInfo" class="h-3.5 w-3.5" />
               </button>
               @if (activeInfo === 'direct') {
-                <div class="absolute right-0 top-5 z-20 w-72 rounded-lg bg-popover border border-border shadow-lg px-3 py-2.5 text-xs text-muted-foreground" (click)="$event.stopPropagation()">
-                  Uses HTTP-01 challenge — Let's Encrypt contacts each app directly over HTTP to verify domain ownership. No DNS provider API access required.
+                <div
+                  class="absolute right-0 top-5 z-20 w-72 rounded-lg bg-popover border border-border shadow-lg px-3 py-2.5 text-xs text-muted-foreground"
+                  (click)="$event.stopPropagation()"
+                >
+                  Uses HTTP-01 challenge — Let's Encrypt contacts each app directly over HTTP to
+                  verify domain ownership. No DNS provider API access required.
                 </div>
               }
             </div>
           </div>
           <p class="text-xs text-muted-foreground mt-0.5">
-            Issues 3 individual certs via HTTP-01, one per app. No DNS provider API needed, but activation takes a bit longer.
+            Issues 3 individual certs via HTTP-01, one per app. No DNS provider API needed, but
+            activation takes a bit longer.
           </p>
         </div>
       </button>
@@ -101,7 +117,8 @@ export class DnsWizardModeStepComponent {
   }
 
   protected modeRadioClass(mode: CertMode): string {
-    const base = 'mt-0.5 h-4 w-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center';
+    const base =
+      'mt-0.5 h-4 w-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center';
     return this.wiz.certMode() === mode
       ? `${base} border-primary`
       : `${base} border-muted-foreground`;

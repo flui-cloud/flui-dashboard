@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  input,
-  output,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import {
   catchError,
@@ -38,9 +31,7 @@ type Reading =
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="card-surface space-y-2 p-4" data-testid="group-cost">
-      <h3 class="m-0 text-[13px] font-semibold text-foreground">
-        What these limits can cost
-      </h3>
+      <h3 class="m-0 text-[13px] font-semibold text-foreground">What these limits can cost</h3>
       @switch (reading().state) {
         @case ('loading') {
           <p class="m-0 text-[12px] text-muted-foreground">Pricing…</p>
@@ -77,7 +68,11 @@ type Reading =
             @if (c.ceiling.says) {
               <p
                 class="m-0 text-[12px]"
-                [class]="c.ceiling.stopsBeforeMax ? 'text-amber-700 dark:text-amber-300' : 'text-muted-foreground'"
+                [class]="
+                  c.ceiling.stopsBeforeMax
+                    ? 'text-amber-700 dark:text-amber-300'
+                    : 'text-muted-foreground'
+                "
                 data-testid="group-cost-ceiling"
               >
                 {{ c.ceiling.says }}
@@ -111,10 +106,12 @@ export class GroupCostComponent {
   readonly needsCeiling = input(false);
   readonly useCeiling = output<number>();
 
-  private readonly ask = computed<{ clusterId: string; body: Partial<ScalingCostDraft> } | null>(() => {
-    const body = this.draft();
-    return body ? { clusterId: this.clusterId(), body } : null;
-  });
+  private readonly ask = computed<{ clusterId: string; body: Partial<ScalingCostDraft> } | null>(
+    () => {
+      const body = this.draft();
+      return body ? { clusterId: this.clusterId(), body } : null;
+    },
+  );
 
   protected readonly reading = toSignal(
     toObservable(this.ask).pipe(

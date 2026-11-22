@@ -30,8 +30,8 @@ export interface DeleteConfirmationData {
     HlmCardHeaderDirective,
     HlmCardTitleDirective,
     HlmCardDescriptionDirective,
-    HlmCardContentDirective
-],
+    HlmCardContentDirective,
+  ],
   providers: [
     provideIcons({
       lucideTriangleAlert,
@@ -42,20 +42,18 @@ export interface DeleteConfirmationData {
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (isOpen()) {
-      <div
-        class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm"
-        (click)="onCancel()"
-      >
-        <div class="fixed left-[50%] top-[50%] z-50 w-full max-w-lg translate-x-[-50%] translate-y-[-50%] p-4">
+      <div class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm" (click)="onCancel()">
+        <div
+          class="fixed left-[50%] top-[50%] z-50 w-full max-w-lg translate-x-[-50%] translate-y-[-50%] p-4"
+        >
           <div hlmCard (click)="$event.stopPropagation()">
             <div hlmCardHeader>
               <div class="flex items-start justify-between">
                 <div class="flex items-center gap-3">
-                  <div class="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10">
-                    <ng-icon
-                      name="lucideTriangleAlert"
-                      class="h-5 w-5 text-destructive"
-                    />
+                  <div
+                    class="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10"
+                  >
+                    <ng-icon name="lucideTriangleAlert" class="h-5 w-5 text-destructive" />
                   </div>
                   <div>
                     <h2 hlmCardTitle class="text-xl">{{ data()?.title }}</h2>
@@ -64,13 +62,7 @@ export interface DeleteConfirmationData {
                     </p>
                   </div>
                 </div>
-                <button
-                  hlmBtn
-                  variant="ghost"
-                  size="sm"
-                  (click)="onCancel()"
-                  class="h-8 w-8 p-0"
-                >
+                <button hlmBtn variant="ghost" size="sm" (click)="onCancel()" class="h-8 w-8 p-0">
                   <ng-icon name="lucideX" class="h-4 w-4" />
                 </button>
               </div>
@@ -78,9 +70,7 @@ export interface DeleteConfirmationData {
 
             <div hlmCardContent class="space-y-4">
               <div class="space-y-2">
-                <p class="text-sm text-foreground">
-                  You are about to delete:
-                </p>
+                <p class="text-sm text-foreground">You are about to delete:</p>
                 <div class="rounded-md bg-muted p-3">
                   <p class="font-semibold">{{ data()?.itemName }}</p>
                   @if (data()?.itemDescription) {
@@ -90,7 +80,9 @@ export interface DeleteConfirmationData {
               </div>
 
               @if (data()?.warningMessage) {
-                <div class="rounded-lg border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20 p-4">
+                <div
+                  class="rounded-lg border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20 p-4"
+                >
                   <div class="flex items-start gap-3">
                     <ng-icon
                       name="lucideTriangleAlert"
@@ -106,12 +98,7 @@ export interface DeleteConfirmationData {
               }
 
               <div class="flex justify-end gap-2 pt-4">
-                <button
-                  hlmBtn
-                  variant="outline"
-                  (click)="onCancel()"
-                  [disabled]="isDeleting()"
-                >
+                <button hlmBtn variant="outline" (click)="onCancel()" [disabled]="isDeleting()">
                   Cancel
                 </button>
                 <button

@@ -1,10 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideDownload, lucideX } from '@ng-icons/lucide';
@@ -30,12 +24,18 @@ const DISMISSED_KEY = 'flui-update-banner-dismissed';
           <p class="text-sm font-semibold">Flui {{ updates.availableVersion() }} is available</p>
           <p class="text-xs text-muted-foreground mt-0.5">{{ summary() }}</p>
         </div>
-        <a routerLink="/management/updates"
-           class="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground">
+        <a
+          routerLink="/management/updates"
+          class="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
+        >
           Review update
         </a>
-        <button type="button" (click)="dismiss()" class="p-1 text-muted-foreground hover:text-foreground"
-                title="Hide until the next release">
+        <button
+          type="button"
+          (click)="dismiss()"
+          class="p-1 text-muted-foreground hover:text-foreground"
+          title="Hide until the next release"
+        >
           <ng-icon name="lucideX" class="h-4 w-4" />
         </button>
       </div>
@@ -49,9 +49,7 @@ export class PlatformUpdateBannerComponent {
 
   protected readonly visible = computed(() => {
     const version = this.updates.availableVersion();
-    return (
-      !!version && !this.updates.running() && this.dismissed() !== version
-    );
+    return !!version && !this.updates.running() && this.dismissed() !== version;
   });
 
   protected summary(): string {
@@ -63,9 +61,7 @@ export class PlatformUpdateBannerComponent {
       `${changed.map((c) => c.key).join(' and ')} change`,
     ];
     if (status.migrations > 0) {
-      parts.push(
-        `${status.migrations} database migration${status.migrations === 1 ? '' : 's'}`,
-      );
+      parts.push(`${status.migrations} database migration${status.migrations === 1 ? '' : 's'}`);
     }
     return parts.join(' · ');
   }

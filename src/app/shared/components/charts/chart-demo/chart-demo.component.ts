@@ -17,7 +17,7 @@ import {
   ProportionDonutData,
   ProportionDonutConfig,
   ProportionBarData,
-  ProportionBarConfig
+  ProportionBarConfig,
 } from '../chart.models';
 
 /**
@@ -35,8 +35,8 @@ import {
     MultiStatCardComponent,
     StatusTimelineComponent,
     ProportionDonutComponent,
-    ProportionBarComponent
-],
+    ProportionBarComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="p-8 space-y-8 bg-background">
@@ -53,34 +53,22 @@ import {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <!-- CPU Usage -->
           <div class="bg-card border border-border rounded-lg p-6">
-            <app-ring-gauge
-              [data]="cpuData()"
-              [config]="cpuConfig"
-            />
+            <app-ring-gauge [data]="cpuData()" [config]="cpuConfig" />
           </div>
 
           <!-- Memory Usage -->
           <div class="bg-card border border-border rounded-lg p-6">
-            <app-ring-gauge
-              [data]="memoryData()"
-              [config]="memoryConfig"
-            />
+            <app-ring-gauge [data]="memoryData()" [config]="memoryConfig" />
           </div>
 
           <!-- Disk Usage -->
           <div class="bg-card border border-border rounded-lg p-6">
-            <app-ring-gauge
-              [data]="diskData()"
-              [config]="diskConfig"
-            />
+            <app-ring-gauge [data]="diskData()" [config]="diskConfig" />
           </div>
 
           <!-- Custom Metric -->
           <div class="bg-card border border-border rounded-lg p-6">
-            <app-ring-gauge
-              [data]="customData()"
-              [config]="customConfig"
-            />
+            <app-ring-gauge [data]="customData()" [config]="customConfig" />
           </div>
         </div>
       </section>
@@ -91,34 +79,22 @@ import {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <!-- CPU Usage -->
           <div class="bg-card border border-border rounded-lg p-6">
-            <app-grade-gauge
-              [data]="cpuData()"
-              [config]="cpuConfig"
-            />
+            <app-grade-gauge [data]="cpuData()" [config]="cpuConfig" />
           </div>
 
           <!-- Memory Usage -->
           <div class="bg-card border border-border rounded-lg p-6">
-            <app-grade-gauge
-              [data]="memoryData()"
-              [config]="memoryConfig"
-            />
+            <app-grade-gauge [data]="memoryData()" [config]="memoryConfig" />
           </div>
 
           <!-- Disk Usage -->
           <div class="bg-card border border-border rounded-lg p-6">
-            <app-grade-gauge
-              [data]="diskData()"
-              [config]="diskConfig"
-            />
+            <app-grade-gauge [data]="diskData()" [config]="diskConfig" />
           </div>
 
           <!-- Network Latency -->
           <div class="bg-card border border-border rounded-lg p-6">
-            <app-grade-gauge
-              [data]="latencyData()"
-              [config]="latencyConfig"
-            />
+            <app-grade-gauge [data]="latencyData()" [config]="latencyConfig" />
           </div>
         </div>
       </section>
@@ -147,18 +123,12 @@ import {
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <!-- Nightingale Radius Mode -->
           <div class="bg-card border border-border rounded-lg p-6">
-            <app-proportion-donut
-              [data]="cpuDistributionData"
-              [config]="cpuDistributionConfig"
-            />
+            <app-proportion-donut [data]="cpuDistributionData" [config]="cpuDistributionConfig" />
           </div>
 
           <!-- Nightingale Area Mode -->
           <div class="bg-card border border-border rounded-lg p-6">
-            <app-proportion-donut
-              [data]="storageByAppData"
-              [config]="storageByAppConfig"
-            />
+            <app-proportion-donut [data]="storageByAppData" [config]="storageByAppConfig" />
           </div>
         </div>
       </section>
@@ -193,16 +163,10 @@ import {
         <h2 class="text-2xl font-semibold mb-4">Time Series Line Chart</h2>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div class="bg-card border border-border rounded-lg p-6">
-            <app-time-series-line
-              [data]="cpuTimeSeriesData"
-              [config]="cpuTimeSeriesConfig"
-            />
+            <app-time-series-line [data]="cpuTimeSeriesData" [config]="cpuTimeSeriesConfig" />
           </div>
           <div class="bg-card border border-border rounded-lg p-6">
-            <app-time-series-line
-              [data]="memoryTimeSeriesData"
-              [config]="memoryTimeSeriesConfig"
-            />
+            <app-time-series-line [data]="memoryTimeSeriesData" [config]="memoryTimeSeriesConfig" />
           </div>
         </div>
       </section>
@@ -211,24 +175,15 @@ import {
       <section>
         <h2 class="text-2xl font-semibold mb-4">Multi-Stat Cards</h2>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <app-multi-stat-card
-            [data]="loadAverageData"
-            [config]="{ layout: 'horizontal' }"
-          />
-          <app-multi-stat-card
-            [data]="systemInfoData"
-            [config]="{ layout: 'grid' }"
-          />
+          <app-multi-stat-card [data]="loadAverageData" [config]="{ layout: 'horizontal' }" />
+          <app-multi-stat-card [data]="systemInfoData" [config]="{ layout: 'grid' }" />
         </div>
       </section>
 
       <!-- Status Timeline -->
       <section>
         <h2 class="text-2xl font-semibold mb-4">Status Timeline (Uptime)</h2>
-        <app-status-timeline
-          [data]="uptimeData"
-          [config]="{ daysToShow: 90 }"
-        />
+        <app-status-timeline [data]="uptimeData" [config]="{ daysToShow: 90 }" />
       </section>
 
       <!-- Controls -->
@@ -255,7 +210,7 @@ import {
         </div>
       </section>
     </div>
-  `
+  `,
 })
 export class ChartDemoComponent {
   // CPU Data
@@ -263,16 +218,16 @@ export class ChartDemoComponent {
     value: 45,
     title: 'CPU Usage',
     subtitle: '4 cores active',
-    previousValue: 40
+    previousValue: 40,
   });
 
   cpuConfig: GaugeChartConfig = {
     unit: '%',
     thresholds: {
       warning: 70,
-      danger: 90
+      danger: 90,
     },
-    height: '240px'
+    height: '240px',
   };
 
   // Memory Data
@@ -280,39 +235,39 @@ export class ChartDemoComponent {
     value: 82,
     title: 'Memory',
     subtitle: '8.2 GB / 10 GB',
-    previousValue: 78
+    previousValue: 78,
   });
 
   memoryConfig: GaugeChartConfig = {
     unit: '%',
     thresholds: {
       warning: 75,
-      danger: 90
+      danger: 90,
     },
-    height: '240px'
+    height: '240px',
   };
 
   // Disk Data
   diskData = signal<GaugeChartData>({
     value: 65,
     title: 'Disk Usage',
-    subtitle: '325 GB / 500 GB'
+    subtitle: '325 GB / 500 GB',
   });
 
   diskConfig: GaugeChartConfig = {
     unit: '%',
     thresholds: {
       warning: 80,
-      danger: 95
+      danger: 95,
     },
-    height: '240px'
+    height: '240px',
   };
 
   // Custom Metric
   customData = signal<GaugeChartData>({
     value: 15,
     title: 'Network Load',
-    subtitle: '150 Mbps'
+    subtitle: '150 Mbps',
   });
 
   customConfig: GaugeChartConfig = {
@@ -321,14 +276,14 @@ export class ChartDemoComponent {
     unit: ' Mbps',
     severity: 'success',
     height: '240px',
-    valueFormatter: (value) => value.toFixed(0)
+    valueFormatter: (value) => value.toFixed(0),
   };
 
   // Latency Data
   latencyData = signal<GaugeChartData>({
     value: 45,
     title: 'Latency',
-    subtitle: 'API Response Time'
+    subtitle: 'API Response Time',
   });
 
   latencyConfig: GaugeChartConfig = {
@@ -337,9 +292,9 @@ export class ChartDemoComponent {
     unit: 'ms',
     thresholds: {
       warning: 100,
-      danger: 150
+      danger: 150,
     },
-    height: '240px'
+    height: '240px',
   };
 
   // Distribution Data - Memory by Application
@@ -352,8 +307,8 @@ export class ChartDemoComponent {
       { name: 'Worker Pool', value: 1536 },
       { name: 'Cache Layer', value: 768 },
       { name: 'Monitoring', value: 512 },
-      { name: 'Other', value: 256 }
-    ]
+      { name: 'Other', value: 256 },
+    ],
   };
 
   // Memory with Labels (for label line demo)
@@ -366,8 +321,8 @@ export class ChartDemoComponent {
       { name: 'Worker Pool', value: 1536 },
       { name: 'Cache Layer', value: 768 },
       { name: 'Monitoring', value: 512 },
-      { name: 'Other', value: 256 }
-    ]
+      { name: 'Other', value: 256 },
+    ],
   };
 
   memoryDistributionConfig: ProportionDonutConfig = {
@@ -376,7 +331,7 @@ export class ChartDemoComponent {
     padAngle: 5,
     borderRadius: 10,
     innerRadius: 0.4,
-    legendPosition: 'top'
+    legendPosition: 'top',
   };
 
   // Memory with Label Lines (classic style)
@@ -387,7 +342,7 @@ export class ChartDemoComponent {
     borderRadius: 10,
     innerRadius: 0.4,
     showLabels: true,
-    showLegend: false
+    showLegend: false,
   };
 
   // Distribution Data - CPU by Namespace (Nightingale Radius)
@@ -400,8 +355,8 @@ export class ChartDemoComponent {
       { name: 'monitoring', value: 28 },
       { name: 'kube-system', value: 22 },
       { name: 'development', value: 20 },
-      { name: 'testing', value: 15 }
-    ]
+      { name: 'testing', value: 15 },
+    ],
   };
 
   cpuDistributionConfig: ProportionDonutConfig = {
@@ -410,7 +365,7 @@ export class ChartDemoComponent {
     height: '380px',
     roseType: 'radius',
     borderRadius: 5,
-    innerRadius: 0.2
+    innerRadius: 0.2,
   };
 
   // Storage by App (Nightingale Area)
@@ -423,8 +378,8 @@ export class ChartDemoComponent {
       { name: 'Redis', value: 68 },
       { name: 'MongoDB', value: 45 },
       { name: 'App Logs', value: 32 },
-      { name: 'Backups', value: 28 }
-    ]
+      { name: 'Backups', value: 28 },
+    ],
   };
 
   storageByAppConfig: ProportionDonutConfig = {
@@ -433,7 +388,7 @@ export class ChartDemoComponent {
     height: '380px',
     roseType: 'area',
     borderRadius: 5,
-    innerRadius: 0.2
+    innerRadius: 0.2,
   };
 
   // Bar Distribution - Storage
@@ -445,13 +400,13 @@ export class ChartDemoComponent {
       { name: 'Redis', value: 32 },
       { name: 'Elasticsearch', value: 85 },
       { name: 'App Logs', value: 45 },
-      { name: 'Backups', value: 68 }
-    ]
+      { name: 'Backups', value: 68 },
+    ],
   };
 
   storageDistributionConfig: ProportionBarConfig = {
     unit: 'GB',
-    barHeight: 32
+    barHeight: 32,
   };
 
   // Bar Distribution - Pods per namespace
@@ -462,8 +417,8 @@ export class ChartDemoComponent {
       { name: 'staging', value: 12 },
       { name: 'monitoring', value: 8 },
       { name: 'kube-system', value: 15 },
-      { name: 'development', value: 6 }
-    ]
+      { name: 'development', value: 6 },
+    ],
   };
 
   // Bar Distribution - Network bandwidth
@@ -475,19 +430,21 @@ export class ChartDemoComponent {
       { name: 'CDN Origin', value: 320 },
       { name: 'WebSocket', value: 180 },
       { name: 'gRPC Internal', value: 95 },
-      { name: 'Metrics Export', value: 55 }
-    ]
+      { name: 'Metrics Export', value: 55 },
+    ],
   };
 
   // Time Series Data - CPU History
   cpuTimeSeriesData: TimeSeriesChartData = {
     title: 'CPU Usage History',
-    series: [{
-      name: 'CPU',
-      data: this.generateTimeSeriesData(30, 40, 70),
-      showArea: true,
-      smooth: true
-    }]
+    series: [
+      {
+        name: 'CPU',
+        data: this.generateTimeSeriesData(30, 40, 70),
+        showArea: true,
+        smooth: true,
+      },
+    ],
   };
 
   cpuTimeSeriesConfig: TimeSeriesChartConfig = {
@@ -497,8 +454,8 @@ export class ChartDemoComponent {
     height: '300px',
     thresholds: {
       warning: 70,
-      danger: 90
-    }
+      danger: 90,
+    },
   };
 
   // Time Series Data - Memory History
@@ -510,23 +467,23 @@ export class ChartDemoComponent {
         data: this.generateTimeSeriesData(30, 60, 85),
         showArea: true,
         smooth: true,
-        color: '#3b82f6'
+        color: '#3b82f6',
       },
       {
         name: 'Cached',
         data: this.generateTimeSeriesData(30, 10, 20),
         showArea: true,
         smooth: true,
-        color: '#8b5cf6'
-      }
-    ]
+        color: '#8b5cf6',
+      },
+    ],
   };
 
   memoryTimeSeriesConfig: TimeSeriesChartConfig = {
     unit: '%',
     showGrid: true,
     showLegend: true,
-    height: '300px'
+    height: '300px',
   };
 
   // Multi-Stat Card - Load Averages
@@ -536,8 +493,8 @@ export class ChartDemoComponent {
     stats: [
       { label: '1 min', value: 1.23, trend: 'up', trendValue: '+0.05' },
       { label: '5 min', value: 1.45, trend: 'stable' },
-      { label: '15 min', value: 1.38, trend: 'down', trendValue: '-0.10' }
-    ]
+      { label: '15 min', value: 1.38, trend: 'down', trendValue: '-0.10' },
+    ],
   };
 
   // Multi-Stat Card - System Info
@@ -548,8 +505,8 @@ export class ChartDemoComponent {
       { label: 'Uptime', value: '15d 4h', severity: 'success' },
       { label: 'Processes', value: '342', severity: 'info' },
       { label: 'Threads', value: '1,245', severity: 'info' },
-      { label: 'Users', value: '12', severity: 'neutral' }
-    ]
+      { label: 'Users', value: '12', severity: 'neutral' },
+    ],
   };
 
   // Status Timeline - Uptime
@@ -557,7 +514,7 @@ export class ChartDemoComponent {
     title: 'Cluster Uptime History',
     subtitle: 'Last 90 days availability',
     uptimePercentage: 99.95,
-    events: this.generateUptimeEvents(90)
+    events: this.generateUptimeEvents(90),
   };
 
   /**
@@ -578,7 +535,7 @@ export class ChartDemoComponent {
     const interval = 5 * 60 * 1000; // 5 minutes
 
     for (let i = points - 1; i >= 0; i--) {
-      const timestamp = now - (i * interval);
+      const timestamp = now - i * interval;
       const value = minValue + this.demoRandom() * (maxValue - minValue);
       data.push({ timestamp, value });
     }
@@ -606,19 +563,19 @@ export class ChartDemoComponent {
         const messages = {
           down: 'Server crash - automatic restart',
           degraded: 'High latency detected',
-          maintenance: 'Scheduled maintenance window'
+          maintenance: 'Scheduled maintenance window',
         };
 
         events.push({
           timestamp: date,
           status,
           duration: Math.floor(this.demoRandom() * 3600000), // 0-1 hour
-          message: messages[status as keyof typeof messages]
+          message: messages[status as keyof typeof messages],
         });
       } else {
         events.push({
           timestamp: date,
-          status: 'up'
+          status: 'up',
         });
       }
     }
@@ -635,7 +592,7 @@ export class ChartDemoComponent {
     this.cpuData.set({
       ...this.cpuData(),
       previousValue: currentCpu,
-      value: Math.min(100, Math.max(0, currentCpu + (this.demoRandom() * 20 - 10)))
+      value: Math.min(100, Math.max(0, currentCpu + (this.demoRandom() * 20 - 10))),
     });
 
     // Update Memory
@@ -643,7 +600,7 @@ export class ChartDemoComponent {
     this.memoryData.set({
       ...this.memoryData(),
       previousValue: currentMemory,
-      value: Math.min(100, Math.max(0, currentMemory + (this.demoRandom() * 15 - 7)))
+      value: Math.min(100, Math.max(0, currentMemory + (this.demoRandom() * 15 - 7))),
     });
 
     // Update Disk
@@ -651,7 +608,7 @@ export class ChartDemoComponent {
     this.diskData.set({
       ...this.diskData(),
       previousValue: currentDisk,
-      value: Math.min(100, Math.max(0, currentDisk + (this.demoRandom() * 5 - 2)))
+      value: Math.min(100, Math.max(0, currentDisk + (this.demoRandom() * 5 - 2))),
     });
 
     // Update Custom
@@ -659,7 +616,7 @@ export class ChartDemoComponent {
     this.customData.set({
       ...this.customData(),
       previousValue: currentCustom,
-      value: Math.min(1000, Math.max(0, currentCustom + (this.demoRandom() * 100 - 50)))
+      value: Math.min(1000, Math.max(0, currentCustom + (this.demoRandom() * 100 - 50))),
     });
 
     // Update Latency
@@ -667,7 +624,7 @@ export class ChartDemoComponent {
     this.latencyData.set({
       ...this.latencyData(),
       previousValue: currentLatency,
-      value: Math.min(200, Math.max(0, currentLatency + (this.demoRandom() * 30 - 15)))
+      value: Math.min(200, Math.max(0, currentLatency + (this.demoRandom() * 30 - 15))),
     });
   }
 
@@ -679,32 +636,32 @@ export class ChartDemoComponent {
       value: 45,
       title: 'CPU Usage',
       subtitle: '4 cores active',
-      previousValue: 40
+      previousValue: 40,
     });
 
     this.memoryData.set({
       value: 82,
       title: 'Memory',
       subtitle: '8.2 GB / 10 GB',
-      previousValue: 78
+      previousValue: 78,
     });
 
     this.diskData.set({
       value: 65,
       title: 'Disk Usage',
-      subtitle: '325 GB / 500 GB'
+      subtitle: '325 GB / 500 GB',
     });
 
     this.customData.set({
       value: 15,
       title: 'Network Load',
-      subtitle: '150 Mbps'
+      subtitle: '150 Mbps',
     });
 
     this.latencyData.set({
       value: 45,
       title: 'Latency',
-      subtitle: 'API Response Time'
+      subtitle: 'API Response Time',
     });
   }
 }

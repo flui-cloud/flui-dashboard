@@ -1,15 +1,29 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { Observable, interval, map, firstValueFrom } from 'rxjs';
-import { ClusterInfo, ClusterCreationStep, ClusterStatus, ClusterType, ProviderType, ClusterConfiguration, ClusterMetrics, AutoScalingConfig, OperationStatus } from '../model/cluster.models';
+import {
+  ClusterInfo,
+  ClusterCreationStep,
+  ClusterStatus,
+  ClusterType,
+  ProviderType,
+  ClusterConfiguration,
+  ClusterMetrics,
+  AutoScalingConfig,
+  OperationStatus,
+} from '../model/cluster.models';
 import { InfrastructureClustersService } from '../../core/api/api/infrastructureClusters.service';
 import { InfrastructureOperationsService } from '../../core/api/api/infrastructureOperations.service';
 import { VirtualInstancesService } from '../../core/api/api/virtualInstances.service';
 import { ProviderManagementService } from '../../core/api/api/providerManagement.service';
-import { CreateClusterDto, UpdateClusterVNetDto, ProviderDefinitionDto, ClusterResponseDto, FirewallRuleDto, HaPlanResponseDto } from '../../core/api/model/models';
 import {
-  InstanceWithLabels,
-  mapClusterNodeToInstance,
-} from '../model/instance.models';
+  CreateClusterDto,
+  UpdateClusterVNetDto,
+  ProviderDefinitionDto,
+  ClusterResponseDto,
+  FirewallRuleDto,
+  HaPlanResponseDto,
+} from '../../core/api/model/models';
+import { InstanceWithLabels, mapClusterNodeToInstance } from '../model/instance.models';
 import { InfrastructureWebSocketService } from './infrastructure-websocket.service';
 import { InstallLogService } from './install-log.service';
 import { SandboxService } from '../../core/services/sandbox.service';
@@ -21,7 +35,6 @@ export interface ProviderInfo {
   enabled: boolean;
   configured: boolean;
 }
-
 
 @Injectable({
   providedIn: 'root',
@@ -106,28 +119,24 @@ export class ClusterService {
   readonly nodesErrorMessage = this.nodesError.asReadonly();
 
   readonly hasCluster = computed(() => !!this.clusterInfo());
-  readonly isClusterActive = computed(
-    () => this.clusterInfo()?.status === ClusterStatus.ACTIVE
-  );
+  readonly isClusterActive = computed(() => this.clusterInfo()?.status === ClusterStatus.ACTIVE);
   readonly isClusterCreating = computed(
-    () => this.clusterInfo()?.status === ClusterStatus.CREATING
+    () => this.clusterInfo()?.status === ClusterStatus.CREATING,
   );
   readonly hasClusters = computed(() => this.clustersList().length > 0);
   readonly selectedCluster = computed(() => {
     const id = this.selectedClusterId();
     if (!id) return null;
-    return this.clustersList().find(c => c.id === id) || null;
+    return this.clustersList().find((c) => c.id === id) || null;
   });
 
   readonly hasConfiguredProviders = computed(() =>
-    this.providersList().some(p => p.configured && p.enabled)
+    this.providersList().some((p) => p.configured && p.enabled),
   );
-  readonly configuredProvidersCount = computed(() =>
-    this.providersList().filter(p => p.configured && p.enabled).length
+  readonly configuredProvidersCount = computed(
+    () => this.providersList().filter((p) => p.configured && p.enabled).length,
   );
-  readonly enabledProviders = computed(() =>
-    this.providersList().filter(p => p.enabled)
-  );
+  readonly enabledProviders = computed(() => this.providersList().filter((p) => p.enabled));
 
   async loadProviders(): Promise<void> {
     this.providersLoading.set(true);
@@ -135,7 +144,7 @@ export class ClusterService {
 
     try {
       const availableProviders = await firstValueFrom(
-        this.providersApi.managementControllerGetAvailableProviders()
+        this.providersApi.managementControllerGetAvailableProviders(),
       );
 
       const providersWithConfig: ProviderInfo[] = await Promise.all(
@@ -145,7 +154,7 @@ export class ClusterService {
 
           try {
             const config = await firstValueFrom(
-              this.providersApi.managementControllerGetProviderConfiguration(providerId)
+              this.providersApi.managementControllerGetProviderConfiguration(providerId),
             );
 
             isConfigured = config?.status === 'active';
@@ -159,7 +168,7 @@ export class ClusterService {
             enabled: provider.enabled,
             configured: isConfigured,
           };
-        })
+        }),
       );
 
       this.providersList.set(providersWithConfig);
@@ -178,7 +187,7 @@ export class ClusterService {
   }
 
   getConfiguredProviders(): ProviderInfo[] {
-    return this.providersList().filter(p => p.configured && p.enabled);
+    return this.providersList().filter((p) => p.configured && p.enabled);
   }
 
   private setError(error: any, fallback: string): string {
@@ -225,7 +234,9 @@ export class ClusterService {
     );
   }
 
-  async createCluster(config: ClusterConfiguration): Promise<{ operationId: string; clusterId: string }> {
+  async createCluster(
+    config: ClusterConfiguration,
+  ): Promise<{ operationId: string; clusterId: string }> {
     this.isLoading.set(true);
     this.error.set(null);
     this.creationProgress.set(0);
@@ -262,7 +273,7 @@ export class ClusterService {
       };
 
       const response = await firstValueFrom(
-        this.clustersApi.clustersControllerCreateCluster(createClusterDto)
+        this.clustersApi.clustersControllerCreateCluster(createClusterDto),
       );
 
       this.currentOperationId.set(response.operation_id);
@@ -293,7 +304,7 @@ export class ClusterService {
 
       return {
         operationId: response.operation_id,
-        clusterId: response.cluster_id
+        clusterId: response.cluster_id,
       };
     } catch (error: any) {
       const errorMessage = error?.error?.message || error.message || 'Failed to create cluster';
@@ -332,7 +343,7 @@ export class ClusterService {
     currentStepIndex: number,
     totalSteps: number,
     currentStepProgress: number,
-    overallProgress: number
+    overallProgress: number,
   ): void {
     if (!currentStepId || currentStepId.trim() === '') return;
 
@@ -370,7 +381,11 @@ export class ClusterService {
     }
   }
 
-  private async pollOperationStatus(operationId: string, clusterId: string, operationType: 'create' | 'delete' | 'stop' | 'start' = 'create'): Promise<void> {
+  private async pollOperationStatus(
+    operationId: string,
+    clusterId: string,
+    operationType: 'create' | 'delete' | 'stop' | 'start' = 'create',
+  ): Promise<void> {
     const POLL_INTERVAL = 3000;
     const MAX_POLLS = 600;
     let pollCount = 0;
@@ -380,26 +395,26 @@ export class ClusterService {
         timeout: 'Cluster creation timeout. Please check the cluster status manually.',
         success: 'Cluster created successfully!',
         failed: 'Cluster creation failed',
-        inProgress: 'Creating cluster...'
+        inProgress: 'Creating cluster...',
       },
       delete: {
         timeout: 'Cluster deletion timeout. Please check the cluster status manually.',
         success: 'Cluster deleted successfully!',
         failed: 'Cluster deletion failed',
-        inProgress: 'Deleting cluster...'
+        inProgress: 'Deleting cluster...',
       },
       stop: {
         timeout: 'Cluster stop timeout. Please check the cluster status manually.',
         success: 'Cluster stopped successfully!',
         failed: 'Cluster stop operation failed',
-        inProgress: 'Stopping cluster...'
+        inProgress: 'Stopping cluster...',
       },
       start: {
         timeout: 'Cluster start timeout. Please check the cluster status manually.',
         success: 'Cluster started successfully!',
         failed: 'Cluster start operation failed',
-        inProgress: 'Starting cluster...'
-      }
+        inProgress: 'Starting cluster...',
+      },
     };
 
     const messages = operationMessages[operationType];
@@ -416,7 +431,7 @@ export class ClusterService {
 
       try {
         const statusResponse = await firstValueFrom(
-          this.operationsApi.infrastructureOperationsControllerGetOperationStatus(operationId)
+          this.operationsApi.infrastructureOperationsControllerGetOperationStatus(operationId),
         );
 
         const status = statusResponse as OperationStatus;
@@ -431,7 +446,7 @@ export class ClusterService {
         const stepDescription = status.metadata?.stepDescription || messages.inProgress;
         if (status.totalSteps > 0) {
           this.creationMessage.set(
-            `Step ${status.currentStepIndex + 1}/${status.totalSteps}: ${stepDescription}`
+            `Step ${status.currentStepIndex + 1}/${status.totalSteps}: ${stepDescription}`,
           );
         } else {
           this.creationMessage.set(stepDescription);
@@ -443,7 +458,7 @@ export class ClusterService {
           status.currentStepIndex,
           status.totalSteps,
           status.currentStepProgress,
-          status.progress
+          status.progress,
         );
 
         if (status.status === 'COMPLETED') {
@@ -452,7 +467,7 @@ export class ClusterService {
           this.completeLastRunningStep();
           this.appendFinalStep(
             messages.success,
-            operationType === 'create' ? 'Your cluster is ready to use' : 'Operation completed'
+            operationType === 'create' ? 'Your cluster is ready to use' : 'Operation completed',
           );
           this.infrastructureWs.unsubscribeFromOperation(operationId);
           await this.fetchClusterDetails(clusterId);
@@ -467,7 +482,7 @@ export class ClusterService {
 
           if (operationType === 'create' || operationType === 'delete') {
             this.clusterInfo.update((cluster) =>
-              cluster ? { ...cluster, status: ClusterStatus.ERROR } : null
+              cluster ? { ...cluster, status: ClusterStatus.ERROR } : null,
             );
           }
           return;
@@ -509,7 +524,7 @@ export class ClusterService {
 
       try {
         const statusResponse = await firstValueFrom(
-          this.operationsApi.infrastructureOperationsControllerGetOperationStatus(operationId)
+          this.operationsApi.infrastructureOperationsControllerGetOperationStatus(operationId),
         );
 
         const status = statusResponse as OperationStatus;
@@ -527,7 +542,7 @@ export class ClusterService {
         const stepDescription = status.metadata?.stepDescription || 'Processing...';
         if (status.totalSteps > 0) {
           this.creationMessage.set(
-            `Step ${status.currentStepIndex + 1}/${status.totalSteps}: ${stepDescription}`
+            `Step ${status.currentStepIndex + 1}/${status.totalSteps}: ${stepDescription}`,
           );
         } else {
           this.creationMessage.set(stepDescription);
@@ -539,7 +554,7 @@ export class ClusterService {
           status.currentStepIndex,
           status.totalSteps,
           status.currentStepProgress,
-          status.progress
+          status.progress,
         );
 
         if (status.status === 'COMPLETED') {
@@ -563,7 +578,7 @@ export class ClusterService {
 
           if (clusterId) {
             this.clusterInfo.update((cluster) =>
-              cluster ? { ...cluster, status: ClusterStatus.ERROR } : null
+              cluster ? { ...cluster, status: ClusterStatus.ERROR } : null,
             );
           }
           return;
@@ -622,7 +637,7 @@ export class ClusterService {
   private async fetchClusterDetails(clusterId: string): Promise<void> {
     try {
       const clusterResponse = await firstValueFrom(
-        this.clustersApi.clustersControllerGetCluster(clusterId)
+        this.clustersApi.clustersControllerGetCluster(clusterId),
       );
 
       const updatedCluster: ClusterInfo = {
@@ -667,9 +682,7 @@ export class ClusterService {
     nodeNetwork?: string;
     serverName: string;
   }> {
-    return firstValueFrom(
-      this.clustersApi.clustersControllerIssueJoinToken(clusterId, opts),
-    );
+    return firstValueFrom(this.clustersApi.clustersControllerIssueJoinToken(clusterId, opts));
   }
 
   async highAvailabilityPlan(query: {
@@ -699,10 +712,7 @@ export class ClusterService {
     warnings: string[];
   }> {
     return firstValueFrom(
-      this.clustersApi.clustersControllerEnsureByosVNet(
-        clusterId,
-        ipRange ? { ipRange } : {},
-      ),
+      this.clustersApi.clustersControllerEnsureByosVNet(clusterId, ipRange ? { ipRange } : {}),
     );
   }
 
@@ -715,14 +725,12 @@ export class ClusterService {
       // answers them from the example world, which is not this cluster.
       if (this.isByosCluster() || this.sandbox.inSandbox()) {
         const nodes = await firstValueFrom(
-          this.clustersApi.clustersControllerGetClusterNodes(clusterId)
+          this.clustersApi.clustersControllerGetClusterNodes(clusterId),
         );
         this.clusterNodes.set(
           numberWorkers(
-            (Array.isArray(nodes) ? nodes : []).map((n) =>
-              mapClusterNodeToInstance(n, clusterId)
-            )
-          )
+            (Array.isArray(nodes) ? nodes : []).map((n) => mapClusterNodeToInstance(n, clusterId)),
+          ),
         );
         return;
       }
@@ -737,8 +745,8 @@ export class ClusterService {
           undefined,
           clusterId,
           undefined,
-          true
-        )
+          true,
+        ),
       );
 
       if (response.partialErrors && response.partialErrors.length > 0) {
@@ -761,13 +769,17 @@ export class ClusterService {
   private async attachNodeArchitectures(clusterId: string): Promise<void> {
     let nodes: { serverName?: string; architecture?: ServerArchitecture | null }[];
     try {
-      const answer = await firstValueFrom(this.clustersApi.clustersControllerGetClusterNodes(clusterId));
+      const answer = await firstValueFrom(
+        this.clustersApi.clustersControllerGetClusterNodes(clusterId),
+      );
       nodes = Array.isArray(answer) ? answer : [];
     } catch {
       return;
     }
     const byName = new Map(
-      nodes.filter((n) => n.serverName && n.architecture).map((n) => [n.serverName!, n.architecture!]),
+      nodes
+        .filter((n) => n.serverName && n.architecture)
+        .map((n) => [n.serverName!, n.architecture!]),
     );
     if (byName.size === 0 || this.clusterInfo()?.id !== clusterId) return;
     this.clusterNodes.update((current) =>
@@ -782,7 +794,6 @@ export class ClusterService {
     this.clusterNodes.set([]);
     this.nodesError.set(null);
   }
-
 
   private mapApiStatusToClusterStatus(apiStatus: string): ClusterStatus {
     switch (apiStatus.toLowerCase()) {
@@ -816,9 +827,7 @@ export class ClusterService {
     this.listError.set(null);
 
     try {
-      const response = await firstValueFrom(
-        this.clustersApi.clustersControllerListClusters()
-      );
+      const response = await firstValueFrom(this.clustersApi.clustersControllerListClusters());
 
       const clusters: ClusterInfo[] = response.map((cluster: ClusterResponseDto) => ({
         id: cluster.id,
@@ -859,7 +868,7 @@ export class ClusterService {
 
     try {
       const clusterResponse = await firstValueFrom(
-        this.clustersApi.clustersControllerGetCluster(clusterId)
+        this.clustersApi.clustersControllerGetCluster(clusterId),
       );
 
       const clusterDetails: ClusterInfo = {
@@ -884,8 +893,8 @@ export class ClusterService {
 
       this.clusterInfo.set(clusterDetails);
 
-      this.clustersList.update(clusters =>
-        clusters.map(c => c.id === clusterId ? clusterDetails : c)
+      this.clustersList.update((clusters) =>
+        clusters.map((c) => (c.id === clusterId ? clusterDetails : c)),
       );
     } catch (error: any) {
       console.error('❌ Failed to load cluster details:', error);
@@ -902,29 +911,29 @@ export class ClusterService {
 
     this.infrastructureWs.subscribeToResource(clusterId, {
       onProgress: (dto) => {
-        this.deletionProgressMap.update(map => ({ ...map, [clusterId]: dto.percentage }));
+        this.deletionProgressMap.update((map) => ({ ...map, [clusterId]: dto.percentage }));
       },
       onCompleted: () => {
         this.infrastructureWs.unsubscribeFromResource(clusterId);
-        this.deletionProgressMap.update(map => {
+        this.deletionProgressMap.update((map) => {
           const next = { ...map };
           delete next[clusterId];
           return next;
         });
-        this.clustersList.update(clusters => clusters.filter(c => c.id !== clusterId));
+        this.clustersList.update((clusters) => clusters.filter((c) => c.id !== clusterId));
         if (this.clusterInfo()?.id === clusterId) {
           this.clusterInfo.set(null);
         }
       },
       onFailed: (dto) => {
         this.infrastructureWs.unsubscribeFromResource(clusterId);
-        this.deletionProgressMap.update(map => {
+        this.deletionProgressMap.update((map) => {
           const next = { ...map };
           delete next[clusterId];
           return next;
         });
-        this.clustersList.update(clusters =>
-          clusters.map(c => c.id === clusterId ? { ...c, status: ClusterStatus.ERROR } : c)
+        this.clustersList.update((clusters) =>
+          clusters.map((c) => (c.id === clusterId ? { ...c, status: ClusterStatus.ERROR } : c)),
         );
         this.error.set(dto.error || 'Cluster deletion failed');
       },
@@ -932,19 +941,17 @@ export class ClusterService {
 
     try {
       const response = await firstValueFrom(
-        this.clustersApi.clustersControllerDeleteCluster(clusterId, force)
+        this.clustersApi.clustersControllerDeleteCluster(clusterId, force),
       );
 
-      this.clustersList.update(clusters =>
-        clusters.map(c =>
-          c.id === clusterId ? { ...c, status: ClusterStatus.DELETING } : c
-        )
+      this.clustersList.update((clusters) =>
+        clusters.map((c) => (c.id === clusterId ? { ...c, status: ClusterStatus.DELETING } : c)),
       );
 
       const current = this.clusterInfo();
       if (current?.id === clusterId) {
         this.clusterInfo.update((cluster) =>
-          cluster ? { ...cluster, status: ClusterStatus.DELETING } : null
+          cluster ? { ...cluster, status: ClusterStatus.DELETING } : null,
         );
       }
 
@@ -957,7 +964,7 @@ export class ClusterService {
       const errorMessage = error?.error?.message || error.message || 'Failed to delete cluster';
       console.error('❌ Cluster deletion failed:', error);
       this.infrastructureWs.unsubscribeFromResource(clusterId);
-      this.deletionProgressMap.update(map => {
+      this.deletionProgressMap.update((map) => {
         const next = { ...map };
         delete next[clusterId];
         return next;
@@ -977,7 +984,7 @@ export class ClusterService {
     let polls = 0;
 
     const poll = async (): Promise<void> => {
-      const currentCluster = this.clustersList().find(c => c.id === clusterId);
+      const currentCluster = this.clustersList().find((c) => c.id === clusterId);
       if (!currentCluster) return;
 
       if (polls >= MAX_POLLS) {
@@ -986,35 +993,35 @@ export class ClusterService {
       polls++;
 
       try {
-        const status = await firstValueFrom(
-          this.operationsApi.infrastructureOperationsControllerGetOperationStatus(operationId)
-        ) as OperationStatus;
+        const status = (await firstValueFrom(
+          this.operationsApi.infrastructureOperationsControllerGetOperationStatus(operationId),
+        )) as OperationStatus;
 
         const pct = status.progress ?? 0;
-        this.deletionProgressMap.update(map => {
+        this.deletionProgressMap.update((map) => {
           const current = map[clusterId] ?? 0;
           return pct > current ? { ...map, [clusterId]: pct } : map;
         });
 
         if (status.status === 'COMPLETED') {
-          this.deletionProgressMap.update(map => {
+          this.deletionProgressMap.update((map) => {
             const next = { ...map };
             delete next[clusterId];
             return next;
           });
-          this.clustersList.update(clusters => clusters.filter(c => c.id !== clusterId));
+          this.clustersList.update((clusters) => clusters.filter((c) => c.id !== clusterId));
           if (this.clusterInfo()?.id === clusterId) {
             this.clusterInfo.set(null);
           }
           this.infrastructureWs.unsubscribeFromResource(clusterId);
         } else if (status.status === 'FAILED') {
-          this.deletionProgressMap.update(map => {
+          this.deletionProgressMap.update((map) => {
             const next = { ...map };
             delete next[clusterId];
             return next;
           });
-          this.clustersList.update(clusters =>
-            clusters.map(c => c.id === clusterId ? { ...c, status: ClusterStatus.ERROR } : c)
+          this.clustersList.update((clusters) =>
+            clusters.map((c) => (c.id === clusterId ? { ...c, status: ClusterStatus.ERROR } : c)),
           );
           this.error.set(status.errorMessage || 'Cluster deletion failed');
           this.infrastructureWs.unsubscribeFromResource(clusterId);
@@ -1043,7 +1050,7 @@ export class ClusterService {
               status: ClusterStatus.SCALING,
               lastActivity: new Date(),
             }
-          : null
+          : null,
       );
 
       await this.delay(5000);
@@ -1056,7 +1063,7 @@ export class ClusterService {
               status: ClusterStatus.ACTIVE,
               lastActivity: new Date(),
             }
-          : null
+          : null,
       );
     } catch (error: any) {
       this.error.set(error.message || 'Failed to scale cluster');
@@ -1066,12 +1073,9 @@ export class ClusterService {
     }
   }
 
-  private updateCreationStep(
-    stepId: string,
-    updates: Partial<ClusterCreationStep>
-  ): void {
+  private updateCreationStep(stepId: string, updates: Partial<ClusterCreationStep>): void {
     this.creationSteps.update((steps) =>
-      steps.map((step) => (step.id === stepId ? { ...step, ...updates } : step))
+      steps.map((step) => (step.id === stepId ? { ...step, ...updates } : step)),
     );
   }
 
@@ -1086,7 +1090,7 @@ export class ClusterService {
         podCount: Math.floor(Math.random() * 50) + 10,
         serviceCount: Math.floor(Math.random() * 20) + 5,
         timestamp: new Date(),
-      }))
+      })),
     );
   }
 
@@ -1105,12 +1109,10 @@ export class ClusterService {
               maxNodes: config.maxNodes,
               lastActivity: new Date(),
             }
-          : null
+          : null,
       );
     } catch (error: any) {
-      this.error.set(
-        error.message || 'Failed to update auto-scaling configuration'
-      );
+      this.error.set(error.message || 'Failed to update auto-scaling configuration');
       throw error;
     } finally {
       this.isLoading.set(false);
@@ -1132,26 +1134,23 @@ export class ClusterService {
     }
   }
 
-
   async stopCluster(clusterId: string): Promise<{ operationId: string }> {
     this.isLoading.set(true);
     this.error.set(null);
 
     try {
       const response = await firstValueFrom(
-        this.clustersApi.clustersControllerStopCluster(clusterId)
+        this.clustersApi.clustersControllerStopCluster(clusterId),
       );
 
-      this.clustersList.update(clusters =>
-        clusters.map(c =>
-          c.id === clusterId ? { ...c, status: ClusterStatus.STOPPING } : c
-        )
+      this.clustersList.update((clusters) =>
+        clusters.map((c) => (c.id === clusterId ? { ...c, status: ClusterStatus.STOPPING } : c)),
       );
 
       const current = this.clusterInfo();
       if (current?.id === clusterId) {
-        this.clusterInfo.update(cluster =>
-          cluster ? { ...cluster, status: ClusterStatus.STOPPING } : null
+        this.clusterInfo.update((cluster) =>
+          cluster ? { ...cluster, status: ClusterStatus.STOPPING } : null,
         );
       }
 
@@ -1176,19 +1175,17 @@ export class ClusterService {
 
     try {
       const response = await firstValueFrom(
-        this.clustersApi.clustersControllerStartCluster(clusterId)
+        this.clustersApi.clustersControllerStartCluster(clusterId),
       );
 
-      this.clustersList.update(clusters =>
-        clusters.map(c =>
-          c.id === clusterId ? { ...c, status: ClusterStatus.STARTING } : c
-        )
+      this.clustersList.update((clusters) =>
+        clusters.map((c) => (c.id === clusterId ? { ...c, status: ClusterStatus.STARTING } : c)),
       );
 
       const current = this.clusterInfo();
       if (current?.id === clusterId) {
-        this.clusterInfo.update(cluster =>
-          cluster ? { ...cluster, status: ClusterStatus.STARTING } : null
+        this.clusterInfo.update((cluster) =>
+          cluster ? { ...cluster, status: ClusterStatus.STARTING } : null,
         );
       }
 
@@ -1212,23 +1209,21 @@ export class ClusterService {
       const response = await firstValueFrom(
         this.clustersApi.clustersControllerReconcileClusterStatus(
           clusterId,
-          autoFix ? { autoFix: true } : undefined
-        )
+          autoFix ? { autoFix: true } : undefined,
+        ),
       );
 
       if (response.new_status && response.new_status !== response.previous_status) {
         const newStatus = this.mapApiStatusToClusterStatus(response.new_status);
 
-        this.clustersList.update(clusters =>
-          clusters.map(c =>
-            c.id === clusterId ? { ...c, status: newStatus } : c
-          )
+        this.clustersList.update((clusters) =>
+          clusters.map((c) => (c.id === clusterId ? { ...c, status: newStatus } : c)),
         );
 
         const current = this.clusterInfo();
         if (current?.id === clusterId) {
-          this.clusterInfo.update(cluster =>
-            cluster ? { ...cluster, status: newStatus } : null
+          this.clusterInfo.update((cluster) =>
+            cluster ? { ...cluster, status: newStatus } : null,
           );
         }
       }
@@ -1242,9 +1237,7 @@ export class ClusterService {
   }
 
   setClusterStatus(status: ClusterStatus): void {
-    this.clusterInfo.update((cluster) =>
-      cluster ? { ...cluster, status } : { status }
-    );
+    this.clusterInfo.update((cluster) => (cluster ? { ...cluster, status } : { status }));
   }
 
   simulateError(message: string): void {
@@ -1332,8 +1325,10 @@ export class ClusterService {
     const status = err?.status;
     const backendMessage = err?.error?.message || err?.message;
     if (status === 409) {
-      return backendMessage
-        || 'Cluster is already attached to a different VNet. Detach the current VNet first (not yet supported).';
+      return (
+        backendMessage ||
+        'Cluster is already attached to a different VNet. Detach the current VNet first (not yet supported).'
+      );
     }
     if (status === 404) {
       return backendMessage || 'Cluster or VNet not found.';

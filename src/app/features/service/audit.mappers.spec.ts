@@ -31,17 +31,12 @@ describe('toAuditParams', () => {
   });
 
   it('leaves the toggles out when they are off', () => {
-    const p = toAuditParams(
-      { period: '7d', dataAccessOnly: false, refusedOnly: false },
-      now,
-    );
+    const p = toAuditParams({ period: '7d', dataAccessOnly: false, refusedOnly: false }, now);
     expect(p).toEqual({ since: '2026-09-21T12:00:00.000Z' });
   });
 
   it('computes a 30-day window', () => {
-    expect(toAuditParams({ period: '30d' }, now)['since']).toBe(
-      '2026-08-29T12:00:00.000Z',
-    );
+    expect(toAuditParams({ period: '30d' }, now)['since']).toBe('2026-08-29T12:00:00.000Z');
   });
 });
 

@@ -65,7 +65,9 @@ describe('TryComponent', () => {
 
   it('says in one line that the last visit ended while opening a new one', fakeAsync(() => {
     const fixture = build({ clientId: 'try-web', turnstileSiteKey: null }, false, true);
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Your visit ended. Here is a new one.');
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+      'Your visit ended. Here is a new one.',
+    );
     http.expectOne(ADMISSION).flush({ nonce: 'n-3', expiresInSeconds: 60 });
     flushMicrotasks();
     expect(oidc.loginAsVisitor).toHaveBeenCalledWith('try-web', 'n-3');

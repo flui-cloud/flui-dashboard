@@ -90,22 +90,21 @@ export class ClusterDnsZoneService {
   readonly internalHostingLoading = this.internalHostingLoadingData.asReadonly();
   readonly hasAssignment = computed(() => this.assignmentsData().length > 0);
   readonly issuersConfigured = computed(() => this.issuersData().length > 0);
-  readonly issuersReady = computed(() => this.issuersData().some(i => i.ready));
+  readonly issuersReady = computed(() => this.issuersData().some((i) => i.ready));
   /** True when a DNS-01-capable issuer is Ready in cert-manager — the live gate for wildcard certs. */
   readonly wildcardIssuersReady = computed(() =>
     this.issuersData().some(
-      i => i.ready && (i.solverType === 'dns01' || i.solverType === 'combined')
-    )
+      (i) => i.ready && (i.solverType === 'dns01' || i.solverType === 'combined'),
+    ),
   );
-  readonly reconciliationStatus = computed(
-    () => this.assignment()?.reconciliationStatus ?? null
-  );
+  readonly reconciliationStatus = computed(() => this.assignment()?.reconciliationStatus ?? null);
   readonly needsReconciliation = computed(() =>
-    this.assignmentsData().some(a =>
-      a.reconciliationStatus === DnsReconciliationStatus.PENDING
-      || a.reconciliationStatus === DnsReconciliationStatus.DRIFT
-      || a.reconciliationStatus === DnsReconciliationStatus.ERROR
-    )
+    this.assignmentsData().some(
+      (a) =>
+        a.reconciliationStatus === DnsReconciliationStatus.PENDING ||
+        a.reconciliationStatus === DnsReconciliationStatus.DRIFT ||
+        a.reconciliationStatus === DnsReconciliationStatus.ERROR,
+    ),
   );
 
   async loadAssignment(clusterId: string): Promise<void> {
@@ -113,7 +112,7 @@ export class ClusterDnsZoneService {
     this.errorData.set(null);
     try {
       const result = await firstValueFrom(
-        this.apiService.clusterDnsZoneControllerListZoneAssignments(clusterId)
+        this.apiService.clusterDnsZoneControllerListZoneAssignments(clusterId),
       );
       this.assignmentsData.set(result ?? []);
     } catch (err: unknown) {
@@ -131,15 +130,15 @@ export class ClusterDnsZoneService {
 
   async assignZone(
     clusterId: string,
-    dto: AssignDnsZoneDto
+    dto: AssignDnsZoneDto,
   ): Promise<ClusterDnsZoneResponseDto | null> {
     this.loadingData.set(true);
     this.errorData.set(null);
     try {
       const result = await firstValueFrom(
-        this.apiService.clusterDnsZoneControllerAssignZone(clusterId, dto)
+        this.apiService.clusterDnsZoneControllerAssignZone(clusterId, dto),
       );
-      this.assignmentsData.update(list => [...list, result]);
+      this.assignmentsData.update((list) => [...list, result]);
       return result;
     } catch (err: unknown) {
       this.errorData.set(this.extractErrorMessage(err, 'Failed to assign DNS zone'));
@@ -152,17 +151,16 @@ export class ClusterDnsZoneService {
   /** Raw HttpClient: the reconcile endpoint is not in the generated client yet. */
   async reconcileAssignment(
     clusterId: string,
-    assignmentId: string
+    assignmentId: string,
   ): Promise<ClusterDnsZoneResponseDto | null> {
     this.loadingData.set(true);
     this.errorData.set(null);
     try {
-      const url = `${this.basePath}/api/v1/clusters/${encodeURIComponent(clusterId)}`
-        + `/dns-zone/${encodeURIComponent(assignmentId)}/reconcile`;
-      const result = await firstValueFrom(
-        this.http.post<ClusterDnsZoneResponseDto>(url, {})
-      );
-      this.assignmentsData.update(list => list.map(a => (a.id === result.id ? result : a)));
+      const url =
+        `${this.basePath}/api/v1/clusters/${encodeURIComponent(clusterId)}` +
+        `/dns-zone/${encodeURIComponent(assignmentId)}/reconcile`;
+      const result = await firstValueFrom(this.http.post<ClusterDnsZoneResponseDto>(url, {}));
+      this.assignmentsData.update((list) => list.map((a) => (a.id === result.id ? result : a)));
       return result;
     } catch (err: unknown) {
       this.errorData.set(this.extractErrorMessage(err, 'Failed to reconcile the DNS zone'));
@@ -174,7 +172,9 @@ export class ClusterDnsZoneService {
 
   async getAcmeResolvers(clusterId: string): Promise<AcmeResolvers | null> {
     try {
-      return await firstValueFrom(this.http.get<AcmeResolvers | null>(this.acmeResolversUrl(clusterId)));
+      return await firstValueFrom(
+        this.http.get<AcmeResolvers | null>(this.acmeResolversUrl(clusterId)),
+      );
     } catch {
       return null;
     }
@@ -183,7 +183,9 @@ export class ClusterDnsZoneService {
   async pinAcmeResolvers(clusterId: string): Promise<AcmeResolvers | null> {
     this.errorData.set(null);
     try {
-      return await firstValueFrom(this.http.post<AcmeResolvers | null>(this.acmeResolversUrl(clusterId), {}));
+      return await firstValueFrom(
+        this.http.post<AcmeResolvers | null>(this.acmeResolversUrl(clusterId), {}),
+      );
     } catch (err: unknown) {
       this.errorData.set(this.extractErrorMessage(err, 'Failed to set public resolvers'));
       return null;
@@ -196,11 +198,11 @@ export class ClusterDnsZoneService {
 
   async getClusterWildcard(
     clusterId: string,
-    assignmentId: string
+    assignmentId: string,
   ): Promise<ClusterWildcard | null> {
     try {
       return await firstValueFrom(
-        this.http.get<ClusterWildcard>(this.wildcardUrl(clusterId, assignmentId))
+        this.http.get<ClusterWildcard>(this.wildcardUrl(clusterId, assignmentId)),
       );
     } catch {
       return null;
@@ -209,20 +211,15 @@ export class ClusterDnsZoneService {
 
   async publishClusterWildcard(
     clusterId: string,
-    assignmentId: string
+    assignmentId: string,
   ): Promise<ClusterWildcard | null> {
     this.errorData.set(null);
     try {
       return await firstValueFrom(
-        this.http.post<ClusterWildcard>(
-          this.wildcardUrl(clusterId, assignmentId),
-          {}
-        )
+        this.http.post<ClusterWildcard>(this.wildcardUrl(clusterId, assignmentId), {}),
       );
     } catch (err: unknown) {
-      this.errorData.set(
-        this.extractErrorMessage(err, 'Failed to publish the wildcard record')
-      );
+      this.errorData.set(this.extractErrorMessage(err, 'Failed to publish the wildcard record'));
       return null;
     }
   }
@@ -237,14 +234,14 @@ export class ClusterDnsZoneService {
   async pollAssignmentReconciliation(
     clusterId: string,
     assignmentId: string,
-    timeoutMs = 180000
+    timeoutMs = 180000,
   ): Promise<void> {
     const start = Date.now();
     const interval = 4000;
     while (Date.now() - start < timeoutMs) {
-      await new Promise(resolve => setTimeout(resolve, interval));
+      await new Promise((resolve) => setTimeout(resolve, interval));
       await this.loadAssignment(clusterId);
-      const assignment = this.assignmentsData().find(a => a.id === assignmentId);
+      const assignment = this.assignmentsData().find((a) => a.id === assignmentId);
       if (!assignment) return;
       if (assignment.reconciliationStatus !== DnsReconciliationStatus.RECONCILING) return;
     }
@@ -257,13 +254,11 @@ export class ClusterDnsZoneService {
     try {
       if (assignmentId) {
         await firstValueFrom(
-          this.apiService.clusterDnsZoneControllerRemoveAssignment(assignmentId, clusterId)
+          this.apiService.clusterDnsZoneControllerRemoveAssignment(assignmentId, clusterId),
         );
-        this.assignmentsData.update(list => list.filter(a => a.id !== assignmentId));
+        this.assignmentsData.update((list) => list.filter((a) => a.id !== assignmentId));
       } else {
-        await firstValueFrom(
-          this.apiService.clusterDnsZoneControllerRemoveZone(clusterId)
-        );
+        await firstValueFrom(this.apiService.clusterDnsZoneControllerRemoveZone(clusterId));
         this.assignmentsData.set([]);
       }
       return true;
@@ -275,10 +270,12 @@ export class ClusterDnsZoneService {
     }
   }
 
-  async getIssuers(clusterId: string): Promise<ClusterDnsZoneControllerGetIssuers200ResponseInner[]> {
+  async getIssuers(
+    clusterId: string,
+  ): Promise<ClusterDnsZoneControllerGetIssuers200ResponseInner[]> {
     try {
       const result = await firstValueFrom(
-        this.apiService.clusterDnsZoneControllerGetIssuers(clusterId)
+        this.apiService.clusterDnsZoneControllerGetIssuers(clusterId),
       );
       this.issuersData.set(result);
       return result;
@@ -300,9 +297,7 @@ export class ClusterDnsZoneService {
       )) as InternalHostingStatus;
       this.internalHostingStatusData.set(result ?? null);
     } catch (err: unknown) {
-      this.errorData.set(
-        this.extractErrorMessage(err, 'Failed to load internal hosting status.'),
-      );
+      this.errorData.set(this.extractErrorMessage(err, 'Failed to load internal hosting status.'));
       this.internalHostingStatusData.set(null);
     } finally {
       this.internalHostingLoadingData.set(false);
@@ -315,9 +310,7 @@ export class ClusterDnsZoneService {
 
   async configureIssuer(clusterId: string, dto: ConfigureIssuerDto): Promise<boolean> {
     try {
-      await firstValueFrom(
-        this.apiService.clusterDnsZoneControllerConfigureIssuer(clusterId, dto)
-      );
+      await firstValueFrom(this.apiService.clusterDnsZoneControllerConfigureIssuer(clusterId, dto));
       return true;
     } catch (err: unknown) {
       this.errorData.set(this.extractErrorMessage(err, 'Failed to configure certificate issuer'));
@@ -325,14 +318,23 @@ export class ClusterDnsZoneService {
     }
   }
 
-  async configureIssuerByType(clusterId: string, type: IssuerApiType, dto: ConfigureIssuerDto): Promise<boolean> {
+  async configureIssuerByType(
+    clusterId: string,
+    type: IssuerApiType,
+    dto: ConfigureIssuerDto,
+  ): Promise<boolean> {
     try {
       await firstValueFrom(
-        this.apiService.clusterDnsZoneControllerConfigureIssuerByType(clusterId, type, dto)
+        this.apiService.clusterDnsZoneControllerConfigureIssuerByType(clusterId, type, dto),
       );
       return true;
     } catch (err: unknown) {
-      this.errorData.set(this.extractErrorMessage(err, `Failed to configure ${type.toUpperCase()} certificate issuers`));
+      this.errorData.set(
+        this.extractErrorMessage(
+          err,
+          `Failed to configure ${type.toUpperCase()} certificate issuers`,
+        ),
+      );
       return false;
     }
   }
@@ -340,9 +342,7 @@ export class ClusterDnsZoneService {
   /** Step 1 of wildcard setup: apply the DNS token Secret in cert-manager namespace */
   async configureDnsSecret(clusterId: string): Promise<boolean> {
     try {
-      await firstValueFrom(
-        this.apiService.clusterDnsZoneControllerConfigureDnsSecret(clusterId)
-      );
+      await firstValueFrom(this.apiService.clusterDnsZoneControllerConfigureDnsSecret(clusterId));
       return true;
     } catch (err: unknown) {
       this.errorData.set(this.extractErrorMessage(err, 'Failed to configure DNS secret'));
@@ -354,11 +354,13 @@ export class ClusterDnsZoneService {
   async configureDnsIssuers(clusterId: string, dto: ConfigureIssuerDto): Promise<boolean> {
     try {
       await firstValueFrom(
-        this.apiService.clusterDnsZoneControllerConfigureDnsIssuers(clusterId, dto)
+        this.apiService.clusterDnsZoneControllerConfigureDnsIssuers(clusterId, dto),
       );
       return true;
     } catch (err: unknown) {
-      this.errorData.set(this.extractErrorMessage(err, 'Failed to configure DNS-01 wildcard issuers'));
+      this.errorData.set(
+        this.extractErrorMessage(err, 'Failed to configure DNS-01 wildcard issuers'),
+      );
       return false;
     }
   }
@@ -366,19 +368,24 @@ export class ClusterDnsZoneService {
   async deleteIssuersByType(clusterId: string, type: IssuerApiType): Promise<boolean> {
     try {
       await firstValueFrom(
-        this.apiService.clusterDnsZoneControllerDeleteIssuersByType(clusterId, type)
+        this.apiService.clusterDnsZoneControllerDeleteIssuersByType(clusterId, type),
       );
       return true;
     } catch (err: unknown) {
-      this.errorData.set(this.extractErrorMessage(err, `Failed to delete ${type.toUpperCase()} certificate issuers`));
+      this.errorData.set(
+        this.extractErrorMessage(err, `Failed to delete ${type.toUpperCase()} certificate issuers`),
+      );
       return false;
     }
   }
 
-  async configureSystemIngress(clusterId: string, dto: ConfigureSystemIngressDto): Promise<boolean> {
+  async configureSystemIngress(
+    clusterId: string,
+    dto: ConfigureSystemIngressDto,
+  ): Promise<boolean> {
     try {
       await firstValueFrom(
-        this.apiService.clusterDnsZoneControllerConfigureSystemIngress(clusterId, dto)
+        this.apiService.clusterDnsZoneControllerConfigureSystemIngress(clusterId, dto),
       );
       return true;
     } catch (err: unknown) {
@@ -404,16 +411,21 @@ export class ClusterDnsZoneService {
 
   async checkSystemHostnames(
     clusterId: string,
-    body: { dnsZoneId?: string; hostnames: SystemHostnameChoice[] }
+    body: { dnsZoneId?: string; hostnames: SystemHostnameChoice[] },
   ): Promise<SystemHostnamesCheck> {
     const url = `${this.basePath}/api/v1/clusters/${encodeURIComponent(clusterId)}/dns-zone/system-hostnames/check`;
     try {
       const result = await firstValueFrom(this.http.post<SystemHostnames>(url, body));
       return { ok: true, result };
     } catch (err: unknown) {
-      const body = (err as { error?: { field?: SystemHostnameApp; message?: string | string[] } })?.error;
+      const body = (err as { error?: { field?: SystemHostnameApp; message?: string | string[] } })
+        ?.error;
       const message = Array.isArray(body?.message) ? body.message.join(' ') : body?.message;
-      return { ok: false, field: body?.field ?? null, message: message ?? 'Could not check the addresses.' };
+      return {
+        ok: false,
+        field: body?.field ?? null,
+        message: message ?? 'Could not check the addresses.',
+      };
     }
   }
 

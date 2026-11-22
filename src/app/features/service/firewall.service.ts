@@ -3,10 +3,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { ProviderFirewallsService, ProviderManagementService } from '../../core/api/api/api';
 import { ProviderFirewallResponseDto } from '../../core/api/model/models';
-import {
-  ProviderFirewallExtended,
-  ProviderFirewallStats,
-} from '../model/firewall.models';
+import { ProviderFirewallExtended, ProviderFirewallStats } from '../model/firewall.models';
 
 /**
  * Service for managing provider firewalls (emergency use only).
@@ -26,16 +23,17 @@ export class FirewallService {
 
   // Public Readonly Signals
   readonly allProviderFirewalls = this.providerFirewalls.asReadonly();
-  readonly loadingProviderFirewalls =
-    this.isLoadingProviderFirewalls.asReadonly();
-  readonly providerFirewallsErrorMessage =
-    this.providerFirewallsError.asReadonly();
+  readonly loadingProviderFirewalls = this.isLoadingProviderFirewalls.asReadonly();
+  readonly providerFirewallsErrorMessage = this.providerFirewallsError.asReadonly();
 
   /**
    * Check if a firewall is a control-cluster firewall
    */
   private isObservabilityFirewall(fw: ProviderFirewallExtended): boolean {
-    return fw.labels?.['flui-cluster-type'] === 'control' || fw.labels?.['flui-cluster-type'] === 'observability';
+    return (
+      fw.labels?.['flui-cluster-type'] === 'control' ||
+      fw.labels?.['flui-cluster-type'] === 'observability'
+    );
   }
 
   /**
@@ -48,11 +46,11 @@ export class FirewallService {
 
   // Computed Signals
   readonly inUseProviderFirewalls = computed(() =>
-    this.providerFirewalls().filter((fw) => this.isFirewallInUse(fw))
+    this.providerFirewalls().filter((fw) => this.isFirewallInUse(fw)),
   );
 
   readonly unusedProviderFirewalls = computed(() =>
-    this.providerFirewalls().filter((fw) => !this.isFirewallInUse(fw))
+    this.providerFirewalls().filter((fw) => !this.isFirewallInUse(fw)),
   );
 
   readonly providerFirewallStats = computed<ProviderFirewallStats>(() => {
@@ -74,10 +72,7 @@ export class FirewallService {
   /**
    * Load provider firewalls from all providers
    */
-  async loadProviderFirewalls(filters?: {
-    provider?: string;
-    clusterId?: string;
-  }): Promise<void> {
+  async loadProviderFirewalls(filters?: { provider?: string; clusterId?: string }): Promise<void> {
     this.isLoadingProviderFirewalls.set(true);
     this.providerFirewallsError.set(null);
 
@@ -89,11 +84,11 @@ export class FirewallService {
         // Fetch active provider configurations directly to avoid calling
         // non-configured providers (which would crash)
         const configurations = await firstValueFrom(
-          this.providerManagementApi.managementControllerGetUserProviderConfigurations()
+          this.providerManagementApi.managementControllerGetUserProviderConfigurations(),
         );
         providers = configurations
-          .filter(c => c.status === 'active')
-          .map(c => c.provider as string);
+          .filter((c) => c.status === 'active')
+          .map((c) => c.provider as string);
       }
 
       if (providers.length === 0) {
@@ -110,17 +105,15 @@ export class FirewallService {
                 provider as any,
                 undefined,
                 undefined,
-                filters?.clusterId
-              )
+                filters?.clusterId,
+              ),
             );
-            return firewalls.map((fw) =>
-              this.extendProviderFirewall(fw, provider)
-            );
+            return firewalls.map((fw) => this.extendProviderFirewall(fw, provider));
           } catch (error) {
             console.error(`Error loading ${provider} firewalls:`, error);
             return [];
           }
-        })
+        }),
       );
 
       // Flatten and set results
@@ -128,9 +121,7 @@ export class FirewallService {
       this.providerFirewalls.set(allFirewalls);
     } catch (error: unknown) {
       const errorMessage =
-        error instanceof Error
-          ? error.message
-          : 'Failed to load provider firewalls';
+        error instanceof Error ? error.message : 'Failed to load provider firewalls';
       this.providerFirewallsError.set(errorMessage);
       console.error('Error loading provider firewalls:', error);
     } finally {
@@ -141,10 +132,7 @@ export class FirewallService {
   /**
    * Delete a provider firewall
    */
-  async deleteProviderFirewall(
-    provider: string,
-    id: string
-  ): Promise<void> {
+  async deleteProviderFirewall(provider: string, id: string): Promise<void> {
     this.isLoadingProviderFirewalls.set(true);
     this.providerFirewallsError.set(null);
 
@@ -153,19 +141,15 @@ export class FirewallService {
         this.providerFirewallsApi.providerFirewallsControllerDeleteFirewall(
           provider as any,
           id,
-          true // confirm parameter
-        )
+          true, // confirm parameter
+        ),
       );
 
       // Remove from local state
-      this.providerFirewalls.update((current) =>
-        current.filter((fw) => fw.id !== id)
-      );
+      this.providerFirewalls.update((current) => current.filter((fw) => fw.id !== id));
     } catch (error: unknown) {
       const errorMessage =
-        error instanceof Error
-          ? error.message
-          : 'Failed to delete provider firewall';
+        error instanceof Error ? error.message : 'Failed to delete provider firewall';
       this.providerFirewallsError.set(errorMessage);
       console.error('Error deleting provider firewall:', error);
       throw error;
@@ -179,7 +163,7 @@ export class FirewallService {
    */
   private extendProviderFirewall(
     fw: ProviderFirewallResponseDto,
-    provider: string
+    provider: string,
   ): ProviderFirewallExtended {
     // Extract cluster info from labels
     const labels = (fw.labels || {}) as Record<string, string>;

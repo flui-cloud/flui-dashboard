@@ -45,16 +45,29 @@ describe('decisionPanel', () => {
     const panel = decisionPanel({
       coverage: coverage({
         protectPath: null,
-        pending: { outcome: 'waiting', reason: 'the database is not running yet', at: '', protectHelps: false },
+        pending: {
+          outcome: 'waiting',
+          reason: 'the database is not running yet',
+          at: '',
+          protectHelps: false,
+        },
       }),
       policies: [],
     });
-    expect(panel).toEqual({ state: 'unprotected', why: 'The database is not running yet.', protectPath: null });
+    expect(panel).toEqual({
+      state: 'unprotected',
+      why: 'The database is not running yet.',
+      protectPath: null,
+    });
   });
 
   it('shows the decision with its note, who and when, and the policies still running', () => {
     const panel = decisionPanel({
-      coverage: coverage({ coverage: 'not_backed_up_by_choice', reason: 'not_backed_up_by_choice', decision }),
+      coverage: coverage({
+        coverage: 'not_backed_up_by_choice',
+        reason: 'not_backed_up_by_choice',
+        decision,
+      }),
       policies: [
         { policyId: 'p-1', name: 'pg-continuous', enabled: true },
         { policyId: 'p-2', name: 'old', enabled: false },
@@ -69,7 +82,9 @@ describe('decisionPanel', () => {
   });
 
   it('shows nothing for a protected app, one that keeps no data, or a part of Flui', () => {
-    expect(decisionPanel({ coverage: coverage({ coverage: 'protected' }), policies: [] })).toBeNull();
+    expect(
+      decisionPanel({ coverage: coverage({ coverage: 'protected' }), policies: [] }),
+    ).toBeNull();
     expect(decisionPanel({ coverage: coverage({ coverage: 'pending' }), policies: [] })).toBeNull();
     expect(decisionPanel({ coverage: coverage({ holdsData: false }), policies: [] })).toBeNull();
     expect(decisionPanel({ coverage: coverage({ category: 'system' }), policies: [] })).toBeNull();

@@ -39,7 +39,8 @@ export class AppRecapStore {
   async load(group: AppGroupView, primary: Application | null): Promise<void> {
     const ids = group.components.map((c) => c.id);
     const loads = [this.loadMetrics(ids), this.loadProtection(ids), this.loadAvailability(ids)];
-    if (group.type === 'composed') loads.push(this.loadEvents(group.components), this.loadTrends(ids));
+    if (group.type === 'composed')
+      loads.push(this.loadEvents(group.components), this.loadTrends(ids));
     else if (primary) loads.push(this.loadRelease(primary.id));
     await Promise.all(loads);
   }
@@ -78,7 +79,14 @@ export class AppRecapStore {
     const end = new Date(now).toISOString();
     const results = await Promise.allSettled(
       ids.map((id) =>
-        firstValueFrom(this.metricsApi.applicationMetricsControllerGetAppMetricsHistory(id, start, end, TREND_STEP)),
+        firstValueFrom(
+          this.metricsApi.applicationMetricsControllerGetAppMetricsHistory(
+            id,
+            start,
+            end,
+            TREND_STEP,
+          ),
+        ),
       ),
     );
     const next: Record<string, ComponentTrend> = {};
@@ -90,7 +98,9 @@ export class AppRecapStore {
 
   private async loadMetrics(ids: string[]): Promise<void> {
     const results = await Promise.allSettled(
-      ids.map((id) => firstValueFrom(this.metricsApi.applicationMetricsControllerGetAppMetrics(id))),
+      ids.map((id) =>
+        firstValueFrom(this.metricsApi.applicationMetricsControllerGetAppMetrics(id)),
+      ),
     );
     const next: Record<string, AppMetricsDto> = {};
     results.forEach((r, i) => {
@@ -112,7 +122,9 @@ export class AppRecapStore {
   private async loadRelease(appId: string): Promise<void> {
     try {
       this.release.set(
-        (await firstValueFrom(this.applicationsApi.applicationReleasesControllerGetCurrentRelease(appId))) ?? null,
+        (await firstValueFrom(
+          this.applicationsApi.applicationReleasesControllerGetCurrentRelease(appId),
+        )) ?? null,
       );
     } catch {
       this.release.set(null);
@@ -121,9 +133,18 @@ export class AppRecapStore {
 
   private async loadEvents(components: Application[]): Promise<void> {
     const results = await Promise.allSettled(
-      components.map((c) => firstValueFrom(this.applicationsApi.applicationsControllerGetAuditEvents(c.id, undefined, 5))),
+      components.map((c) =>
+        firstValueFrom(
+          this.applicationsApi.applicationsControllerGetAuditEvents(c.id, undefined, 5),
+        ),
+      ),
     );
-    this.events.set(recentEvents(components, results.map((r) => (r.status === 'fulfilled' ? (r.value as unknown) : null))));
+    this.events.set(
+      recentEvents(
+        components,
+        results.map((r) => (r.status === 'fulfilled' ? (r.value as unknown) : null)),
+      ),
+    );
     this.eventsLoaded.set(true);
   }
 

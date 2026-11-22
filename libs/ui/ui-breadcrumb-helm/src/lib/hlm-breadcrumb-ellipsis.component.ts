@@ -6,19 +6,21 @@ import { HlmIconDirective } from '@spartan-ng/ui-icon-helm';
 import type { ClassValue } from 'clsx';
 
 @Component({
-	selector: 'hlm-breadcrumb-ellipsis',
-	imports: [NgIcon, HlmIconDirective],
-	providers: [provideIcons({ lucideEllipsis })],
-	template: `
-		<span role="presentation" aria-hidden="true" [class]="_computedClass()">
-			<ng-icon hlm size="sm" name="lucideEllipsis" />
-			<span class="sr-only">More</span>
-		</span>
-	`,
-	changeDetection: ChangeDetectionStrategy.OnPush,
+  selector: 'hlm-breadcrumb-ellipsis',
+  imports: [NgIcon, HlmIconDirective],
+  providers: [provideIcons({ lucideEllipsis })],
+  template: `
+    <span role="presentation" aria-hidden="true" [class]="_computedClass()">
+      <ng-icon hlm size="sm" name="lucideEllipsis" />
+      <span class="sr-only">More</span>
+    </span>
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HlmBreadcrumbEllipsisComponent {
-	public readonly userClass = input<ClassValue>('', { alias: 'class' });
+  public readonly userClass = input<ClassValue>('', { alias: 'class' });
 
-	protected readonly _computedClass = computed(() => hlm('flex h-9 w-9 items-center justify-center', this.userClass()));
+  protected readonly _computedClass = computed(() =>
+    hlm('flex h-9 w-9 items-center justify-center', this.userClass()),
+  );
 }

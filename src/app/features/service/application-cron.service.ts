@@ -40,9 +40,7 @@ export class ApplicationCronService {
     this.loadingData.set(true);
     this.errorData.set(null);
     try {
-      const data = await firstValueFrom(
-        this.http.get<ScheduledJob[]>(this.base(appId)),
-      );
+      const data = await firstValueFrom(this.http.get<ScheduledJob[]>(this.base(appId)));
       this.jobsData.set(data ?? []);
     } catch (error: any) {
       console.error('Error loading schedules:', error);
@@ -52,16 +50,11 @@ export class ApplicationCronService {
     }
   }
 
-  async create(
-    appId: string,
-    body: CreateScheduledJobRequest,
-  ): Promise<ScheduledJob | null> {
+  async create(appId: string, body: CreateScheduledJobRequest): Promise<ScheduledJob | null> {
     this.savingData.set(true);
     this.errorData.set(null);
     try {
-      const created = await firstValueFrom(
-        this.http.post<ScheduledJob>(this.base(appId), body),
-      );
+      const created = await firstValueFrom(this.http.post<ScheduledJob>(this.base(appId), body));
       if (created) {
         this.jobsData.update((list) => [created, ...list]);
       }
@@ -84,15 +77,10 @@ export class ApplicationCronService {
     this.errorData.set(null);
     try {
       const updated = await firstValueFrom(
-        this.http.patch<ScheduledJob>(
-          `${this.base(appId)}/${encodeURIComponent(name)}`,
-          body,
-        ),
+        this.http.patch<ScheduledJob>(`${this.base(appId)}/${encodeURIComponent(name)}`, body),
       );
       if (updated) {
-        this.jobsData.update((list) =>
-          list.map((j) => (j.name === name ? updated : j)),
-        );
+        this.jobsData.update((list) => list.map((j) => (j.name === name ? updated : j)));
       }
       return updated;
     } catch (error: any) {
@@ -112,9 +100,7 @@ export class ApplicationCronService {
     this.errorData.set(null);
     try {
       await firstValueFrom(
-        this.http.delete<void>(
-          `${this.base(appId)}/${encodeURIComponent(name)}`,
-        ),
+        this.http.delete<void>(`${this.base(appId)}/${encodeURIComponent(name)}`),
       );
       this.jobsData.update((list) => list.filter((j) => j.name !== name));
       return true;
@@ -145,9 +131,7 @@ export class ApplicationCronService {
   async listRuns(appId: string, name: string): Promise<ScheduledJobRun[]> {
     try {
       const runs = await firstValueFrom(
-        this.http.get<ScheduledJobRun[]>(
-          `${this.base(appId)}/${encodeURIComponent(name)}/runs`,
-        ),
+        this.http.get<ScheduledJobRun[]>(`${this.base(appId)}/${encodeURIComponent(name)}/runs`),
       );
       return runs ?? [];
     } catch (error: any) {

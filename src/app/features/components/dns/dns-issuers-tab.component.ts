@@ -10,12 +10,16 @@ import { ClusterIssuerSetupComponent } from '../cluster/cluster-issuer-setup.com
 @Component({
   selector: 'app-dns-issuers-tab',
   standalone: true,
-  imports: [NgIconComponent, FormsModule, ClusterCertificateIssuersComponent, ClusterIssuerSetupComponent],
+  imports: [
+    NgIconComponent,
+    FormsModule,
+    ClusterCertificateIssuersComponent,
+    ClusterIssuerSetupComponent,
+  ],
   providers: [provideIcons({ lucideServer, lucideInfo, lucideRefreshCw })],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-4">
-
       @if (loading()) {
         <!-- Skeleton loader -->
         <div class="animate-pulse space-y-4">
@@ -25,7 +29,9 @@ import { ClusterIssuerSetupComponent } from '../cluster/cluster-issuer-setup.com
             <div class="h-8 w-64 rounded-md bg-gray-200 dark:bg-gray-700"></div>
           </div>
           <!-- Content card skeleton -->
-          <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 space-y-4">
+          <div
+            class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 space-y-4"
+          >
             <div class="h-5 w-40 rounded bg-gray-200 dark:bg-gray-700"></div>
             <div class="space-y-3">
               @for (i of [1, 2, 3]; track i) {
@@ -39,12 +45,15 @@ import { ClusterIssuerSetupComponent } from '../cluster/cluster-issuer-setup.com
           </div>
         </div>
       } @else if (clusters().length === 0) {
-        <div class="flex items-start gap-3 p-4 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg">
+        <div
+          class="flex items-start gap-3 p-4 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg"
+        >
           <ng-icon name="lucideInfo" class="h-4 w-4 text-gray-400 flex-shrink-0 mt-0.5" />
-          <p class="text-sm text-gray-600 dark:text-gray-400">No clusters available. Create a cluster to configure certificate issuers.</p>
+          <p class="text-sm text-gray-600 dark:text-gray-400">
+            No clusters available. Create a cluster to configure certificate issuers.
+          </p>
         </div>
       } @else {
-
         <!-- Cluster selector -->
         <div class="flex items-center justify-between gap-3">
           <div class="flex items-center gap-3">
@@ -70,15 +79,27 @@ import { ClusterIssuerSetupComponent } from '../cluster/cluster-issuer-setup.com
 
         @if (selectedClusterId) {
           <div class="space-y-4">
-            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5">
-              <app-cluster-certificate-issuers [clusterId]="selectedClusterId" [refreshTrigger]="issuersRefreshTrigger()" />
+            <div
+              class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5"
+            >
+              <app-cluster-certificate-issuers
+                [clusterId]="selectedClusterId"
+                [refreshTrigger]="issuersRefreshTrigger()"
+              />
             </div>
-            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5">
-              <app-cluster-issuer-setup [clusterId]="selectedClusterId" [refreshTrigger]="issuersRefreshTrigger()" />
+            <div
+              class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5"
+            >
+              <app-cluster-issuer-setup
+                [clusterId]="selectedClusterId"
+                [refreshTrigger]="issuersRefreshTrigger()"
+              />
             </div>
           </div>
         } @else {
-          <p class="text-sm text-gray-500 dark:text-gray-400">Select a cluster to view and configure its certificate issuers.</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400">
+            Select a cluster to view and configure its certificate issuers.
+          </p>
         }
       }
     </div>
@@ -97,13 +118,13 @@ export class DnsIssuersTabComponent implements OnInit {
     effect(() => {
       const trigger = this.refreshService.trigger();
       if (trigger > 0) {
-        this.issuersRefreshTrigger.update(n => n + 1);
+        this.issuersRefreshTrigger.update((n) => n + 1);
       }
     });
   }
 
   refresh(): void {
-    this.issuersRefreshTrigger.update(n => n + 1);
+    this.issuersRefreshTrigger.update((n) => n + 1);
   }
 
   ngOnInit(): void {

@@ -1,5 +1,15 @@
-import { AppGroupView, Application, ApplicationKind, ApplicationKindEnum } from '../../model/application.models';
-import { WORKLOAD_LIST_LABEL, WORKLOAD_LIST_ROUTE, WorkloadList, workloadListOf } from '../../model/workload-list';
+import {
+  AppGroupView,
+  Application,
+  ApplicationKind,
+  ApplicationKindEnum,
+} from '../../model/application.models';
+import {
+  WORKLOAD_LIST_LABEL,
+  WORKLOAD_LIST_ROUTE,
+  WorkloadList,
+  workloadListOf,
+} from '../../model/workload-list';
 import { databaseEngineOf, engineDescriptor } from '../../model/db-engine';
 import { originOf } from './applications-list-rows';
 
@@ -48,7 +58,11 @@ export function formatDate(iso: string): string {
   return Number.isNaN(d.getTime()) ? iso : d.toLocaleString();
 }
 
-export function headerMeta(group: AppGroupView, primary: Application | null, clusterName: string): HeaderPart[] {
+export function headerMeta(
+  group: AppGroupView,
+  primary: Application | null,
+  clusterName: string,
+): HeaderPart[] {
   const parts: HeaderPart[] = [];
   const origin = originOf(primary ?? undefined, group);
   if (group.type === 'composed' || origin === 'Catalog') {

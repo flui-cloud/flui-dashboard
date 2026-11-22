@@ -48,16 +48,23 @@ import { AttachVNetDialogComponent } from './attach-vnet-dialog.component';
       </div>
 
       @if (isByos() && clusterVNet()) {
-        <div class="card-inner border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/10 rounded-lg p-3 mb-4 flex items-start gap-2.5">
-          <ng-icon name="lucideShieldCheck" class="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+        <div
+          class="card-inner border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/10 rounded-lg p-3 mb-4 flex items-start gap-2.5"
+        >
+          <ng-icon
+            name="lucideShieldCheck"
+            class="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5"
+          />
           <div>
-            <span class="inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+            <span
+              class="inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+            >
               Registered (self-hosted)
             </span>
             <p class="text-sm text-sub mt-1">
-              Flui doesn't provision this network — it's the private network your nodes
-              already share. Flui registers its CIDR (the host firewall opens it for
-              node-to-node traffic) and validates that each node belongs to it.
+              Flui doesn't provision this network — it's the private network your nodes already
+              share. Flui registers its CIDR (the host firewall opens it for node-to-node traffic)
+              and validates that each node belongs to it.
             </p>
           </div>
         </div>
@@ -66,7 +73,7 @@ import { AttachVNetDialogComponent } from './attach-vnet-dialog.component';
       @if (isLoading()) {
         <div class="animate-pulse space-y-4">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            @for (i of [1,2]; track i) {
+            @for (i of [1, 2]; track i) {
               <div class="card-inner p-4 space-y-3">
                 <div class="flex items-center gap-2">
                   <div class="skeleton h-4 w-4"></div>
@@ -78,7 +85,7 @@ import { AttachVNetDialogComponent } from './attach-vnet-dialog.component';
           </div>
           <div class="space-y-2">
             <div class="skeleton h-4 w-16"></div>
-            @for (i of [1,2]; track i) {
+            @for (i of [1, 2]; track i) {
               <div class="skeleton h-12 rounded-lg"></div>
             }
           </div>
@@ -130,9 +137,8 @@ import { AttachVNetDialogComponent } from './attach-vnet-dialog.component';
           <ng-icon name="lucideNetwork" class="h-12 w-12 text-muted-foreground mx-auto mb-3" />
           <p class="text-sm text-sub">No private network registered yet.</p>
           <p class="text-xs text-sub mt-1 max-w-md mx-auto">
-            Flui registers the private network your nodes share (it isn't provisioned).
-            Register it to open the host firewall for node-to-node traffic and enable
-            multi-node scaling.
+            Flui registers the private network your nodes share (it isn't provisioned). Register it
+            to open the host firewall for node-to-node traffic and enable multi-node scaling.
           </p>
           <button
             (click)="registerByosNetwork()"
@@ -194,8 +200,7 @@ export class ClusterNetworkTabComponent implements OnInit {
   clusterId = (): string | null => this.clusterService.cluster()?.id ?? null;
   clusterProvider = (): string => this.clusterService.cluster()?.provider ?? '';
   isByos = (): boolean => this.clusterService.isByosCluster();
-  canAttach = (): boolean =>
-    !this.isByos() && !!this.clusterId() && !!this.clusterProvider();
+  canAttach = (): boolean => !this.isByos() && !!this.clusterId() && !!this.clusterProvider();
 
   async registerByosNetwork(): Promise<void> {
     const clusterId = this.clusterId();

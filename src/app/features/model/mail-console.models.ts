@@ -414,12 +414,16 @@ export const MAIL_PROVIDERS: MailProviderProfile[] = [
       where: 'From your relay\u2019s own setup page — host, port and credentials.',
       href: 'https://docs.aws.amazon.com/ses/latest/dg/smtp-credentials.html',
       linkText: 'Using AWS SES over SMTP',
-      caveat:
-        'SES SMTP credentials are not your AWS access keys, and they are issued per region.',
+      caveat: 'SES SMTP credentials are not your AWS access keys, and they are issued per region.',
     },
     fields: [
       { key: 'host', label: 'Host', type: 'text', required: true },
-      { key: 'port', label: 'Port', hint: '587 for STARTTLS, 465 for implicit TLS', type: 'number' },
+      {
+        key: 'port',
+        label: 'Port',
+        hint: '587 for STARTTLS, 465 for implicit TLS',
+        type: 'number',
+      },
       { key: 'username', label: 'Username', type: 'text' },
       {
         key: 'allowsBulk',
@@ -433,7 +437,12 @@ export const MAIL_PROVIDERS: MailProviderProfile[] = [
         hint: 'The bare hostname from the relay’s setup page — spf.example.org, not the whole record.',
         type: 'text',
       },
-      { key: 'dkimSelector', label: 'DKIM selector', hint: 'Verbatim from the relay. A guessed selector never verifies.', type: 'text' },
+      {
+        key: 'dkimSelector',
+        label: 'DKIM selector',
+        hint: 'Verbatim from the relay. A guessed selector never verifies.',
+        type: 'text',
+      },
       { key: 'dkimValue', label: 'DKIM value', type: 'text' },
     ],
   },

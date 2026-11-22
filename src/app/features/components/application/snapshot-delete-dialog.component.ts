@@ -1,9 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  input,
-  output,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideLoader, lucideTrash2 } from '@ng-icons/lucide';
 import { ApplicationSnapshot } from '../../model/volume-management.models';
@@ -16,8 +11,14 @@ import { ApplicationSnapshot } from '../../model/volume-management.models';
   providers: [provideIcons({ lucideLoader, lucideTrash2 })],
   template: `
     @if (snapshot(); as snap) {
-      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" (click)="cancelled.emit()">
-        <div class="bg-background rounded-lg border border-border shadow-xl max-w-md w-full p-6" (click)="$event.stopPropagation()">
+      <div
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        (click)="cancelled.emit()"
+      >
+        <div
+          class="bg-background rounded-lg border border-border shadow-xl max-w-md w-full p-6"
+          (click)="$event.stopPropagation()"
+        >
           <h3 class="text-lg font-semibold">Delete snapshot</h3>
           <p class="text-sm text-muted-foreground mt-2">
             This will permanently remove the snapshot.

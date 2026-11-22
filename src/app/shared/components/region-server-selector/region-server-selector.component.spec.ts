@@ -64,7 +64,9 @@ describe('the node size picker', () => {
 
   it('names the architecture on every size', () => {
     render([size('cx23', 'x86', 0.005)]);
-    expect(card('cx23').querySelector('[data-testid="architecture-badge"]')?.textContent?.trim()).toBe('x86');
+    expect(
+      card('cx23').querySelector('[data-testid="architecture-badge"]')?.textContent?.trim(),
+    ).toBe('x86');
     expect(card('cx23').disabled).toBeFalse();
     expect(card('cx23').getAttribute('title')).toBeNull();
   });
@@ -74,7 +76,9 @@ describe('the node size picker', () => {
     const arm = card('cax21');
     expect(arm.disabled).toBeFalse();
     expect(arm.getAttribute('title')).toBe(ARM_WARNING);
-    expect(arm.querySelector('[data-testid="architecture-badge"]')?.textContent?.trim()).toBe('Arm');
+    expect(arm.querySelector('[data-testid="architecture-badge"]')?.textContent?.trim()).toBe(
+      'Arm',
+    );
   });
 
   it('selects an arm size', () => {
@@ -87,9 +91,11 @@ describe('the node size picker', () => {
 
   it('warns under the sizes once an arm size is selected', () => {
     render([size('cx23', 'x86', 0.005), size('cax21', 'arm', 0.006)], 'cax21');
-    expect(fixture.nativeElement.querySelector('[data-testid="architecture-warning"]')?.textContent?.trim()).toBe(
-      ARM_WARNING,
-    );
+    expect(
+      fixture.nativeElement
+        .querySelector('[data-testid="architecture-warning"]')
+        ?.textContent?.trim(),
+    ).toBe(ARM_WARNING);
   });
 
   it('says nothing about architecture when an x86 size is selected', () => {

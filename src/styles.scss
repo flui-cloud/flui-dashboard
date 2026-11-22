@@ -1,11 +1,11 @@
-@import "@angular/cdk/overlay-prebuilt.css";
+@import '@angular/cdk/overlay-prebuilt.css';
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* A routed page that caps its own width sits centred in the content area. */
-.page-outlet > * > [class*="max-w-"]:not(.fixed):not(.absolute) {
+.page-outlet > * > [class*='max-w-']:not(.fixed):not(.absolute) {
   margin-inline: auto;
 }
 
@@ -51,7 +51,6 @@
  *   skeleton          → animate-pulse placeholder block
  */
 @layer components {
-
   /* ── Surfaces ─────────────────────────────────────────────── */
   .card-surface {
     @apply bg-card text-card-foreground border border-border rounded-lg;
@@ -91,10 +90,18 @@
     @apply text-muted-foreground;
   }
 
-  .dot-healthy { @apply bg-green-500; }
-  .dot-degraded { @apply bg-orange-400; }
-  .dot-error { @apply bg-red-500; }
-  .dot-pending { @apply bg-muted-foreground; }
+  .dot-healthy {
+    @apply bg-green-500;
+  }
+  .dot-degraded {
+    @apply bg-orange-400;
+  }
+  .dot-error {
+    @apply bg-red-500;
+  }
+  .dot-pending {
+    @apply bg-muted-foreground;
+  }
 
   /* ── Skeleton ─────────────────────────────────────────────── */
   .skeleton {
@@ -148,23 +155,42 @@
   .icon-chip {
     @apply flex h-[38px] w-[38px] flex-none items-center justify-center rounded-[10px];
   }
-  .icon-chip-sm { @apply h-7 w-7 rounded-lg; }
-  .icon-chip-lg { @apply h-[60px] w-[60px] rounded-full; }
+  .icon-chip-sm {
+    @apply h-7 w-7 rounded-lg;
+  }
+  .icon-chip-lg {
+    @apply h-[60px] w-[60px] rounded-full;
+  }
 
-  .chip-brand  { background: hsl(var(--brand) / 0.10);  color: hsl(var(--brand)); }
-  .chip-purple { background: hsl(var(--purple) / 0.12); color: hsl(var(--purple)); }
-  .chip-ok     { background: hsl(var(--ok) / 0.12);     color: hsl(var(--ok)); }
-  .chip-warn   { background: hsl(var(--warn) / 0.12);   color: hsl(var(--warn)); }
-  .chip-danger { background: hsl(var(--destructive) / 0.10); color: hsl(var(--destructive)); }
+  .chip-brand {
+    background: hsl(var(--brand) / 0.1);
+    color: hsl(var(--brand));
+  }
+  .chip-purple {
+    background: hsl(var(--purple) / 0.12);
+    color: hsl(var(--purple));
+  }
+  .chip-ok {
+    background: hsl(var(--ok) / 0.12);
+    color: hsl(var(--ok));
+  }
+  .chip-warn {
+    background: hsl(var(--warn) / 0.12);
+    color: hsl(var(--warn));
+  }
+  .chip-danger {
+    background: hsl(var(--destructive) / 0.1);
+    color: hsl(var(--destructive));
+  }
 
   .brand-soft {
-    background: hsl(var(--brand) / 0.10);
+    background: hsl(var(--brand) / 0.1);
     color: hsl(var(--brand));
   }
 }
 
 hlm-sidebar a.active {
-  background: hsl(var(--brand) / 0.10);
+  background: hsl(var(--brand) / 0.1);
   box-shadow: inset 2.5px 0 0 hsl(var(--brand));
   border-radius: 0.5rem;
 }
@@ -221,19 +247,53 @@ hlm-sidebar a.active ng-icon {
 
 /* ── Flui Assistant markdown rendering ────────────────────────────────────── */
 .md {
-  p { margin: 0.3em 0; line-height: 1.65; }
-  p:first-child { margin-top: 0; }
-  p:last-child  { margin-bottom: 0; }
+  p {
+    margin: 0.3em 0;
+    line-height: 1.65;
+  }
+  p:first-child {
+    margin-top: 0;
+  }
+  p:last-child {
+    margin-bottom: 0;
+  }
 
-  h1, h2, h3, h4 { font-weight: 600; line-height: 1.3; margin: 0.8em 0 0.3em; }
-  h1 { font-size: 1.1em; }
-  h2 { font-size: 1.0em; }
-  h3 { font-size: 0.95em; }
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-weight: 600;
+    line-height: 1.3;
+    margin: 0.8em 0 0.3em;
+  }
+  h1 {
+    font-size: 1.1em;
+  }
+  h2 {
+    font-size: 1em;
+  }
+  h3 {
+    font-size: 0.95em;
+  }
 
-  ul { list-style: disc outside;   padding-left: 1.4em; margin: 0.35em 0; }
-  ol { list-style: decimal outside; padding-left: 1.4em; margin: 0.35em 0; }
-  li { margin: 0.2em 0; line-height: 1.6; }
-  li > ul, li > ol { margin: 0.1em 0; }
+  ul {
+    list-style: disc outside;
+    padding-left: 1.4em;
+    margin: 0.35em 0;
+  }
+  ol {
+    list-style: decimal outside;
+    padding-left: 1.4em;
+    margin: 0.35em 0;
+  }
+  li {
+    margin: 0.2em 0;
+    line-height: 1.6;
+  }
+  li > ul,
+  li > ol {
+    margin: 0.1em 0;
+  }
 
   code:not(pre code) {
     font-family: ui-monospace, 'Cascadia Code', monospace;
@@ -243,8 +303,12 @@ hlm-sidebar a.active ng-icon {
     border-radius: 4px;
   }
 
-  strong { font-weight: 600; }
-  em     { font-style: italic; }
+  strong {
+    font-weight: 600;
+  }
+  em {
+    font-style: italic;
+  }
 
   blockquote {
     border-left: 3px solid currentColor;
@@ -253,20 +317,48 @@ hlm-sidebar a.active ng-icon {
     margin: 0.5rem 0;
   }
 
-  a { text-decoration: underline; }
+  a {
+    text-decoration: underline;
+  }
 
-  hr { border: none; border-top: 1px solid rgba(0,0,0,0.15); margin: 0.6rem 0; }
+  hr {
+    border: none;
+    border-top: 1px solid rgba(0, 0, 0, 0.15);
+    margin: 0.6rem 0;
+  }
 
-  table { border-collapse: collapse; font-size: 0.82em; margin: 0.5rem 0; width: 100%; }
-  th, td { border: 1px solid rgba(0,0,0,0.15); padding: 0.3rem 0.6rem; text-align: left; }
-  th { font-weight: 600; background: rgba(0,0,0,0.04); }
+  table {
+    border-collapse: collapse;
+    font-size: 0.82em;
+    margin: 0.5rem 0;
+    width: 100%;
+  }
+  th,
+  td {
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    padding: 0.3rem 0.6rem;
+    text-align: left;
+  }
+  th {
+    font-weight: 600;
+    background: rgba(0, 0, 0, 0.04);
+  }
 }
 
 .dark .md {
-  code:not(pre code) { background: rgba(255,255,255,0.1); }
-  hr { border-top-color: rgba(255,255,255,0.15); }
-  th, td { border-color: rgba(255,255,255,0.12); }
-  th { background: rgba(255,255,255,0.05); }
+  code:not(pre code) {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  hr {
+    border-top-color: rgba(255, 255, 255, 0.15);
+  }
+  th,
+  td {
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+  th {
+    background: rgba(255, 255, 255, 0.05);
+  }
 }
 
 /* Code blocks — always dark regardless of theme */
@@ -302,11 +394,18 @@ hlm-sidebar a.active ng-icon {
   cursor: pointer;
   padding: 2px 8px;
   border-radius: 4px;
-  transition: color 0.15s, background 0.15s;
+  transition:
+    color 0.15s,
+    background 0.15s;
   font-family: inherit;
 
-  &:hover { color: #c9d1d9; background: #21262d; }
-  &.copied { color: #3fb950; }
+  &:hover {
+    color: #c9d1d9;
+    background: #21262d;
+  }
+  &.copied {
+    color: #3fb950;
+  }
 }
 
 .md-code-block pre {
@@ -326,7 +425,7 @@ hlm-sidebar a.active ng-icon {
 
 /* Inline code inside user bubble (white background) needs different treatment */
 .md-user-bubble .md code:not(pre code) {
-  background: rgba(255,255,255,0.18);
+  background: rgba(255, 255, 255, 0.18);
 }
 
 .look-only button:not([aria-expanded]),

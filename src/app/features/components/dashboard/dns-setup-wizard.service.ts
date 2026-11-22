@@ -25,7 +25,8 @@ import { SystemDnsStatusResponseDto } from '../../../core/api/model/systemDnsSta
 import { ClusterDnsZoneControllerGetIssuers200ResponseInner } from '../../../core/api/model/clusterDnsZoneControllerGetIssuers200ResponseInner';
 import { AppConfigService } from '../../../core/services/app-config.service';
 
-export type WizardStep = 'mode' | 'zone' | 'names' | 'issuer' | 'endpoints-config' | 'endpoints' | 'done';
+export type WizardStep =
+  'mode' | 'zone' | 'names' | 'issuer' | 'endpoints-config' | 'endpoints' | 'done';
 export type CertMode = 'wildcard' | 'direct';
 export type EndpointPhase = 'idle' | 'configuring' | 'polling' | 'done' | 'error';
 
@@ -99,7 +100,7 @@ export interface SystemNameRow {
 export const SYSTEM_APP_TITLES: Record<SystemHostnameApp, string> = {
   'flui-web': 'Dashboard',
   'flui-api': 'API',
-  'zitadel': 'Sign-in',
+  zitadel: 'Sign-in',
 };
 
 const SYSTEM_APPS = new Set<string>(Object.keys(SYSTEM_APP_TITLES));
@@ -112,7 +113,8 @@ export function wildcardLabelHint(label: string, zoneName: string): string | nul
     return `One name, no dots: the certificate for *.${zoneName || 'your domain'} covers a single level.`;
   }
   if (label.length > 63) return 'At most 63 characters.';
-  if (!DNS_LABEL.test(label)) return 'Lowercase letters, digits and hyphens, not at the start or end.';
+  if (!DNS_LABEL.test(label))
+    return 'Lowercase letters, digits and hyphens, not at the start or end.';
   return null;
 }
 
@@ -148,7 +150,7 @@ export class DnsSetupWizardService {
 
   // ── Navigation ──────────────────────────────────────────────────────
   readonly steps = computed<WizardStep[]>(() =>
-    this.certMode() === 'direct' ? DIRECT_STEPS : WILDCARD_STEPS
+    this.certMode() === 'direct' ? DIRECT_STEPS : WILDCARD_STEPS,
   );
   readonly totalSteps = computed(() => this.steps().length);
   private readonly stepIndexData = signal(0);
@@ -171,9 +173,10 @@ export class DnsSetupWizardService {
   readonly zoneError = signal<string | null>(null);
   readonly configuredDnsProviders = computed(() => {
     const supported = new Set(this.dnsZonesService.providers());
-    return this.dnsZonesService.dnsCapableProviders()
-      .map(p => p.id)
-      .filter(id => supported.has(id));
+    return this.dnsZonesService
+      .dnsCapableProviders()
+      .map((p) => p.id)
+      .filter((id) => supported.has(id));
   });
 
   // ── Step 2b (wildcard only): System app names ───────────────────────
@@ -187,8 +190,12 @@ export class DnsSetupWizardService {
   private readonly currentFqdns = signal<Partial<Record<string, string>>>({});
 
   // ── Step 3: Issuer ──────────────────────────────────────────────────
-  readonly issuerPhase = signal<'idle' | 'zone' | 'staging' | 'prod' | 'verifying' | 'done' | 'error'>('idle');
-  private readonly issuerStatuses = signal<{ name?: string; ready?: boolean; message?: string | null }[]>([]);
+  readonly issuerPhase = signal<
+    'idle' | 'zone' | 'staging' | 'prod' | 'verifying' | 'done' | 'error'
+  >('idle');
+  private readonly issuerStatuses = signal<
+    { name?: string; ready?: boolean; message?: string | null }[]
+  >([]);
   private readonly existingIssuers = signal<{ name?: string; ready?: boolean }[]>([]);
   readonly setupError = signal<string | null>(null);
   readonly saving = signal(false);
@@ -209,14 +216,18 @@ export class DnsSetupWizardService {
   readonly endpointError = signal<string | null>(null);
   private readonly appEndpointsDataSignal = signal<AppEndpointStatus[]>([]);
   readonly appEndpoints = this.appEndpointsDataSignal.asReadonly();
-  readonly activeAppError = signal<{ label: string; certMessage: string | null; errorMessage: string | null } | null>(null);
+  readonly activeAppError = signal<{
+    label: string;
+    certMessage: string | null;
+    errorMessage: string | null;
+  } | null>(null);
   readonly appErrorCopied = signal(false);
   /** True when the wizard has switched the OIDC issuer and the user needs to re-login. */
   readonly requiresRelogin = signal(false);
 
   // ── Computed ─────────────────────────────────────────────────────────
   readonly hasFailedEndpoint = computed(() =>
-    this.appEndpointsDataSignal().some(a => a.status === 'error')
+    this.appEndpointsDataSignal().some((a) => a.status === 'error'),
   );
 
   readonly setupPhases = computed(() => {
@@ -225,10 +236,12 @@ export class DnsSetupWizardService {
     const statuses = this.issuerStatuses();
     const phaseOrder = ['zone', 'staging', 'prod', 'verifying'] as const;
 
-    const statusOf = (key: 'zone' | 'staging' | 'prod' | 'verifying'): 'pending' | 'running' | 'done' | 'error' | 'skipped' => {
+    const statusOf = (
+      key: 'zone' | 'staging' | 'prod' | 'verifying',
+    ): 'pending' | 'running' | 'done' | 'error' | 'skipped' => {
       if (direct && (key === 'staging' || key === 'prod')) return 'skipped';
       const keyIdx = phaseOrder.indexOf(key);
-      const activeIdx = phaseOrder.indexOf(phase as typeof phaseOrder[number]);
+      const activeIdx = phaseOrder.indexOf(phase as (typeof phaseOrder)[number]);
       if (phase === 'done') return 'done';
       if (phase === 'error') {
         if (keyIdx < activeIdx) return 'done';
@@ -241,46 +254,88 @@ export class DnsSetupWizardService {
       return 'pending';
     };
 
-    const verifyingStatus = direct ? 'skipped' as const : statusOf('verifying');
-    const notReadyIssuer = statuses.find(i => !i.ready && i.message);
+    const verifyingStatus = direct ? ('skipped' as const) : statusOf('verifying');
+    const notReadyIssuer = statuses.find((i) => !i.ready && i.message);
 
     return [
-      { key: 'zone',      label: 'Assign DNS zone',                status: statusOf('zone'),    active: phase === 'zone',      issuerMessage: undefined as string | undefined },
-      { key: 'staging',   label: 'Configure test issuer (staging)', status: statusOf('staging'), active: phase === 'staging',   issuerMessage: undefined as string | undefined },
-      { key: 'prod',      label: 'Configure production issuer',     status: statusOf('prod'),    active: phase === 'prod',      issuerMessage: undefined as string | undefined },
-{ key: 'verifying', label: 'Verify issuers are ready',        status: verifyingStatus,     active: phase === 'verifying', issuerMessage: phase === 'verifying' && notReadyIssuer ? (notReadyIssuer.message ?? undefined) : undefined },
+      {
+        key: 'zone',
+        label: 'Assign DNS zone',
+        status: statusOf('zone'),
+        active: phase === 'zone',
+        issuerMessage: undefined as string | undefined,
+      },
+      {
+        key: 'staging',
+        label: 'Configure test issuer (staging)',
+        status: statusOf('staging'),
+        active: phase === 'staging',
+        issuerMessage: undefined as string | undefined,
+      },
+      {
+        key: 'prod',
+        label: 'Configure production issuer',
+        status: statusOf('prod'),
+        active: phase === 'prod',
+        issuerMessage: undefined as string | undefined,
+      },
+      {
+        key: 'verifying',
+        label: 'Verify issuers are ready',
+        status: verifyingStatus,
+        active: phase === 'verifying',
+        issuerMessage:
+          phase === 'verifying' && notReadyIssuer
+            ? (notReadyIssuer.message ?? undefined)
+            : undefined,
+      },
     ];
   });
 
   readonly isAutoRunning = computed(() => {
     const ip = this.issuerPhase();
     const ep = this.endpointPhase();
-    return (ip !== 'idle' && ip !== 'done' && ip !== 'error') ||
-           (ep === 'configuring' || ep === 'polling');
+    return (
+      (ip !== 'idle' && ip !== 'done' && ip !== 'error') || ep === 'configuring' || ep === 'polling'
+    );
   });
 
   readonly canProceed = computed(() => {
     switch (this.currentStep()) {
-      case 'mode': return true;
-      case 'zone': return this.canProceedFromZone();
-      case 'names': return this.canProceedFromNames();
-      case 'issuer': return this.canProceedFromIssuer();
-      case 'endpoints-config': return this.canProceedFromEndpointsConfig();
-      case 'endpoints':        return this.endpointPhase() === 'done' && !this.hasFailedEndpoint();
-      case 'done':             return true;
+      case 'mode':
+        return true;
+      case 'zone':
+        return this.canProceedFromZone();
+      case 'names':
+        return this.canProceedFromNames();
+      case 'issuer':
+        return this.canProceedFromIssuer();
+      case 'endpoints-config':
+        return this.canProceedFromEndpointsConfig();
+      case 'endpoints':
+        return this.endpointPhase() === 'done' && !this.hasFailedEndpoint();
+      case 'done':
+        return true;
     }
   });
 
   private canProceedFromZone(): boolean {
-    return !!this.selectedZoneKey() && !!this.acmeEmail().trim()
-      && !this.registeringZone() && !this.loadingZoneOptions();
+    return (
+      !!this.selectedZoneKey() &&
+      !!this.acmeEmail().trim() &&
+      !this.registeringZone() &&
+      !this.loadingZoneOptions()
+    );
   }
 
   private canProceedFromNames(): boolean {
     const rows = this.systemNames();
-    return rows.length > 0
-      && rows.every(r => !!r.label && !r.error)
-      && !this.loadingNames() && !this.checkingNames();
+    return (
+      rows.length > 0 &&
+      rows.every((r) => !!r.label && !r.error) &&
+      !this.loadingNames() &&
+      !this.checkingNames()
+    );
   }
 
   private canProceedFromIssuer(): boolean {
@@ -299,7 +354,7 @@ export class DnsSetupWizardService {
   private canProceedFromEndpointsConfig(): boolean {
     const rows = this.directEndpoints();
     if (rows.length === 0 || this.checkingDirect()) return false;
-    return rows.every(r => {
+    return rows.every((r) => {
       if (!r.configured) return false;
       if (r.draftHostnameMode === 'ip') return !!r.draftPrefix.trim() && !!this.masterIp();
       return !!r.draftFqdn.trim();
@@ -309,18 +364,18 @@ export class DnsSetupWizardService {
   // ── Navigation helpers ───────────────────────────────────────────────
   advance(): void {
     if (this.stepIndexData() < this.steps().length - 1) {
-      this.stepIndexData.update(i => i + 1);
+      this.stepIndexData.update((i) => i + 1);
     }
   }
 
   back(): void {
     if (this.stepIndexData() > 0) {
-      this.stepIndexData.update(i => i - 1);
+      this.stepIndexData.update((i) => i - 1);
     }
   }
 
   selectedZoneName(): string {
-    const zone = this.dnsZonesService.zones().find(z => z.id === this.selectedZoneId());
+    const zone = this.dnsZonesService.zones().find((z) => z.id === this.selectedZoneId());
     return zone?.zoneName ?? '';
   }
 
@@ -347,13 +402,17 @@ export class DnsSetupWizardService {
         this.acmeEmail.set(assignment.acmeEmail ?? '');
         this.certMode.set(assignment.wildcardCertificate ? 'wildcard' : 'direct');
       }
-    } catch { /* no assignment */ }
+    } catch {
+      /* no assignment */
+    }
 
     try {
       const issuers = await this.clusterDnsZoneService.getIssuers(clusterId);
       this.existingIssuers.set(issuers);
       this.issuerStatuses.set(issuers);
-    } catch { /* no issuers */ }
+    } catch {
+      /* no issuers */
+    }
   }
 
   // ── Step 2: Zone choice (registered + provider zones) ──────────────
@@ -362,7 +421,7 @@ export class DnsSetupWizardService {
     this.loadingZoneOptions.set(true);
     this.zoneError.set(null);
     const registered = this.dnsZonesService.zones();
-    const options: ZoneOption[] = registered.map(z => ({
+    const options: ZoneOption[] = registered.map((z) => ({
       key: `zone:${z.id}`,
       zoneName: z.zoneName,
       provider: z.dnsProvider,
@@ -371,19 +430,21 @@ export class DnsSetupWizardService {
     }));
     const unreadable: string[] = [];
     const perProvider = await Promise.all(
-      this.configuredDnsProviders().map(async provider => {
+      this.configuredDnsProviders().map(async (provider) => {
         try {
           return { provider, zones: await this.dnsZonesService.fetchProviderZones(provider) };
         } catch {
           unreadable.push(provider);
           return { provider, zones: [] };
         }
-      })
+      }),
     );
     for (const { provider, zones } of perProvider) {
       for (const zone of zones) {
-        const known = registered.some(r =>
-          r.dnsProvider === provider && (r.providerZoneId === zone.zoneId || r.zoneName === zone.name)
+        const known = registered.some(
+          (r) =>
+            r.dnsProvider === provider &&
+            (r.providerZoneId === zone.zoneId || r.zoneName === zone.name),
         );
         if (known || !zone.name) continue;
         options.push({
@@ -398,9 +459,10 @@ export class DnsSetupWizardService {
     this.zoneOptions.set(options);
     this.unreadableZoneProviders.set(unreadable);
 
-    const current = options.find(o => o.key === this.selectedZoneKey())
-      ?? options.find(o => !!o.registeredId && o.registeredId === this.selectedZoneId())
-      ?? (options.length === 1 ? options[0] : undefined);
+    const current =
+      options.find((o) => o.key === this.selectedZoneKey()) ??
+      options.find((o) => !!o.registeredId && o.registeredId === this.selectedZoneId()) ??
+      (options.length === 1 ? options[0] : undefined);
     this.selectZone(current?.key ?? '');
     this.loadingZoneOptions.set(false);
   }
@@ -413,13 +475,13 @@ export class DnsSetupWizardService {
     }
     this.selectedZoneKey.set(key);
     this.zoneError.set(null);
-    const option = this.zoneOptions().find(o => o.key === key);
+    const option = this.zoneOptions().find((o) => o.key === key);
     this.selectedZoneId.set(option?.registeredId ?? '');
   }
 
   /** Registers the chosen provider zone when it is not registered yet. */
   async ensureSelectedZoneRegistered(): Promise<boolean> {
-    const option = this.zoneOptions().find(o => o.key === this.selectedZoneKey());
+    const option = this.zoneOptions().find((o) => o.key === this.selectedZoneKey());
     if (!option) return false;
     if (option.registeredId) {
       this.selectedZoneId.set(option.registeredId);
@@ -441,8 +503,8 @@ export class DnsSetupWizardService {
     }
 
     const key = `zone:${result.id}`;
-    this.zoneOptions.update(list =>
-      list.map(o => (o.key === option.key ? { ...o, key, registeredId: result.id } : o))
+    this.zoneOptions.update((list) =>
+      list.map((o) => (o.key === option.key ? { ...o, key, registeredId: result.id } : o)),
     );
     this.selectedZoneKey.set(key);
     this.selectedZoneId.set(result.id);
@@ -456,13 +518,23 @@ export class DnsSetupWizardService {
     this.loadingNames.set(true);
     this.namesError.set(null);
     try {
-      const result = await this.clusterDnsZoneService.getSystemHostnames(clusterId, zoneId || undefined);
+      const result = await this.clusterDnsZoneService.getSystemHostnames(
+        clusterId,
+        zoneId || undefined,
+      );
       const zoneName = result.zoneName ?? this.selectedZoneName();
       this.namesZoneName.set(zoneName);
-      this.systemNames.set(result.hostnames.map(h => {
-        const label = h.label ?? h.defaultLabel;
-        return { app: h.app, label, defaultLabel: h.defaultLabel, error: wildcardLabelHint(label, zoneName) };
-      }));
+      this.systemNames.set(
+        result.hostnames.map((h) => {
+          const label = h.label ?? h.defaultLabel;
+          return {
+            app: h.app,
+            label,
+            defaultLabel: h.defaultLabel,
+            error: wildcardLabelHint(label, zoneName),
+          };
+        }),
+      );
       this.namesLoadedForZone = zoneId;
     } catch (err: unknown) {
       const message = (err as { error?: { message?: string } })?.error?.message;
@@ -476,9 +548,11 @@ export class DnsSetupWizardService {
   setSystemName(app: SystemHostnameApp, value: string): void {
     const label = value.trim().toLowerCase();
     this.namesError.set(null);
-    this.systemNames.update(rows => rows.map(r =>
-      r.app === app ? { ...r, label, error: wildcardLabelHint(label, this.namesZoneName()) } : r
-    ));
+    this.systemNames.update((rows) =>
+      rows.map((r) =>
+        r.app === app ? { ...r, label, error: wildcardLabelHint(label, this.namesZoneName()) } : r,
+      ),
+    );
   }
 
   /** Asks the API whether the chosen names are valid and free; keeps the resulting addresses. */
@@ -487,23 +561,31 @@ export class DnsSetupWizardService {
     this.namesError.set(null);
     const check = await this.clusterDnsZoneService.checkSystemHostnames(clusterId, {
       dnsZoneId: this.selectedZoneId() || undefined,
-      hostnames: this.systemNames().map(r => ({ app: r.app, label: r.label })),
+      hostnames: this.systemNames().map((r) => ({ app: r.app, label: r.label })),
     });
     this.checkingNames.set(false);
     if (!check.ok) {
-      if (check.field && this.systemNames().some(r => r.app === check.field)) {
-        this.systemNames.update(rows => rows.map(r => (r.app === check.field ? { ...r, error: check.message } : r)));
+      if (check.field && this.systemNames().some((r) => r.app === check.field)) {
+        this.systemNames.update((rows) =>
+          rows.map((r) => (r.app === check.field ? { ...r, error: check.message } : r)),
+        );
       } else {
         this.namesError.set(check.message);
       }
       return false;
     }
-    this.chosenFqdns.set(Object.fromEntries(
-      check.result.hostnames.filter(h => !!h.fqdn).map(h => [h.app, h.fqdn as string])
-    ));
-    this.currentFqdns.set(Object.fromEntries(
-      check.result.hostnames.filter(h => !!h.currentFqdn).map(h => [h.app, h.currentFqdn as string])
-    ));
+    this.chosenFqdns.set(
+      Object.fromEntries(
+        check.result.hostnames.filter((h) => !!h.fqdn).map((h) => [h.app, h.fqdn as string]),
+      ),
+    );
+    this.currentFqdns.set(
+      Object.fromEntries(
+        check.result.hostnames
+          .filter((h) => !!h.currentFqdn)
+          .map((h) => [h.app, h.currentFqdn as string]),
+      ),
+    );
     return true;
   }
 
@@ -515,15 +597,18 @@ export class DnsSetupWizardService {
     try {
       const issuers = await this.clusterDnsZoneService.getIssuers(clusterId);
       const { SolverTypeEnum } = ClusterDnsZoneControllerGetIssuers200ResponseInner;
-      const http = issuers.find(i =>
-        i.solverType === SolverTypeEnum.Http01 || i.solverType === SolverTypeEnum.Combined
+      const http = issuers.find(
+        (i) => i.solverType === SolverTypeEnum.Http01 || i.solverType === SolverTypeEnum.Combined,
       );
       if (http?.email) {
         this.existingHttpIssuerEmail.set(http.email);
         this.issuerPhase.set('done');
       }
-    } catch { /* no issuer yet, user must enter email */ }
-    finally { this.loadingHttpIssuer.set(false); }
+    } catch {
+      /* no issuer yet, user must enter email */
+    } finally {
+      this.loadingHttpIssuer.set(false);
+    }
   }
 
   async runSetup(clusterId: string): Promise<void> {
@@ -534,10 +619,16 @@ export class DnsSetupWizardService {
       const email = this.existingHttpIssuerEmail() ?? this.directAcmeEmail().trim();
       this.issuerPhase.set('prod');
       const issuerDto: ConfigureIssuerDto = { acmeEmail: email };
-      const ok = await this.clusterDnsZoneService.configureIssuerByType(clusterId, 'http', issuerDto);
+      const ok = await this.clusterDnsZoneService.configureIssuerByType(
+        clusterId,
+        'http',
+        issuerDto,
+      );
       if (!ok) {
         this.issuerPhase.set('error');
-        this.setupError.set(this.clusterDnsZoneService.error() ?? 'Failed to configure HTTP-01 issuer');
+        this.setupError.set(
+          this.clusterDnsZoneService.error() ?? 'Failed to configure HTTP-01 issuer',
+        );
         return;
       }
       this.issuerPhase.set('done');
@@ -546,7 +637,8 @@ export class DnsSetupWizardService {
 
     this.issuerPhase.set('zone');
 
-    const hasZone = !!this.existingZone() && this.existingZone()!.dnsZoneId === this.selectedZoneId();
+    const hasZone =
+      !!this.existingZone() && this.existingZone()!.dnsZoneId === this.selectedZoneId();
     if (!hasZone) {
       const dto: AssignDnsZoneDto = {
         dnsZoneId: this.selectedZoneId(),
@@ -576,7 +668,9 @@ export class DnsSetupWizardService {
     const issuersOk = await this.clusterDnsZoneService.configureDnsIssuers(clusterId, issuerDto);
     if (!issuersOk) {
       this.issuerPhase.set('error');
-      this.setupError.set(this.clusterDnsZoneService.error() ?? 'Failed to configure wildcard issuers');
+      this.setupError.set(
+        this.clusterDnsZoneService.error() ?? 'Failed to configure wildcard issuers',
+      );
       return;
     }
 
@@ -590,19 +684,23 @@ export class DnsSetupWizardService {
     const start = Date.now();
 
     while (Date.now() - start < TIMEOUT_MS) {
-      await new Promise(r => setTimeout(r, INTERVAL_MS));
+      await new Promise((r) => setTimeout(r, INTERVAL_MS));
       try {
         const issuers = await this.clusterDnsZoneService.getIssuers(clusterId);
         this.issuerStatuses.set(issuers);
-        if (issuers.length > 0 && issuers.every(i => i.ready === true)) {
+        if (issuers.length > 0 && issuers.every((i) => i.ready === true)) {
           this.issuerPhase.set('done');
           return;
         }
-      } catch { /* transient */ }
+      } catch {
+        /* transient */
+      }
     }
 
     this.issuerPhase.set('done');
-    this.setupError.set('Issuers are taking longer than expected to become ready. You can continue — they will activate in the background.');
+    this.setupError.set(
+      'Issuers are taking longer than expected to become ready. You can continue — they will activate in the background.',
+    );
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────
@@ -624,10 +722,12 @@ export class DnsSetupWizardService {
     clusterApps: ApplicationResponseDto[],
   ): Array<{ key: string; label: string; slug: string; applicationId: string }> {
     const result: Array<{ key: string; label: string; slug: string; applicationId: string }> = [];
-    for (const [statusKey, slug] of Object.entries(this.STATUS_KEY_TO_SLUG) as Array<[keyof SystemDnsStatusResponseDto, string]>) {
+    for (const [statusKey, slug] of Object.entries(this.STATUS_KEY_TO_SLUG) as Array<
+      [keyof SystemDnsStatusResponseDto, string]
+    >) {
       const entry = systemStatus[statusKey];
       if (!entry?.applicationId) continue; // null or missing → app not present
-      const app = clusterApps.find(a => a.id === entry.applicationId);
+      const app = clusterApps.find((a) => a.id === entry.applicationId);
       result.push({
         key: slug,
         label: app?.name ?? slug,
@@ -643,8 +743,18 @@ export class DnsSetupWizardService {
     this.loadingDirectConfig.set(true);
     try {
       const [systemStatus, clusterApps, cluster] = await Promise.all([
-        firstValueFrom(this.clusterDNSZoneApi.clusterDnsZoneControllerGetSystemDnsStatus(clusterId)),
-        firstValueFrom(this.applicationsApi.applicationsControllerListByCluster(clusterId, undefined, undefined, undefined, 'system')),
+        firstValueFrom(
+          this.clusterDNSZoneApi.clusterDnsZoneControllerGetSystemDnsStatus(clusterId),
+        ),
+        firstValueFrom(
+          this.applicationsApi.applicationsControllerListByCluster(
+            clusterId,
+            undefined,
+            undefined,
+            undefined,
+            'system',
+          ),
+        ),
         firstValueFrom(this.clustersApi.clustersControllerGetCluster(clusterId)),
       ]);
       await this.appEndpointsService.loadEndpoints(clusterId);
@@ -654,20 +764,18 @@ export class DnsSetupWizardService {
       const appDefs = this.buildSystemAppDefs(systemStatus, clusterApps);
 
       this.directEndpoints.set(
-        appDefs.map(d => {
-          const endpoint = endpoints.find(e => e.applicationId === d.applicationId) ?? null;
+        appDefs.map((d) => {
+          const endpoint = endpoints.find((e) => e.applicationId === d.applicationId) ?? null;
           // Pre-populate the draft from the existing endpoint when available so the
           // user sees what's currently configured. nip.io detection is heuristic
           // (suffix match against the cluster master IP).
           const fqdn = endpoint?.fqdn ?? '';
           const ip = cluster.masterIpAddress ?? '';
-          const ipDashed = ip.replaceAll('.',  '-');
+          const ipDashed = ip.replaceAll('.', '-');
           const nipSuffix = ipDashed ? `.${ipDashed}.nip.io` : '';
-          const isNip = (endpoint?.hostnameMode === 'ip')
-            || (!!nipSuffix && fqdn.endsWith(nipSuffix));
-          const prefix = isNip && nipSuffix
-            ? fqdn.slice(0, fqdn.length - nipSuffix.length)
-            : '';
+          const isNip =
+            endpoint?.hostnameMode === 'ip' || (!!nipSuffix && fqdn.endsWith(nipSuffix));
+          const prefix = isNip && nipSuffix ? fqdn.slice(0, fqdn.length - nipSuffix.length) : '';
           return {
             key: d.key,
             label: d.label,
@@ -681,9 +789,11 @@ export class DnsSetupWizardService {
             saving: false,
             error: null,
           } satisfies DirectEndpointRow;
-        })
+        }),
       );
-    } catch { /* show empty rows */ } finally {
+    } catch {
+      /* show empty rows */
+    } finally {
       this.loadingDirectConfig.set(false);
     }
   }
@@ -692,7 +802,7 @@ export class DnsSetupWizardService {
   buildNipFqdn(prefix: string): string {
     const ip = this.masterIp().trim();
     if (!ip || !prefix.trim()) return '';
-    return `${prefix.trim()}.${ip.replaceAll('.',  '-')}.nip.io`;
+    return `${prefix.trim()}.${ip.replaceAll('.', '-')}.nip.io`;
   }
 
   /** Resolve the FQDN that the row will be created with, based on its draft state. */
@@ -720,20 +830,20 @@ export class DnsSetupWizardService {
 
   /** Asks the API whether the addresses of the direct-mode rows are valid and free. */
   async checkDirectEndpoints(clusterId: string): Promise<boolean> {
-    const rows = this.directEndpoints().filter(r => SYSTEM_APPS.has(r.key));
+    const rows = this.directEndpoints().filter((r) => SYSTEM_APPS.has(r.key));
     if (rows.length === 0) return true;
-    rows.forEach(r => this.updateDirectRow(r.key, { error: null }));
+    rows.forEach((r) => this.updateDirectRow(r.key, { error: null }));
     this.endpointsConfigError.set(null);
     this.checkingDirect.set(true);
     const check = await this.clusterDnsZoneService.checkSystemHostnames(clusterId, {
-      hostnames: rows.map(r => ({
+      hostnames: rows.map((r) => ({
         app: r.key as SystemHostnameApp,
         fqdn: r.endpoint?.fqdn ?? this.resolveDraftFqdn(r),
       })),
     });
     this.checkingDirect.set(false);
     if (check.ok) return true;
-    if (check.field && rows.some(r => r.key === check.field)) {
+    if (check.field && rows.some((r) => r.key === check.field)) {
       this.updateDirectRow(check.field, { error: check.message });
     } else {
       this.endpointsConfigError.set(check.message);
@@ -742,8 +852,8 @@ export class DnsSetupWizardService {
   }
 
   updateDirectRow(key: DirectEndpointRow['key'], patch: Partial<DirectEndpointRow>): void {
-    this.directEndpoints.update(rows =>
-      rows.map(r => r.key === key ? { ...r, ...patch } : r)
+    this.directEndpoints.update((rows) =>
+      rows.map((r) => (r.key === key ? { ...r, ...patch } : r)),
     );
   }
 
@@ -766,7 +876,7 @@ export class DnsSetupWizardService {
     const existingEndpoints = this.appEndpointsService.endpoints();
 
     const appDefs = this.buildEndpointSetupAppDefs(isDirect, systemAppDefs);
-    if (!isDirect && appDefs.some(d => !d.fqdn)) {
+    if (!isDirect && appDefs.some((d) => !d.fqdn)) {
       this.endpointError.set('Choose the addresses first: go back to the names step.');
       this.endpointPhase.set('error');
       return;
@@ -775,7 +885,12 @@ export class DnsSetupWizardService {
     // Direct mode batch optimisation: one SAN certificate covering all FQDNs
     // (HTTP-01 in this wizard) → 1 ACME challenge instead of N. The id is reused
     // when each endpoint is created below.
-    const sanCertificateId = await this.resolveEndpointSetupSanCertificateId(clusterId, isDirect, isRetry, appDefs);
+    const sanCertificateId = await this.resolveEndpointSetupSanCertificateId(
+      clusterId,
+      isDirect,
+      isRetry,
+      appDefs,
+    );
 
     this.seedEndpointStatuses(isRetry, appDefs, systemAppDefs, existingEndpoints);
 
@@ -806,8 +921,18 @@ export class DnsSetupWizardService {
   ): Promise<Array<{ key: string; label: string; slug: string; applicationId: string }> | null> {
     try {
       const [systemStatus, clusterApps] = await Promise.all([
-        firstValueFrom(this.clusterDNSZoneApi.clusterDnsZoneControllerGetSystemDnsStatus(clusterId)),
-        firstValueFrom(this.applicationsApi.applicationsControllerListByCluster(clusterId, undefined, undefined, undefined, 'system')),
+        firstValueFrom(
+          this.clusterDNSZoneApi.clusterDnsZoneControllerGetSystemDnsStatus(clusterId),
+        ),
+        firstValueFrom(
+          this.applicationsApi.applicationsControllerListByCluster(
+            clusterId,
+            undefined,
+            undefined,
+            undefined,
+            'system',
+          ),
+        ),
       ]);
       return this.buildSystemAppDefs(systemStatus, clusterApps);
     } catch {
@@ -826,9 +951,15 @@ export class DnsSetupWizardService {
   private buildEndpointSetupAppDefs(
     isDirect: boolean,
     systemAppDefs: Array<{ key: string; label: string; slug: string; applicationId: string }>,
-  ): Array<{ key: string; label: string; fqdn: string; slug: string; hostnameMode: 'ip' | 'domain' }> {
+  ): Array<{
+    key: string;
+    label: string;
+    fqdn: string;
+    slug: string;
+    hostnameMode: 'ip' | 'domain';
+  }> {
     if (isDirect) {
-      return this.directEndpoints().map(r => ({
+      return this.directEndpoints().map((r) => ({
         key: r.key,
         label: r.label,
         fqdn: r.endpoint?.fqdn ?? this.resolveDraftFqdn(r),
@@ -837,7 +968,7 @@ export class DnsSetupWizardService {
       }));
     }
     const chosen = this.chosenFqdns();
-    return systemAppDefs.map(d => ({
+    return systemAppDefs.map((d) => ({
       key: d.key,
       label: d.label,
       fqdn: chosen[d.slug] ?? '',
@@ -855,9 +986,7 @@ export class DnsSetupWizardService {
     if (isRetry) return this.batchSanCertificateId();
     if (!isDirect) return null;
 
-    const fqdnsForSan = appDefs
-      .map(d => d.fqdn)
-      .filter((f): f is string => !!f && f.length > 0);
+    const fqdnsForSan = appDefs.map((d) => d.fqdn).filter((f): f is string => !!f && f.length > 0);
     if (fqdnsForSan.length === 0) return null;
 
     try {
@@ -886,48 +1015,62 @@ export class DnsSetupWizardService {
 
   private seedEndpointStatuses(
     isRetry: boolean,
-    appDefs: Array<{ key: string; label: string; fqdn: string; slug: string; hostnameMode: 'ip' | 'domain' }>,
+    appDefs: Array<{
+      key: string;
+      label: string;
+      fqdn: string;
+      slug: string;
+      hostnameMode: 'ip' | 'domain';
+    }>,
     systemAppDefs: Array<{ key: string; label: string; slug: string; applicationId: string }>,
     existingEndpoints: AppEndpointResponseDto[],
   ): void {
-    const appIdByKey = new Map(systemAppDefs.map(d => [d.key, d.applicationId]));
+    const appIdByKey = new Map(systemAppDefs.map((d) => [d.key, d.applicationId]));
 
     if (isRetry) {
-      this.appEndpointsDataSignal.update(apps => apps.map(a => {
-        if (a.status === 'done') return a;
-        const ep = existingEndpoints.find(e => e.fqdn === a.fqdn);
-        const slugForKey = appDefs.find(d => d.key === a.key)?.slug;
-        const applicationIdFromKey = slugForKey ? (appIdByKey.get(slugForKey) ?? null) : null;
-        return {
-          ...a,
-          applicationId: ep?.applicationId ?? applicationIdFromKey ?? a.applicationId,
-          endpointId: ep?.id ?? a.endpointId,
-          phase: 'idle' as const,
-          rolloutProgress: null,
-          dnsCheckStatus: 'pending' as const,
-          dnsResolvedAddresses: [], errorMessage: null,
-        };
-      }));
+      this.appEndpointsDataSignal.update((apps) =>
+        apps.map((a) => {
+          if (a.status === 'done') return a;
+          const ep = existingEndpoints.find((e) => e.fqdn === a.fqdn);
+          const slugForKey = appDefs.find((d) => d.key === a.key)?.slug;
+          const applicationIdFromKey = slugForKey ? (appIdByKey.get(slugForKey) ?? null) : null;
+          return {
+            ...a,
+            applicationId: ep?.applicationId ?? applicationIdFromKey ?? a.applicationId,
+            endpointId: ep?.id ?? a.endpointId,
+            phase: 'idle' as const,
+            rolloutProgress: null,
+            dnsCheckStatus: 'pending' as const,
+            dnsResolvedAddresses: [],
+            errorMessage: null,
+          };
+        }),
+      );
     } else {
-      this.appEndpointsDataSignal.set(appDefs.map(d => {
-        const ep = existingEndpoints.find(e => e.fqdn === d.fqdn);
-        const appId = appIdByKey.get(d.key) ?? null;
-        const toRename = ep ? undefined : this.endpointToRename(d.slug, appId, existingEndpoints);
-        const applicationId = ep?.applicationId ?? toRename?.applicationId ?? appId;
-        return {
-          key: d.key, label: d.label, fqdn: d.fqdn,
-          applicationId, endpointId: ep?.id ?? toRename?.id ?? null,
-          status: 'pending' as const,
-          phase: 'idle' as const,
-          rolloutProgress: null,
-          dnsCheckStatus: 'pending' as const,
-          dnsResolvedAddresses: [],
-          certStatus: (ep?.certificateStatus as AppEndpointStatus['certStatus']) ?? null,
-          certMessage: ep?.certificateMessage ?? null,
-          ingressConfigured: ep?.reconciliationStatus === 'IN_SYNC',
-          errorMessage: null,
-        };
-      }));
+      this.appEndpointsDataSignal.set(
+        appDefs.map((d) => {
+          const ep = existingEndpoints.find((e) => e.fqdn === d.fqdn);
+          const appId = appIdByKey.get(d.key) ?? null;
+          const toRename = ep ? undefined : this.endpointToRename(d.slug, appId, existingEndpoints);
+          const applicationId = ep?.applicationId ?? toRename?.applicationId ?? appId;
+          return {
+            key: d.key,
+            label: d.label,
+            fqdn: d.fqdn,
+            applicationId,
+            endpointId: ep?.id ?? toRename?.id ?? null,
+            status: 'pending' as const,
+            phase: 'idle' as const,
+            rolloutProgress: null,
+            dnsCheckStatus: 'pending' as const,
+            dnsResolvedAddresses: [],
+            certStatus: (ep?.certificateStatus as AppEndpointStatus['certStatus']) ?? null,
+            certMessage: ep?.certificateMessage ?? null,
+            ingressConfigured: ep?.reconciliationStatus === 'IN_SYNC',
+            errorMessage: null,
+          };
+        }),
+      );
     }
   }
 
@@ -942,11 +1085,13 @@ export class DnsSetupWizardService {
     existingEndpoints: AppEndpointResponseDto[],
   ): AppEndpointResponseDto | undefined {
     if (!applicationId || !SYSTEM_APPS.has(slug)) return undefined;
-    const own = existingEndpoints.filter(e =>
-      e.applicationId === applicationId && e.hostnameMode === AppEndpointResponseDto.HostnameModeEnum.Domain
+    const own = existingEndpoints.filter(
+      (e) =>
+        e.applicationId === applicationId &&
+        e.hostnameMode === AppEndpointResponseDto.HostnameModeEnum.Domain,
     );
     const current = this.currentFqdns()[slug];
-    return own.find(e => e.fqdn === current) ?? own[0];
+    return own.find((e) => e.fqdn === current) ?? own[0];
   }
 
   private async processEndpointSetupDef(
@@ -956,7 +1101,7 @@ export class DnsSetupWizardService {
     isDirect: boolean,
     sanCertificateId: string | null,
   ): Promise<void> {
-    const current = this.appEndpointsDataSignal().find(a => a.key === def.key)!;
+    const current = this.appEndpointsDataSignal().find((a) => a.key === def.key)!;
     if (current.status === 'done') return;
 
     this.updateAppStatus(def.key, { status: 'running', phase: 'creating-endpoint' });
@@ -965,7 +1110,14 @@ export class DnsSetupWizardService {
     if (endpointId) {
       if (!(await this.ensureEndpointName(def, endpointId, zoneId, isDirect))) return;
     } else {
-      endpointId = await this.ensureEndpointCreated(def, clusterId, zoneId, isDirect, sanCertificateId, current);
+      endpointId = await this.ensureEndpointCreated(
+        def,
+        clusterId,
+        zoneId,
+        isDirect,
+        sanCertificateId,
+        current,
+      );
       if (!endpointId) return;
     }
 
@@ -974,7 +1126,11 @@ export class DnsSetupWizardService {
     this.updateAppStatus(def.key, { phase: 'reconciling' });
     const reconciled = await this.appEndpointsService.reconcileEndpoint(endpointId);
     if (!reconciled) {
-      this.updateAppStatus(def.key, { status: 'error', phase: 'error', errorMessage: this.appEndpointsService.error() ?? 'Failed to reconcile endpoint' });
+      this.updateAppStatus(def.key, {
+        status: 'error',
+        phase: 'error',
+        errorMessage: this.appEndpointsService.error() ?? 'Failed to reconcile endpoint',
+      });
     }
 
     // Domain sync runs after production certs are valid (see pollEndpointStatuses).
@@ -987,7 +1143,7 @@ export class DnsSetupWizardService {
     zoneId: string,
     isDirect: boolean,
   ): Promise<boolean> {
-    const existing = this.appEndpointsService.endpoints().find(e => e.id === endpointId);
+    const existing = this.appEndpointsService.endpoints().find((e) => e.id === endpointId);
     if (!existing || !def.fqdn || existing.fqdn === def.fqdn) return true;
     const dto: UpdateAppEndpointDto = {
       fqdn: def.fqdn,
@@ -996,19 +1152,28 @@ export class DnsSetupWizardService {
       certificateProvider: this.startsInStaging
         ? UpdateAppEndpointDto.CertificateProviderEnum.LetsEncryptStaging
         : UpdateAppEndpointDto.CertificateProviderEnum.LetsEncrypt,
-      hostnameMode: def.hostnameMode === 'ip'
-        ? UpdateAppEndpointDto.HostnameModeEnum.Ip
-        : UpdateAppEndpointDto.HostnameModeEnum.Domain,
+      hostnameMode:
+        def.hostnameMode === 'ip'
+          ? UpdateAppEndpointDto.HostnameModeEnum.Ip
+          : UpdateAppEndpointDto.HostnameModeEnum.Domain,
       certChallenge: isDirect
         ? UpdateAppEndpointDto.CertChallengeEnum.Http01
         : UpdateAppEndpointDto.CertChallengeEnum.Dns01,
     };
     const updated = await this.appEndpointsService.updateEndpoint(endpointId, dto);
     if (!updated) {
-      this.updateAppStatus(def.key, { status: 'error', phase: 'error', errorMessage: this.appEndpointsService.error() ?? 'Failed to change the address' });
+      this.updateAppStatus(def.key, {
+        status: 'error',
+        phase: 'error',
+        errorMessage: this.appEndpointsService.error() ?? 'Failed to change the address',
+      });
       return false;
     }
-    this.updateAppStatus(def.key, { certStatus: null, certMessage: null, ingressConfigured: false });
+    this.updateAppStatus(def.key, {
+      certStatus: null,
+      certMessage: null,
+      ingressConfigured: false,
+    });
     return true;
   }
 
@@ -1022,7 +1187,11 @@ export class DnsSetupWizardService {
     current: AppEndpointStatus,
   ): Promise<string | null> {
     if (!current.applicationId) {
-      this.updateAppStatus(def.key, { status: 'error', phase: 'error', errorMessage: 'Application not found — cannot create endpoint' });
+      this.updateAppStatus(def.key, {
+        status: 'error',
+        phase: 'error',
+        errorMessage: 'Application not found — cannot create endpoint',
+      });
       return null;
     }
     const dto: CreateAppEndpointDto = {
@@ -1033,9 +1202,10 @@ export class DnsSetupWizardService {
       certificateProvider: this.startsInStaging
         ? CreateAppEndpointDto.CertificateProviderEnum.LetsEncryptStaging
         : CreateAppEndpointDto.CertificateProviderEnum.LetsEncrypt,
-      hostnameMode: (def.hostnameMode === 'ip'
-        ? CreateAppEndpointDto.HostnameModeEnum.Ip
-        : CreateAppEndpointDto.HostnameModeEnum.Domain),
+      hostnameMode:
+        def.hostnameMode === 'ip'
+          ? CreateAppEndpointDto.HostnameModeEnum.Ip
+          : CreateAppEndpointDto.HostnameModeEnum.Domain,
       certChallenge: isDirect
         ? CreateAppEndpointDto.CertChallengeEnum.Http01
         : CreateAppEndpointDto.CertChallengeEnum.Dns01,
@@ -1045,7 +1215,11 @@ export class DnsSetupWizardService {
     };
     const ep = await this.appEndpointsService.createEndpoint(clusterId, dto);
     if (!ep) {
-      this.updateAppStatus(def.key, { status: 'error', phase: 'error', errorMessage: this.appEndpointsService.error() ?? 'Failed to create endpoint' });
+      this.updateAppStatus(def.key, {
+        status: 'error',
+        phase: 'error',
+        errorMessage: this.appEndpointsService.error() ?? 'Failed to create endpoint',
+      });
       return null;
     }
     this.updateAppStatus(def.key, { endpointId: ep.id, applicationId: ep.applicationId ?? null });
@@ -1053,8 +1227,11 @@ export class DnsSetupWizardService {
     return ep.id;
   }
 
-  private async checkEndpointDns(def: { key: string; fqdn: string }, endpointId: string): Promise<void> {
-    const epForCheck = this.appEndpointsService.endpoints().find(e => e.id === endpointId);
+  private async checkEndpointDns(
+    def: { key: string; fqdn: string },
+    endpointId: string,
+  ): Promise<void> {
+    const epForCheck = this.appEndpointsService.endpoints().find((e) => e.id === endpointId);
     const expectedIp = epForCheck?.dnsRecordValue ?? null;
     if (expectedIp) {
       this.updateAppStatus(def.key, { phase: 'checking-dns', dnsCheckStatus: 'checking' });
@@ -1076,7 +1253,11 @@ export class DnsSetupWizardService {
 
       const timer = setTimeout(() => {
         this.appRuntimeWs.unsubscribeFromApp(appId);
-        this.updateAppStatus(key, { status: 'error', phase: 'error', errorMessage: 'Rollout timed out after 5 minutes' });
+        this.updateAppStatus(key, {
+          status: 'error',
+          phase: 'error',
+          errorMessage: 'Rollout timed out after 5 minutes',
+        });
         resolve(false);
       }, TIMEOUT_MS);
 
@@ -1095,7 +1276,11 @@ export class DnsSetupWizardService {
         onFailed: (e) => {
           clearTimeout(timer);
           this.appRuntimeWs.unsubscribeFromApp(appId);
-          this.updateAppStatus(key, { status: 'error', phase: 'error', errorMessage: e.error || 'Rollout failed' });
+          this.updateAppStatus(key, {
+            status: 'error',
+            phase: 'error',
+            errorMessage: e.error || 'Rollout failed',
+          });
           resolve(false);
         },
       });
@@ -1112,9 +1297,9 @@ export class DnsSetupWizardService {
 
   private async syncSystemDomains(clusterId: string): Promise<void> {
     const apps = this.appEndpointsDataSignal();
-    const zitadelAppId = apps.find(a => a.key === 'zitadel')?.applicationId;
-    const fluiApiAppId = apps.find(a => a.key === 'flui-api')?.applicationId;
-    const fluiWebAppId = apps.find(a => a.key === 'flui-web')?.applicationId;
+    const zitadelAppId = apps.find((a) => a.key === 'zitadel')?.applicationId;
+    const fluiApiAppId = apps.find((a) => a.key === 'flui-api')?.applicationId;
+    const fluiWebAppId = apps.find((a) => a.key === 'flui-web')?.applicationId;
 
     if (!fluiApiAppId || !fluiWebAppId) return;
 
@@ -1139,7 +1324,7 @@ export class DnsSetupWizardService {
   // look frozen with checkmarks while work is still happening.
   private startDomainSyncLoaders(apps: AppEndpointStatus[]): void {
     const initialSyncPhase: Record<string, AppEndpointPhase> = {
-      'zitadel': 'syncing-auth',
+      zitadel: 'syncing-auth',
       'flui-web': 'syncing-web',
       'flui-api': 'syncing-api',
     };
@@ -1150,13 +1335,23 @@ export class DnsSetupWizardService {
     }
   }
 
-  private async syncZitadelAuthDomain(clusterId: string, zitadelAppId: string, fluiWebAppId: string): Promise<boolean> {
+  private async syncZitadelAuthDomain(
+    clusterId: string,
+    zitadelAppId: string,
+    fluiWebAppId: string,
+  ): Promise<boolean> {
     this.updateAppStatus('zitadel', { phase: 'syncing-auth' });
     try {
       const authDto: SyncAuthDomainDto = { fluiWebApplicationId: fluiWebAppId };
-      await firstValueFrom(this.clusterDNSZoneApi.clusterDnsZoneControllerSyncAuthDomain(clusterId, authDto));
+      await firstValueFrom(
+        this.clusterDNSZoneApi.clusterDnsZoneControllerSyncAuthDomain(clusterId, authDto),
+      );
     } catch {
-      this.updateAppStatus('zitadel', { status: 'error', phase: 'error', errorMessage: 'Auth domain sync failed' });
+      this.updateAppStatus('zitadel', {
+        status: 'error',
+        phase: 'error',
+        errorMessage: 'Auth domain sync failed',
+      });
       return false;
     }
     const authRolloutOk = await this.waitForRollout(zitadelAppId, 'zitadel', 'rollout-auth');
@@ -1165,7 +1360,12 @@ export class DnsSetupWizardService {
     return true;
   }
 
-  private async syncFluiWebDomain(clusterId: string, fluiApiAppId: string, fluiWebAppId: string, zitadelAppId: string | null | undefined): Promise<boolean> {
+  private async syncFluiWebDomain(
+    clusterId: string,
+    fluiApiAppId: string,
+    fluiWebAppId: string,
+    zitadelAppId: string | null | undefined,
+  ): Promise<boolean> {
     this.updateAppStatus('flui-web', { phase: 'syncing-web' });
     try {
       const webDto: SyncWebDomainDto = {
@@ -1173,9 +1373,15 @@ export class DnsSetupWizardService {
         fluiWebApplicationId: fluiWebAppId,
         ...(zitadelAppId ? { zitadelApplicationId: zitadelAppId } : {}),
       };
-      await firstValueFrom(this.clusterDNSZoneApi.clusterDnsZoneControllerSyncWebDomain(clusterId, webDto));
+      await firstValueFrom(
+        this.clusterDNSZoneApi.clusterDnsZoneControllerSyncWebDomain(clusterId, webDto),
+      );
     } catch {
-      this.updateAppStatus('flui-web', { status: 'error', phase: 'error', errorMessage: 'Web domain sync failed' });
+      this.updateAppStatus('flui-web', {
+        status: 'error',
+        phase: 'error',
+        errorMessage: 'Web domain sync failed',
+      });
       return false;
     }
 
@@ -1185,7 +1391,12 @@ export class DnsSetupWizardService {
     return true;
   }
 
-  private async syncFluiApiDomain(clusterId: string, fluiApiAppId: string, fluiWebAppId: string, zitadelAppId: string | null | undefined): Promise<boolean> {
+  private async syncFluiApiDomain(
+    clusterId: string,
+    fluiApiAppId: string,
+    fluiWebAppId: string,
+    zitadelAppId: string | null | undefined,
+  ): Promise<boolean> {
     this.updateAppStatus('flui-api', { phase: 'syncing-api' });
     try {
       const syncDto: SyncApiDomainDto = {
@@ -1193,9 +1404,15 @@ export class DnsSetupWizardService {
         fluiWebApplicationId: fluiWebAppId,
         ...(zitadelAppId ? { zitadelApplicationId: zitadelAppId } : {}),
       };
-      await firstValueFrom(this.clusterDNSZoneApi.clusterDnsZoneControllerSyncApiDomain(clusterId, syncDto));
+      await firstValueFrom(
+        this.clusterDNSZoneApi.clusterDnsZoneControllerSyncApiDomain(clusterId, syncDto),
+      );
     } catch {
-      this.updateAppStatus('flui-api', { status: 'error', phase: 'error', errorMessage: 'API domain sync failed' });
+      this.updateAppStatus('flui-api', {
+        status: 'error',
+        phase: 'error',
+        errorMessage: 'API domain sync failed',
+      });
       return false;
     }
 
@@ -1205,33 +1422,45 @@ export class DnsSetupWizardService {
     return true;
   }
 
-  private async waitForDnsResolution(key: AppEndpointStatus['key'], fqdn: string, expectedIp: string): Promise<boolean> {
+  private async waitForDnsResolution(
+    key: AppEndpointStatus['key'],
+    fqdn: string,
+    expectedIp: string,
+  ): Promise<boolean> {
     const INTERVAL_MS = 10_000;
     const TIMEOUT_MS = 180_000;
     const start = Date.now();
 
     while (Date.now() - start < TIMEOUT_MS) {
       try {
-        const res = await firstValueFrom(this.dnsZonesApi.dnsZoneControllerVerifyDns(fqdn, expectedIp));
+        const res = await firstValueFrom(
+          this.dnsZonesApi.dnsZoneControllerVerifyDns(fqdn, expectedIp),
+        );
         this.updateAppStatus(key, { dnsResolvedAddresses: res.resolvedAddresses ?? [] });
         if (res.matches) {
           this.updateAppStatus(key, { dnsCheckStatus: 'ok' });
           return true;
         }
-      } catch { /* transient */ }
-      await new Promise(r => setTimeout(r, INTERVAL_MS));
+      } catch {
+        /* transient */
+      }
+      await new Promise((r) => setTimeout(r, INTERVAL_MS));
     }
     return false;
   }
 
-  private async pollEndpointStatuses(clusterId: string, phase: 'staging' | 'prod' = 'staging'): Promise<void> {
+  private async pollEndpointStatuses(
+    clusterId: string,
+    phase: 'staging' | 'prod' = 'staging',
+  ): Promise<void> {
     const INTERVAL_MS = 4000;
     const TIMEOUT_MS = 120_000;
     const start = Date.now();
-    const activePhase: AppEndpointPhase = phase === 'staging' ? 'issuing-cert' : 'issuing-prod-cert';
+    const activePhase: AppEndpointPhase =
+      phase === 'staging' ? 'issuing-cert' : 'issuing-prod-cert';
 
     while (Date.now() - start < TIMEOUT_MS) {
-      await new Promise(r => setTimeout(r, INTERVAL_MS));
+      await new Promise((r) => setTimeout(r, INTERVAL_MS));
       try {
         await this.appEndpointsService.loadEndpoints(clusterId);
         const allEndpoints = this.appEndpointsService.endpoints();
@@ -1242,14 +1471,18 @@ export class DnsSetupWizardService {
 
         const done = await this.evaluatePollCompletion(clusterId, phase);
         if (done) return;
-      } catch { /* transient */ }
+      } catch {
+        /* transient */
+      }
     }
 
-    this.appEndpointsDataSignal.update(apps =>
-      apps.map(a => a.status === 'running' ? { ...a, status: 'done', phase: 'done' } : a)
+    this.appEndpointsDataSignal.update((apps) =>
+      apps.map((a) => (a.status === 'running' ? { ...a, status: 'done', phase: 'done' } : a)),
     );
     this.endpointPhase.set('done');
-    this.endpointError.set('Endpoints are configured. Certificate issuance is running in the background.');
+    this.endpointError.set(
+      'Endpoints are configured. Certificate issuance is running in the background.',
+    );
   }
 
   private applyPolledEndpointStatus(
@@ -1260,14 +1493,22 @@ export class DnsSetupWizardService {
   ): void {
     if (app.status === 'error' && !app.endpointId) return;
     if (!app.endpointId) return;
-    const ep = allEndpoints.find(e => e.id === app.endpointId);
+    const ep = allEndpoints.find((e) => e.id === app.endpointId);
     if (!ep) return;
 
-    const { ingressConfigured, effectiveStatus, certMessage, certPermanentlyFailed, isReady } = this.classifyPolledCertStatus(ep);
-    const { newPhase, endpointStatus } = this.derivePolledPhaseAndStatus(isReady, certPermanentlyFailed, phase, activePhase);
+    const { ingressConfigured, effectiveStatus, certMessage, certPermanentlyFailed, isReady } =
+      this.classifyPolledCertStatus(ep);
+    const { newPhase, endpointStatus } = this.derivePolledPhaseAndStatus(
+      isReady,
+      certPermanentlyFailed,
+      phase,
+      activePhase,
+    );
 
     this.updateAppStatus(app.key, {
-      certStatus: effectiveStatus, certMessage, ingressConfigured,
+      certStatus: effectiveStatus,
+      certMessage,
+      ingressConfigured,
       phase: newPhase,
       status: endpointStatus,
       errorMessage: certPermanentlyFailed ? (certMessage ?? 'Certificate issuance failed') : null,
@@ -1285,12 +1526,18 @@ export class DnsSetupWizardService {
     const certStatus = (ep.certificateStatus as AppEndpointStatus['certStatus']) ?? null;
     const certMessage = ep.certificateMessage ?? null;
     // cert-manager may set "failed" during transient challenge propagation — treat as still issuing
-    const challengeInProgress = (certStatus === 'failed') &&
-      !!certMessage && /waiting for (dns-01|http-01|tls-alpn-01) challenge/i.test(certMessage);
-    const certPermanentlyFailed = (certStatus === 'failed' || certStatus === 'expired') && !challengeInProgress;
+    const challengeInProgress =
+      certStatus === 'failed' &&
+      !!certMessage &&
+      /waiting for (dns-01|http-01|tls-alpn-01) challenge/i.test(certMessage);
+    const certPermanentlyFailed =
+      (certStatus === 'failed' || certStatus === 'expired') && !challengeInProgress;
     // If challenge is still in progress, treat as "issuing" for display purposes
-    const effectiveStatus: AppEndpointStatus['certStatus'] = challengeInProgress ? 'issuing' : certStatus;
-    const certSettled = effectiveStatus !== null && effectiveStatus !== 'pending' && effectiveStatus !== 'issuing';
+    const effectiveStatus: AppEndpointStatus['certStatus'] = challengeInProgress
+      ? 'issuing'
+      : certStatus;
+    const certSettled =
+      effectiveStatus !== null && effectiveStatus !== 'pending' && effectiveStatus !== 'issuing';
     const isReady = ingressConfigured && certSettled;
     return { ingressConfigured, effectiveStatus, certMessage, certPermanentlyFailed, isReady };
   }
@@ -1318,15 +1565,21 @@ export class DnsSetupWizardService {
   }
 
   /** Returns true once polling should stop — either a terminal failure, or the flow finished / handed off to prod polling. */
-  private async evaluatePollCompletion(clusterId: string, phase: 'staging' | 'prod'): Promise<boolean> {
+  private async evaluatePollCompletion(
+    clusterId: string,
+    phase: 'staging' | 'prod',
+  ): Promise<boolean> {
     const apps = this.appEndpointsDataSignal();
-    const appsWithEndpoint = apps.filter(a => !!a.endpointId);
+    const appsWithEndpoint = apps.filter((a) => !!a.endpointId);
     const allEndpointsLoaded = this.appEndpointsService.endpoints();
 
     // Classify each active endpoint by its current cert status from the API
-    const certEntries = appsWithEndpoint.map(a => {
-      const ep = allEndpointsLoaded.find(e => e.id === a.endpointId);
-      return { status: ep?.certificateStatus as AppEndpointStatus['certStatus'] | undefined, message: ep?.certificateMessage ?? null };
+    const certEntries = appsWithEndpoint.map((a) => {
+      const ep = allEndpointsLoaded.find((e) => e.id === a.endpointId);
+      return {
+        status: ep?.certificateStatus as AppEndpointStatus['certStatus'] | undefined,
+        message: ep?.certificateMessage ?? null,
+      };
     });
 
     // cert-manager sets "failed" even during transient challenge propagation waits.
@@ -1335,9 +1588,9 @@ export class DnsSetupWizardService {
       !!msg && /waiting for (dns-01|http-01|tls-alpn-01) challenge/i.test(msg);
 
     const anyPermanentlyFailed = certEntries.some(
-      e => (e.status === 'failed' || e.status === 'expired') && !isChallengeInProgress(e.message)
+      (e) => (e.status === 'failed' || e.status === 'expired') && !isChallengeInProgress(e.message),
     );
-    const allValid = certEntries.length > 0 && certEntries.every(e => e.status === 'valid');
+    const allValid = certEntries.length > 0 && certEntries.every((e) => e.status === 'valid');
 
     // Stop immediately if any cert has permanently failed
     if (anyPermanentlyFailed) {
@@ -1362,7 +1615,9 @@ export class DnsSetupWizardService {
 
   /** Upgrades all active endpoints from staging to production Let's Encrypt. Returns false if any upgrade failed. */
   private async upgradeToProdCerts(): Promise<boolean> {
-    const apps = this.appEndpointsDataSignal().filter(a => a.status !== 'error' && !!a.endpointId);
+    const apps = this.appEndpointsDataSignal().filter(
+      (a) => a.status !== 'error' && !!a.endpointId,
+    );
     const allEndpoints = this.appEndpointsService.endpoints();
     let allOk = true;
 
@@ -1370,7 +1625,7 @@ export class DnsSetupWizardService {
       this.updateAppStatus(app.key, { phase: 'upgrading-to-prod', status: 'running' });
       try {
         // Preserve clusterDnsZoneId so the backend uses the DNS-01 issuer (wildcard mode)
-        const existing = allEndpoints.find(e => e.id === app.endpointId);
+        const existing = allEndpoints.find((e) => e.id === app.endpointId);
         const updateDto: UpdateAppEndpointDto = {
           certificateRequired: true,
           certificateProvider: UpdateAppEndpointDto.CertificateProviderEnum.LetsEncrypt,
@@ -1379,13 +1634,21 @@ export class DnsSetupWizardService {
         await this.appEndpointsService.updateEndpoint(app.endpointId!, updateDto);
         const reconciled = await this.appEndpointsService.reconcileEndpoint(app.endpointId!);
         if (!reconciled) {
-          this.updateAppStatus(app.key, { status: 'error', phase: 'error', errorMessage: 'Failed to reconcile after prod cert upgrade' });
+          this.updateAppStatus(app.key, {
+            status: 'error',
+            phase: 'error',
+            errorMessage: 'Failed to reconcile after prod cert upgrade',
+          });
           allOk = false;
           continue;
         }
         this.updateAppStatus(app.key, { phase: 'issuing-prod-cert' });
       } catch {
-        this.updateAppStatus(app.key, { status: 'error', phase: 'error', errorMessage: 'Failed to upgrade to production certificate' });
+        this.updateAppStatus(app.key, {
+          status: 'error',
+          phase: 'error',
+          errorMessage: 'Failed to upgrade to production certificate',
+        });
         allOk = false;
       }
     }
@@ -1394,13 +1657,17 @@ export class DnsSetupWizardService {
   }
 
   updateAppStatus(key: AppEndpointStatus['key'], patch: Partial<AppEndpointStatus>): void {
-    this.appEndpointsDataSignal.update(apps =>
-      apps.map(a => a.key === key ? { ...a, ...patch } : a)
+    this.appEndpointsDataSignal.update((apps) =>
+      apps.map((a) => (a.key === key ? { ...a, ...patch } : a)),
     );
   }
 
   openAppError(app: AppEndpointStatus): void {
-    this.activeAppError.set({ label: app.label, certMessage: app.certMessage, errorMessage: app.errorMessage });
+    this.activeAppError.set({
+      label: app.label,
+      certMessage: app.certMessage,
+      errorMessage: app.errorMessage,
+    });
     this.appErrorCopied.set(false);
   }
 

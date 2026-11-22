@@ -75,15 +75,11 @@ export class MailConsoleService {
   }
 
   removeDomain(domain: string): Observable<MailRemoveResult> {
-    return this.http.delete<MailRemoveResult>(
-      `${this.base}/domains/${encodeURIComponent(domain)}`,
-    );
+    return this.http.delete<MailRemoveResult>(`${this.base}/domains/${encodeURIComponent(domain)}`);
   }
 
   testDraft(domain: string): Observable<MailTestDraft> {
-    return this.http.get<MailTestDraft>(
-      `${this.base}/domains/${encodeURIComponent(domain)}/test`,
-    );
+    return this.http.get<MailTestDraft>(`${this.base}/domains/${encodeURIComponent(domain)}/test`);
   }
 
   test(
@@ -130,9 +126,7 @@ export class MailConsoleService {
   }
 
   unsuppress(address: string): Observable<void> {
-    return this.http.delete<void>(
-      `${this.base}/suppressions/${encodeURIComponent(address)}`,
-    );
+    return this.http.delete<void>(`${this.base}/suppressions/${encodeURIComponent(address)}`);
   }
 
   connections(): Observable<MailConnection[]> {

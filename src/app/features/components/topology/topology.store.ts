@@ -55,7 +55,8 @@ export class TopologyStore {
       (focus.type === 'stack' && snapshot.stacks.some((s) => s.id === focus.id)) ||
       (focus.type === 'app' && snapshot.apps.some((a) => a.id === focus.id)) ||
       (focus.type === 'link' && snapshot.links.some((l) => l.id === focus.id)) ||
-      (focus.type === 'platform' && snapshot.apps.some((a) => a.clusterId === focus.id && a.kind === 'system'));
+      (focus.type === 'platform' &&
+        snapshot.apps.some((a) => a.clusterId === focus.id && a.kind === 'system'));
     return found ? focus : null;
   });
 
@@ -69,9 +70,9 @@ export class TopologyStore {
       const fresh = this.api.data();
       if (fresh) this._snapshot.set(fresh);
     });
-    this.api.events$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((event) =>
-      this._snapshot.update((s) => (s ? applyTopologyEvent(s, event) : s)),
-    );
+    this.api.events$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((event) => this._snapshot.update((s) => (s ? applyTopologyEvent(s, event) : s)));
     this.destroyRef.onDestroy(() => this.api.stopStream());
     // Showing or hiding platform apps changes what the API sends: fetch again, stream again.
     let first = true;
@@ -104,7 +105,9 @@ export class TopologyStore {
 
   update(patch: Partial<TopologyViewState>): void {
     const current = this.state();
-    const moved = ('level' in patch && patch.level !== current.level) || ('cluster' in patch && patch.cluster !== current.cluster);
+    const moved =
+      ('level' in patch && patch.level !== current.level) ||
+      ('cluster' in patch && patch.cluster !== current.cluster);
     const next = { ...current, ...(moved && !('all' in patch) ? { all: false } : {}), ...patch };
     void this.router.navigate([], {
       relativeTo: this.route,

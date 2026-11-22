@@ -169,7 +169,7 @@ export class RepositoryService {
   // Computed signals
   readonly hasRepositories = computed(() => this.repositoriesList().length > 0);
   readonly connectedRepositories = computed(() =>
-    this.repositoriesList().filter((repo) => repo.connected)
+    this.repositoriesList().filter((repo) => repo.connected),
   );
   readonly connectedCount = computed(() => this.connectedRepositories().length);
 
@@ -206,27 +206,44 @@ export class RepositoryService {
     this.initOAuthStatus();
   }
 
-  private applyOAuthResult(status: { connected?: boolean; githubUsername?: string; connectedAt?: string; scopes?: string } | null): void {
+  private applyOAuthResult(
+    status: {
+      connected?: boolean;
+      githubUsername?: string;
+      connectedAt?: string;
+      scopes?: string;
+    } | null,
+  ): void {
     const oauthMap = new Map<GitProvider, OAuthStatus>();
-    oauthMap.set(GitProvider.GitHub, status
-      ? { provider: GitProvider.GitHub, connected: status.connected || false, username: status.githubUsername, expiresAt: status.connectedAt, scopes: status.scopes }
-      : { provider: GitProvider.GitHub, connected: false }
+    oauthMap.set(
+      GitProvider.GitHub,
+      status
+        ? {
+            provider: GitProvider.GitHub,
+            connected: status.connected || false,
+            username: status.githubUsername,
+            expiresAt: status.connectedAt,
+            scopes: status.scopes,
+          }
+        : { provider: GitProvider.GitHub, connected: false },
     );
     oauthMap.set(GitProvider.GitLab, { provider: GitProvider.GitLab, connected: false });
     this.oauthStatus.set(oauthMap);
   }
 
   private initOAuthStatus(): void {
-    this.gitHubOAuthApi.gitHubOAuthControllerGetStatus()
-      .pipe(take(1), catchError(() => of(null)))
-      .subscribe(status => this.applyOAuthResult(status));
+    this.gitHubOAuthApi
+      .gitHubOAuthControllerGetStatus()
+      .pipe(
+        take(1),
+        catchError(() => of(null)),
+      )
+      .subscribe((status) => this.applyOAuthResult(status));
   }
 
   async checkOAuthStatus(): Promise<void> {
     try {
-      const status = await firstValueFrom(
-        this.gitHubOAuthApi.gitHubOAuthControllerGetStatus()
-      );
+      const status = await firstValueFrom(this.gitHubOAuthApi.gitHubOAuthControllerGetStatus());
       this.applyOAuthResult(status);
     } catch {
       this.applyOAuthResult(null);
@@ -238,14 +255,16 @@ export class RepositoryService {
    */
   async checkSetupStatus(): Promise<GitHubSetupStatusResponseDto> {
     try {
-      const status = await firstValueFrom(
-        this.gitHubSetupApi.gitHubSetupControllerGetStatus()
-      );
+      const status = await firstValueFrom(this.gitHubSetupApi.gitHubSetupControllerGetStatus());
       this.githubSetupStatus.set(status);
       this.githubSetupRefused.set(false);
       return status;
     } catch (error: any) {
-      const fallback: GitHubSetupStatusResponseDto = { configured: false, authMethod: null, imageRegistry: 'ghcr' };
+      const fallback: GitHubSetupStatusResponseDto = {
+        configured: false,
+        authMethod: null,
+        imageRegistry: 'ghcr',
+      };
       this.githubSetupStatus.set(fallback);
       this.githubSetupRefused.set(isSandboxRefusal(error));
       return fallback;
@@ -254,9 +273,7 @@ export class RepositoryService {
 
   async checkSetupHealth(): Promise<GitHubSetupHealthResponseDto | null> {
     try {
-      const health = await firstValueFrom(
-        this.gitHubSetupApi.gitHubSetupControllerHealth()
-      );
+      const health = await firstValueFrom(this.gitHubSetupApi.gitHubSetupControllerHealth());
       this.githubSetupHealth.set(health);
       return health;
     } catch (err) {
@@ -276,27 +293,29 @@ export class RepositoryService {
 
     try {
       const repositories = await firstValueFrom(
-        this.repositoriesApi.repositoriesControllerListRepositories()
+        this.repositoriesApi.repositoriesControllerListRepositories(),
       );
 
-      const mappedRepos: ConnectedRepository[] = (repositories as ImportedRepositoryDto[]).map((repo) => ({
-        id: repo.id,
-        name: repo.repositoryName,
-        fullName: repo.repositoryFullName,
-        description: repo.description,
-        provider: repo.provider === 'github' ? GitProvider.GitHub : GitProvider.GitLab,
-        url: repo.htmlUrl || repo.cloneUrl || '',
-        branch: repo.defaultBranch,
-        private: repo.isPrivate,
-        language: repo.language,
-        hasDockerfile: false, // Need to detect
-        hasPackageJson: true, // Assume true
-        connected: true, // Already imported means connected
-        connectedAt: repo.createdAt,
-        webhookEnabled: repo.webhookActive || false,
-        autoDeployEnabled: repo.autoDeployEnabled || false,
-        lastCommit: undefined, // Will be loaded separately if needed
-      }));
+      const mappedRepos: ConnectedRepository[] = (repositories as ImportedRepositoryDto[]).map(
+        (repo) => ({
+          id: repo.id,
+          name: repo.repositoryName,
+          fullName: repo.repositoryFullName,
+          description: repo.description,
+          provider: repo.provider === 'github' ? GitProvider.GitHub : GitProvider.GitLab,
+          url: repo.htmlUrl || repo.cloneUrl || '',
+          branch: repo.defaultBranch,
+          private: repo.isPrivate,
+          language: repo.language,
+          hasDockerfile: false, // Need to detect
+          hasPackageJson: true, // Assume true
+          connected: true, // Already imported means connected
+          connectedAt: repo.createdAt,
+          webhookEnabled: repo.webhookActive || false,
+          autoDeployEnabled: repo.autoDeployEnabled || false,
+          lastCommit: undefined, // Will be loaded separately if needed
+        }),
+      );
 
       if (provider) {
         const filtered = mappedRepos.filter((repo) => repo.provider === provider);
@@ -323,12 +342,13 @@ export class RepositoryService {
 
     try {
       const available = await firstValueFrom(
-        this.repositoriesApi.repositoriesControllerListAvailableRepositories()
+        this.repositoriesApi.repositoriesControllerListAvailableRepositories(),
       );
 
       this.availableReposList.set(available);
     } catch (error: any) {
-      const errorMessage = error?.error?.message || error?.message || 'Failed to load available repositories';
+      const errorMessage =
+        error?.error?.message || error?.message || 'Failed to load available repositories';
       console.error('❌ Failed to load available repositories:', error);
       this.error.set(errorMessage);
       throw error;
@@ -349,9 +369,7 @@ export class RepositoryService {
         throw new Error('Only GitHub OAuth is currently supported');
       }
 
-      await firstValueFrom(
-        this.gitHubOAuthApi.gitHubOAuthControllerDisconnect()
-      );
+      await firstValueFrom(this.gitHubOAuthApi.gitHubOAuthControllerDisconnect());
 
       this.oauthStatus.update((current) => {
         const updated = new Map(current);
@@ -377,7 +395,10 @@ export class RepositoryService {
    * Import repositories from GitHub
    * Returns the import response with details about success/failures
    */
-  async importRepositories(repositoryIds: string[], autoDeployEnabled = false): Promise<ImportRepositoriesResponseDto> {
+  async importRepositories(
+    repositoryIds: string[],
+    autoDeployEnabled = false,
+  ): Promise<ImportRepositoriesResponseDto> {
     this.isLoading.set(true);
     this.error.set(null);
 
@@ -386,12 +407,13 @@ export class RepositoryService {
         this.repositoriesApi.repositoriesControllerImportRepositories({
           repositoryIds,
           autoDeployEnabled,
-        })
+        }),
       );
 
       return response;
     } catch (error: any) {
-      const errorMessage = error?.error?.message || error?.message || 'Failed to import repositories';
+      const errorMessage =
+        error?.error?.message || error?.message || 'Failed to import repositories';
       console.error('❌ Failed to import repositories:', error);
       this.error.set(errorMessage);
       throw error;
@@ -418,16 +440,14 @@ export class RepositoryService {
 
     try {
       await firstValueFrom(
-        this.repositoriesApi.repositoriesControllerDeleteRepository(repositoryId)
+        this.repositoriesApi.repositoriesControllerDeleteRepository(repositoryId),
       );
 
       // Remove from local list
-      this.repositoriesList.update((repos) =>
-        repos.filter((repo) => repo.id !== repositoryId)
-      );
-
+      this.repositoriesList.update((repos) => repos.filter((repo) => repo.id !== repositoryId));
     } catch (error: any) {
-      const errorMessage = error?.error?.message || error?.message || 'Failed to disconnect repository';
+      const errorMessage =
+        error?.error?.message || error?.message || 'Failed to disconnect repository';
       console.error('❌ Failed to disconnect repository:', error);
       this.error.set(errorMessage);
       throw error;
@@ -447,10 +467,9 @@ export class RepositoryService {
     try {
       this.repositoriesList.update((repos) =>
         repos.map((repo) =>
-          repo.id === repositoryId ? { ...repo, webhookEnabled: enabled } : repo
-        )
+          repo.id === repositoryId ? { ...repo, webhookEnabled: enabled } : repo,
+        ),
       );
-
     } catch (error: any) {
       const errorMessage = error?.message || 'Failed to toggle webhook';
       console.error('❌ Failed to toggle webhook:', error);
@@ -472,10 +491,9 @@ export class RepositoryService {
     try {
       this.repositoriesList.update((repos) =>
         repos.map((repo) =>
-          repo.id === repositoryId ? { ...repo, autoDeployEnabled: enabled } : repo
-        )
+          repo.id === repositoryId ? { ...repo, autoDeployEnabled: enabled } : repo,
+        ),
       );
-
     } catch (error: any) {
       const errorMessage = error?.message || 'Failed to toggle auto-deploy';
       console.error('❌ Failed to toggle auto-deploy:', error);
@@ -492,10 +510,11 @@ export class RepositoryService {
   async checkDockerfile(repositoryId: string): Promise<{ hasDockerfile: boolean }> {
     try {
       return await firstValueFrom(
-        this.repositoriesApi.repositoriesControllerCheckDockerfilePresence(repositoryId)
+        this.repositoriesApi.repositoriesControllerCheckDockerfilePresence(repositoryId),
       );
     } catch (error: any) {
-      const errorMessage = error?.error?.message || error?.message || 'Failed to check Dockerfile presence';
+      const errorMessage =
+        error?.error?.message || error?.message || 'Failed to check Dockerfile presence';
       console.error('Failed to check Dockerfile:', error);
       throw new Error(errorMessage);
     }
@@ -510,11 +529,12 @@ export class RepositoryService {
   async getFluiManifests(repositoryId: string, branch?: string): Promise<RepositoryFluiManifests> {
     try {
       const result = await firstValueFrom(
-        this.repositoriesApi.repositoriesControllerGetManifests(repositoryId, branch)
+        this.repositoriesApi.repositoriesControllerGetManifests(repositoryId, branch),
       );
       return result as unknown as RepositoryFluiManifests;
     } catch (error: any) {
-      const errorMessage = error?.error?.message || error?.message || 'Failed to read flui.yaml manifests';
+      const errorMessage =
+        error?.error?.message || error?.message || 'Failed to read flui.yaml manifests';
       console.error('Failed to read flui.yaml manifests:', error);
       throw new Error(errorMessage);
     }
@@ -529,12 +549,13 @@ export class RepositoryService {
 
     try {
       const analysis = await firstValueFrom(
-        this.repositoriesApi.repositoriesControllerAnalyzeRepository(repositoryId, { branch })
+        this.repositoriesApi.repositoriesControllerAnalyzeRepository(repositoryId, { branch }),
       );
 
       return analysis;
     } catch (error: any) {
-      const errorMessage = error?.error?.message || error?.message || 'Failed to analyze repository';
+      const errorMessage =
+        error?.error?.message || error?.message || 'Failed to analyze repository';
       console.error('❌ Failed to analyze repository:', error);
       this.error.set(errorMessage);
       throw error;
@@ -546,10 +567,14 @@ export class RepositoryService {
   /**
    * Extract environment variables from a repository
    */
-  async extractEnvVars(repositoryId: string, branch: string, framework: string): Promise<ExtractedEnvVarDto[]> {
+  async extractEnvVars(
+    repositoryId: string,
+    branch: string,
+    framework: string,
+  ): Promise<ExtractedEnvVarDto[]> {
     try {
       return await firstValueFrom(
-        this.repositoriesApi.repositoriesControllerExtractEnv(repositoryId, { branch, framework })
+        this.repositoriesApi.repositoriesControllerExtractEnv(repositoryId, { branch, framework }),
       );
     } catch (error: any) {
       const errorMessage = error?.error?.message || error?.message || 'Failed to extract env vars';
@@ -593,7 +618,7 @@ export class RepositoryService {
 
     try {
       const branches = await firstValueFrom(
-        this.repositoriesApi.repositoriesControllerListBranches(repositoryId)
+        this.repositoriesApi.repositoriesControllerListBranches(repositoryId),
       );
 
       return branches;
@@ -616,7 +641,11 @@ export class RepositoryService {
 
     try {
       const commits = await firstValueFrom(
-        this.repositoriesApi.repositoriesControllerListCommits(repositoryId, branch || 'main', limit)
+        this.repositoriesApi.repositoriesControllerListCommits(
+          repositoryId,
+          branch || 'main',
+          limit,
+        ),
       );
 
       return commits;
@@ -635,7 +664,7 @@ export class RepositoryService {
    */
   async analyzePublicRepository(cloneUrl: string, branch?: string): Promise<RepositoryAnalysisDto> {
     return firstValueFrom(
-      this.repositoriesApi.repositoriesControllerAnalyzePublicRepository({ cloneUrl, branch })
+      this.repositoriesApi.repositoriesControllerAnalyzePublicRepository({ cloneUrl, branch }),
     );
   }
 
@@ -644,7 +673,7 @@ export class RepositoryService {
    */
   async searchPublicRepositories(query: string, limit = 15): Promise<PublicRepoSearchResultDto[]> {
     return firstValueFrom(
-      this.gitHubOAuthApi.gitHubOAuthControllerSearchPublicRepositories(query, limit)
+      this.gitHubOAuthApi.gitHubOAuthControllerSearchPublicRepositories(query, limit),
     );
   }
 
@@ -653,9 +682,9 @@ export class RepositoryService {
    */
   async getPublicRepositoryBranches(fullName: string): Promise<string[]> {
     const branches = await firstValueFrom(
-      this.gitHubOAuthApi.gitHubOAuthControllerGetPublicRepoBranches(fullName)
+      this.gitHubOAuthApi.gitHubOAuthControllerGetPublicRepoBranches(fullName),
     );
-    return branches.map(b => b.name);
+    return branches.map((b) => b.name);
   }
 
   /**

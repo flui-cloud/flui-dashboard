@@ -2,11 +2,7 @@ import { Component, OnInit, computed, inject, input, ChangeDetectionStrategy } f
 
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideShieldAlert,
-  lucideChevronRight,
-  lucideTriangleAlert,
-} from '@ng-icons/lucide';
+import { lucideShieldAlert, lucideChevronRight, lucideTriangleAlert } from '@ng-icons/lucide';
 import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
 import { CrashDiagnosesService } from '../../../service/crash-diagnoses.service';
 import { severityBannerClass } from '../../../model/crash-diagnosis.models';
@@ -28,9 +24,7 @@ import { severityBannerClass } from '../../../model/crash-diagnosis.models';
           <p class="font-medium">{{ latest()!.title }}</p>
           <p class="text-xs opacity-90 whitespace-pre-wrap">{{ latest()!.explanation }}</p>
           @if (othersCount() > 0) {
-            <p class="text-xs opacity-75">
-              +{{ othersCount() }} other unresolved diagnoses
-            </p>
+            <p class="text-xs opacity-75">+{{ othersCount() }} other unresolved diagnoses</p>
           }
         </div>
         <a
@@ -53,9 +47,7 @@ export class DiagnosesBannerComponent implements OnInit {
   private readonly service = inject(CrashDiagnosesService);
 
   readonly latest = computed(() => this.service.unresolvedRecent()[0] ?? null);
-  readonly othersCount = computed(() =>
-    Math.max(0, this.service.unresolvedRecent().length - 1),
-  );
+  readonly othersCount = computed(() => Math.max(0, this.service.unresolvedRecent().length - 1));
   readonly bannerClass = computed(() =>
     this.latest() ? severityBannerClass(this.latest().severity) : '',
   );

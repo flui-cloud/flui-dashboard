@@ -15,6 +15,11 @@ describe('egress ports', () => {
   });
 
   it('writes ports back the way a person types them', () => {
-    expect(formatEgressPorts([{ port: 443, protocol: 'TCP' }, { port: 123, protocol: 'UDP' }])).toBe('443, 123/udp');
+    expect(
+      formatEgressPorts([
+        { port: 443, protocol: 'TCP' },
+        { port: 123, protocol: 'UDP' },
+      ]),
+    ).toBe('443, 123/udp');
   });
 });

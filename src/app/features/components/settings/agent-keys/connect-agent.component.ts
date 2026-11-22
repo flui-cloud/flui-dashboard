@@ -104,7 +104,11 @@ function hostOf(endpoint: string): string {
         <span class="min-w-0 flex-1">
           <span class="block text-sm font-medium text-foreground">Connect an agent</span>
           <span class="block text-xs text-muted-foreground">
-            {{ apiKey() ? 'Copy this before you leave — the key is shown once.' : 'Instructions to paste into a coding agent chat, any time.' }}
+            {{
+              apiKey()
+                ? 'Copy this before you leave — the key is shown once.'
+                : 'Instructions to paste into a coding agent chat, any time.'
+            }}
           </span>
         </span>
         <ng-icon
@@ -119,20 +123,25 @@ function hostOf(endpoint: string): string {
           @if (apiKey(); as key) {
             <div class="rounded-md border border-primary/40 bg-primary/5 p-3 space-y-2">
               <p class="text-xs text-muted-foreground">
-                This is the only time the value is shown. If you lose it, revoke this key and issue another.
+                This is the only time the value is shown. If you lose it, revoke this key and issue
+                another.
               </p>
               <div class="flex items-center gap-2">
                 <code
                   data-testid="minted-key"
                   class="min-w-0 flex-1 truncate rounded-md border border-border bg-background px-3 py-2 font-mono text-xs"
-                >{{ key }}</code>
+                  >{{ key }}</code
+                >
                 <button
                   type="button"
                   data-testid="copy-key"
                   (click)="copy(key)"
                   class="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
                 >
-                  <ng-icon [name]="keyCopied() ? 'lucideCheck' : 'lucideCopy'" class="h-3.5 w-3.5" />
+                  <ng-icon
+                    [name]="keyCopied() ? 'lucideCheck' : 'lucideCopy'"
+                    class="h-3.5 w-3.5"
+                  />
                   {{ keyCopied() ? 'Copied' : 'Copy' }}
                 </button>
               </div>
@@ -145,21 +154,24 @@ function hostOf(endpoint: string): string {
             </p>
             <p class="text-xs text-muted-foreground">
               Covers Claude Code, Codex CLI and OpenCode — the agent reads the section that matches
-              it. The key never appears in this text; it tells whoever is guiding the agent to put it
-              in a terminal instead.
+              it. The key never appears in this text; it tells whoever is guiding the agent to put
+              it in a terminal instead.
             </p>
             <div class="relative">
               <pre
                 data-testid="connect-agent-prompt"
                 class="max-h-72 overflow-auto rounded-md border border-border bg-muted/40 p-3 pr-16 font-mono text-[11px] leading-relaxed text-foreground whitespace-pre"
-              >{{ chatPrompt() }}</pre>
+                >{{ chatPrompt() }}</pre>
               <button
                 type="button"
                 data-testid="connect-agent-copy-prompt"
                 (click)="copyPrompt()"
                 class="absolute right-2 top-2 inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
               >
-                <ng-icon [name]="promptCopied() ? 'lucideCheck' : 'lucideCopy'" class="h-3.5 w-3.5" />
+                <ng-icon
+                  [name]="promptCopied() ? 'lucideCheck' : 'lucideCopy'"
+                  class="h-3.5 w-3.5"
+                />
                 {{ promptCopied() ? 'Copied' : 'Copy' }}
               </button>
             </div>
@@ -185,7 +197,10 @@ function hostOf(endpoint: string): string {
               </button>
               @if (skillSectionOpen()) {
                 <div class="space-y-2 border-t border-border px-3 py-2">
-                  <span class="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground" data-testid="skill-version">
+                  <span
+                    class="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+                    data-testid="skill-version"
+                  >
                     skill {{ doc.version }}
                   </span>
                   <p class="text-xs text-muted-foreground">
@@ -201,7 +216,10 @@ function hostOf(endpoint: string): string {
                       (click)="copySkill(doc.content)"
                       class="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-2 text-xs font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
                     >
-                      <ng-icon [name]="skillCopied() ? 'lucideCheck' : 'lucideCopy'" class="h-3.5 w-3.5" />
+                      <ng-icon
+                        [name]="skillCopied() ? 'lucideCheck' : 'lucideCopy'"
+                        class="h-3.5 w-3.5"
+                      />
                       {{ skillCopied() ? 'Copied' : 'Copy ' + doc.filename }}
                     </button>
                     <button
@@ -217,13 +235,16 @@ function hostOf(endpoint: string): string {
                     <pre
                       data-testid="skill-content"
                       class="max-h-64 overflow-auto rounded-md border border-border bg-muted/40 p-3 font-mono text-[11px] leading-relaxed text-foreground whitespace-pre-wrap"
-                    >{{ doc.content }}</pre>
+                      >{{ doc.content }}</pre>
                   }
                 </div>
               }
             </div>
           } @else if (skillError()) {
-            <div class="rounded-md border border-border bg-background px-3 py-2" data-testid="skill-missing">
+            <div
+              class="rounded-md border border-border bg-background px-3 py-2"
+              data-testid="skill-missing"
+            >
               <p class="text-xs text-muted-foreground">{{ skillError() }}</p>
             </div>
           }
@@ -285,12 +306,10 @@ export class ConnectAgentComponent implements OnInit {
   }
 
   protected copyPrompt(): void {
-    void navigator.clipboard
-      ?.writeText(this.chatPrompt())
-      .then(() => {
-        this.promptCopied.set(true);
-        setTimeout(() => this.promptCopied.set(false), 2_000);
-      });
+    void navigator.clipboard?.writeText(this.chatPrompt()).then(() => {
+      this.promptCopied.set(true);
+      setTimeout(() => this.promptCopied.set(false), 2_000);
+    });
   }
 
   protected copySkill(value: string): void {

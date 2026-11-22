@@ -18,7 +18,10 @@ import type { PlatformComponentResponseDto } from '../../../core/api/model/platf
 const PAGE_ID = 'platform-components';
 const LIST_ID = `${PAGE_ID}:components`;
 
-export type VisibleComponent = PlatformComponentResponseDto & { clusterId: string; clusterName: string };
+export type VisibleComponent = PlatformComponentResponseDto & {
+  clusterId: string;
+  clusterName: string;
+};
 
 export function platformComponentEntityRef(clusterId: string, key: string): string {
   return compositeEntityRef('platform-component', clusterId, key);

@@ -34,7 +34,11 @@ const POLL_MS = 10_000;
         @if (view(); as v) {
           <dl class="mt-2 grid grid-cols-[8rem_1fr] gap-x-3 gap-y-1 text-xs">
             <dt class="text-muted-foreground">From</dt>
-            <dd class="font-mono">{{ v.source.user }}&#64;{{ v.source.host }}:{{ v.source.port }}/{{ v.source.database }}</dd>
+            <dd class="font-mono">
+              {{ v.source.user }}&#64;{{ v.source.host }}:{{ v.source.port }}/{{
+                v.source.database
+              }}
+            </dd>
             <dt class="text-muted-foreground">State</dt>
             <dd>{{ stateText[v.status] }}</dd>
             @if (v.tablesTotal !== null) {
@@ -53,42 +57,116 @@ const POLL_MS = 10_000;
             </p>
           }
           @if (v.detail) {
-            <p class="mt-2 text-xs" [class]="v.status === 'failed' ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground'">{{ v.detail }}</p>
+            <p
+              class="mt-2 text-xs"
+              [class]="
+                v.status === 'failed' ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground'
+              "
+            >
+              {{ v.detail }}
+            </p>
           }
           @if (v.status === 'streaming') {
             <p class="mt-2 text-xs text-muted-foreground">
-              When you are ready, stop every write to the source, then switch. Flui waits for the last
-              changes, then detaches.
+              When you are ready, stop every write to the source, then switch. Flui waits for the
+              last changes, then detaches.
             </p>
           }
           <div class="mt-3 flex gap-2">
             @if (v.status === 'streaming') {
-              <button type="button" class="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground" [disabled]="busy()" (click)="switchOver()">Switch to Flui</button>
+              <button
+                type="button"
+                class="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground"
+                [disabled]="busy()"
+                (click)="switchOver()"
+              >
+                Switch to Flui
+              </button>
             }
             @if (active()) {
-              <button type="button" class="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-muted" [disabled]="busy()" (click)="cancel()">Cancel the import</button>
+              <button
+                type="button"
+                class="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-muted"
+                [disabled]="busy()"
+                (click)="cancel()"
+              >
+                Cancel the import
+              </button>
             } @else {
-              <button type="button" class="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-muted" (click)="view.set(null)">Start another</button>
+              <button
+                type="button"
+                class="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-muted"
+                (click)="view.set(null)"
+              >
+                Start another
+              </button>
             }
           </div>
         } @else {
           <p class="mt-1 text-xs text-muted-foreground">
-            Copies a database that runs elsewhere into this one, which must be empty, and keeps it in
-            step until you switch. {{ requirement() }}
+            Copies a database that runs elsewhere into this one, which must be empty, and keeps it
+            in step until you switch. {{ requirement() }}
           </p>
-          <form class="mt-3 grid grid-cols-2 gap-2 text-xs" (ngSubmit)="start()" data-testid="db-import-form">
-            <input class="col-span-2 rounded-md border bg-background px-2 py-1.5" name="host" placeholder="Host" [(ngModel)]="form.host" required />
-            <input class="rounded-md border bg-background px-2 py-1.5" name="port" type="number" placeholder="Port" [(ngModel)]="form.port" required />
-            <select class="rounded-md border bg-background px-2 py-1.5" name="sslmode" [(ngModel)]="form.sslmode">
+          <form
+            class="mt-3 grid grid-cols-2 gap-2 text-xs"
+            (ngSubmit)="start()"
+            data-testid="db-import-form"
+          >
+            <input
+              class="col-span-2 rounded-md border bg-background px-2 py-1.5"
+              name="host"
+              placeholder="Host"
+              [(ngModel)]="form.host"
+              required
+            />
+            <input
+              class="rounded-md border bg-background px-2 py-1.5"
+              name="port"
+              type="number"
+              placeholder="Port"
+              [(ngModel)]="form.port"
+              required
+            />
+            <select
+              class="rounded-md border bg-background px-2 py-1.5"
+              name="sslmode"
+              [(ngModel)]="form.sslmode"
+            >
               <option value="require">TLS required</option>
               <option value="verify-full">TLS, verify certificate</option>
               <option value="prefer">TLS if available</option>
               <option value="disable">No TLS</option>
             </select>
-            <input class="rounded-md border bg-background px-2 py-1.5" name="database" placeholder="Database" [(ngModel)]="form.database" required />
-            <input class="rounded-md border bg-background px-2 py-1.5" name="user" placeholder="User" [(ngModel)]="form.user" required />
-            <input class="col-span-2 rounded-md border bg-background px-2 py-1.5" name="password" type="password" autocomplete="off" placeholder="Password (kept encrypted until the import ends)" [(ngModel)]="password" required />
-            <button type="submit" class="col-span-2 justify-self-start rounded-md bg-primary px-3 py-1.5 font-medium text-primary-foreground" [disabled]="busy()">Start the import</button>
+            <input
+              class="rounded-md border bg-background px-2 py-1.5"
+              name="database"
+              placeholder="Database"
+              [(ngModel)]="form.database"
+              required
+            />
+            <input
+              class="rounded-md border bg-background px-2 py-1.5"
+              name="user"
+              placeholder="User"
+              [(ngModel)]="form.user"
+              required
+            />
+            <input
+              class="col-span-2 rounded-md border bg-background px-2 py-1.5"
+              name="password"
+              type="password"
+              autocomplete="off"
+              placeholder="Password (kept encrypted until the import ends)"
+              [(ngModel)]="password"
+              required
+            />
+            <button
+              type="submit"
+              class="col-span-2 justify-self-start rounded-md bg-primary px-3 py-1.5 font-medium text-primary-foreground"
+              [disabled]="busy()"
+            >
+              Start the import
+            </button>
           </form>
         }
         @if (error()) {
@@ -121,17 +199,13 @@ export class DbImportCardComponent {
     return e === 'postgres' || e === 'mariadb' ? e : null;
   });
   readonly supported = computed(() => this.engine() !== null);
-  readonly engineName = computed(() =>
-    this.engine() === 'mariadb' ? 'MariaDB' : 'PostgreSQL',
-  );
+  readonly engineName = computed(() => (this.engine() === 'mariadb' ? 'MariaDB' : 'PostgreSQL'));
   readonly requirement = computed(() =>
     this.engine() === 'mariadb'
       ? 'The source needs binary logging in ROW format and a user with REPLICATION SLAVE, BINLOG MONITOR and RELOAD.'
       : 'The source needs wal_level=logical and a user that can replicate.',
   );
-  readonly active = computed(
-    () => !!this.view() && ACTIVE_IMPORT.includes(this.view()!.status),
-  );
+  readonly active = computed(() => !!this.view() && ACTIVE_IMPORT.includes(this.view()!.status));
   readonly lag = computed(() => {
     const v = this.view();
     if (!v || !this.active()) return null;

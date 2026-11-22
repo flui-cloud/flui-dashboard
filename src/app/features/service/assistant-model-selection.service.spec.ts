@@ -7,10 +7,21 @@ import { SandboxService } from '../../core/services/sandbox.service';
 describe('AssistantModelSelectionService', () => {
   const inSandbox = signal(false);
   const providers = signal([
-    { provider: 'scaleway', configured: true, euDataResidency: true, models: ['deepseek-v4-flash-0731', 'gpt-oss-120b'], defaultModel: 'deepseek-v4-flash-0731' },
+    {
+      provider: 'scaleway',
+      configured: true,
+      euDataResidency: true,
+      models: ['deepseek-v4-flash-0731', 'gpt-oss-120b'],
+      defaultModel: 'deepseek-v4-flash-0731',
+    },
   ]);
   const recommendations = signal({
-    recommendedProvider: { key: 'scaleway', label: 'Scaleway', reason: 'EU', defaultModel: 'deepseek-v4-flash-0731' },
+    recommendedProvider: {
+      key: 'scaleway',
+      label: 'Scaleway',
+      reason: 'EU',
+      defaultModel: 'deepseek-v4-flash-0731',
+    },
     groups: [
       {
         key: 'scaleway',
@@ -25,10 +36,20 @@ describe('AssistantModelSelectionService', () => {
 
   const inference = {
     configuredProviders: computed(() => providers()),
-    connections: signal([{ id: 'c1', label: 'Mistral', baseUrl: 'https://api.mistral.ai/v1', models: ['mistral-small-2603'], isDefault: false }]),
+    connections: signal([
+      {
+        id: 'c1',
+        label: 'Mistral',
+        baseUrl: 'https://api.mistral.ai/v1',
+        models: ['mistral-small-2603'],
+        isDefault: false,
+      },
+    ]),
     recommendations,
     groupFor(opts: { provider?: string } | null) {
-      return opts?.provider ? recommendations().groups.find((g) => g.matchProvider === opts.provider) : undefined;
+      return opts?.provider
+        ? recommendations().groups.find((g) => g.matchProvider === opts.provider)
+        : undefined;
     },
     recommendedModelFor(opts: { provider?: string; model?: string } | null) {
       return this.groupFor(opts)?.models.find((m) => m.model === opts?.model);
@@ -53,13 +74,22 @@ describe('AssistantModelSelectionService', () => {
   it('preselects the recommended default and keeps a BYO connection selectable', () => {
     inSandbox.set(false);
     const service = create();
-    expect(service.selectedOpts()).toEqual({ provider: 'scaleway', model: 'deepseek-v4-flash-0731' });
-    expect(service.featuredOptions().map((o) => o.modelId)).toEqual(['deepseek-v4-flash-0731', 'gpt-oss-120b']);
+    expect(service.selectedOpts()).toEqual({
+      provider: 'scaleway',
+      model: 'deepseek-v4-flash-0731',
+    });
+    expect(service.featuredOptions().map((o) => o.modelId)).toEqual([
+      'deepseek-v4-flash-0731',
+      'gpt-oss-120b',
+    ]);
     expect(service.otherOptions().map((o) => o.modelId)).toEqual(['mistral-small-2603']);
   });
 
   it('gives a demo guest no choice: one option, nothing sent, a stored pick ignored', () => {
-    localStorage.setItem('flui.assistant.modelSelection', JSON.stringify({ connectionId: 'c1', model: 'mistral-small-2603' }));
+    localStorage.setItem(
+      'flui.assistant.modelSelection',
+      JSON.stringify({ connectionId: 'c1', model: 'mistral-small-2603' }),
+    );
     inSandbox.set(true);
     const service = create();
     expect(service.pickerOptions()).toHaveSize(1);

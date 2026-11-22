@@ -63,7 +63,9 @@ import { ConnectAgentComponent } from './connect-agent.component';
       </div>
 
       @if (loadError(); as e) {
-        <div class="flex items-start gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <div
+          class="flex items-start gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+        >
           <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-4 w-4 shrink-0" />
           <span>{{ e }}</span>
         </div>
@@ -213,9 +215,7 @@ export class AgentKeysComponent implements OnInit {
       },
       error: (err: unknown) => {
         this.catalogue.set([]);
-        this.loadError.set(
-          sandboxFailureMessage(err, 'The permission groups could not be read.'),
-        );
+        this.loadError.set(sandboxFailureMessage(err, 'The permission groups could not be read.'));
         this.loadKeys();
       },
     });
@@ -231,8 +231,7 @@ export class AgentKeysComponent implements OnInit {
         this.keys.set([]);
         this.loading.set(false);
         this.loadError.set(
-          this.loadError() ??
-            sandboxFailureMessage(err, 'Your keys could not be read.'),
+          this.loadError() ?? sandboxFailureMessage(err, 'Your keys could not be read.'),
         );
       },
     });
@@ -280,10 +279,7 @@ export class AgentKeysComponent implements OnInit {
     });
   }
 
-  protected updateApplications(event: {
-    key: ApiKeyResponseDto;
-    applicationIds: string[];
-  }): void {
+  protected updateApplications(event: { key: ApiKeyResponseDto; applicationIds: string[] }): void {
     this.updatingApplications.set(event.key.id);
     this.updateApplicationsError.set(null);
     this.api
@@ -304,10 +300,7 @@ export class AgentKeysComponent implements OnInit {
       });
   }
 
-  protected updateProjects(event: {
-    key: ApiKeyResponseDto;
-    projectIds: string[];
-  }): void {
+  protected updateProjects(event: { key: ApiKeyResponseDto; projectIds: string[] }): void {
     this.updatingProjects.set(event.key.id);
     this.updateProjectsError.set(null);
     this.api
@@ -352,8 +345,7 @@ export class AgentKeysComponent implements OnInit {
 }
 
 function messageOf(err: unknown, fallback: string): string {
-  const message = (err as { error?: { message?: unknown } } | null)?.error
-    ?.message;
+  const message = (err as { error?: { message?: unknown } } | null)?.error?.message;
   if (typeof message === 'string' && message.trim()) return message;
   if (Array.isArray(message) && typeof message[0] === 'string') return message[0];
   return fallback;

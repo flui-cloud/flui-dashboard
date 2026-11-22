@@ -14,7 +14,9 @@ describe('app access summary', () => {
   });
 
   it('assumes data access when an older instance does not say', () => {
-    expect(accessOf({ access: { tabs: [], readOnly: false, showcase: false } })?.dataAccess).toBeTrue();
+    expect(
+      accessOf({ access: { tabs: [], readOnly: false, showcase: false } })?.dataAccess,
+    ).toBeTrue();
   });
 
   it('treats a missing summary as no opinion', () => {

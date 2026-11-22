@@ -15,7 +15,8 @@ import {
   WorkflowConsent,
 } from '../../service/application.service';
 
-export type WorkflowGenerationState = 'idle' | 'generating' | 'committing' | 'waiting' | 'done' | 'error';
+export type WorkflowGenerationState =
+  'idle' | 'generating' | 'committing' | 'waiting' | 'done' | 'error';
 
 @Component({
   selector: 'app-generate-workflow-step',
@@ -36,7 +37,9 @@ export type WorkflowGenerationState = 'idle' | 'generating' | 'committing' | 'wa
     <div class="space-y-5">
       @if (generationState() === 'idle') {
         @if (consentError()) {
-          <div class="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+          <div
+            class="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive"
+          >
             {{ consentError() }}
           </div>
         } @else if (!consent()) {
@@ -55,12 +58,16 @@ export type WorkflowGenerationState = 'idle' | 'generating' | 'committing' | 'wa
               </p>
               <div
                 class="flex items-start gap-2 rounded-md border p-3 text-sm"
-                [class]="c.delivery === 'pull-request'
-                  ? 'border-primary/30 bg-primary/5'
-                  : 'border-orange-500/30 bg-orange-500/5'"
+                [class]="
+                  c.delivery === 'pull-request'
+                    ? 'border-primary/30 bg-primary/5'
+                    : 'border-orange-500/30 bg-orange-500/5'
+                "
               >
                 <ng-icon
-                  [name]="c.delivery === 'pull-request' ? 'lucideGitPullRequest' : 'lucideTriangleAlert'"
+                  [name]="
+                    c.delivery === 'pull-request' ? 'lucideGitPullRequest' : 'lucideTriangleAlert'
+                  "
                   class="h-4 w-4 shrink-0 mt-0.5"
                 />
                 <span>{{ c.deliveryNote }}</span>
@@ -86,7 +93,7 @@ export type WorkflowGenerationState = 'idle' | 'generating' | 'committing' | 'wa
               </div>
               <pre
                 class="max-h-96 overflow-auto rounded-md border border-border bg-muted/40 p-3 text-xs font-mono whitespace-pre"
-              >{{ c.workflowYaml }}</pre>
+                >{{ c.workflowYaml }}</pre>
               @if (c.webhookSecretNote) {
                 <p class="text-xs text-muted-foreground">{{ c.webhookSecretNote }}</p>
               }
@@ -94,10 +101,16 @@ export type WorkflowGenerationState = 'idle' | 'generating' | 'committing' | 'wa
 
             <ul class="space-y-1.5 text-sm text-muted-foreground">
               @if (c.usesYourActionsMinutes) {
-                <li>The build runs on GitHub-hosted runners and spends <strong>your</strong> Actions minutes.</li>
+                <li>
+                  The build runs on GitHub-hosted runners and spends <strong>your</strong> Actions
+                  minutes.
+                </li>
               }
               @if (!c.builtOnFluiMachines) {
-                <li>Your code is never compiled on Flui machines. Flui runs the resulting image, nothing else.</li>
+                <li>
+                  Your code is never compiled on Flui machines. Flui runs the resulting image,
+                  nothing else.
+                </li>
               }
               @if (buildExpectation(); as e) {
                 <li>{{ e.note }}</li>
@@ -113,7 +126,11 @@ export type WorkflowGenerationState = 'idle' | 'generating' | 'committing' | 'wa
                 [name]="c.delivery === 'pull-request' ? 'lucideGitPullRequest' : 'lucideGithub'"
                 class="h-4 w-4"
               />
-              {{ c.delivery === 'pull-request' ? 'Open the pull request' : 'Commit to ' + c.branch + ' and start the build' }}
+              {{
+                c.delivery === 'pull-request'
+                  ? 'Open the pull request'
+                  : 'Commit to ' + c.branch + ' and start the build'
+              }}
             </button>
           </div>
         }
@@ -130,7 +147,15 @@ export type WorkflowGenerationState = 'idle' | 'generating' | 'committing' | 'wa
               } @else {
                 <span class="h-4 w-4 rounded-full border border-border shrink-0 block"></span>
               }
-              <span [class]="isStepActive(step.state) ? 'text-foreground' : isStepDone(step.state) ? 'text-muted-foreground' : 'text-muted-foreground/50'">
+              <span
+                [class]="
+                  isStepActive(step.state)
+                    ? 'text-foreground'
+                    : isStepDone(step.state)
+                      ? 'text-muted-foreground'
+                      : 'text-muted-foreground/50'
+                "
+              >
                 {{ step.label }}
               </span>
             </div>
@@ -218,7 +243,12 @@ export class GenerateWorkflowStepComponent {
     },
   ]);
 
-  private readonly stateOrder: WorkflowGenerationState[] = ['generating', 'committing', 'waiting', 'done'];
+  private readonly stateOrder: WorkflowGenerationState[] = [
+    'generating',
+    'committing',
+    'waiting',
+    'done',
+  ];
 
   isStepDone(stepState: WorkflowGenerationState): boolean {
     const currentIdx = this.stateOrder.indexOf(this.generationState());

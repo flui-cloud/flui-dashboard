@@ -28,11 +28,19 @@ export interface JobDetailSurfaceContext {
   appVersion?: string;
 }
 
-function textObservation(key: string, value: string | undefined | null, source: ObservationSource): Observation | null {
+function textObservation(
+  key: string,
+  value: string | undefined | null,
+  source: ObservationSource,
+): Observation | null {
   return value ? { key, presentedAs: { text: value }, source } : null;
 }
 
-function valueObservation(key: string, value: number | boolean, source: ObservationSource): Observation {
+function valueObservation(
+  key: string,
+  value: number | boolean,
+  source: ObservationSource,
+): Observation {
   return { key, presentedAs: { value }, source };
 }
 
@@ -53,14 +61,23 @@ function artifactObservations(j: BackupJob): Observation[] {
   if (!a) return [];
   return [
     textObservation('flui.backup.artifact.size', formatBytes(a.sizeBytes), 'derived'),
-    a.itemCount != null ? valueObservation('flui.backup.artifact.item_count', a.itemCount, 'api') : null,
+    a.itemCount != null
+      ? valueObservation('flui.backup.artifact.item_count', a.itemCount, 'api')
+      : null,
     textObservation('flui.backup.artifact.expires_at', a.expiresAt, 'api'),
   ].filter((observation): observation is Observation => observation !== null);
 }
 
-function locationRowScope(artifactScopeId: string, loc: BackupArtifactLocation): SemanticScopeSnapshot {
+function locationRowScope(
+  artifactScopeId: string,
+  loc: BackupArtifactLocation,
+): SemanticScopeSnapshot {
   const label = loc.destination?.name ?? loc.destinationId;
-  const entity: EntityReference = { ref: destinationEntityRef(loc.destinationId), label, role: 'related' };
+  const entity: EntityReference = {
+    ref: destinationEntityRef(loc.destinationId),
+    label,
+    role: 'related',
+  };
   return {
     id: `${artifactScopeId}:location:${loc.destinationId}`,
     parentId: artifactScopeId,

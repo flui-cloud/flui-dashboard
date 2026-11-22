@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -110,17 +117,23 @@ import { CatalogIconComponent } from '../../catalog/catalog-icon.component';
                 <div class="min-w-0 flex-1">
                   <div class="flex items-start justify-between gap-2">
                     <span class="truncate text-sm font-medium">{{ app.name }}</span>
-                    <span class="shrink-0 text-[11px] text-muted-foreground">v{{ app.version }}</span>
+                    <span class="shrink-0 text-[11px] text-muted-foreground"
+                      >v{{ app.version }}</span
+                    >
                   </div>
                   <div class="mt-0.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
                     <span class="capitalize">{{ app.category }}</span>
                     @if (app.alternativeTo.length) {
                       <span>·</span>
-                      <span class="truncate">Alt. to {{ app.alternativeTo.slice(0, 2).join(', ') }}</span>
+                      <span class="truncate"
+                        >Alt. to {{ app.alternativeTo.slice(0, 2).join(', ') }}</span
+                      >
                     }
                   </div>
                   @if (app.description) {
-                    <p class="mt-1 line-clamp-2 text-xs text-muted-foreground">{{ app.description }}</p>
+                    <p class="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                      {{ app.description }}
+                    </p>
                   }
                 </div>
                 @if (loadingSlug() === app.slug) {
@@ -170,31 +183,48 @@ import { CatalogIconComponent } from '../../catalog/catalog-icon.component';
         >
           <ng-icon name="lucideSparkles" class="mt-0.5 h-4 w-4 shrink-0" />
           <p>
-            This app comes with sensible defaults defined in its manifest. Most steps are
-            pre-filled — just confirm or override what you need.
+            This app comes with sensible defaults defined in its manifest. Most steps are pre-filled
+            — just confirm or override what you need.
           </p>
         </div>
 
         <!-- Access mode indicator (read-only — set by the manifest) -->
         @if (detail()!.exposure === 'internal' && detail()!.appType !== 'building-block') {
-          <div class="flex items-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+          <div
+            class="flex items-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground"
+          >
             <ng-icon name="lucideShieldCheck" class="h-3.5 w-3.5 shrink-0 text-foreground/60" />
-            <span><span class="font-medium text-foreground">Internal app</span> — gets a private URL on your cluster's internal domain, protected by Flui authentication. Accessible from the internet — login required.</span>
+            <span
+              ><span class="font-medium text-foreground">Internal app</span> — gets a private URL on
+              your cluster's internal domain, protected by Flui authentication. Accessible from the
+              internet — login required.</span
+            >
           </div>
         } @else if (detail()!.exposure === 'public' && detail()!.appType !== 'building-block') {
-          <div class="flex items-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+          <div
+            class="flex items-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground"
+          >
             <ng-icon name="lucideGlobe" class="h-3.5 w-3.5 shrink-0 text-foreground/60" />
-            <span><span class="font-medium text-foreground">Public app</span> — will get a public URL and DNS record on your cluster.</span>
+            <span
+              ><span class="font-medium text-foreground">Public app</span> — will get a public URL
+              and DNS record on your cluster.</span
+            >
           </div>
         }
 
         <!-- Placement hint — shown when the manifest pins the app to a single node (databases & friends). -->
         @if (detail()!.persistenceScope === 'dedicated') {
-          <div class="flex items-start gap-2 rounded-md border border-indigo-200 dark:border-indigo-900 bg-indigo-50/50 dark:bg-indigo-950/20 px-3 py-2 text-xs">
-            <ng-icon name="lucidePin" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-indigo-600 dark:text-indigo-400" />
+          <div
+            class="flex items-start gap-2 rounded-md border border-indigo-200 dark:border-indigo-900 bg-indigo-50/50 dark:bg-indigo-950/20 px-3 py-2 text-xs"
+          >
+            <ng-icon
+              name="lucidePin"
+              class="mt-0.5 h-3.5 w-3.5 shrink-0 text-indigo-600 dark:text-indigo-400"
+            />
             <span class="text-indigo-900 dark:text-indigo-200">
-              <span class="font-medium">Pinned to one node</span> — this app keeps its data on a single node's disk (the master, by default).
-              That gives databases the disk guarantees they need, but it means resizing that node will briefly stop the app.
+              <span class="font-medium">Pinned to one node</span> — this app keeps its data on a
+              single node's disk (the master, by default). That gives databases the disk guarantees
+              they need, but it means resizing that node will briefly stop the app.
             </span>
           </div>
         }

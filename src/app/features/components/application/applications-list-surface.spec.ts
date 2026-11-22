@@ -46,7 +46,10 @@ function input(over: Partial<ApplicationsListSurfaceInput> = {}): ApplicationsLi
 }
 
 function snapshotOf(over: Partial<ApplicationsListSurfaceInput> = {}): SurfaceSnapshot {
-  return buildApplicationsListSurface(input(over), { revision: 1, generatedAt: '2026-08-20T09:13:00.000Z' });
+  return buildApplicationsListSurface(input(over), {
+    revision: 1,
+    generatedAt: '2026-08-20T09:13:00.000Z',
+  });
 }
 
 const pageScope = (snapshot: SurfaceSnapshot) => snapshot.scopes.find((s) => s.kind === 'page')!;
@@ -66,11 +69,14 @@ describe('applications list surface producer', () => {
 
   it('bumps the revision on real change, and validateSurfaceSemantics accepts it against the previous snapshot', () => {
     const tracker = new ApplicationsListSurfaceRevision();
-    const first = buildApplicationsListSurface(input(), { revision: tracker.next(presentedContent(input())), generatedAt: '2026-08-20T09:13:00.000Z' });
-    const second = buildApplicationsListSurface(
-      input({ failedCount: 1 }),
-      { revision: tracker.next(presentedContent(input({ failedCount: 1 }))), generatedAt: '2026-08-20T09:14:00.000Z' },
-    );
+    const first = buildApplicationsListSurface(input(), {
+      revision: tracker.next(presentedContent(input())),
+      generatedAt: '2026-08-20T09:13:00.000Z',
+    });
+    const second = buildApplicationsListSurface(input({ failedCount: 1 }), {
+      revision: tracker.next(presentedContent(input({ failedCount: 1 }))),
+      generatedAt: '2026-08-20T09:14:00.000Z',
+    });
     expect(second.surface.revision).toBe(first.surface.revision + 1);
     expect(validateSurfaceSemantics(second, { previousSnapshot: first })).toEqual([]);
   });
@@ -80,7 +86,9 @@ describe('applications list surface producer', () => {
     // out on purpose (see the note in applications-list-surface.ts).
     const tracker = new ApplicationsListSurfaceRevision();
     const a = input({ filters: { search: '', view: 'all', type: '', cluster: '', project: '' } });
-    const b = input({ filters: { search: 'billing', view: 'all', type: '', cluster: '', project: '' } });
+    const b = input({
+      filters: { search: 'billing', view: 'all', type: '', cluster: '', project: '' },
+    });
     const r1 = tracker.next(presentedContent(a));
     const r2 = tracker.next(presentedContent(b));
     expect(r2).toBe(r1);
@@ -88,7 +96,10 @@ describe('applications list surface producer', () => {
 
   it('flags a snapshot whose revision does not advance on the previous one', () => {
     const first = snapshotOf();
-    const stale = { ...snapshotOf(), surface: { ...snapshotOf().surface, revision: first.surface.revision } };
+    const stale = {
+      ...snapshotOf(),
+      surface: { ...snapshotOf().surface, revision: first.surface.revision },
+    };
     const issues = validateSurfaceSemantics(stale, { previousSnapshot: first });
     expect(issues).toEqual([
       jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' }),
@@ -96,7 +107,9 @@ describe('applications list surface producer', () => {
   });
 
   it('SELECTION MODEL: no entity is ever primary or selected — every row is related, and attention names only the page', () => {
-    const snapshot = snapshotOf({ filteredGroups: [group({ id: 'g1' }), group({ id: 'g2', name: 'worker' })] });
+    const snapshot = snapshotOf({
+      filteredGroups: [group({ id: 'g1' }), group({ id: 'g2', name: 'worker' })],
+    });
     expect(snapshot.attention).toEqual([{ scopeId: `apps-list:applications`, reason: 'route' }]);
     for (const row of rowScopes(snapshot)) {
       expect(row.entities?.every((e) => e.role === 'related')).toBe(true);
@@ -107,7 +120,9 @@ describe('applications list surface producer', () => {
     const snapshot = snapshotOf({ filteredGroups: [group({ id: 'g1', name: 'billing-api' })] });
     const rows = rowScopes(snapshot);
     expect(rows.length).toBe(1);
-    expect(rows[0].entities).toEqual([{ ref: appGroupEntityRef('g1'), label: 'billing-api', role: 'related' }]);
+    expect(rows[0].entities).toEqual([
+      { ref: appGroupEntityRef('g1'), label: 'billing-api', role: 'related' },
+    ]);
     expect(rows[0].id).toBe('apps-list:applications:list:row:g1');
     expect(rows[0].parentId).toBe('apps-list:applications:list');
   });
@@ -128,7 +143,9 @@ describe('applications list surface producer', () => {
     });
     expect(listScope(snapshot).completeness).toEqual({ shown: 1, total: 1, filtered: true });
     expect(observation(snapshot, 'flui.applications.total')?.presentedAs.value).toBe(9);
-    expect(observation(snapshot, 'flui.applications.filter_view')?.presentedAs.text).toBe('attention');
+    expect(observation(snapshot, 'flui.applications.filter_view')?.presentedAs.text).toBe(
+      'attention',
+    );
     expect(observation(snapshot, 'flui.applications.filter_cluster')).toBeUndefined();
     expect(JSON.stringify(snapshot)).not.toContain('proj-1');
   });
@@ -137,21 +154,34 @@ describe('applications list surface producer', () => {
     const counted = snapshotOf({ attentionCount: 2, noBackupCount: 3 });
     expect(observation(counted, 'flui.applications.attention_count')?.presentedAs.value).toBe(2);
     expect(observation(counted, 'flui.applications.no_backup_count')?.presentedAs.value).toBe(3);
-    expect(observation(snapshotOf({ noBackupCount: null }), 'flui.applications.no_backup_count')).toBeUndefined();
+    expect(
+      observation(snapshotOf({ noBackupCount: null }), 'flui.applications.no_backup_count'),
+    ).toBeUndefined();
   });
 
   it('never presents the live-typed search box, only committed select filters', () => {
-    const json = JSON.stringify(snapshotOf({ filters: { search: 'do-not-leak-this', view: 'all', type: '', cluster: '', project: '' } }));
+    const json = JSON.stringify(
+      snapshotOf({
+        filters: { search: 'do-not-leak-this', view: 'all', type: '', cluster: '', project: '' },
+      }),
+    );
     expect(json).not.toContain('do-not-leak-this');
   });
 
   it('distinguishes loading, error and empty on the list scope, not on the page', () => {
-    expect(listScope(snapshotOf({ isInitialLoading: true, filteredGroups: [] })).state)
-      .toEqual({ loading: true, empty: false });
-    expect(listScope(snapshotOf({ hasLoadError: true, filteredGroups: [] })).state)
-      .toEqual({ loading: false, error: true, empty: true });
-    expect(listScope(snapshotOf({ filteredGroups: [] })).state)
-      .toEqual({ loading: false, empty: true });
+    expect(listScope(snapshotOf({ isInitialLoading: true, filteredGroups: [] })).state).toEqual({
+      loading: true,
+      empty: false,
+    });
+    expect(listScope(snapshotOf({ hasLoadError: true, filteredGroups: [] })).state).toEqual({
+      loading: false,
+      error: true,
+      empty: true,
+    });
+    expect(listScope(snapshotOf({ filteredGroups: [] })).state).toEqual({
+      loading: false,
+      empty: true,
+    });
     expect(pageScope(snapshotOf()).state).toBeUndefined();
   });
 

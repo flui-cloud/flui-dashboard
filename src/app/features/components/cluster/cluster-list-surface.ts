@@ -77,10 +77,16 @@ function rowObservations(cluster: ClusterInfo): Observation[] {
     textObservation('flui.cluster.status', cluster.status, 'api'),
     textObservation('flui.cluster.provider', cluster.provider, 'api'),
     textObservation('flui.cluster.region', cluster.region, 'api'),
-    cluster.nodeCount !== undefined ? valueObservation('flui.cluster.node_count', cluster.nodeCount, 'api') : null,
-    cluster.autoScalingEnabled ? valueObservation('flui.cluster.auto_scaling_enabled', true, 'api') : null,
+    cluster.nodeCount !== undefined
+      ? valueObservation('flui.cluster.node_count', cluster.nodeCount, 'api')
+      : null,
+    cluster.autoScalingEnabled
+      ? valueObservation('flui.cluster.auto_scaling_enabled', true, 'api')
+      : null,
     textObservation('flui.cluster.version', cluster.version, 'api'),
-    cluster.createdAt ? textObservation('flui.cluster.created_at', new Date(cluster.createdAt).toISOString(), 'api') : null,
+    cluster.createdAt
+      ? textObservation('flui.cluster.created_at', new Date(cluster.createdAt).toISOString(), 'api')
+      : null,
   ].filter((observation): observation is Observation => observation !== null);
 }
 

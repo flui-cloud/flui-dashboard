@@ -275,7 +275,8 @@ export class GithubAvailableReposComponent implements OnInit {
     const q = this.searchQuery.toLowerCase();
     if (!q) return this.repos();
     return this.repos().filter(
-      r => r.fullName.toLowerCase().includes(q) || (r.description || '').toLowerCase().includes(q)
+      (r) =>
+        r.fullName.toLowerCase().includes(q) || (r.description || '').toLowerCase().includes(q),
     );
   });
 
@@ -290,7 +291,7 @@ export class GithubAvailableReposComponent implements OnInit {
 
     try {
       const repos = await firstValueFrom(
-        this.repositoriesApi.repositoriesControllerListAvailableRepositories()
+        this.repositoriesApi.repositoriesControllerListAvailableRepositories(),
       );
       this.repos.set(repos);
     } catch (err: any) {
@@ -306,9 +307,9 @@ export class GithubAvailableReposComponent implements OnInit {
 
   toggleSelection(repo: AvailableRepositoryDto): void {
     if (repo.isImported) return;
-    this.selectedIds.update(ids => {
+    this.selectedIds.update((ids) => {
       const exists = ids.includes(repo.fullName);
-      return exists ? ids.filter(id => id !== repo.fullName) : [...ids, repo.fullName];
+      return exists ? ids.filter((id) => id !== repo.fullName) : [...ids, repo.fullName];
     });
   }
 
@@ -334,7 +335,7 @@ export class GithubAvailableReposComponent implements OnInit {
         this.repositoriesApi.repositoriesControllerImportRepositories({
           repositoryIds: ids,
           autoDeployEnabled: false,
-        })
+        }),
       );
       this.importResult.set({ imported: result.imported, failed: result.failed });
       this.selectedIds.set([]);

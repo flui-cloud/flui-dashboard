@@ -1,9 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
-import {
-  InstallLogChunk,
-  InstallLogService,
-} from '../../service/install-log.service';
+import { InstallLogChunk, InstallLogService } from '../../service/install-log.service';
 import { PurchaseLogComponent } from './purchase-log.component';
 
 describe('the install log of a purchase', () => {
@@ -50,9 +47,7 @@ describe('the install log of a purchase', () => {
 
   it('opens the log in place instead of only saving a file', async () => {
     await click('purchase-log');
-    expect(find('purchase-log-panel')!.textContent).toContain(
-      'cloud-init running',
-    );
+    expect(find('purchase-log-panel')!.textContent).toContain('cloud-init running');
     expect(find('install-log-download')).not.toBeNull();
   });
 

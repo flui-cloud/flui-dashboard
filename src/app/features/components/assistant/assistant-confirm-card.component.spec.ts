@@ -47,30 +47,22 @@ describe('confirming an action in the chat', () => {
     fixture.nativeElement.querySelector(`[data-testid="${testid}"]`);
 
   const findAll = (testid: string): HTMLElement[] =>
-    Array.from(
-      fixture.nativeElement.querySelectorAll(`[data-testid="${testid}"]`),
-    );
+    Array.from(fixture.nativeElement.querySelectorAll(`[data-testid="${testid}"]`));
 
   afterEach(() => TestBed.resetTestingModule());
 
   it('shows the cycle’s sentence before the buttons, in its own words', async () => {
     await build([RAISED]);
-    expect(find('cycle-sentence')?.textContent?.trim()).toBe(
-      'add nodes to cluster c-1',
-    );
+    expect(find('cycle-sentence')?.textContent?.trim()).toBe('add nodes to cluster c-1');
   });
 
   it('says a price is attached, in the same sentence the agent is told', async () => {
     await build([RAISED]);
-    expect(find('cycle-estimate')?.textContent).toContain(
-      'cost estimate attached',
-    );
+    expect(find('cycle-estimate')?.textContent).toContain('cost estimate attached');
   });
 
   it('stays silent about a price when there is none attached', async () => {
-    await build([
-      { ...RAISED, request: { ...RAISED.request!, estimateNote: undefined } },
-    ]);
+    await build([{ ...RAISED, request: { ...RAISED.request!, estimateNote: undefined } }]);
     expect(find('cycle-request')).toBeTruthy();
     expect(find('cycle-estimate')).toBeNull();
   });
@@ -96,9 +88,10 @@ describe('confirming an action in the chat', () => {
         request: { proposalId: 'p-2', sentence: 'add nodes to cluster c-2' },
       },
     ]);
-    expect(findAll('cycle-sentence').map((el) => el.textContent?.trim())).toEqual(
-      ['add nodes to cluster c-1', 'add nodes to cluster c-2'],
-    );
+    expect(findAll('cycle-sentence').map((el) => el.textContent?.trim())).toEqual([
+      'add nodes to cluster c-1',
+      'add nodes to cluster c-2',
+    ]);
   });
 
   it('still marks a destructive action as destructive', async () => {
@@ -117,12 +110,10 @@ describe('confirming an action in the chat', () => {
       },
     ]);
     const decided: string[][] = [];
-    fixture.componentInstance.decided.subscribe((ids: string[]) =>
-      decided.push(ids),
+    fixture.componentInstance.decided.subscribe((ids: string[]) => decided.push(ids));
+    (fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLElement>).forEach((b) =>
+      b.click(),
     );
-    (
-      fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLElement>
-    ).forEach((b) => b.click());
     expect(decided).toEqual([[], ['tc-2', 'tc-3']]);
   });
 });

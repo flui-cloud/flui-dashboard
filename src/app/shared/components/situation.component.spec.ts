@@ -43,9 +43,7 @@ describe('where we are, and what there is to do', () => {
   });
 
   it('says so when there is nothing to do', () => {
-    expect(find('sit-nothing-to-do')?.textContent).toContain(
-      'Nothing is required of you.',
-    );
+    expect(find('sit-nothing-to-do')?.textContent).toContain('Nothing is required of you.');
     expect(all('sit-todo')).toHaveSize(0);
   });
 

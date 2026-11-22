@@ -1,6 +1,11 @@
 import { ReplicaPod, placementOf, replicaPodsOf } from './replica-pods';
 
-const pod = (name: string, phase: string, ready: boolean, node: string | null = 'node-1'): ReplicaPod => ({
+const pod = (
+  name: string,
+  phase: string,
+  ready: boolean,
+  node: string | null = 'node-1',
+): ReplicaPod => ({
   name,
   node,
   phase,
@@ -42,7 +47,10 @@ describe('replicaPodsOf', () => {
   });
 
   it('keeps every ready pod when the desired count lags a scale', () => {
-    const { current, older } = replicaPodsOf([pod('a', 'Running', true), pod('b', 'Running', true)], 1);
+    const { current, older } = replicaPodsOf(
+      [pod('a', 'Running', true), pod('b', 'Running', true)],
+      1,
+    );
     expect(current).toHaveSize(2);
     expect(older).toBe(0);
   });
@@ -54,7 +62,11 @@ describe('replicaPodsOf', () => {
 
 describe('placementOf', () => {
   it('joins the server type and region it knows', () => {
-    expect(placementOf({ ...pod('a', 'Running', true), serverType: 'cx22', region: 'fsn1' })).toBe('cx22 · fsn1');
-    expect(placementOf({ ...pod('a', 'Running', true), serverType: null, region: 'fsn1' })).toBe('fsn1');
+    expect(placementOf({ ...pod('a', 'Running', true), serverType: 'cx22', region: 'fsn1' })).toBe(
+      'cx22 · fsn1',
+    );
+    expect(placementOf({ ...pod('a', 'Running', true), serverType: null, region: 'fsn1' })).toBe(
+      'fsn1',
+    );
   });
 });

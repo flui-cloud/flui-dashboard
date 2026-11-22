@@ -1,13 +1,16 @@
-import { Component, computed, inject, input, effect, signal, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  input,
+  effect,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { RouterLink } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideActivity,
-  lucideExternalLink,
-  lucideGlobe,
-  lucideInfo,
-} from '@ng-icons/lucide';
+import { lucideActivity, lucideExternalLink, lucideGlobe, lucideInfo } from '@ng-icons/lucide';
 import {
   MultiStatCardComponent,
   MultiStatCardData,
@@ -27,12 +30,7 @@ export interface TrafficRange {
 @Component({
   selector: 'app-traffic-section',
   standalone: true,
-  imports: [
-    RouterLink,
-    NgIconComponent,
-    TimeSeriesLineComponent,
-    MultiStatCardComponent
-],
+  imports: [RouterLink, NgIconComponent, TimeSeriesLineComponent, MultiStatCardComponent],
   providers: [
     provideIcons({
       lucideActivity,
@@ -46,7 +44,9 @@ export interface TrafficRange {
     <div class="space-y-4">
       <div class="flex items-start justify-between gap-4">
         <div>
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+          <h3
+            class="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2"
+          >
             <ng-icon name="lucideGlobe" class="text-sub" size="20" />
             Traffic
           </h3>
@@ -74,17 +74,12 @@ export interface TrafficRange {
         <div
           class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-6 text-center"
         >
-          <ng-icon
-            name="lucideActivity"
-            class="text-gray-400 mx-auto mb-2"
-            size="24"
-          />
+          <ng-icon name="lucideActivity" class="text-gray-400 mx-auto mb-2" size="24" />
           <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
             Not exposed through the ingress
           </p>
           <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            This application has no public HTTP route, so there is no edge traffic to
-            measure.
+            This application has no public HTTP route, so there is no edge traffic to measure.
           </p>
         </div>
       } @else {
@@ -102,10 +97,7 @@ export interface TrafficRange {
         }
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <app-time-series-line
-            [data]="requestRateChart()"
-            [config]="requestRateConfig"
-          />
+          <app-time-series-line [data]="requestRateChart()" [config]="requestRateConfig" />
           <app-time-series-line [data]="errorChart()" [config]="errorConfig" />
         </div>
 
@@ -113,13 +105,19 @@ export interface TrafficRange {
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           @if (statusView(); as view) {
-            <div class="rounded-lg border border-border bg-card p-4" data-testid="traffic-status-codes">
+            <div
+              class="rounded-lg border border-border bg-card p-4"
+              data-testid="traffic-status-codes"
+            >
               <h4 class="m-0 mb-2 text-sm font-semibold text-foreground">Status codes</h4>
               <div class="min-h-24">
                 @for (entry of view.rows; track entry.code) {
                   <div class="flex h-6 items-center justify-between text-sm">
                     <span class="flex items-center gap-2">
-                      <span class="inline-block h-2 w-2 rounded-full" [class]="codeDot(entry.code)"></span>
+                      <span
+                        class="inline-block h-2 w-2 rounded-full"
+                        [class]="codeDot(entry.code)"
+                      ></span>
                       <span class="font-mono text-foreground">{{ entry.code }}</span>
                     </span>
                     <span class="text-sub">{{ formatRate(entry.requests_per_second) }}</span>
@@ -132,7 +130,11 @@ export interface TrafficRange {
                   class="mt-1 text-xs font-medium text-sub hover:text-foreground hover:underline"
                   (click)="showAllCodes.set(!showAllCodes())"
                 >
-                  {{ showAllCodes() ? 'Show fewer' : 'Show all (' + (view.rows.length + view.hidden) + ')' }}
+                  {{
+                    showAllCodes()
+                      ? 'Show fewer'
+                      : 'Show all (' + (view.rows.length + view.hidden) + ')'
+                  }}
                 </button>
               }
             </div>
@@ -155,7 +157,11 @@ export interface TrafficRange {
                   class="mt-1 text-xs font-medium text-sub hover:text-foreground hover:underline"
                   (click)="showAllMethods.set(!showAllMethods())"
                 >
-                  {{ showAllMethods() ? 'Show fewer' : 'Show all (' + (view.rows.length + view.hidden) + ')' }}
+                  {{
+                    showAllMethods()
+                      ? 'Show fewer'
+                      : 'Show all (' + (view.rows.length + view.hidden) + ')'
+                  }}
                 </button>
               }
             </div>
@@ -221,19 +227,14 @@ export class AppTrafficSectionComponent {
   );
 
   protected readonly coarseHint = computed(() => {
-    const boundaries =
-      this.current()?.traffic.latency.bucket_boundaries_seconds ?? [];
+    const boundaries = this.current()?.traffic.latency.bucket_boundaries_seconds ?? [];
     const buckets = boundaries.map((b) => `${b}s`).join(', ');
     return `The latency histogram only has buckets at ${buckets}, which cannot resolve this application.`;
   });
 
-  protected readonly byStatusCode = computed(
-    () => this.current()?.traffic.by_status_code ?? [],
-  );
+  protected readonly byStatusCode = computed(() => this.current()?.traffic.by_status_code ?? []);
 
-  protected readonly byMethod = computed(
-    () => this.current()?.traffic.by_method ?? [],
-  );
+  protected readonly byMethod = computed(() => this.current()?.traffic.by_method ?? []);
 
   protected readonly showAllCodes = signal(false);
   protected readonly showAllMethods = signal(false);

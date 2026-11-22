@@ -25,11 +25,16 @@ describe('the firewall on each node', () => {
     fails?: boolean;
   }): Promise<void> {
     setHostLayer = options.fails
-      ? jasmine.createSpy('setHostLayer').and.rejectWith({ error: { message: 'Not offered on this cluster' } })
+      ? jasmine
+          .createSpy('setHostLayer')
+          .and.rejectWith({ error: { message: 'Not offered on this cluster' } })
       : jasmine
           .createSpy('setHostLayer')
           .and.callFake((_id: string, enabled: boolean) =>
-            Promise.resolve({ id: 'fw-1', hostLayer: layer({ enabled, state: enabled ? 'pending' : 'off' }) }),
+            Promise.resolve({
+              id: 'fw-1',
+              hostLayer: layer({ enabled, state: enabled ? 'pending' : 'off' }),
+            }),
           );
 
     await TestBed.configureTestingModule({

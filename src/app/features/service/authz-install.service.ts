@@ -34,9 +34,11 @@ export class AuthzInstallService {
     this._error.set(null);
     try {
       const all = await firstValueFrom(this.authzApi.authzInstallControllerFindAll());
-      const match = all
-        .filter(i => i.clusterId === clusterId)
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0] ?? null;
+      const match =
+        all
+          .filter((i) => i.clusterId === clusterId)
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0] ??
+        null;
       this._install.set(match);
     } catch (err) {
       this._error.set(this.extractError(err) ?? 'Failed to load authz status');
@@ -69,9 +71,7 @@ export class AuthzInstallService {
     this._progress.set(0);
     this._progressStep.set('Uninstalling...');
     try {
-      const result = await firstValueFrom(
-        this.authzApi.authzInstallControllerUninstall(installId),
-      );
+      const result = await firstValueFrom(this.authzApi.authzInstallControllerUninstall(installId));
       this._install.set(result);
       await this.pollOperation(result.id, result.operationId);
     } catch (err) {
@@ -91,9 +91,9 @@ export class AuthzInstallService {
 
       if (operationId) {
         try {
-          const op = await firstValueFrom(
+          const op = (await firstValueFrom(
             this.operationsApi.infrastructureOperationsControllerGetOperationStatus(operationId),
-          ) as OperationStatusSnapshot;
+          )) as OperationStatusSnapshot;
           if (op.progress !== undefined) this._progress.set(op.progress);
           if (op.currentStep?.description) this._progressStep.set(op.currentStep.description);
         } catch {
@@ -135,6 +135,6 @@ export class AuthzInstallService {
   }
 
   private delay(ms: number): Promise<void> {
-    return new Promise(r => setTimeout(r, ms));
+    return new Promise((r) => setTimeout(r, ms));
   }
 }

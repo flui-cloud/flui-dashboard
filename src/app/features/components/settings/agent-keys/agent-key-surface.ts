@@ -1,12 +1,7 @@
 import { ApiKeyResponseDto } from '../../../../core/api/model/apiKeyResponseDto';
 import { PermissionGroupDto } from '../../../../core/api/model/permissionGroupDto';
 
-export type KeyShape =
-  | 'unscoped'
-  | 'grouped'
-  | 'beyond-groups'
-  | 'no-group'
-  | 'nothing';
+export type KeyShape = 'unscoped' | 'grouped' | 'beyond-groups' | 'no-group' | 'nothing';
 
 export interface SurfaceGroup {
   key: string;
@@ -40,15 +35,10 @@ function joinWords(parts: string[]): string {
   return `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}`;
 }
 
-function extrasOf(
-  scopes: string[],
-  catalogue: PermissionGroupDto[],
-): SurfaceExtra[] {
+function extrasOf(scopes: string[], catalogue: PermissionGroupDto[]): SurfaceExtra[] {
   return scopes.map((scope) => ({
     scope,
-    carriedBy: catalogue
-      .filter((g) => g.scopes.includes(scope))
-      .map((g) => g.label),
+    carriedBy: catalogue.filter((g) => g.scopes.includes(scope)).map((g) => g.label),
   }));
 }
 

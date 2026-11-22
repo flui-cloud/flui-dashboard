@@ -12,10 +12,7 @@ import {
   destinationEntityRef,
   presentedContent,
 } from './destinations-list-surface';
-import type {
-  BackupDestination,
-  ObjectStoragePreset,
-} from '../../../model/backup.models';
+import type { BackupDestination, ObjectStoragePreset } from '../../../model/backup.models';
 
 const DEST: BackupDestination = {
   id: 'dest-1',
@@ -60,11 +57,15 @@ function input(over: Partial<DestinationsListSurfaceInput> = {}): DestinationsLi
 }
 
 function snapshotOf(over: Partial<DestinationsListSurfaceInput> = {}): SurfaceSnapshot {
-  return buildDestinationsListSurface(input(over), { revision: 1, generatedAt: '2026-09-02T09:00:00.000Z' });
+  return buildDestinationsListSurface(input(over), {
+    revision: 1,
+    generatedAt: '2026-09-02T09:00:00.000Z',
+  });
 }
 
 const listScope = (s: SurfaceSnapshot) => s.scopes.find((x) => x.kind === 'list')!;
-const rowScope = (s: SurfaceSnapshot, id: string) => s.scopes.find((x) => x.id === `backup-destinations:list:${id}`)!;
+const rowScope = (s: SurfaceSnapshot, id: string) =>
+  s.scopes.find((x) => x.id === `backup-destinations:list:${id}`)!;
 
 describe('destinations list surface producer', () => {
   it('emits a snapshot that validates against the real schema and passes semantic checks', () => {
@@ -77,25 +78,38 @@ describe('destinations list surface producer', () => {
 
   it('bumps the revision on real change', () => {
     const tracker = new DestinationsListSurfaceRevision();
-    const first = buildDestinationsListSurface(input(), { revision: tracker.next(presentedContent(input())), generatedAt: '2026-09-02T09:13:00.000Z' });
+    const first = buildDestinationsListSurface(input(), {
+      revision: tracker.next(presentedContent(input())),
+      generatedAt: '2026-09-02T09:13:00.000Z',
+    });
     const changed = input({ destinations: [{ ...DEST, healthStatus: 'degraded' }] });
-    const second = buildDestinationsListSurface(changed, { revision: tracker.next(presentedContent(changed)), generatedAt: '2026-09-02T09:14:00.000Z' });
+    const second = buildDestinationsListSurface(changed, {
+      revision: tracker.next(presentedContent(changed)),
+      generatedAt: '2026-09-02T09:14:00.000Z',
+    });
     expect(second.surface.revision).toBe(first.surface.revision + 1);
     expect(validateSurfaceSemantics(second, { previousSnapshot: first })).toEqual([]);
   });
 
   it('flags a snapshot whose revision does not advance on the previous one', () => {
     const first = snapshotOf();
-    const stale = { ...snapshotOf(), surface: { ...snapshotOf().surface, revision: first.surface.revision } };
+    const stale = {
+      ...snapshotOf(),
+      surface: { ...snapshotOf().surface, revision: first.surface.revision },
+    };
     const issues = validateSurfaceSemantics(stale, { previousSnapshot: first });
-    expect(issues).toEqual([jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' })]);
+    expect(issues).toEqual([
+      jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' }),
+    ]);
   });
 
   it('is a list page with no selection: attention names only the page, every row is related', () => {
     const snapshot = snapshotOf();
     expect(snapshot.attention).toEqual([{ scopeId: 'backup-destinations', reason: 'route' }]);
     const row = rowScope(snapshot, 'dest-1');
-    expect(row.entities).toEqual([{ ref: destinationEntityRef('dest-1'), label: 'primary-eu', role: 'related' }]);
+    expect(row.entities).toEqual([
+      { ref: destinationEntityRef('dest-1'), label: 'primary-eu', role: 'related' },
+    ]);
   });
 
   it('declares completeness, and truncates past the row cap', () => {
@@ -107,7 +121,9 @@ describe('destinations list surface producer', () => {
   it('presents provider, region, bucket, health and usage as shown in the row', () => {
     const row = rowScope(snapshotOf(), 'dest-1');
     const obs = (key: string) => row.observations?.find((o) => o.key === key);
-    expect(obs('flui.backup.destination.provider')?.presentedAs.text).toBe('Scaleway Object Storage');
+    expect(obs('flui.backup.destination.provider')?.presentedAs.text).toBe(
+      'Scaleway Object Storage',
+    );
     expect(obs('flui.backup.destination.region')?.presentedAs.text).toBe('fr-par');
     expect(obs('flui.backup.destination.health')?.presentedAs.text).toBe('healthy');
     expect(obs('flui.backup.destination.usage')?.presentedAs.text).toBe('1.0 GB');

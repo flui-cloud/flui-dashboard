@@ -1,10 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  input,
-  output,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { lucideLoader, lucideTrash2 } from '@ng-icons/lucide';
 import { VolumeBackup } from '../../model/volume-backup.models';
@@ -27,9 +21,8 @@ import { formatDate } from './snapshot-format';
       >
         <h3 class="text-lg font-semibold">Delete backup</h3>
         <p class="text-sm text-muted-foreground">
-          The backup of {{ taken() }}
-          ({{ backup().volumeName || 'volume' }}) is removed from backup storage and
-          cannot be restored afterwards.
+          The backup of {{ taken() }} ({{ backup().volumeName || 'volume' }}) is removed from backup
+          storage and cannot be restored afterwards.
         </p>
         @if (error(); as e) {
           <p class="text-sm text-red-600">{{ e }}</p>

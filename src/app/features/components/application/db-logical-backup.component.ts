@@ -5,7 +5,7 @@ import {
   inject,
   input,
   signal,
-  viewChild
+  viewChild,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -43,15 +43,23 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
       @if (i.supported) {
         <div class="rounded-lg border border-border bg-card p-4">
           <div class="flex items-start gap-2">
-            <ng-icon name="lucideDatabase" class="mt-0.5 h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+            <ng-icon
+              name="lucideDatabase"
+              class="mt-0.5 h-5 w-5 text-indigo-600 dark:text-indigo-400"
+            />
             <div class="min-w-0 flex-1">
               <h3 class="text-base font-semibold">
                 Logical backup
-                <span class="font-normal text-muted-foreground">· {{ i.engine }} · {{ i.format }}</span>
+                <span class="font-normal text-muted-foreground"
+                  >· {{ i.engine }} · {{ i.format }}</span
+                >
               </h3>
               <p class="mt-0.5 text-sm text-muted-foreground">
-                A portable engine-native dump{{ i.database ? ' of database “' + i.database + '”' : '' }} — restore it here, on
-                another Flui database, or anywhere. Complements the volume copies below.
+                A portable engine-native dump{{
+                  i.database ? ' of database “' + i.database + '”' : ''
+                }}
+                — restore it here, on another Flui database, or anywhere. Complements the volume
+                copies below.
               </p>
 
               <div class="mt-3 flex flex-wrap items-center gap-2">
@@ -61,7 +69,11 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
                   [disabled]="downloading()"
                   class="inline-flex h-9 items-center gap-1.5 rounded-md bg-blue-600 px-3 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
                 >
-                  <ng-icon [name]="downloading() ? 'lucideLoader' : 'lucideDownload'" class="h-4 w-4" [class.animate-spin]="downloading()" />
+                  <ng-icon
+                    [name]="downloading() ? 'lucideLoader' : 'lucideDownload'"
+                    class="h-4 w-4"
+                    [class.animate-spin]="downloading()"
+                  />
                   {{ downloading() ? 'Dumping…' : 'Download dump' }}
                 </button>
 
@@ -73,7 +85,11 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
                     [disabled]="restoring()"
                     class="inline-flex h-9 items-center gap-1.5 rounded-md border border-destructive/40 px-3 text-sm font-medium text-destructive hover:bg-destructive/10 disabled:opacity-50"
                   >
-                    <ng-icon [name]="restoring() ? 'lucideLoader' : 'lucideUpload'" class="h-4 w-4" [class.animate-spin]="restoring()" />
+                    <ng-icon
+                      [name]="restoring() ? 'lucideLoader' : 'lucideUpload'"
+                      class="h-4 w-4"
+                      [class.animate-spin]="restoring()"
+                    />
                     {{ restoring() ? 'Restoring…' : 'Restore from dump…' }}
                   </button>
                 } @else {
@@ -97,7 +113,9 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
           #restoreDialog
           title="Restore database"
           [message]="
-            'Restore “' + (pendingFile()?.name ?? '') + '” into this database? ' +
+            'Restore “' +
+            (pendingFile()?.name ?? '') +
+            '” into this database? ' +
             'This runs the dump against the live database and OVERWRITES existing data.'
           "
           confirmText="Restore"

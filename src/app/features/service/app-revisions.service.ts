@@ -5,7 +5,17 @@ import { AppRevisionResponseDto } from '../../core/api/model/appRevisionResponse
 import { AppAuditEventSummaryDto } from '../../core/api/model/appAuditEventSummaryDto';
 import { RollbackApplicationDto } from '../../core/api/model/rollbackApplicationDto';
 
-export type AuditEventType = 'deploy' | 'rollback' | 'scale' | 'resource_update' | 'restart' | 'start' | 'stop' | 'config_update' | 'reconciled' | 'created';
+export type AuditEventType =
+  | 'deploy'
+  | 'rollback'
+  | 'scale'
+  | 'resource_update'
+  | 'restart'
+  | 'start'
+  | 'stop'
+  | 'config_update'
+  | 'reconciled'
+  | 'created';
 
 @Injectable({ providedIn: 'root' })
 export class AppRevisionsService {
@@ -44,7 +54,7 @@ export class AppRevisionsService {
     this.revisionsErrorData.set(null);
     try {
       const result = await firstValueFrom(
-        this.api.applicationReleasesControllerGetRevisions(appId)
+        this.api.applicationReleasesControllerGetRevisions(appId),
       );
       this.revisionsData.set(result ?? []);
     } catch (err: unknown) {
@@ -59,10 +69,12 @@ export class AppRevisionsService {
     this.eventsErrorData.set(null);
     try {
       const result = await firstValueFrom(
-        this.api.applicationsControllerGetAuditEvents(appId, type, limit, offset)
+        this.api.applicationsControllerGetAuditEvents(appId, type, limit, offset),
       );
-      const events = Array.isArray(result) ? result : (result as any)?.events ?? [];
-      const total = Array.isArray(result) ? events.length : (result as any)?.total ?? events.length;
+      const events = Array.isArray(result) ? result : ((result as any)?.events ?? []);
+      const total = Array.isArray(result)
+        ? events.length
+        : ((result as any)?.total ?? events.length);
       this.eventsData.set(events);
       this.eventsTotalData.set(total);
     } catch (err: unknown) {
@@ -77,9 +89,7 @@ export class AppRevisionsService {
     this.rollbackErrorData.set(null);
     try {
       const dto: RollbackApplicationDto = { revisionNumber };
-      await firstValueFrom(
-        this.api.applicationsControllerRollback(appId, dto)
-      );
+      await firstValueFrom(this.api.applicationsControllerRollback(appId, dto));
       return true;
     } catch (err: unknown) {
       this.rollbackErrorData.set(this.extractErrorMessage(err, 'Rollback failed'));

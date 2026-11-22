@@ -60,9 +60,7 @@ export class OperatingContextService {
     nature: EntryNature,
     scopeRef?: string | null,
   ): Observable<EntryReach> {
-    let params = new HttpParams()
-      .set('scopeType', scopeType)
-      .set('nature', nature);
+    let params = new HttpParams().set('scopeType', scopeType).set('nature', nature);
     if (scopeRef) params = params.set('scopeRef', scopeRef);
     return this.http.get<EntryReach>(`${this.base}/reach`, { params });
   }
@@ -72,17 +70,11 @@ export class OperatingContextService {
   }
 
   edit(id: string, edit: EditContextEntry): Observable<ContextEntry> {
-    return this.http.patch<ContextEntry>(
-      `${this.base}/${encodeURIComponent(id)}`,
-      edit,
-    );
+    return this.http.patch<ContextEntry>(`${this.base}/${encodeURIComponent(id)}`, edit);
   }
 
   confirm(id: string): Observable<ContextEntry> {
-    return this.http.post<ContextEntry>(
-      `${this.base}/${encodeURIComponent(id)}/confirm`,
-      {},
-    );
+    return this.http.post<ContextEntry>(`${this.base}/${encodeURIComponent(id)}/confirm`, {});
   }
 
   archive(id: string): Observable<void> {

@@ -20,11 +20,29 @@ const OVERVIEW: MailOverview = {
   bucket: 'day',
   incident: null,
   kpis: [
-    { id: 'sent', count: 120, rate: null, previousCount: 100, previousRate: null, delta: 20, tone: 'neutral' },
-    { id: 'bounced', count: 3, rate: 0.025, previousCount: 2, previousRate: 0.02, delta: 1, tone: 'warn' },
+    {
+      id: 'sent',
+      count: 120,
+      rate: null,
+      previousCount: 100,
+      previousRate: null,
+      delta: 20,
+      tone: 'neutral',
+    },
+    {
+      id: 'bounced',
+      count: 3,
+      rate: 0.025,
+      previousCount: 2,
+      previousRate: 0.02,
+      delta: 1,
+      tone: 'warn',
+    },
   ],
   volume: [],
-  domains: [{ domain: 'mail.example.com', spf: 'ok', dkim: 'ok', dmarc: 'ok', verified: true, sent: 120 }],
+  domains: [
+    { domain: 'mail.example.com', spf: 'ok', dkim: 'ok', dmarc: 'ok', verified: true, sent: 120 },
+  ],
   senders: [
     {
       from: 'billing@app.example.com',
@@ -49,11 +67,15 @@ function input(over: Partial<MailOverviewSurfaceInput> = {}): MailOverviewSurfac
 }
 
 function snapshotOf(over: Partial<MailOverviewSurfaceInput> = {}): SurfaceSnapshot {
-  return buildMailOverviewSurface(input(over), { revision: 1, generatedAt: '2026-09-02T09:00:00.000Z' });
+  return buildMailOverviewSurface(input(over), {
+    revision: 1,
+    generatedAt: '2026-09-02T09:00:00.000Z',
+  });
 }
 
 const pageScope = (s: SurfaceSnapshot) => s.scopes.find((x) => x.id === 'mail-overview')!;
-const observation = (s: SurfaceSnapshot, key: string) => pageScope(s).observations?.find((o) => o.key === key);
+const observation = (s: SurfaceSnapshot, key: string) =>
+  pageScope(s).observations?.find((o) => o.key === key);
 
 describe('mail overview surface producer', () => {
   it('emits a snapshot that validates against the real schema and passes semantic checks', () => {
@@ -81,9 +103,14 @@ describe('mail overview surface producer', () => {
 
   it('flags a snapshot whose revision does not advance on the previous one', () => {
     const first = snapshotOf();
-    const stale = { ...snapshotOf(), surface: { ...snapshotOf().surface, revision: first.surface.revision } };
+    const stale = {
+      ...snapshotOf(),
+      surface: { ...snapshotOf().surface, revision: first.surface.revision },
+    };
     const issues = validateSurfaceSemantics(stale, { previousSnapshot: first });
-    expect(issues).toEqual([jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' })]);
+    expect(issues).toEqual([
+      jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' }),
+    ]);
   });
 
   it('names only the page in attention — no real selection on the KPI dashboard', () => {
@@ -122,7 +149,13 @@ describe('mail overview surface producer', () => {
   it('redacts: the raw incident detail text never reaches the snapshot, only kind and title', () => {
     const withIncident: MailOverview = {
       ...OVERVIEW,
-      incident: { kind: 'sender-down', title: 'Sending has stopped', detail: 'provider=scw code=INTERNAL_5xx trace=abc123', subject: 'x', since: null },
+      incident: {
+        kind: 'sender-down',
+        title: 'Sending has stopped',
+        detail: 'provider=scw code=INTERNAL_5xx trace=abc123',
+        subject: 'x',
+        since: null,
+      },
     };
     const snapshot = snapshotOf({ overview: withIncident });
     expect(observation(snapshot, 'flui.mail.incident_kind')?.presentedAs.text).toBe('sender-down');

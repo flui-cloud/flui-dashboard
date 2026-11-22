@@ -23,7 +23,9 @@ import { StatTileData, StatTileNote } from '../chart.models';
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="card-surface p-4 flex flex-col gap-2 h-full">
-      <div class="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-sub">
+      <div
+        class="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-sub"
+      >
         {{ data().label }}
         @if (data().hint; as hint) {
           <ng-icon
@@ -39,7 +41,9 @@ import { StatTileData, StatTileNote } from '../chart.models';
       </div>
 
       <div class="flex items-baseline gap-1.5">
-        <span class="text-2xl font-semibold text-foreground tracking-tight">{{ data().value }}</span>
+        <span class="text-2xl font-semibold text-foreground tracking-tight">{{
+          data().value
+        }}</span>
         @if (data().unit) {
           <span class="text-xs text-sub">{{ data().unit }}</span>
         }
@@ -63,14 +67,25 @@ import { StatTileData, StatTileNote } from '../chart.models';
             [attr.title]="note.hint"
           >
             @if (note.tone !== 'muted') {
-              <span class="h-1.5 w-1.5 shrink-0 rounded-full" [class]="dotClass(note.tone)" data-testid="stat-tile-note-dot"></span>
+              <span
+                class="h-1.5 w-1.5 shrink-0 rounded-full"
+                [class]="dotClass(note.tone)"
+                data-testid="stat-tile-note-dot"
+              ></span>
             }
             {{ note.text }}
           </span>
         } @else {
-          <p class="m-0 flex items-start gap-1.5 text-[11px] leading-snug text-sub" data-testid="stat-tile-note">
+          <p
+            class="m-0 flex items-start gap-1.5 text-[11px] leading-snug text-sub"
+            data-testid="stat-tile-note"
+          >
             @if (note.tone !== 'muted') {
-              <span class="mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full" [class]="dotClass(note.tone)" data-testid="stat-tile-note-dot"></span>
+              <span
+                class="mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full"
+                [class]="dotClass(note.tone)"
+                data-testid="stat-tile-note-dot"
+              ></span>
             }
             <span>{{ note.text }}</span>
             @if (note.hint) {
@@ -100,14 +115,23 @@ import { StatTileData, StatTileNote } from '../chart.models';
           <span class="text-[10px] text-sub">no history yet</span>
         }
         @if (data().footnote; as footnote) {
-          <span class="truncate text-[10px] text-sub" [attr.title]="footnote" data-testid="stat-tile-footnote">{{ footnote }}</span>
+          <span
+            class="truncate text-[10px] text-sub"
+            [attr.title]="footnote"
+            data-testid="stat-tile-footnote"
+            >{{ footnote }}</span
+          >
         }
       </div>
     </div>
   `,
-  styles: [`
-    :host { display: block; }
-  `],
+  styles: [
+    `
+      :host {
+        display: block;
+      }
+    `,
+  ],
 })
 export class StatTileComponent {
   readonly data = input.required<StatTileData>();

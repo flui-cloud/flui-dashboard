@@ -28,7 +28,13 @@ const SUPPORTED_FRAMEWORKS = [
   standalone: true,
   imports: [NgIcon],
   providers: [
-    provideIcons({ lucideGithub, lucidePackage, lucideTriangleAlert, lucideChevronDown, lucideCheck }),
+    provideIcons({
+      lucideGithub,
+      lucidePackage,
+      lucideTriangleAlert,
+      lucideChevronDown,
+      lucideCheck,
+    }),
   ],
   template: `
     <div class="space-y-6">
@@ -38,9 +44,14 @@ const SUPPORTED_FRAMEWORKS = [
 
         <!-- Unsupported warning -->
         @if (!analysis.supported) {
-          <div class="flex items-start gap-2 p-3 rounded-md border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/10 text-sm text-yellow-800 dark:text-yellow-300">
+          <div
+            class="flex items-start gap-2 p-3 rounded-md border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/10 text-sm text-yellow-800 dark:text-yellow-300"
+          >
             <ng-icon name="lucideTriangleAlert" class="h-4 w-4 shrink-0 mt-0.5" />
-            <span>The detected framework is not yet fully supported. You can still proceed by selecting a build path manually.</span>
+            <span
+              >The detected framework is not yet fully supported. You can still proceed by selecting
+              a build path manually.</span
+            >
           </div>
         }
 
@@ -55,7 +66,8 @@ const SUPPORTED_FRAMEWORKS = [
             >
               <option [value]="analysis.detection.framework">
                 {{ formatFrameworkLabel(analysis.detection.framework) }}
-                {{ analysis.detection.version ? '(' + analysis.detection.version + ')' : '' }} ← detected
+                {{ analysis.detection.version ? '(' + analysis.detection.version + ')' : '' }} ←
+                detected
               </option>
               @for (alt of analysis.alternatives; track alt) {
                 @if (alt !== analysis.detection.framework) {
@@ -68,7 +80,10 @@ const SUPPORTED_FRAMEWORKS = [
                 }
               </optgroup>
             </select>
-            <ng-icon name="lucideChevronDown" class="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+            <ng-icon
+              name="lucideChevronDown"
+              class="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none"
+            />
           </div>
         </div>
 
@@ -87,7 +102,10 @@ const SUPPORTED_FRAMEWORKS = [
               </div>
               <div class="flex flex-col items-end gap-1">
                 @if (analysis.recommended === 'github-actions') {
-                  <span class="text-xs font-medium px-1.5 py-0.5 rounded bg-primary text-primary-foreground">Recommended</span>
+                  <span
+                    class="text-xs font-medium px-1.5 py-0.5 rounded bg-primary text-primary-foreground"
+                    >Recommended</span
+                  >
                 }
                 <span [class]="getScoreBadgeClass(analysis.scores.githubActions)">
                   {{ analysis.scores.githubActions }}/100
@@ -95,7 +113,8 @@ const SUPPORTED_FRAMEWORKS = [
               </div>
             </div>
             <p class="text-sm text-left text-muted-foreground">
-              Flui generates a workflow and commits it to your repo. GitHub Actions builds the image and pushes it to the registry.
+              Flui generates a workflow and commits it to your repo. GitHub Actions builds the image
+              and pushes it to the registry.
             </p>
             @if (selectedPath() === 'github-actions') {
               <div class="absolute top-2 right-2">
@@ -105,11 +124,7 @@ const SUPPORTED_FRAMEWORKS = [
           </button>
 
           <!-- Railpack card -->
-          <button
-            type="button"
-            (click)="selectPath('railpack')"
-            [class]="getCardClass('railpack')"
-          >
+          <button type="button" (click)="selectPath('railpack')" [class]="getCardClass('railpack')">
             <div class="flex items-start justify-between mb-3">
               <div class="flex items-center gap-2">
                 <ng-icon name="lucidePackage" class="h-5 w-5" />
@@ -117,15 +132,19 @@ const SUPPORTED_FRAMEWORKS = [
               </div>
               <div class="flex flex-col items-end gap-1">
                 @if (analysis.recommended === 'railpack') {
-                  <span class="text-xs font-medium px-1.5 py-0.5 rounded bg-primary text-primary-foreground">Recommended</span>
+                  <span
+                    class="text-xs font-medium px-1.5 py-0.5 rounded bg-primary text-primary-foreground"
+                    >Recommended</span
+                  >
                 }
-                <span [class]="getScoreBadgeClass(analysis.scores.railpack )">
+                <span [class]="getScoreBadgeClass(analysis.scores.railpack)">
                   {{ analysis.scores.railpack }}/100
                 </span>
               </div>
             </div>
             <p class="text-sm text-left text-muted-foreground">
-              Build directly on the Flui cluster using Railpack and BuildKit. No GitHub Actions workflow needed.
+              Build directly on the Flui cluster using Railpack and BuildKit. No GitHub Actions
+              workflow needed.
             </p>
             @if (selectedPath() === 'railpack') {
               <div class="absolute top-2 right-2">
@@ -181,7 +200,7 @@ export class BuildPathSelectorComponent implements OnInit {
     const detected = analysis?.detection?.framework ?? '';
     const alternatives = analysis?.alternatives ?? [];
     return SUPPORTED_FRAMEWORKS.filter(
-      fw => fw.value !== detected && !alternatives.includes(fw.value)
+      (fw) => fw.value !== detected && !alternatives.includes(fw.value),
     );
   });
 
@@ -207,13 +226,15 @@ export class BuildPathSelectorComponent implements OnInit {
   }
 
   formatFrameworkLabel(fw: string): string {
-    return SUPPORTED_FRAMEWORKS.find(f => f.value === fw)?.label ?? fw;
+    return SUPPORTED_FRAMEWORKS.find((f) => f.value === fw)?.label ?? fw;
   }
 
   getScoreBadgeClass(score: number): string {
     const base = 'text-xs font-medium px-1.5 py-0.5 rounded';
-    if (score >= 80) return `${base} bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400`;
-    if (score >= 50) return `${base} bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400`;
+    if (score >= 80)
+      return `${base} bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400`;
+    if (score >= 50)
+      return `${base} bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400`;
     return `${base} bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400`;
   }
 

@@ -1,4 +1,15 @@
-import { Component, OnInit, input, output, signal, computed, effect, inject, untracked, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  input,
+  output,
+  signal,
+  computed,
+  effect,
+  inject,
+  untracked,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { RouterLink } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
@@ -19,10 +30,7 @@ import {
 } from '../../services/provider-wizard.service';
 import { PricingService } from '../../services/pricing.service';
 import { ProviderMarkComponent } from '../provider-mark.component';
-import {
-  ArchitectureBadgeComponent,
-  architectureWarning,
-} from '../architecture-badge.component';
+import { ArchitectureBadgeComponent, architectureWarning } from '../architecture-badge.component';
 
 /**
  * Provider Region Selector Component
@@ -72,7 +80,7 @@ import {
           @if (wizardService.providerError() && !wizardService.isProviderLoading()) {
             <div
               class="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg text-sm"
-              >
+            >
               <ng-icon name="lucideCircleAlert" size="16"></ng-icon>
               <span>{{ wizardService.providerError() }}</span>
             </div>
@@ -81,26 +89,32 @@ import {
           @if (lockedProvider()) {
             <div
               class="flex items-center gap-2 mb-3 p-3 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 rounded-lg text-sm"
-              >
+            >
               <ng-icon name="lucideShield" size="16"></ng-icon>
               <span>Workloads must run on the same provider as the control cluster.</span>
             </div>
           }
-          @if (!wizardService.isProviderLoading() && !wizardService.providerError() && !hasConfiguredProvider()) {
+          @if (
+            !wizardService.isProviderLoading() &&
+            !wizardService.providerError() &&
+            !hasConfiguredProvider()
+          ) {
             <div
               data-testid="no-provider-configured"
               class="flex items-center gap-2 mb-3 p-3 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300 rounded-lg text-sm"
-              >
+            >
               <ng-icon name="lucideCircleAlert" size="16"></ng-icon>
               <span>No provider is connected yet. Connect one to create a cluster.</span>
-              <a routerLink="/management/providers" class="ml-auto font-medium underline underline-offset-2">Providers</a>
+              <a
+                routerLink="/management/providers"
+                class="ml-auto font-medium underline underline-offset-2"
+                >Providers</a
+              >
             </div>
           }
           <!-- Provider Grid -->
           @if (!wizardService.isProviderLoading() && !wizardService.providerError()) {
-            <div
-              class="grid grid-cols-2 md:grid-cols-3 gap-3"
-              >
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
               @for (provider of wizardService.providersData(); track provider) {
                 <div
                   (click)="!isProviderDisabled(provider) && selectProvider(provider.id)"
@@ -108,17 +122,21 @@ import {
                   class="relative p-3 border-2 rounded-lg transition-all"
                   [class.cursor-pointer]="!isProviderDisabled(provider)"
                   [class.cursor-not-allowed]="isProviderDisabled(provider)"
-                  >
+                >
                   <div class="flex flex-col items-center gap-2 text-center">
                     <app-provider-mark [name]="provider.name" [size]="40" />
                     <div>
-                      <p class="text-sm font-semibold text-slate-900 dark:text-white leading-tight">{{ provider.name }}</p>
-                      <p class="text-xs text-slate-500 dark:text-slate-400">{{ provider.regions }} regions</p>
+                      <p class="text-sm font-semibold text-slate-900 dark:text-white leading-tight">
+                        {{ provider.name }}
+                      </p>
+                      <p class="text-xs text-slate-500 dark:text-slate-400">
+                        {{ provider.regions }} regions
+                      </p>
                     </div>
                     @if (provider.comingSoon) {
                       <span
                         class="px-1.5 py-0.5 text-xs font-medium bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400 rounded"
-                        >
+                      >
                         Soon
                       </span>
                     } @else if (!provider.configured) {
@@ -128,7 +146,7 @@ import {
                         [queryParams]="{ configure: provider.id }"
                         [attr.data-testid]="'connect-provider-' + provider.id"
                         class="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline"
-                        >
+                      >
                         Connect {{ provider.name }}
                       </a>
                     }
@@ -139,7 +157,7 @@ import {
           }
         </div>
       }
-    
+
       <!-- Step 2: Region Selection -->
       @if (currentStep() === 2) {
         <div>
@@ -153,16 +171,14 @@ import {
           @if (wizardService.regionError() && !wizardService.isRegionLoading()) {
             <div
               class="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg text-sm"
-              >
+            >
               <ng-icon name="lucideCircleAlert" size="16"></ng-icon>
               <span>{{ wizardService.regionError() }}</span>
             </div>
           }
           <!-- Region Grid -->
           @if (!wizardService.isRegionLoading() && !wizardService.regionError()) {
-            <div
-              class="grid grid-cols-2 md:grid-cols-3 gap-2"
-              >
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
               @for (region of regions(); track region) {
                 <div
                   (click)="region.available && selectRegion(region.id)"
@@ -171,12 +187,16 @@ import {
                   [class.cursor-pointer]="region.available"
                   [class.cursor-not-allowed]="!region.available"
                   [class.opacity-50]="!region.available"
-                  >
+                >
                   <div class="flex items-center gap-2">
                     <span class="text-xl leading-none">{{ region.flagEmoji }}</span>
                     <div class="min-w-0">
-                      <p class="text-sm font-semibold text-slate-900 dark:text-white truncate">{{ region.name }}</p>
-                      <p class="text-xs text-slate-500 dark:text-slate-400 truncate">{{ region.country }}</p>
+                      <p class="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                        {{ region.name }}
+                      </p>
+                      <p class="text-xs text-slate-500 dark:text-slate-400 truncate">
+                        {{ region.country }}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -185,7 +205,7 @@ import {
           }
         </div>
       }
-    
+
       <!-- Step 3: Server Type Selection -->
       @if (currentStep() === 3) {
         <div>
@@ -196,12 +216,14 @@ import {
               [value]="cpuTypeFilter()"
               (change)="setCpuTypeFilter($any($event.target).value)"
               class="h-7 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-2 py-0.5 text-xs text-slate-900 dark:text-white"
-              >
+            >
               <option value="all">All</option>
               <option value="shared">Shared (VPS)</option>
               <option value="dedicated">Dedicated</option>
             </select>
-            <span class="text-xs text-slate-500 dark:text-slate-400">({{ filteredServerTypes().length }})</span>
+            <span class="text-xs text-slate-500 dark:text-slate-400"
+              >({{ filteredServerTypes().length }})</span
+            >
           </div>
           <!-- Loading State -->
           @if (wizardService.isServerTypeLoading()) {
@@ -213,7 +235,7 @@ import {
           @if (wizardService.serverTypeError() && !wizardService.isServerTypeLoading()) {
             <div
               class="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg text-sm"
-              >
+            >
               <ng-icon name="lucideCircleAlert" size="16"></ng-icon>
               <span>{{ wizardService.serverTypeError() }}</span>
             </div>
@@ -222,7 +244,7 @@ import {
           @if (!wizardService.isServerTypeLoading() && !wizardService.serverTypeError()) {
             <div
               class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-72 overflow-y-auto pr-1"
-              >
+            >
               @for (serverType of filteredServerTypes(); track serverType) {
                 <div
                   (click)="isSelectable(serverType) && selectServerType(serverType.id)"
@@ -232,9 +254,11 @@ import {
                   [class.cursor-not-allowed]="!isSelectable(serverType)"
                   [class.cursor-pointer]="isSelectable(serverType)"
                   class="p-3 border-2 rounded-lg transition-all"
-                  >
+                >
                   <div class="flex items-center justify-between mb-2">
-                    <p class="flex items-center gap-1.5 text-sm font-semibold text-slate-900 dark:text-white">
+                    <p
+                      class="flex items-center gap-1.5 text-sm font-semibold text-slate-900 dark:text-white"
+                    >
                       {{ serverType.name }}
                       <app-architecture-badge [architecture]="serverType.architecture" />
                     </p>
@@ -258,7 +282,7 @@ import {
                       <span
                         [class]="getCpuTypeBadgeClass(serverType.cpuType)"
                         class="px-1.5 py-0.5 text-xs font-medium rounded"
-                        >
+                      >
                         {{ serverType.cpuType === 'dedicated' ? 'Ded' : 'VPS' }}
                       </span>
                     </div>
@@ -266,11 +290,15 @@ import {
                   <div class="grid grid-cols-3 gap-1 text-xs mb-2">
                     <div class="text-center">
                       <p class="text-slate-500 dark:text-slate-400">vCPU</p>
-                      <p class="font-medium text-slate-900 dark:text-white">{{ serverType.vcpu }}</p>
+                      <p class="font-medium text-slate-900 dark:text-white">
+                        {{ serverType.vcpu }}
+                      </p>
                     </div>
                     <div class="text-center">
                       <p class="text-slate-500 dark:text-slate-400">RAM</p>
-                      <p class="font-medium text-slate-900 dark:text-white">{{ serverType.ram }}GB</p>
+                      <p class="font-medium text-slate-900 dark:text-white">
+                        {{ serverType.ram }}GB
+                      </p>
                     </div>
                     <div class="text-center">
                       <p class="text-slate-500 dark:text-slate-400">Disk</p>
@@ -279,29 +307,40 @@ import {
                       </p>
                     </div>
                   </div>
-                  <div class="flex justify-between items-center text-xs pt-2 border-t border-slate-200 dark:border-slate-700">
-                    <span class="text-slate-500 dark:text-slate-400">~€{{ pricingService.formatMonthlyPrice(serverType.pricePerHour) }}/mo</span>
-                    <span class="text-slate-400 dark:text-slate-500">€{{ serverType.pricePerHour.toFixed(4) }}/h</span>
+                  <div
+                    class="flex justify-between items-center text-xs pt-2 border-t border-slate-200 dark:border-slate-700"
+                  >
+                    <span class="text-slate-500 dark:text-slate-400"
+                      >~€{{ pricingService.formatMonthlyPrice(serverType.pricePerHour) }}/mo</span
+                    >
+                    <span class="text-slate-400 dark:text-slate-500"
+                      >€{{ serverType.pricePerHour.toFixed(4) }}/h</span
+                    >
                   </div>
                 </div>
               }
             </div>
           }
           @if (selectedArchitectureWarning(); as warning) {
-            <p class="mt-2 text-xs text-amber-800 dark:text-amber-300" data-testid="architecture-warning">{{ warning }}</p>
+            <p
+              class="mt-2 text-xs text-amber-800 dark:text-amber-300"
+              data-testid="architecture-warning"
+            >
+              {{ warning }}
+            </p>
           }
           <!-- Empty State -->
           @if (!wizardService.isServerTypeLoading() && filteredServerTypes().length === 0) {
-            <div
-              class="text-center py-8"
-              >
-              <p class="text-sm text-slate-500 dark:text-slate-400">No server types match the selected filter.</p>
+            <div class="text-center py-8">
+              <p class="text-sm text-slate-500 dark:text-slate-400">
+                No server types match the selected filter.
+              </p>
             </div>
           }
         </div>
       }
     </div>
-    `,
+  `,
   changeDetection: ChangeDetectionStrategy.Eager,
   styles: [],
 })
@@ -328,7 +367,7 @@ export class ProviderRegionSelectorComponent implements OnInit {
 
   // === Computed ===
   readonly hasConfiguredProvider = computed(() =>
-    this.wizardService.providersData().some((p) => !p.comingSoon && p.configured)
+    this.wizardService.providersData().some((p) => !p.comingSoon && p.configured),
   );
 
   readonly filteredServerTypes = computed<ServerTypeOption[]>(() => {
@@ -342,7 +381,7 @@ export class ProviderRegionSelectorComponent implements OnInit {
   readonly selectedArchitectureWarning = computed(() =>
     architectureWarning(
       this.serverTypes().find((type) => type.id === this.selectedServerTypeId())?.architecture,
-    )
+    ),
   );
 
   // === Effects ===
@@ -357,8 +396,8 @@ export class ProviderRegionSelectorComponent implements OnInit {
         untracked(() =>
           this.wizardService.loadRegions(provider).then(
             (regions) => this.regions.set(regions),
-            (error) => console.error('Failed to load regions:', error)
-          )
+            (error) => console.error('Failed to load regions:', error),
+          ),
         );
       }
     });
@@ -373,8 +412,8 @@ export class ProviderRegionSelectorComponent implements OnInit {
         untracked(() =>
           this.wizardService.loadServerTypes(provider, region).then(
             (serverTypes) => this.serverTypes.set(serverTypes),
-            (error) => console.error('Failed to load server types:', error)
-          )
+            (error) => console.error('Failed to load server types:', error),
+          ),
         );
       }
     });

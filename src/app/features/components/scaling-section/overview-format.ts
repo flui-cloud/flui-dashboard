@@ -1,7 +1,6 @@
 import { ProviderScalingCapability, ScalingModeLabel } from '../../model/scaling-section.models';
 
-export type ScalingMode =
-  'flui-buys' | 'flui-decides' | 'you-buy' | 'you-attach';
+export type ScalingMode = 'flui-buys' | 'flui-decides' | 'you-buy' | 'you-attach';
 
 export interface ModeCopy {
   id: ScalingMode;
@@ -89,10 +88,7 @@ export function age(iso: string, now: number): string {
   return hours >= 48 ? `${Math.round(hours / 24)}d` : `${hours}h`;
 }
 
-export function oldestAlarm(
-  sinces: readonly (string | undefined)[],
-  now: number,
-): string | null {
+export function oldestAlarm(sinces: readonly (string | undefined)[], now: number): string | null {
   const times = sinces
     .filter((since): since is string => since !== undefined)
     .map((since) => Date.parse(since))

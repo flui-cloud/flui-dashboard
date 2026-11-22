@@ -12,9 +12,21 @@ const DARK_TEXT = 'hsl(var(--foreground))';
 
 const NETWORK_LOOK: Record<NetworkKind, TileLook> = {
   flui: { background: 'hsl(var(--ok) / 0.18)', color: DARK_TEXT, border: 'hsl(var(--ok))' },
-  'flui-waiting': { background: 'hsl(var(--warn) / 0.18)', color: DARK_TEXT, border: 'hsl(var(--warn))' },
-  private: { background: 'hsl(var(--brand) / 0.14)', color: DARK_TEXT, border: 'hsl(var(--brand) / 0.6)' },
-  public: { background: 'hsl(var(--muted))', color: DARK_TEXT, border: 'hsl(var(--muted-foreground) / 0.6)' },
+  'flui-waiting': {
+    background: 'hsl(var(--warn) / 0.18)',
+    color: DARK_TEXT,
+    border: 'hsl(var(--warn))',
+  },
+  private: {
+    background: 'hsl(var(--brand) / 0.14)',
+    color: DARK_TEXT,
+    border: 'hsl(var(--brand) / 0.6)',
+  },
+  public: {
+    background: 'hsl(var(--muted))',
+    color: DARK_TEXT,
+    border: 'hsl(var(--muted-foreground) / 0.6)',
+  },
 };
 
 /**
@@ -29,7 +41,10 @@ export function tileLook(tile: Tile, colorBy: TopologyColorBy, maxPods: number):
   if (colorBy !== 'pods' && tile.value >= FULL_PCT) {
     return { background: 'hsl(var(--destructive))', color: LIGHT_TEXT, border: 'transparent' };
   }
-  const k = colorBy === 'pods' ? share(tile.value, maxPods) : Math.min(1, Math.max(0, (tile.value - 30) / 60));
+  const k =
+    colorBy === 'pods'
+      ? share(tile.value, maxPods)
+      : Math.min(1, Math.max(0, (tile.value - 30) / 60));
   const alpha = 0.12 + 0.78 * k;
   return {
     background: `hsl(var(--brand) / ${alpha.toFixed(2)})`,

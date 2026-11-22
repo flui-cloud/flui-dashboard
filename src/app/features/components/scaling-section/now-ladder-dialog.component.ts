@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  input,
-  output,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideArrowLeft,
@@ -61,9 +54,7 @@ import { LadderRow } from './ladder-rows';
       >
         <div class="flex items-start gap-4">
           <div class="flex flex-col gap-1">
-            <h3 class="m-0 text-lg font-semibold text-foreground">
-              If a node were needed now
-            </h3>
+            <h3 class="m-0 text-lg font-semibold text-foreground">If a node were needed now</h3>
             <p class="m-0 text-[13px] text-sub">{{ subtitle() }}</p>
           </div>
           <button
@@ -83,11 +74,7 @@ import { LadderRow } from './ladder-rows';
               <button
                 type="button"
                 class="flex h-1.5 w-full rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                [class]="
-                  i === at()
-                    ? 'bg-primary'
-                    : 'bg-border hover:bg-muted-foreground/40'
-                "
+                [class]="i === at() ? 'bg-primary' : 'bg-border hover:bg-muted-foreground/40'"
                 [attr.aria-label]="'Step ' + row.rung.step"
                 [attr.aria-current]="i === at() ? 'step' : null"
                 [attr.data-testid]="'ladder-dot-' + row.rung.step"
@@ -98,13 +85,8 @@ import { LadderRow } from './ladder-rows';
         </ol>
 
         @if (current(); as row) {
-          <div
-            class="flex flex-col gap-3"
-            [attr.data-testid]="'ladder-step-' + row.rung.step"
-          >
-            <p
-              class="m-0 text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
-            >
+          <div class="flex flex-col gap-3" [attr.data-testid]="'ladder-step-' + row.rung.step">
+            <p class="m-0 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
               Step {{ row.rung.step }} of {{ rows().length }}
             </p>
 
@@ -121,9 +103,7 @@ import { LadderRow } from './ladder-rows';
               </p>
             }
 
-            <div
-              class="flex flex-col gap-1 rounded-lg border border-border bg-muted/30 p-3.5"
-            >
+            <div class="flex flex-col gap-1 rounded-lg border border-border bg-muted/30 p-3.5">
               <span
                 class="inline-flex items-center gap-1.5 text-[13px] font-medium"
                 [class]="row.tone"
@@ -131,10 +111,7 @@ import { LadderRow } from './ladder-rows';
                 <ng-icon [name]="row.icon" class="h-4 w-4" />
                 {{ row.verdict }}
               </span>
-              <span
-                class="text-[13px] leading-relaxed text-sub"
-                data-testid="ladder-step-why"
-              >
+              <span class="text-[13px] leading-relaxed text-sub" data-testid="ladder-step-why">
                 {{ row.why }}
               </span>
             </div>

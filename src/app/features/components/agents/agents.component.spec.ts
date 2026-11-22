@@ -12,11 +12,7 @@ import {
   AgentIdentity,
   AgentIdentityActivity,
 } from '../../model/agent-activity.models';
-import {
-  AgentConcession,
-  AgentProposal,
-  PROPOSAL_STATUS,
-} from '../../model/agent-cycle.models';
+import { AgentConcession, AgentProposal, PROPOSAL_STATUS } from '../../model/agent-cycle.models';
 import { AgentCycleService } from '../../service/agent-cycle.service';
 import { AgentsComponent } from './agents.component';
 
@@ -83,21 +79,23 @@ describe('the agents section', () => {
   let cycle: jasmine.SpyObj<AgentCycleService>;
   let keys: jasmine.SpyObj<ApiAuthService>;
 
-  const build = async (opts: {
-    proposals?: AgentProposal[];
-    concessions?: AgentConcession[];
-    isAdmin?: boolean;
-    permissions?: string[];
-    proposalId?: string | null;
-    proposalsFail?: boolean;
-    activity?: AgentActivityEntry[];
-    activityScope?: ActivityScope;
-    activityTotal?: number;
-    activityFails?: boolean;
-    actors?: AgentIdentityActivity[];
-    identities?: AgentIdentity[];
-    identitiesFail?: boolean;
-  } = {}): Promise<void> => {
+  const build = async (
+    opts: {
+      proposals?: AgentProposal[];
+      concessions?: AgentConcession[];
+      isAdmin?: boolean;
+      permissions?: string[];
+      proposalId?: string | null;
+      proposalsFail?: boolean;
+      activity?: AgentActivityEntry[];
+      activityScope?: ActivityScope;
+      activityTotal?: number;
+      activityFails?: boolean;
+      actors?: AgentIdentityActivity[];
+      identities?: AgentIdentity[];
+      identitiesFail?: boolean;
+    } = {},
+  ): Promise<void> => {
     cycle = jasmine.createSpyObj<AgentCycleService>('AgentCycleService', [
       'listProposals',
       'listConcessions',
@@ -114,19 +112,15 @@ describe('the agents section', () => {
         ? throwError(() => ({ error: { message: 'no register for you' } }))
         : of({
             scope: opts.activityScope ?? 'own',
-            total: opts.activityTotal ?? (opts.activity?.length ?? 0),
+            total: opts.activityTotal ?? opts.activity?.length ?? 0,
             limit: 50,
             offset: 0,
             entries: opts.activity ?? [],
           }),
     );
-    cycle.activityIdentities.and.returnValue(
-      of({ scope: 'own', identities: opts.actors ?? [] }),
-    );
+    cycle.activityIdentities.and.returnValue(of({ scope: 'own', identities: opts.actors ?? [] }));
     cycle.agentIdentities.and.returnValue(
-      opts.identitiesFail
-        ? throwError(() => ({ status: 403 }))
-        : of(opts.identities ?? []),
+      opts.identitiesFail ? throwError(() => ({ status: 403 })) : of(opts.identities ?? []),
     );
     cycle.listProposals.and.returnValue(
       opts.proposalsFail
@@ -141,9 +135,7 @@ describe('the agents section', () => {
     cycle.decide.and.returnValue(of({ proposal: live(), concession: null }));
     cycle.estimate.and.returnValue(of({}));
 
-    keys = jasmine.createSpyObj<ApiAuthService>('ApiAuthService', [
-      'apiKeysControllerListApiKeys',
-    ]);
+    keys = jasmine.createSpyObj<ApiAuthService>('ApiAuthService', ['apiKeysControllerListApiKeys']);
     keys.apiKeysControllerListApiKeys.and.returnValue(
       of([{ id: 'k-1', name: "Dawit's MacBook" }]) as never,
     );
@@ -171,9 +163,7 @@ describe('the agents section', () => {
           provide: ActivatedRoute,
           useValue: {
             snapshot: {
-              paramMap: convertToParamMap(
-                opts.proposalId ? { proposalId: opts.proposalId } : {},
-              ),
+              paramMap: convertToParamMap(opts.proposalId ? { proposalId: opts.proposalId } : {}),
             },
           },
         },
@@ -196,9 +186,7 @@ describe('the agents section', () => {
     it('says an agent can never do more than you can', async () => {
       await build();
       const ceiling = find('ceiling');
-      expect(ceiling?.textContent).toContain(
-        'An agent can never do more than you can',
-      );
+      expect(ceiling?.textContent).toContain('An agent can never do more than you can');
       expect(ceiling?.textContent).toContain('cannot reach past it');
     });
 
@@ -261,9 +249,7 @@ describe('the agents section', () => {
 
     it('reports a refused answer without pretending it went through', async () => {
       await build({ proposals: [live()] });
-      cycle.decide.and.returnValue(
-        throwError(() => ({ error: { message: 'already answered' } })),
-      );
+      cycle.decide.and.returnValue(throwError(() => ({ error: { message: 'already answered' } })));
       find('deny')?.click();
       fixture.detectChanges();
       expect(find('decide-error')?.textContent).toContain('already answered');
@@ -286,9 +272,7 @@ describe('the agents section', () => {
         proposalId: 'p-second',
         proposals: [live(), live({ id: 'p-second', sentence: 'restart app a-2' })],
       });
-      expect(findAll('request-sentence')[0].textContent).toContain(
-        'Restart app a-2',
-      );
+      expect(findAll('request-sentence')[0].textContent).toContain('Restart app a-2');
     });
 
     it('says the request was already answered rather than showing nothing', async () => {
@@ -339,9 +323,7 @@ describe('the agents section', () => {
 
     it('keeps the dialog open when the revoke was refused', async () => {
       await build({ concessions: [CONCESSION] });
-      cycle.revoke.and.returnValue(
-        throwError(() => ({ error: { message: 'not yours' } })),
-      );
+      cycle.revoke.and.returnValue(throwError(() => ({ error: { message: 'not yours' } })));
       find('revoke')?.click();
       fixture.detectChanges();
       find('confirm-revoke')?.click();
@@ -367,9 +349,7 @@ describe('the agents section', () => {
 
     it('keeps the rest of the page when the register will not load', async () => {
       await build({ proposals: [live()], activityFails: true });
-      expect(find('activity-error-banner')?.textContent).toContain(
-        'no register for you',
-      );
+      expect(find('activity-error-banner')?.textContent).toContain('no register for you');
       expect(findAll('request')).toHaveSize(1);
       expect(find('activity-count')?.textContent).toContain('could not be read');
     });
@@ -380,17 +360,13 @@ describe('the agents section', () => {
         activityScope: 'instance',
         activityTotal: 9,
       });
-      expect(find('activity-scope')?.textContent).toContain(
-        'every agent on the instance',
-      );
+      expect(find('activity-scope')?.textContent).toContain('every agent on the instance');
       expect(find('activity-count')?.textContent).toContain('whole instance');
     });
 
     it('names an actor that holds an account instead of a key', async () => {
       await build({
-        activity: [
-          { ...ACTED, actorKeyId: null, actorKeyName: null, userId: 'u-bot' },
-        ],
+        activity: [{ ...ACTED, actorKeyId: null, actorKeyName: null, userId: 'u-bot' }],
         identities: [
           {
             userId: 'idp-77',
@@ -405,9 +381,7 @@ describe('the agents section', () => {
 
     it('shows no name rather than a wrong one when the directory is refused', async () => {
       await build({
-        activity: [
-          { ...ACTED, actorKeyId: null, actorKeyName: null, userId: 'u-bot' },
-        ],
+        activity: [{ ...ACTED, actorKeyId: null, actorKeyName: null, userId: 'u-bot' }],
         identitiesFail: true,
       });
       expect(find('activity-what')?.textContent).not.toContain('u-bot');

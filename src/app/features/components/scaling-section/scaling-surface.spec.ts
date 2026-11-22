@@ -89,9 +89,7 @@ const listScope = (snapshot: SurfaceSnapshot) =>
 const rowScopes = (snapshot: SurfaceSnapshot) =>
   snapshot.scopes.filter((s) => s.parentId === 'scaling-overview:rows');
 const rowFor = (snapshot: SurfaceSnapshot, clusterId: string) =>
-  rowScopes(snapshot).find(
-    (r) => r.entities?.[0].ref === clusterEntityRef(clusterId),
-  )!;
+  rowScopes(snapshot).find((r) => r.entities?.[0].ref === clusterEntityRef(clusterId))!;
 
 describe('scaling surface producer', () => {
   it('emits a snapshot that validates against the real schema and passes semantic checks', () => {
@@ -113,9 +111,7 @@ describe('scaling surface producer', () => {
       generatedAt: '2026-08-20T09:14:00.000Z',
     });
     expect(second.surface.revision).toBe(first.surface.revision + 1);
-    expect(
-      validateSurfaceSemantics(second, { previousSnapshot: first }),
-    ).toEqual([]);
+    expect(validateSurfaceSemantics(second, { previousSnapshot: first })).toEqual([]);
   });
 
   it('flags a snapshot whose revision does not advance on the previous one', () => {
@@ -132,9 +128,7 @@ describe('scaling surface producer', () => {
 
   it('claims only the page — no entity, because "Manage"/"Set up scaling" on a row navigates or expands, it does not select', () => {
     const snapshot = snapshotOf();
-    expect(snapshot.attention).toEqual([
-      { scopeId: 'scaling-overview', reason: 'route' },
-    ]);
+    expect(snapshot.attention).toEqual([{ scopeId: 'scaling-overview', reason: 'route' }]);
   });
 
   it('lists every row as related, referencing the same cluster ref cluster-list/cluster-detail use', () => {
@@ -151,69 +145,57 @@ describe('scaling surface producer', () => {
     const snapshot = snapshotOf();
     const observations = listScope(snapshot).observations!;
     expect(
-      observations.find((o) => o.key === 'flui.scaling.needs_person_count')
-        ?.presentedAs.value,
+      observations.find((o) => o.key === 'flui.scaling.needs_person_count')?.presentedAs.value,
     ).toBe(1);
     expect(
-      observations.find((o) => o.key === 'flui.scaling.open_alarms_count')
-        ?.presentedAs.value,
+      observations.find((o) => o.key === 'flui.scaling.open_alarms_count')?.presentedAs.value,
     ).toBe(1);
-    expect(
-      observations.find((o) => o.key === 'flui.scaling.billed_monthly')
-        ?.presentedAs,
-    ).toEqual({ value: 120.5, unit: 'EUR' });
+    expect(observations.find((o) => o.key === 'flui.scaling.billed_monthly')?.presentedAs).toEqual({
+      value: 120.5,
+      unit: 'EUR',
+    });
   });
 
   it('presents "no bill" as text when nothing is priced across any row', () => {
     const unpriced = { ...ROW_A, monthlyEur: null };
     const snapshot = snapshotOf({ rows: [unpriced] });
     expect(
-      listScope(snapshot).observations!.find(
-        (o) => o.key === 'flui.scaling.billed_monthly',
-      )?.presentedAs.text,
+      listScope(snapshot).observations!.find((o) => o.key === 'flui.scaling.billed_monthly')
+        ?.presentedAs.text,
     ).toBe('no bill');
   });
 
   it("presents each row's mode/nodes/bounds/spend/has_group facts", () => {
     const snapshot = snapshotOf();
     const rowA = rowFor(snapshot, ROW_A.clusterId);
+    expect(rowA.observations!.find((o) => o.key === 'flui.scaling.mode')?.presentedAs.text).toBe(
+      'Automatic — Flui adds nodes',
+    );
+    expect(rowA.observations!.find((o) => o.key === 'flui.scaling.nodes')?.presentedAs.value).toBe(
+      4,
+    );
+    expect(rowA.observations!.find((o) => o.key === 'flui.scaling.bounds')?.presentedAs.text).toBe(
+      '2·4·8',
+    );
     expect(
-      rowA.observations!.find((o) => o.key === 'flui.scaling.mode')?.presentedAs
-        .text,
-    ).toBe('Automatic — Flui adds nodes');
-    expect(
-      rowA.observations!.find((o) => o.key === 'flui.scaling.nodes')
-        ?.presentedAs.value,
-    ).toBe(4);
-    expect(
-      rowA.observations!.find((o) => o.key === 'flui.scaling.bounds')
-        ?.presentedAs.text,
-    ).toBe('2·4·8');
-    expect(
-      rowA.observations!.find((o) => o.key === 'flui.scaling.monthly_eur')
-        ?.presentedAs,
+      rowA.observations!.find((o) => o.key === 'flui.scaling.monthly_eur')?.presentedAs,
     ).toEqual({ value: 120.5, unit: 'EUR' });
     expect(
-      rowA.observations!.find((o) => o.key === 'flui.scaling.has_group')
-        ?.presentedAs.value,
+      rowA.observations!.find((o) => o.key === 'flui.scaling.has_group')?.presentedAs.value,
     ).toBe(true);
   });
 
   it('presents an open alarm as a boolean with its since-timestamp, and the fact a person is needed — never the raw backend prose behind either', () => {
     const snapshot = snapshotOf();
     const rowB = rowFor(snapshot, ROW_B.clusterId);
-    const alarm = rowB.observations!.find(
-      (o) => o.key === 'flui.scaling.alarm_open',
-    )!;
+    const alarm = rowB.observations!.find((o) => o.key === 'flui.scaling.alarm_open')!;
     expect(alarm.presentedAs.value).toBe(true);
     expect(alarm.observedAt).toBe('2026-08-19T12:00:00.000Z');
     expect(
-      rowB.observations!.find((o) => o.key === 'flui.scaling.needs_person')
-        ?.presentedAs.value,
+      rowB.observations!.find((o) => o.key === 'flui.scaling.needs_person')?.presentedAs.value,
     ).toBe(true);
     expect(
-      rowB.observations!.find((o) => o.key === 'flui.scaling.has_group')
-        ?.presentedAs.value,
+      rowB.observations!.find((o) => o.key === 'flui.scaling.has_group')?.presentedAs.value,
     ).toBe(false);
 
     const json = JSON.stringify(snapshot);

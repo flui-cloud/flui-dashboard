@@ -144,7 +144,10 @@ const AUTO_REFRESH_MS = 5000;
                       [attr.data-testid]="'session-' + s.pid"
                       (click)="toggle(s.pid)"
                     >
-                      <td class="px-4 py-3 whitespace-nowrap" [style.padding-left.rem]="1 + row.depth * 1.25">
+                      <td
+                        class="px-4 py-3 whitespace-nowrap"
+                        [style.padding-left.rem]="1 + row.depth * 1.25"
+                      >
                         @if (row.depth) {
                           <span class="text-muted-foreground mr-1">└</span>
                         }
@@ -166,15 +169,25 @@ const AUTO_REFRESH_MS = 5000;
                       <td class="px-4 py-3 whitespace-nowrap tabular-nums text-muted-foreground">
                         {{ age(s.xactAgeMs ?? s.stateAgeMs) }}
                       </td>
-                      <td class="px-4 py-3 font-mono text-xs max-w-[28rem] truncate" [title]="s.query">
+                      <td
+                        class="px-4 py-3 font-mono text-xs max-w-[28rem] truncate"
+                        [title]="s.query"
+                      >
                         {{ s.query || '—' }}
                       </td>
-                      <td class="px-4 py-3 text-right whitespace-nowrap" (click)="$event.stopPropagation()">
+                      <td
+                        class="px-4 py-3 text-right whitespace-nowrap"
+                        (click)="$event.stopPropagation()"
+                      >
                         <button
                           type="button"
                           class="p-1.5 rounded hover:bg-muted transition-colors disabled:opacity-40"
                           [disabled]="!s.actions.cancel || busy() === s.pid"
-                          [title]="s.actions.cancel ? 'Cancel query' : (s.actions.reason ?? 'Not available')"
+                          [title]="
+                            s.actions.cancel
+                              ? 'Cancel query'
+                              : (s.actions.reason ?? 'Not available')
+                          "
                           [attr.data-testid]="'session-cancel-' + s.pid"
                           (click)="ask(s, 'cancel')"
                         >
@@ -184,7 +197,11 @@ const AUTO_REFRESH_MS = 5000;
                           type="button"
                           class="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors disabled:opacity-40"
                           [disabled]="!s.actions.terminate || busy() === s.pid"
-                          [title]="s.actions.terminate ? 'Close session' : (s.actions.reason ?? 'Not available')"
+                          [title]="
+                            s.actions.terminate
+                              ? 'Close session'
+                              : (s.actions.reason ?? 'Not available')
+                          "
                           [attr.data-testid]="'session-terminate-' + s.pid"
                           (click)="ask(s, 'terminate')"
                         >
@@ -193,7 +210,10 @@ const AUTO_REFRESH_MS = 5000;
                       </td>
                     </tr>
                     @if (expanded() === s.pid) {
-                      <tr class="border-b border-border/50 bg-muted/20" [attr.data-testid]="'session-detail-' + s.pid">
+                      <tr
+                        class="border-b border-border/50 bg-muted/20"
+                        [attr.data-testid]="'session-detail-' + s.pid"
+                      >
                         <td colspan="5" class="px-4 py-3">
                           <dl class="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-xs">
                             <dt class="text-muted-foreground">Session</dt>
@@ -221,7 +241,9 @@ const AUTO_REFRESH_MS = 5000;
                               <dd>{{ s.actions.reason }}</dd>
                             }
                             <dt class="text-muted-foreground">Query</dt>
-                            <dd class="font-mono whitespace-pre-wrap break-all">{{ s.query || '—' }}</dd>
+                            <dd class="font-mono whitespace-pre-wrap break-all">
+                              {{ s.query || '—' }}
+                            </dd>
                           </dl>
                         </td>
                       </tr>
@@ -253,14 +275,18 @@ const AUTO_REFRESH_MS = 5000;
                       <td class="py-1">{{ pool.database }} · {{ pool.user }}</td>
                       <td class="py-1 text-right tabular-nums">{{ pool.clientsActive }}</td>
                       <td class="py-1 text-right tabular-nums">{{ pool.clientsWaiting }}</td>
-                      <td class="py-1 text-right tabular-nums">{{ pool.serversActive }} / {{ pool.serversActive + pool.serversIdle }}</td>
+                      <td class="py-1 text-right tabular-nums">
+                        {{ pool.serversActive }} / {{ pool.serversActive + pool.serversIdle }}
+                      </td>
                       <td class="py-1 text-right tabular-nums">{{ age(pool.maxWaitMs) }}</td>
                     </tr>
                   }
                 </tbody>
               </table>
               @if (p.reason) {
-                <p class="mt-2 text-xs text-amber-600" data-testid="sessions-pooler-reason">{{ p.reason }}</p>
+                <p class="mt-2 text-xs text-amber-600" data-testid="sessions-pooler-reason">
+                  {{ p.reason }}
+                </p>
               }
               @if (p.clients.length) {
                 <table class="mt-3 w-full text-xs">
@@ -278,7 +304,9 @@ const AUTO_REFRESH_MS = 5000;
                       <tr [attr.data-testid]="'pooled-client-' + c.id">
                         <td class="py-1">{{ clientWho(c) }}</td>
                         <td class="py-1">{{ c.state }}</td>
-                        <td class="py-1 text-right tabular-nums">{{ c.waitMs ? age(c.waitMs) : '—' }}</td>
+                        <td class="py-1 text-right tabular-nums">
+                          {{ c.waitMs ? age(c.waitMs) : '—' }}
+                        </td>
                         <td class="py-1 text-right tabular-nums">{{ c.serverPid ?? '—' }}</td>
                         <td class="py-1 text-right">
                           <button

@@ -1,4 +1,11 @@
-import { Component, OnInit, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  inject,
+  signal,
+  computed,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -11,24 +18,28 @@ import { ReconciliationStatusBadgeComponent } from './reconciliation-status-badg
 import { DriftIndicatorComponent } from './drift-indicator.component';
 import { FirewallRuleComparisonComponent } from './firewall-rule-comparison.component';
 import { FirewallInlineRuleEditorComponent } from './firewall-inline-rule-editor.component';
-import { FirewallRuleFormData, convertRuleResponseToFormData } from '../../model/firewall-v2.models';
+import {
+  FirewallRuleFormData,
+  convertRuleResponseToFormData,
+} from '../../model/firewall-v2.models';
 import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
 
 @Component({
   selector: 'app-firewall-detail',
   standalone: true,
-  imports: [MaskIdPipe, 
+  imports: [
+    MaskIdPipe,
     CommonModule,
     NgIcon,
     ReconciliationStatusBadgeComponent,
     DriftIndicatorComponent,
     FirewallRuleComparisonComponent,
-    FirewallInlineRuleEditorComponent
+    FirewallInlineRuleEditorComponent,
   ],
   viewProviders: [provideIcons({ lucideArrowLeft })],
   templateUrl: './firewall-detail.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  styleUrls: ['./firewall-detail.component.scss']
+  styleUrls: ['./firewall-detail.component.scss'],
 })
 export class FirewallDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
@@ -40,16 +51,10 @@ export class FirewallDetailComponent implements OnInit {
   private readonly clusterProvider = signal<string | null>(null);
   readonly firewallCap = computed(() => {
     const p = this.clusterProvider();
-    return p
-      ? this.providersService.getProviderDefinition(p)?.capabilities?.firewall
-      : undefined;
+    return p ? this.providersService.getProviderDefinition(p)?.capabilities?.firewall : undefined;
   });
-  readonly supportsSshAllowlist = computed(
-    () => this.firewallCap()?.supportsSshAllowlist ?? true,
-  );
-  readonly isHostFirewall = computed(
-    () => this.firewallCap()?.backend === 'host-nftables',
-  );
+  readonly supportsSshAllowlist = computed(() => this.firewallCap()?.supportsSshAllowlist ?? true);
+  readonly isHostFirewall = computed(() => this.firewallCap()?.backend === 'host-nftables');
 
   firewallId = signal<string>('');
   isReconciling = signal(false);
@@ -75,7 +80,9 @@ export class FirewallDetailComponent implements OnInit {
 
   canReconcile = computed(() => {
     const fw = this.firewall();
-    return fw?.hasDrift || fw?.reconciliationStatus === 'ERROR' || fw?.reconciliationStatus === 'PENDING';
+    return (
+      fw?.hasDrift || fw?.reconciliationStatus === 'ERROR' || fw?.reconciliationStatus === 'PENDING'
+    );
   });
 
   ngOnInit(): void {
@@ -104,8 +111,7 @@ export class FirewallDetailComponent implements OnInit {
         this.providersService.loadProviderDefinition(cluster.provider);
         this.clusterProvider.set(cluster.provider);
       }
-    } catch {
-    }
+    } catch {}
   }
 
   async reconcile() {
@@ -141,7 +147,7 @@ export class FirewallDetailComponent implements OnInit {
   }
 
   toggleComparison() {
-    this.showComparison.update(v => !v);
+    this.showComparison.update((v) => !v);
   }
 
   goToEditRules() {

@@ -8,7 +8,6 @@ import { ScalingGroupStore } from './scaling-group.store';
 import { ScalingNowAddOrderComponent } from './now-add-order.component';
 import { ARM_WARNING } from '../../../shared/components/architecture-badge.component';
 
-
 const shape = (name: string, architecture: 'x86' | 'arm') => ({
   shape: name,
   allowed: true,

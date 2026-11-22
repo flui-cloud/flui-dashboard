@@ -47,7 +47,10 @@ function valueObservation(key: string, value: number, source: ObservationSource)
  * `apps.filter(a => a.project === p.slug)` the template itself calls (§3.4). Individual
  * app membership is not itemised here — a count is what the page leads with, and every
  * assigned app already gets its own entity/ref on the Application Detail producer. */
-function projectRow(project: Project, apps: AppAttributes[]): { ref: string; label: string; observations: Observation[] } {
+function projectRow(
+  project: Project,
+  apps: AppAttributes[],
+): { ref: string; label: string; observations: Observation[] } {
   const appsCount = apps.filter((a) => a.project === project.slug).length;
   return {
     ref: projectEntityRef(project.id),

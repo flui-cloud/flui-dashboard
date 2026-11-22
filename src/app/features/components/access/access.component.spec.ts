@@ -12,8 +12,7 @@ import { AccessDelta, accessDeltaLines } from '../../model/iam.model';
 
 const deltaFixture = (over: Partial<AccessDelta> = {}): AccessDelta => ({
   principal: { type: 'user', ref: 'alice@acme.com' },
-  summary:
-    'alice@acme.com loses 2 applications (acme-api, acme-db) and the Clusters section.',
+  summary: 'alice@acme.com loses 2 applications (acme-api, acme-db) and the Clusters section.',
   losesNothing: false,
   losesEverything: false,
   principalIsPlatformAdmin: false,
@@ -61,9 +60,7 @@ const iamStub = (
   usersError: signal(null),
   refresh: jasmine.createSpy('refresh'),
   removeGrant,
-  revocationPreview: jasmine
-    .createSpy('revocationPreview')
-    .and.returnValue(preview.asObservable()),
+  revocationPreview: jasmine.createSpy('revocationPreview').and.returnValue(preview.asObservable()),
   isRevocable: () => true,
   roleName: (k: string) => k,
   clusterName: (k: string) => k,
@@ -135,9 +132,7 @@ describe('revoking a grant on the access screen', () => {
   it('asks the API what is lost rather than working it out here', () => {
     trashButton()!.click();
     fixture.detectChanges();
-    expect(
-      TestBed.inject(IamService).revocationPreview,
-    ).toHaveBeenCalledWith('g1');
+    expect(TestBed.inject(IamService).revocationPreview).toHaveBeenCalledWith('g1');
   });
 
   it('shows the sentence the API wrote, and what stands behind it', () => {
@@ -240,11 +235,15 @@ describe('the access screen says whose grants it is listing', () => {
   const openPreview = (f: ComponentFixture<AccessComponent>) => {
     const buttons = (): HTMLButtonElement[] =>
       Array.from(f.nativeElement.querySelectorAll('button'));
-    buttons().find((b) => b.getAttribute('title') === 'Remove grant')!.click();
+    buttons()
+      .find((b) => b.getAttribute('title') === 'Remove grant')!
+      .click();
     f.detectChanges();
     preview.next(deltaFixture());
     f.detectChanges();
-    buttons().find((b) => b.textContent?.trim() === 'What exactly happens')!.click();
+    buttons()
+      .find((b) => b.textContent?.trim() === 'What exactly happens')!
+      .click();
     f.detectChanges();
   };
 
@@ -285,17 +284,15 @@ describe('the access screen says whose grants it is listing', () => {
  * not a person, and a preview whose coverage is already unknown.
  */
 describe('the identity-provider caveat picks its moments', () => {
-  const lines = (
-    over: Partial<AccessDelta>,
-    identityProvider: boolean,
-  ): string[] => accessDeltaLines(deltaFixture(over), { identityProvider });
+  const lines = (over: Partial<AccessDelta>, identityProvider: boolean): string[] =>
+    accessDeltaLines(deltaFixture(over), { identityProvider });
 
   const caveat = 'Counted from grants made in Flui only';
 
   it('stays off a group — nothing in the provider confers a rung on one', () => {
-    expect(
-      lines({ principal: { type: 'group', ref: 'platform' } }, true).join(' '),
-    ).not.toContain(caveat);
+    expect(lines({ principal: { type: 'group', ref: 'platform' } }, true).join(' ')).not.toContain(
+      caveat,
+    );
   });
 
   it('stays off a service account for the same reason', () => {
@@ -362,9 +359,9 @@ describe('the grants list says when each grant ends', () => {
   };
 
   const rowOf = (f: ComponentFixture<AccessComponent>, ref: string) =>
-    (Array.from(
-      f.nativeElement.querySelectorAll('[data-testid="grant-row"]'),
-    ) as HTMLElement[]).find((r) => r.textContent?.includes(ref))!;
+    (
+      Array.from(f.nativeElement.querySelectorAll('[data-testid="grant-row"]')) as HTMLElement[]
+    ).find((r) => r.textContent?.includes(ref))!;
 
   const endOf = (row: HTMLElement) =>
     row.querySelector('[data-testid="grant-end"]')!.textContent!.trim();

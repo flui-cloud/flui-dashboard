@@ -139,7 +139,9 @@ export class ProviderWizardService {
 
       // Cache raw DTOs for topology/capability access
       const defsMap: Record<string, ProviderDefinitionDto> = {};
-      providersDto.forEach(p => { if (p.id) defsMap[p.id] = p; });
+      providersDto.forEach((p) => {
+        if (p.id) defsMap[p.id] = p;
+      });
       this.providerDefinitions.set(defsMap);
 
       const mappedProviders: ProviderOption[] = providersDto.map((provider) => ({
@@ -162,7 +164,7 @@ export class ProviderWizardService {
 
       if (enabledProviderIds.length > 0) {
         const regionResults = await Promise.allSettled(
-          enabledProviderIds.map((id) => this.fetchRegionsSilently(id))
+          enabledProviderIds.map((id) => this.fetchRegionsSilently(id)),
         );
 
         // Update region counts from the loaded regions
@@ -175,7 +177,7 @@ export class ProviderWizardService {
               ...p,
               regions: result.status === 'fulfilled' ? result.value.length : 0,
             };
-          })
+          }),
         );
       }
 
@@ -194,7 +196,7 @@ export class ProviderWizardService {
   private async fetchConfiguredProviderIds(): Promise<Set<string> | null> {
     try {
       const configurations = await firstValueFrom(
-        this.providerManagementService.managementControllerGetUserProviderConfigurations()
+        this.providerManagementService.managementControllerGetUserProviderConfigurations(),
       );
       return new Set(configurations.filter((c) => c.status === 'active').map((c) => c.provider));
     } catch {
@@ -228,8 +230,8 @@ export class ProviderWizardService {
 
     const regionsDto = await firstValueFrom(
       this.providerManagementService.managementControllerGetProviderRegions(
-        provider as 'hetzner' | 'contabo' | 'scaleway'
-      )
+        provider as 'hetzner' | 'contabo' | 'scaleway',
+      ),
     );
 
     const mappedRegions: ProviderRegion[] = (regionsDto as ProviderRegionDto[]).map(
@@ -239,7 +241,7 @@ export class ProviderWizardService {
         country: region.country || '',
         flagEmoji: region.flagEmoji || '🌍',
         available: region.available !== false,
-      })
+      }),
     );
 
     this.regions.update((current) => ({ ...current, [provider]: mappedRegions }));
@@ -262,8 +264,8 @@ export class ProviderWizardService {
     try {
       const regionsDto = await firstValueFrom(
         this.providerManagementService.managementControllerGetProviderRegions(
-          provider as 'hetzner' | 'contabo'
-        )
+          provider as 'hetzner' | 'contabo',
+        ),
       );
 
       const mappedRegions: ProviderRegion[] = (regionsDto as ProviderRegionDto[]).map(
@@ -273,7 +275,7 @@ export class ProviderWizardService {
           country: region.country || '',
           flagEmoji: region.flagEmoji || '🌍',
           available: region.available !== false,
-        })
+        }),
       );
 
       this.regions.update((current) => ({
@@ -281,7 +283,10 @@ export class ProviderWizardService {
         [provider]: mappedRegions,
       }));
 
-      console.log(`✅ [ProviderWizardService] Regions loaded for ${provider}:`, mappedRegions.length);
+      console.log(
+        `✅ [ProviderWizardService] Regions loaded for ${provider}:`,
+        mappedRegions.length,
+      );
       return mappedRegions;
     } catch (error: any) {
       console.error(`❌ [ProviderWizardService] Failed to load regions for ${provider}:`, error);
@@ -320,17 +325,14 @@ export class ProviderWizardService {
       const nodeSizesDto = await firstValueFrom(
         this.providerManagementService.managementControllerGetProviderNodeSizes(
           provider as 'hetzner' | 'contabo',
-          region  // Filter node sizes by selected region
+          region, // Filter node sizes by selected region
           // skipCache omitted: metadata (CPU/RAM/price) is safe to serve from
           // the backend's 24h cache — live availability is fetched by the
           // backend unconditionally for providers that have one
-        )
+        ),
       );
 
-      const mappedServerTypes = this.mapNodeSizesToServerTypes(
-        nodeSizesDto,
-        region
-      );
+      const mappedServerTypes = this.mapNodeSizesToServerTypes(nodeSizesDto, region);
 
       this.serverTypes.update((current) => ({
         ...current,
@@ -339,13 +341,13 @@ export class ProviderWizardService {
 
       console.log(
         `✅ [ProviderWizardService] Server types loaded for ${provider} in ${region}:`,
-        mappedServerTypes.length
+        mappedServerTypes.length,
       );
       return mappedServerTypes;
     } catch (error: any) {
       console.error(
         `❌ [ProviderWizardService] Failed to load server types for ${provider}:`,
-        error
+        error,
       );
       this.serverTypesError.set('Failed to load server types. Please try again.');
       throw error;
@@ -383,8 +385,8 @@ export class ProviderWizardService {
       // catalog, so region membership can be derived client-side.
       const nodeSizesDto = await firstValueFrom(
         this.providerManagementService.managementControllerGetProviderNodeSizes(
-          provider as 'hetzner' | 'contabo'
-        )
+          provider as 'hetzner' | 'contabo',
+        ),
       );
       const catalog = nodeSizesDto.filter((nodeSize) => !nodeSize.deprecated);
 
@@ -400,11 +402,11 @@ export class ProviderWizardService {
       const updates: Record<string, ServerTypeOption[]> = {};
       for (const region of regions) {
         const availableInRegion = catalog.filter((nodeSize) =>
-          this.isAvailableInRegion(nodeSize, region.id)
+          this.isAvailableInRegion(nodeSize, region.id),
         );
         updates[`${provider}:${region.id}`] = this.mapNodeSizesToServerTypes(
           availableInRegion,
-          region.id
+          region.id,
         ).map((serverType) => ({
           ...serverType,
           availableRegionIds: regionIdsByType[serverType.id] ?? [region.id],
@@ -418,7 +420,7 @@ export class ProviderWizardService {
           (serverType) => ({
             ...serverType,
             availableRegionIds: regionIdsByType[serverType.id] ?? [],
-          })
+          }),
         ),
       }));
       this.serverTypesError.set(null);
@@ -428,7 +430,7 @@ export class ProviderWizardService {
     } catch (error) {
       console.error(
         `❌ [ProviderWizardService] Failed to load server types for ${provider}:`,
-        error
+        error,
       );
       this.serverTypesError.set('Failed to load server types. Please try again.');
       throw error;
@@ -464,7 +466,7 @@ export class ProviderWizardService {
    */
   private mapNodeSizesToServerTypes(
     nodeSizes: NodeSizeOptionDto[],
-    region: string
+    region: string,
   ): ServerTypeOption[] {
     return nodeSizes
       .filter((nodeSize) => !nodeSize.deprecated)
@@ -506,9 +508,7 @@ export class ProviderWizardService {
     this.sshKeysError.set(null);
 
     try {
-      const keys = await firstValueFrom(
-        this.accessManagementService.accessControllerListSSHKeys()
-      );
+      const keys = await firstValueFrom(this.accessManagementService.accessControllerListSSHKeys());
 
       this.sshKeys.set(keys);
       console.log('✅ [ProviderWizardService] SSH keys loaded:', keys.length);
@@ -525,7 +525,12 @@ export class ProviderWizardService {
   /**
    * Create a new SSH key
    */
-  async createSshKey(name: string, userName: string, providers?: string[], tags?: Record<string, any>): Promise<SSHKeyDto> {
+  async createSshKey(
+    name: string,
+    userName: string,
+    providers?: string[],
+    tags?: Record<string, any>,
+  ): Promise<SSHKeyDto> {
     this.isLoadingSshKeys.set(true);
     this.sshKeysError.set(null);
 
@@ -536,7 +541,7 @@ export class ProviderWizardService {
           userName,
           tags: tags || {},
           ...(providers && providers.length > 0 ? { providers: providers as any[] } : {}),
-        })
+        }),
       );
 
       // Add to local cache
@@ -558,13 +563,11 @@ export class ProviderWizardService {
   async updateSshKeyTags(keyId: string, tags: Record<string, any>): Promise<SSHKeyDto> {
     try {
       const updated = await firstValueFrom(
-        this.accessManagementService.accessControllerUpdateSSHKey(keyId, { tags })
+        this.accessManagementService.accessControllerUpdateSSHKey(keyId, { tags }),
       );
 
       // Update local cache
-      this.sshKeys.update((keys) =>
-        keys.map((key) => (key.id === keyId ? { ...key, tags } : key))
-      );
+      this.sshKeys.update((keys) => keys.map((key) => (key.id === keyId ? { ...key, tags } : key)));
 
       console.log('✅ [ProviderWizardService] SSH key tags updated:', keyId);
       return updated;
@@ -577,7 +580,7 @@ export class ProviderWizardService {
   /**
    * Get cached SSH keys
    */
-  getSshKeys(): SSHKeyDto[]  {
+  getSshKeys(): SSHKeyDto[] {
     return this.sshKeys();
   }
 

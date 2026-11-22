@@ -118,7 +118,9 @@ describe('image registry storage surface producer', () => {
 
   it('carries a refusal as an observation, never as a view error', () => {
     const snapshot = snapshotOf({ status: null, refused: true });
-    expect(obs(snapshot, 'registry-storage', 'flui.registry.refused')!.presentedAs.value).toBe(true);
+    expect(obs(snapshot, 'registry-storage', 'flui.registry.refused')!.presentedAs.value).toBe(
+      true,
+    );
     expect(scope(snapshot, 'registry-storage')!.state!.error).toBeUndefined();
   });
 
@@ -136,10 +138,18 @@ describe('image registry storage surface producer', () => {
     const snapshot = snapshotOf({
       status: status({ usage: { ...status().usage!, alerting: true, totalBytes: 17 * GIB } }),
     });
-    expect(obs(snapshot, 'registry-storage:usage', 'flui.registry.used_bytes')!.presentedAs.value).toBe(17 * GIB);
-    expect(obs(snapshot, 'registry-storage:usage', 'flui.registry.used_percent')!.presentedAs.value).toBe(85);
-    expect(obs(snapshot, 'registry-storage:usage', 'flui.registry.alerting')!.presentedAs.value).toBe(true);
-    expect(obs(snapshot, 'registry-storage', 'flui.registry.backend')!.presentedAs.text).toBe('volume');
+    expect(
+      obs(snapshot, 'registry-storage:usage', 'flui.registry.used_bytes')!.presentedAs.value,
+    ).toBe(17 * GIB);
+    expect(
+      obs(snapshot, 'registry-storage:usage', 'flui.registry.used_percent')!.presentedAs.value,
+    ).toBe(85);
+    expect(
+      obs(snapshot, 'registry-storage:usage', 'flui.registry.alerting')!.presentedAs.value,
+    ).toBe(true);
+    expect(obs(snapshot, 'registry-storage', 'flui.registry.backend')!.presentedAs.text).toBe(
+      'volume',
+    );
   });
 
   it('lists the largest applications by their canonical application ref', () => {
@@ -147,24 +157,35 @@ describe('image registry storage surface producer', () => {
     const row = scope(snapshot, 'registry-storage:applications:app-1')!;
     expect(row.label).toBe('shop-api');
     expect(row.entities![0].ref).toBe('flui://application/app-1');
-    expect(scope(snapshot, 'registry-storage:applications')!.completeness).toEqual({ shown: 2, total: 2 });
+    expect(scope(snapshot, 'registry-storage:applications')!.completeness).toEqual({
+      shown: 2,
+      total: 2,
+    });
   });
 
   it('shows only the page when the installation keeps its images on GitHub', () => {
     const snapshot = snapshotOf({ status: status({ usage: undefined }) });
     expect(snapshot.scopes.map((s) => s.id)).toEqual(['registry-storage']);
-    expect(obs(snapshot, 'registry-storage', 'flui.registry.own_registry')!.presentedAs.value).toBe(false);
+    expect(obs(snapshot, 'registry-storage', 'flui.registry.own_registry')!.presentedAs.value).toBe(
+      false,
+    );
   });
 
   it('says a connected bucket is not in use while the registry still keeps a volume', () => {
     const snapshot = snapshotOf({ status: { ...connected(), backend: 'filesystem' } });
-    expect(obs(snapshot, 'registry-storage:bucket', 'flui.registry.bucket_in_use')!.presentedAs.value).toBe(false);
-    expect(obs(snapshot, 'registry-storage:bucket', 'flui.registry.bucket_provider')!.presentedAs.text).toBe('Scaleway');
+    expect(
+      obs(snapshot, 'registry-storage:bucket', 'flui.registry.bucket_in_use')!.presentedAs.value,
+    ).toBe(false);
+    expect(
+      obs(snapshot, 'registry-storage:bucket', 'flui.registry.bucket_provider')!.presentedAs.text,
+    ).toBe('Scaleway');
   });
 
   it('moves attention onto the replace confirmation while it is open', () => {
     const snapshot = snapshotOf({ status: connected(), confirmReplace: 'scaleway' });
-    expect(snapshot.attention).toEqual([{ scopeId: 'registry-storage:confirm-replace', reason: 'overlay' }]);
+    expect(snapshot.attention).toEqual([
+      { scopeId: 'registry-storage:confirm-replace', reason: 'overlay' },
+    ]);
     expect(snapshotOf({ status: connected() }).attention).toEqual([
       { scopeId: 'registry-storage', reason: 'route' },
     ]);
@@ -178,16 +199,24 @@ describe('image registry storage surface producer', () => {
       confirmRemove: { createdByFlui: true },
     });
     expectValidSurface(snapshot);
-    expect(obs(snapshot, 'registry-storage:bucket', 'flui.registry.replaced_buckets')!.presentedAs.value).toBe(2);
     expect(
-      obs(snapshot, 'registry-storage:bucket', 'flui.registry.replaced_buckets_created_by_flui')!.presentedAs.value,
+      obs(snapshot, 'registry-storage:bucket', 'flui.registry.replaced_buckets')!.presentedAs.value,
+    ).toBe(2);
+    expect(
+      obs(snapshot, 'registry-storage:bucket', 'flui.registry.replaced_buckets_created_by_flui')!
+        .presentedAs.value,
     ).toBe(1);
-    expect(snapshot.attention).toEqual([{ scopeId: 'registry-storage:confirm-remove', reason: 'overlay' }]);
+    expect(snapshot.attention).toEqual([
+      { scopeId: 'registry-storage:confirm-remove', reason: 'overlay' },
+    ]);
     expect(JSON.stringify(snapshot)).not.toContain('acme-flui-images');
   });
 
   it('reports a failed removal as a coded view error', () => {
-    expect(scope(snapshotOf({ replacedBuckets: 1, hasRemoveError: true }), 'registry-storage:bucket')!.state).toEqual({
+    expect(
+      scope(snapshotOf({ replacedBuckets: 1, hasRemoveError: true }), 'registry-storage:bucket')!
+        .state,
+    ).toEqual({
       error: true,
       errorCode: 'flui.registry.remove_failed',
     });
@@ -230,7 +259,10 @@ describe('image registry storage surface producer', () => {
   });
 
   it('carries the traffic figures and the selected window as numbers', () => {
-    const snapshot = snapshotOf({ trafficWindow: '7d', traffic: traffic({ readFromBucketBytes: 5 * GIB }) });
+    const snapshot = snapshotOf({
+      trafficWindow: '7d',
+      traffic: traffic({ readFromBucketBytes: 5 * GIB }),
+    });
     expectValidSurface(snapshot);
     const t = (key: string) => obs(snapshot, 'registry-storage:traffic', key)!.presentedAs;
     expect(t('flui.registry.traffic.window').text).toBe('7d');
@@ -243,8 +275,12 @@ describe('image registry storage surface producer', () => {
   });
 
   it('leaves out the bucket read on a volume, and the whole traffic region when it is not readable', () => {
-    expect(obs(snapshotOf(), 'registry-storage:traffic', 'flui.registry.traffic.read_from_bucket')).toBeUndefined();
-    expect(scope(snapshotOf({ trafficHidden: true, traffic: null }), 'registry-storage:traffic')).toBeUndefined();
+    expect(
+      obs(snapshotOf(), 'registry-storage:traffic', 'flui.registry.traffic.read_from_bucket'),
+    ).toBeUndefined();
+    expect(
+      scope(snapshotOf({ trafficHidden: true, traffic: null }), 'registry-storage:traffic'),
+    ).toBeUndefined();
   });
 
   it('marks the traffic region loading while a window is being read', () => {

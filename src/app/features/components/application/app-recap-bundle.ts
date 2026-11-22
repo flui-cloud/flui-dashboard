@@ -24,7 +24,12 @@ export interface ComponentTrend {
 }
 
 /** CPU and memory percentages from a metrics history, oldest first, gaps left out. */
-export function trendOf(points: ReadonlyArray<{ cpu_utilization_percent?: number | null; memory_utilization_percent?: number | null }>): ComponentTrend {
+export function trendOf(
+  points: ReadonlyArray<{
+    cpu_utilization_percent?: number | null;
+    memory_utilization_percent?: number | null;
+  }>,
+): ComponentTrend {
   const values = (pick: (p: (typeof points)[number]) => number | null | undefined) =>
     points.map(pick).filter((v): v is number => typeof v === 'number' && Number.isFinite(v));
   return {
@@ -65,7 +70,10 @@ export function roleOf(app: Application): string {
   return labels?.['flui.cloud/composed-component'] ?? app.name;
 }
 
-function replicaSummary(ready: number | null | undefined, desired: number | null | undefined): string {
+function replicaSummary(
+  ready: number | null | undefined,
+  desired: number | null | undefined,
+): string {
   if (ready == null || desired == null) return 'replicas not reported';
   const noun = desired === 1 ? 'replica' : 'replicas';
   return `${ready} of ${desired} ${noun}`;
@@ -81,11 +89,23 @@ export function componentCard(
   const replicas = replicaSummary(s?.replicas_ready, s?.replicas_desired);
   const volume = metrics?.volume?.capacity_bytes;
   const bars: ComponentCard['bars'] = [
-    { key: 'CPU', percent: metrics?.cpu?.utilization_percent ?? null, color: NODE_SERIES_COLORS[0] },
-    { key: 'MEM', percent: metrics?.memory?.utilization_percent ?? null, color: NODE_SERIES_COLORS[1] },
+    {
+      key: 'CPU',
+      percent: metrics?.cpu?.utilization_percent ?? null,
+      color: NODE_SERIES_COLORS[0],
+    },
+    {
+      key: 'MEM',
+      percent: metrics?.memory?.utilization_percent ?? null,
+      color: NODE_SERIES_COLORS[1],
+    },
   ];
   if (volume != null) {
-    bars.push({ key: 'DISK', percent: metrics?.volume?.utilization_percent ?? null, color: NODE_SERIES_COLORS[2] });
+    bars.push({
+      key: 'DISK',
+      percent: metrics?.volume?.utilization_percent ?? null,
+      color: NODE_SERIES_COLORS[2],
+    });
   }
   const engine = databaseEngineOf(app);
   const badge = engine
@@ -102,7 +122,10 @@ export function componentCard(
   };
 }
 
-export function splitCards(cards: ComponentCard[], primaryId: string | undefined): { front: ComponentCard[]; back: ComponentCard[] } {
+export function splitCards(
+  cards: ComponentCard[],
+  primaryId: string | undefined,
+): { front: ComponentCard[]; back: ComponentCard[] } {
   const isFront = (c: ComponentCard) => c.app.id === primaryId || c.app.exposure === 'public';
   const matched = cards.filter(isFront);
   const front = matched.length ? matched : cards.slice(0, 1);
@@ -145,7 +168,11 @@ export function backupAlarms(
 }
 
 /** Audit answers per component, merged newest first; a component whose read failed is `null`. */
-export function recentEvents(components: Application[], answers: unknown[], limit = 5): RecentEvent[] {
+export function recentEvents(
+  components: Application[],
+  answers: unknown[],
+  limit = 5,
+): RecentEvent[] {
   const merged: RecentEvent[] = [];
   answers.forEach((value, i) => {
     if (value == null) return;
@@ -154,7 +181,8 @@ export function recentEvents(components: Application[], answers: unknown[], limi
       merged.push({
         id: e.id,
         at: e.createdAt,
-        text: components.length > 1 ? `${roleOf(components[i])}: ${appEventText(e)}` : appEventText(e),
+        text:
+          components.length > 1 ? `${roleOf(components[i])}: ${appEventText(e)}` : appEventText(e),
         tone: EVENT_TONE[e.eventType] ?? 'muted',
       });
     }
@@ -180,9 +208,15 @@ export function dbData(metrics: AppMetricsDto | undefined): { value: string; lab
   };
 }
 
-export function dbLastBackup(protection: AppProtection | undefined, now = Date.now()): { value: string; tone: Tone } {
+export function dbLastBackup(
+  protection: AppProtection | undefined,
+  now = Date.now(),
+): { value: string; tone: Tone } {
   const cov = protection?.coverage;
   if (!cov) return { value: '—', tone: 'muted' };
   if (!cov.lastSuccessAt) return { value: 'None', tone: cov.holdsData ? 'warn' : 'muted' };
-  return { value: relativeTime(cov.lastSuccessAt, now), tone: cov.coverage === 'protected' ? 'ok' : 'warn' };
+  return {
+    value: relativeTime(cov.lastSuccessAt, now),
+    tone: cov.coverage === 'protected' ? 'ok' : 'warn',
+  };
 }

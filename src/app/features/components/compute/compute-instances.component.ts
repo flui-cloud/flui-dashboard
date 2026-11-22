@@ -1,5 +1,13 @@
-
-import { Component, OnDestroy, OnInit, computed, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnDestroy,
+  OnInit,
+  computed,
+  effect,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -21,11 +29,7 @@ import {
 } from '@spartan-ng/ui-card-helm';
 import { HlmInputDirective } from '@spartan-ng/ui-input-helm';
 import { HlmLabelDirective } from '@spartan-ng/ui-label-helm';
-import {
-  InstanceResponseDto,
-  ProviderErrorDto,
-  VirtualInstancesService,
-} from '../../../core/api';
+import { InstanceResponseDto, ProviderErrorDto, VirtualInstancesService } from '../../../core/api';
 import { InstanceWithLabels } from '../../model/instance.models';
 import { ProvidersService } from '../../service/providers.service';
 import { InstanceRowComponent } from './instance-row.component';
@@ -56,8 +60,8 @@ interface FilterState {
     HlmButtonDirective,
     HlmInputDirective,
     HlmLabelDirective,
-    InstanceRowComponent
-],
+    InstanceRowComponent,
+  ],
   providers: [
     provideIcons({
       lucideServer,
@@ -74,9 +78,7 @@ interface FilterState {
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="p-6 space-y-6">
-      <div
-        class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
-      >
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 class="text-3xl font-bold text-foreground">Compute Instances</h1>
           <p class="text-muted-foreground">
@@ -128,7 +130,7 @@ interface FilterState {
                   >
                     <option value="">All providers</option>
                     @for (p of activeProviders(); track p.id) {
-                    <option [value]="p.id">{{ p.displayName }}</option>
+                      <option [value]="p.id">{{ p.displayName }}</option>
                     }
                   </select>
                   <ng-icon
@@ -172,7 +174,7 @@ interface FilterState {
                   >
                     <option value="">All regions</option>
                     @for (region of uniqueRegions(); track region) {
-                    <option [value]="region">{{ region }}</option>
+                      <option [value]="region">{{ region }}</option>
                     }
                   </select>
                   <ng-icon
@@ -184,120 +186,119 @@ interface FilterState {
             </div>
 
             @if (hasActiveFilters()) {
-            <button
-              hlmBtn
-              variant="outline"
-              size="sm"
-              (click)="clearAllFilters()"
-              class="shrink-0"
-            >
-              <ng-icon name="lucideX" class="h-4 w-4 mr-2" />
-              Clear filters
-            </button>
+              <button
+                hlmBtn
+                variant="outline"
+                size="sm"
+                (click)="clearAllFilters()"
+                class="shrink-0"
+              >
+                <ng-icon name="lucideX" class="h-4 w-4 mr-2" />
+                Clear filters
+              </button>
             }
           </div>
 
           <!-- Active Filters Display - Always visible container -->
           <div class="flex flex-wrap gap-2 mt-4 min-h-[28px]">
             @if (filters().search) {
-            <span class="inline-flex items-center gap-1 px-2 py-1 text-xs bg-primary/10 text-primary rounded-md">
-              Search: "{{ filters().search }}"
-              <button (click)="clearFilter('search')" class="hover:bg-primary/20 rounded p-0.5">
-                <ng-icon name="lucideX" class="h-3 w-3" />
-              </button>
-            </span>
+              <span
+                class="inline-flex items-center gap-1 px-2 py-1 text-xs bg-primary/10 text-primary rounded-md"
+              >
+                Search: "{{ filters().search }}"
+                <button (click)="clearFilter('search')" class="hover:bg-primary/20 rounded p-0.5">
+                  <ng-icon name="lucideX" class="h-3 w-3" />
+                </button>
+              </span>
             }
             @if (filters().provider) {
-            <span class="inline-flex items-center gap-1 px-2 py-1 text-xs bg-primary/10 text-primary rounded-md">
-              Provider: {{ getProviderLabel(filters().provider) }}
-              <button (click)="clearFilter('provider')" class="hover:bg-primary/20 rounded p-0.5">
-                <ng-icon name="lucideX" class="h-3 w-3" />
-              </button>
-            </span>
+              <span
+                class="inline-flex items-center gap-1 px-2 py-1 text-xs bg-primary/10 text-primary rounded-md"
+              >
+                Provider: {{ getProviderLabel(filters().provider) }}
+                <button (click)="clearFilter('provider')" class="hover:bg-primary/20 rounded p-0.5">
+                  <ng-icon name="lucideX" class="h-3 w-3" />
+                </button>
+              </span>
             }
             @if (filters().status) {
-            <span class="inline-flex items-center gap-1 px-2 py-1 text-xs bg-primary/10 text-primary rounded-md">
-              Status: {{ getStatusLabel(filters().status) }}
-              <button (click)="clearFilter('status')" class="hover:bg-primary/20 rounded p-0.5">
-                <ng-icon name="lucideX" class="h-3 w-3" />
-              </button>
-            </span>
+              <span
+                class="inline-flex items-center gap-1 px-2 py-1 text-xs bg-primary/10 text-primary rounded-md"
+              >
+                Status: {{ getStatusLabel(filters().status) }}
+                <button (click)="clearFilter('status')" class="hover:bg-primary/20 rounded p-0.5">
+                  <ng-icon name="lucideX" class="h-3 w-3" />
+                </button>
+              </span>
             }
             @if (filters().region) {
-            <span class="inline-flex items-center gap-1 px-2 py-1 text-xs bg-primary/10 text-primary rounded-md">
-              Region: {{ filters().region }}
-              <button (click)="clearFilter('region')" class="hover:bg-primary/20 rounded p-0.5">
-                <ng-icon name="lucideX" class="h-3 w-3" />
-              </button>
-            </span>
+              <span
+                class="inline-flex items-center gap-1 px-2 py-1 text-xs bg-primary/10 text-primary rounded-md"
+              >
+                Region: {{ filters().region }}
+                <button (click)="clearFilter('region')" class="hover:bg-primary/20 rounded p-0.5">
+                  <ng-icon name="lucideX" class="h-3 w-3" />
+                </button>
+              </span>
             }
             @if (!hasActiveFilters()) {
-            <span class="text-xs text-muted-foreground italic py-1">
-              No active filters
-            </span>
+              <span class="text-xs text-muted-foreground italic py-1"> No active filters </span>
             }
           </div>
         </div>
 
         <div hlmCardContent class="p-0">
           @if (partialErrors().length > 0) {
-          <div
-            class="mx-6 mb-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg"
-          >
             <div
-              class="flex items-center gap-2 text-yellow-800 dark:text-yellow-200 font-medium mb-2"
+              class="mx-6 mb-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg"
             >
-              <ng-icon name="lucideTriangleAlert" class="h-4 w-4" />
-              Partial Data Warning
+              <div
+                class="flex items-center gap-2 text-yellow-800 dark:text-yellow-200 font-medium mb-2"
+              >
+                <ng-icon name="lucideTriangleAlert" class="h-4 w-4" />
+                Partial Data Warning
+              </div>
+              <div class="text-sm text-yellow-700 dark:text-yellow-300 space-y-1">
+                @for (error of partialErrors(); track error.provider) {
+                  <div>{{ error.provider }}: {{ error.message }}</div>
+                }
+              </div>
             </div>
-            <div class="text-sm text-yellow-700 dark:text-yellow-300 space-y-1">
-              @for (error of partialErrors(); track error.provider) {
-              <div>{{ error.provider }}: {{ error.message }}</div>
-              }
-            </div>
-          </div>
           }
 
           @if (isLoading()) {
-          <div class="flex items-center justify-center py-12">
-            <div class="flex items-center gap-2 text-muted-foreground">
-              <ng-icon name="lucideLoader" class="h-5 w-5 animate-spin" />
-              Loading instances...
+            <div class="flex items-center justify-center py-12">
+              <div class="flex items-center gap-2 text-muted-foreground">
+                <ng-icon name="lucideLoader" class="h-5 w-5 animate-spin" />
+                Loading instances...
+              </div>
             </div>
-          </div>
           } @else if (filteredInstances().length === 0) {
-          <div
-            class="flex flex-col items-center justify-center py-12 text-center"
-          >
-            <ng-icon
-              name="lucideServer"
-              class="h-12 w-12 text-muted-foreground mb-4"
-            />
-            <h3 class="text-lg font-medium text-foreground mb-2">
-              No instances found
-            </h3>
-            <p class="text-muted-foreground mb-4">
-              @if (hasActiveFilters()) {
-                Try adjusting your filters to see more instances.
-              } @else {
-                Instances will appear automatically when your cluster scales up.
-              }
-            </p>
-            <div class="flex gap-2">
-              @if (hasActiveFilters()) {
-              <button hlmBtn variant="outline" (click)="clearAllFilters()">
-                <ng-icon name="lucideX" class="h-4 w-4 mr-2" />
-                Clear filters
-              </button>
+            <div class="flex flex-col items-center justify-center py-12 text-center">
+              <ng-icon name="lucideServer" class="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 class="text-lg font-medium text-foreground mb-2">No instances found</h3>
+              <p class="text-muted-foreground mb-4">
+                @if (hasActiveFilters()) {
+                  Try adjusting your filters to see more instances.
+                } @else {
+                  Instances will appear automatically when your cluster scales up.
+                }
+              </p>
+              <div class="flex gap-2">
+                @if (hasActiveFilters()) {
+                  <button hlmBtn variant="outline" (click)="clearAllFilters()">
+                    <ng-icon name="lucideX" class="h-4 w-4 mr-2" />
+                    Clear filters
+                  </button>
+                }
+              </div>
+            </div>
+          } @else {
+            <div class="flex flex-col gap-2 p-4">
+              @for (instance of filteredInstances(); track instance.id || instance.providerId) {
+                <app-instance-row [instance]="instance" />
               }
             </div>
-          </div>
-          } @else {
-          <div class="flex flex-col gap-2 p-4">
-            @for (instance of filteredInstances(); track instance.id || instance.providerId) {
-              <app-instance-row [instance]="instance" />
-            }
-          </div>
           }
         </div>
       </div>
@@ -370,10 +371,7 @@ export class ComputeInstancesComponent implements OnInit, OnDestroy {
         }
       }
 
-      if (
-        currentFilters.provider &&
-        instance.provider !== currentFilters.provider
-      ) {
+      if (currentFilters.provider && instance.provider !== currentFilters.provider) {
         return false;
       }
 
@@ -410,19 +408,31 @@ export class ComputeInstancesComponent implements OnInit, OnDestroy {
   loadInstances() {
     this.isLoading.set(true);
 
-    this.virtualInstancesService.instancesControllerFindAll(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, true).subscribe({
-      next: (response: InstanceResponseDto) => {
-        this.instances.set(response.data || []);
-        this.partialErrors.set(response.partialErrors || []);
-        this.isLoading.set(false);
-      },
-      error: (error) => {
-        console.error('Failed to load instances:', error);
-        this.instances.set([]);
-        this.partialErrors.set([]);
-        this.isLoading.set(false);
-      },
-    });
+    this.virtualInstancesService
+      .instancesControllerFindAll(
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        true,
+      )
+      .subscribe({
+        next: (response: InstanceResponseDto) => {
+          this.instances.set(response.data || []);
+          this.partialErrors.set(response.partialErrors || []);
+          this.isLoading.set(false);
+        },
+        error: (error) => {
+          console.error('Failed to load instances:', error);
+          this.instances.set([]);
+          this.partialErrors.set([]);
+          this.isLoading.set(false);
+        },
+      });
   }
 
   refreshInstances() {

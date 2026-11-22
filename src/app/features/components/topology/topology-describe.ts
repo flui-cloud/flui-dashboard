@@ -35,7 +35,10 @@ export interface InspectorView {
 type Snapshot = TopologyResponseDto;
 type Section = InspectorView['sections'][number];
 
-export function describeFocus(focus: TopologyFocus | null, t: Snapshot | null): InspectorView | null {
+export function describeFocus(
+  focus: TopologyFocus | null,
+  t: Snapshot | null,
+): InspectorView | null {
   if (!focus || !t) return null;
   switch (focus.type) {
     case 'cluster':
@@ -57,7 +60,8 @@ const clusterNameIn = (t: Snapshot, id: string) => t.clusters.find((c) => c.id =
 const appIn = (t: Snapshot, id: string | undefined) => t.apps.find((a) => a.id === id);
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 /** A section only when it has rows: an empty heading says nothing. */
-const section = (title: string, rows: InspectorRow[]): Section[] => (rows.length ? [{ title, rows }] : []);
+const section = (title: string, rows: InspectorRow[]): Section[] =>
+  rows.length ? [{ title, rows }] : [];
 
 function routeUrl(l: TopologyLinkDto): string {
   const path = l.routePath && l.routePath !== '/' ? l.routePath : '';
@@ -68,7 +72,14 @@ function describeCluster(t: Snapshot, id: string): InspectorView {
   const c = t.clusters.find((x) => x.id === id)!;
   const problems = t.apps.filter((a) => a.clusterId === c.id && a.status !== 'running');
   const open: Section[] = c.inbound
-    ? [{ title: 'Open to the Internet', rows: c.inbound.length ? c.inbound.map((r, i) => inboundRow(r, i)) : [{ key: 'in-none', label: 'Nothing', detail: '' }] }]
+    ? [
+        {
+          title: 'Open to the Internet',
+          rows: c.inbound.length
+            ? c.inbound.map((r, i) => inboundRow(r, i))
+            : [{ key: 'in-none', label: 'Nothing', detail: '' }],
+        },
+      ]
     : [];
   return {
     kind: 'Cluster',
@@ -84,7 +95,10 @@ function describeCluster(t: Snapshot, id: string): InspectorView {
       ...(c.inbound === null ? [{ label: 'Firewall', value: 'None managed by Flui' }] : []),
     ],
     sections: [
-      ...section('Needs attention', problems.map((a) => appRow(a, a.statusReason ?? statusLabel(a.status)))),
+      ...section(
+        'Needs attention',
+        problems.map((a) => appRow(a, a.statusReason ?? statusLabel(a.status))),
+      ),
       ...open,
     ],
   };
@@ -105,10 +119,18 @@ function describePlatform(t: Snapshot, clusterId: string): InspectorView {
     facts: [
       { label: 'Apps', value: `${own.length}` },
       { label: 'Replicas', value: `${own.reduce((n, a) => n + a.replicaCount, 0)}` },
-      { label: 'Memory request', value: memory(own.reduce((n, a) => n + a.ramRequestMB * a.replicaCount, 0)) },
-      { label: 'CPU request', value: cpu(own.reduce((n, a) => n + a.cpuRequestM * a.replicaCount, 0)) },
+      {
+        label: 'Memory request',
+        value: memory(own.reduce((n, a) => n + a.ramRequestMB * a.replicaCount, 0)),
+      },
+      {
+        label: 'CPU request',
+        value: cpu(own.reduce((n, a) => n + a.cpuRequestM * a.replicaCount, 0)),
+      },
     ],
-    sections: [{ title: 'Apps', rows: own.map((a) => appRow(a, a.statusReason ?? `×${a.replicaCount}`)) }],
+    sections: [
+      { title: 'Apps', rows: own.map((a) => appRow(a, a.statusReason ?? `×${a.replicaCount}`)) },
+    ],
   };
 }
 
@@ -126,7 +148,9 @@ const ARCHITECTURE: Record<string, string> = { arm: 'Arm', x86: 'x86' };
 function describeServer(t: Snapshot, id: string): InspectorView {
   const s = t.servers.find((x) => x.id === id)!;
   const hosted = t.apps.filter((a) => a.replicas.some((r) => r.serverId === s.id));
-  const reserved = s.capacity ? `${memory(s.capacity.requestedMemMi)} of ${memory(s.capacity.allocatableMemMi)}` : '—';
+  const reserved = s.capacity
+    ? `${memory(s.capacity.requestedMemMi)} of ${memory(s.capacity.allocatableMemMi)}`
+    : '—';
   return {
     kind: 'Server',
     title: s.nodeName,
@@ -143,10 +167,14 @@ function describeServer(t: Snapshot, id: string): InspectorView {
       { label: 'Flui network', value: FLUI_NETWORK[s.fluiNetwork] ?? '—' },
       { label: 'Private network', value: s.privateNetwork ? 'Yes' : 'No' },
     ],
-    sections: [{
-      title: 'Runs here',
-      rows: hosted.map((a) => appRow(a, `×${a.replicas.find((r) => r.serverId === s.id)!.count}`)),
-    }],
+    sections: [
+      {
+        title: 'Runs here',
+        rows: hosted.map((a) =>
+          appRow(a, `×${a.replicas.find((r) => r.serverId === s.id)!.count}`),
+        ),
+      },
+    ],
   };
 }
 
@@ -160,10 +188,14 @@ function describeStack(t: Snapshot, id: string): InspectorView {
     status: statusLabel(st.status),
     tone: toneOf(st.status),
     facts: [{ label: 'Apps', value: `${members.length}` }],
-    sections: [{
-      title: 'Apps',
-      rows: members.map((a) => appRow(a, `×${a.replicaCount} on ${plural(a.replicas.length, 'server')}`)),
-    }],
+    sections: [
+      {
+        title: 'Apps',
+        rows: members.map((a) =>
+          appRow(a, `×${a.replicaCount} on ${plural(a.replicas.length, 'server')}`),
+        ),
+      },
+    ],
   };
 }
 
@@ -189,8 +221,14 @@ function describeApp(t: Snapshot, id: string): InspectorView {
     sections: [
       { title: 'Replicas', rows: a.replicas.map((r) => replicaRow(t, r.serverId, r.count)) },
       ...section('Reachable from the Internet', routes.map(routeRow)),
-      ...section('Called by', calledBy.map((l) => appRow(appIn(t, l.from.appId)!, l.label))),
-      ...section('Talks to', talksTo.map((l) => appRow(appIn(t, l.to.appId)!, l.label))),
+      ...section(
+        'Called by',
+        calledBy.map((l) => appRow(appIn(t, l.from.appId)!, l.label)),
+      ),
+      ...section(
+        'Talks to',
+        talksTo.map((l) => appRow(appIn(t, l.to.appId)!, l.label)),
+      ),
     ],
   };
 }
@@ -207,7 +245,10 @@ function replicaRow(t: Snapshot, serverId: string, count: number): InspectorRow 
 }
 
 function routeRow(l: TopologyLinkDto): InspectorRow {
-  const detail = [l.targetPort ? `→ :${l.targetPort}` : '', l.traffic.measured ? rps(l.traffic.rps) : ''];
+  const detail = [
+    l.targetPort ? `→ :${l.targetPort}` : '',
+    l.traffic.measured ? rps(l.traffic.rps) : '',
+  ];
   return {
     key: l.id,
     label: routeUrl(l),
@@ -224,7 +265,8 @@ function crossingLabel(l: TopologyLinkDto): string {
 
 function describeLink(t: Snapshot, id: string): InspectorView {
   const l = t.links.find((x) => x.id === id)!;
-  const from = l.from.kind === 'internet' ? 'Internet' : (appIn(t, l.from.appId)?.displayName ?? '—');
+  const from =
+    l.from.kind === 'internet' ? 'Internet' : (appIn(t, l.from.appId)?.displayName ?? '—');
   const to = appIn(t, l.to.appId)?.displayName ?? '—';
   return {
     kind: 'Link',
@@ -241,6 +283,15 @@ function describeLink(t: Snapshot, id: string): InspectorView {
   };
 }
 
-function appRow(a: { id: string; displayName: string; status: string }, detail: string): InspectorRow {
-  return { key: a.id, label: a.displayName, detail, tone: toneOf(a.status), focus: { type: 'app', id: a.id } };
+function appRow(
+  a: { id: string; displayName: string; status: string },
+  detail: string,
+): InspectorRow {
+  return {
+    key: a.id,
+    label: a.displayName,
+    detail,
+    tone: toneOf(a.status),
+    focus: { type: 'app', id: a.id },
+  };
 }

@@ -8,15 +8,22 @@
  * Custom success state with cluster-specific actions (Go to Cluster)
  */
 
-import { Component, OnInit, AfterViewChecked, inject, computed, signal, effect, ElementRef, viewChild, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  AfterViewChecked,
+  inject,
+  computed,
+  signal,
+  effect,
+  ElementRef,
+  viewChild,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideCopy,
-  lucideDownload,
-  lucideLoader,
-} from '@ng-icons/lucide';
+import { lucideCopy, lucideDownload, lucideLoader } from '@ng-icons/lucide';
 import {
   OperationProgressTrackerComponent,
   OperationLabels,
@@ -54,24 +61,37 @@ import { InstallLogService } from '../../service/install-log.service';
         <div class="px-5 py-3 border-b border-border flex items-center justify-between">
           <h2 class="text-sm font-medium">Install log</h2>
           <div class="flex items-center gap-3">
-            <button (click)="copyLog()"
-              class="inline-flex items-center text-xs text-muted-foreground hover:text-foreground transition-colors">
+            <button
+              (click)="copyLog()"
+              class="inline-flex items-center text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
               <ng-icon name="lucideCopy" class="h-3.5 w-3.5 mr-1" />
               Copy
             </button>
-            <button (click)="downloadLog()" [disabled]="downloadingLog()"
-              class="inline-flex items-center text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-60">
-              <ng-icon [name]="downloadingLog() ? 'lucideLoader' : 'lucideDownload'" class="h-3.5 w-3.5 mr-1" [class.animate-spin]="downloadingLog()" />
+            <button
+              (click)="downloadLog()"
+              [disabled]="downloadingLog()"
+              class="inline-flex items-center text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-60"
+            >
+              <ng-icon
+                [name]="downloadingLog() ? 'lucideLoader' : 'lucideDownload'"
+                class="h-3.5 w-3.5 mr-1"
+                [class.animate-spin]="downloadingLog()"
+              />
               Download
             </button>
           </div>
         </div>
         <div class="p-4 bg-zinc-950">
-          <div #logContainer class="font-mono text-xs text-zinc-300 h-64 overflow-y-auto whitespace-pre-wrap leading-relaxed">{{ installLog() }}</div>
+          <div
+            #logContainer
+            class="font-mono text-xs text-zinc-300 h-64 overflow-y-auto whitespace-pre-wrap leading-relaxed"
+          >
+            {{ installLog() }}
+          </div>
         </div>
       </div>
     }
-
   `,
 })
 export class ClusterProgressTrackerComponent implements OnInit, AfterViewChecked {
@@ -128,9 +148,9 @@ export class ClusterProgressTrackerComponent implements OnInit, AfterViewChecked
         this.router.navigate(['/cluster']);
         return;
       }
-  
+
       this.operationId = opId;
-  
+
       // Start tracking this operation using ClusterService
       // (which internally uses the same OperationTrackerService)
       try {
@@ -138,7 +158,7 @@ export class ClusterProgressTrackerComponent implements OnInit, AfterViewChecked
       } catch (error) {
         console.error('Failed to track cluster creation:', error);
       }
-  
+
       // Try to extract clusterId from metadata if available
       // This allows navigation on success even if cluster is not fully loaded yet
       const op = this.trackerService.operation();
@@ -149,7 +169,6 @@ export class ClusterProgressTrackerComponent implements OnInit, AfterViewChecked
   }
 
   onOperationCompleted(): void {
-
     // Fetch final cluster details to update state
     const cluster = this.clusterInfo();
     if (cluster?.id) {

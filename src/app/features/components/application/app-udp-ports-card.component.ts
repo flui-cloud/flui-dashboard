@@ -45,14 +45,9 @@ import {
                 <li>
                   <span class="font-mono">{{ p.port }}</span>
                   <span class="text-muted-foreground"> {{ p.name }} · </span>
-                  <span
-                    [class]="
-                      p.state === 'open'
-                        ? ''
-                        : 'text-amber-700 dark:text-amber-300'
-                    "
-                    >{{ stateText[p.state] }}</span
-                  >
+                  <span [class]="p.state === 'open' ? '' : 'text-amber-700 dark:text-amber-300'">{{
+                    stateText[p.state]
+                  }}</span>
                 </li>
               }
             </ul>
@@ -80,19 +75,14 @@ export class AppUdpPortsCardComponent {
   readonly view = signal<UdpPortsView | null>(null);
   readonly stateText = UDP_STATE_TEXT;
 
-  readonly allOpen = computed(
-    () => this.view()?.ports.every((p) => p.state === 'open') ?? true,
-  );
+  readonly allOpen = computed(() => this.view()?.ports.every((p) => p.state === 'open') ?? true);
   readonly advice = computed(() => {
     const v = this.view();
     return v ? udpPortsAdvice(v) : null;
   });
   readonly showFirewallLink = computed(() => {
     const v = this.view();
-    return (
-      !!v?.firewallId &&
-      v.ports.some((p) => p.state === 'closed' || p.state === 'pending')
-    );
+    return !!v?.firewallId && v.ports.some((p) => p.state === 'closed' || p.state === 'pending');
   });
 
   constructor() {

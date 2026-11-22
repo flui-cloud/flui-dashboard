@@ -19,25 +19,24 @@ import {
     HlmBreadcrumbListDirective,
     HlmBreadcrumbItemDirective,
     HlmBreadcrumbPageDirective,
-    HlmBreadcrumbLinkDirective
+    HlmBreadcrumbLinkDirective,
   ],
   template: `
-  <nav hlmBreadcrumb>
-    <ol hlmBreadcrumbList>
+    <nav hlmBreadcrumb>
+      <ol hlmBreadcrumbList>
         <li hlmBreadcrumbItem>
-            <a hlmBreadcrumbLink href="/home">Home</a>
+          <a hlmBreadcrumbLink href="/home">Home</a>
         </li>
         <li hlmBreadcrumbSeparator></li>
         <li hlmBreadcrumbItem>
-            <hlm-breadcrumb-ellipsis />
+          <hlm-breadcrumb-ellipsis />
         </li>
         <li hlmBreadcrumbSeparator></li>
         <li hlmBreadcrumbItem>
-            <span hlmBreadcrumbPage>Breadcrumb</span>
+          <span hlmBreadcrumbPage>Breadcrumb</span>
         </li>
-    </ol>
-</nav>
-  `
+      </ol>
+    </nav>
+  `,
 })
-export class BreadcrumbComponent {
-}
+export class BreadcrumbComponent {}

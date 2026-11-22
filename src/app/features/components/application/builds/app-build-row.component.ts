@@ -2,7 +2,11 @@ import { Component, computed, input, output, ChangeDetectionStrategy } from '@an
 
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
-  lucideGitBranch, lucideClock, lucideExternalLink, lucideRocket, lucideLoader,
+  lucideGitBranch,
+  lucideClock,
+  lucideExternalLink,
+  lucideRocket,
+  lucideLoader,
 } from '@ng-icons/lucide';
 import { AppBuildResponseDto } from '../../../../core/api/model/appBuildResponseDto';
 import { AppBuildProviderBadgeComponent } from './app-build-provider-badge.component';
@@ -13,7 +17,9 @@ import { formatDuration, formatRelativeDate, truncateImageRef } from './build-fo
   selector: 'app-build-row',
   standalone: true,
   imports: [NgIcon, AppBuildProviderBadgeComponent, AppBuildStatusBadgeComponent],
-  providers: [provideIcons({ lucideGitBranch, lucideClock, lucideExternalLink, lucideRocket, lucideLoader })],
+  providers: [
+    provideIcons({ lucideGitBranch, lucideClock, lucideExternalLink, lucideRocket, lucideLoader }),
+  ],
   host: { class: 'contents' },
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
@@ -22,7 +28,9 @@ import { formatDuration, formatRelativeDate, truncateImageRef } from './build-fo
         <div class="flex items-center gap-2 flex-wrap">
           <app-build-provider-badge [provider]="build().provider" />
           @if (isReadyToRelease()) {
-            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+            <span
+              class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+            >
               Ready to release
             </span>
           }
@@ -39,15 +47,19 @@ import { formatDuration, formatRelativeDate, truncateImageRef } from './build-fo
       </td>
       <td class="px-4 py-3">
         @if (build().commitSha) {
-          <code class="text-xs bg-muted px-1.5 py-0.5 rounded font-mono">{{ build().commitSha!.substring(0, 7) }}</code>
+          <code class="text-xs bg-muted px-1.5 py-0.5 rounded font-mono">{{
+            build().commitSha!.substring(0, 7)
+          }}</code>
         } @else {
           <span class="text-muted-foreground">—</span>
         }
       </td>
       <td class="px-4 py-3">
         @if (build().status === 'COMPLETED' && build().imageRef) {
-          <span class="font-mono text-xs text-muted-foreground truncate max-w-[160px] inline-block align-middle"
-            [title]="build().imageRef!">
+          <span
+            class="font-mono text-xs text-muted-foreground truncate max-w-[160px] inline-block align-middle"
+            [title]="build().imageRef!"
+          >
             {{ truncate(build().imageRef!) }}
           </span>
         } @else {
@@ -66,8 +78,11 @@ import { formatDuration, formatRelativeDate, truncateImageRef } from './build-fo
       <td class="px-4 py-3 text-right">
         <div class="inline-flex items-center gap-2">
           @if (canRelease()) {
-            <button (click)="deploy.emit(build())" [disabled]="deploying()"
-              class="inline-flex items-center text-xs text-primary hover:text-primary/80 disabled:opacity-50 transition-colors">
+            <button
+              (click)="deploy.emit(build())"
+              [disabled]="deploying()"
+              class="inline-flex items-center text-xs text-primary hover:text-primary/80 disabled:opacity-50 transition-colors"
+            >
               @if (deploying()) {
                 <ng-icon name="lucideLoader" class="h-3.5 w-3.5 mr-1 animate-spin" />
               } @else {
@@ -77,14 +92,20 @@ import { formatDuration, formatRelativeDate, truncateImageRef } from './build-fo
             </button>
           }
           @if (build().provider === 'GITHUB_ACTIONS' && build().externalUrl) {
-            <a [href]="build().externalUrl" target="_blank" rel="noopener"
-              class="inline-flex items-center text-xs text-muted-foreground hover:text-foreground transition-colors">
+            <a
+              [href]="build().externalUrl"
+              target="_blank"
+              rel="noopener"
+              class="inline-flex items-center text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
               <ng-icon name="lucideExternalLink" class="h-3.5 w-3.5 mr-1" />
               View on GitHub
             </a>
           } @else {
-            <button (click)="view.emit(build())"
-              class="inline-flex items-center text-xs text-muted-foreground hover:text-foreground transition-colors">
+            <button
+              (click)="view.emit(build())"
+              class="inline-flex items-center text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
               <ng-icon name="lucideExternalLink" class="h-3.5 w-3.5 mr-1" />
               View
             </button>

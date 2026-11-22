@@ -42,7 +42,8 @@ describe('TopologyInfrastructureComponent', () => {
   it('moves focus between tiles with the arrow keys', () => {
     const fixture = render(fleetOf(8));
     const tiles = Array.from(
-      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('section')[0]
+      (fixture.nativeElement as HTMLElement)
+        .querySelectorAll<HTMLElement>('section')[0]
         .querySelectorAll<HTMLElement>('button[data-columns]'),
     );
     tiles[0].focus();

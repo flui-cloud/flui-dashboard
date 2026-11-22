@@ -36,13 +36,11 @@ import { NodeDisksService } from '../../service/node-disks.service';
         <h3 class="m-0 text-base font-semibold">Resize {{ nodeName() }}</h3>
         @if (preview(); as p) {
           <p class="m-0 mt-1 text-xs text-muted-foreground">
-            Now {{ p.node.currentServerType }}. The node is off for about
-            {{ minutes(p) }} minutes while the provider changes its type.
+            Now {{ p.node.currentServerType }}. The node is off for about {{ minutes(p) }} minutes
+            while the provider changes its type.
           </p>
 
-          <label class="mt-4 block text-xs font-medium" for="resize-type">
-            Machine type
-          </label>
+          <label class="mt-4 block text-xs font-medium" for="resize-type"> Machine type </label>
           <select
             id="resize-type"
             class="mt-1 w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm"
@@ -65,8 +63,8 @@ import { NodeDisksService } from '../../service/node-disks.service';
                 data-testid="resize-upgrade-disk"
               />
               <span>
-                Also grow the disk to the size of the new type. It cannot be
-                undone: the node can never move back to a smaller type.
+                Also grow the disk to the size of the new type. It cannot be undone: the node can
+                never move back to a smaller type.
               </span>
             </label>
           }
@@ -95,31 +93,23 @@ import { NodeDisksService } from '../../service/node-disks.service';
           }
           @for (s of p.highAvailability?.switchovers ?? []; track s.cluster) {
             <p class="m-0 mt-2 text-xs text-muted-foreground">
-              The primary of {{ s.cluster }} moves to {{ s.target }} first;
-              writes pause for a few seconds.
+              The primary of {{ s.cluster }} moves to {{ s.target }} first; writes pause for a few
+              seconds.
             </p>
           }
           @if (p.highAvailability?.refusal) {
-            <p
-              class="m-0 mt-3 text-xs text-destructive"
-              data-testid="resize-refusal"
-            >
+            <p class="m-0 mt-3 text-xs text-destructive" data-testid="resize-refusal">
               {{ p.highAvailability?.refusal }}
             </p>
           }
         } @else if (!error()) {
-          <p class="m-0 mt-3 text-xs text-muted-foreground">
-            Reading the node…
-          </p>
+          <p class="m-0 mt-3 text-xs text-muted-foreground">Reading the node…</p>
         }
         @if (error()) {
           <p class="m-0 mt-3 text-xs text-destructive">{{ error() }}</p>
         }
         @if (done()) {
-          <p
-            class="m-0 mt-3 text-xs text-muted-foreground"
-            data-testid="resize-done"
-          >
+          <p class="m-0 mt-3 text-xs text-muted-foreground" data-testid="resize-done">
             {{ done() }}
           </p>
         }
@@ -173,10 +163,7 @@ export class ResizeNodeDialogComponent implements OnInit {
   );
 
   readonly canResize = computed(
-    () =>
-      !!this.target() &&
-      !this.busy() &&
-      !this.preview()?.highAvailability?.refusal,
+    () => !!this.target() && !this.busy() && !this.preview()?.highAvailability?.refusal,
   );
 
   ngOnInit(): void {
@@ -210,10 +197,7 @@ export class ResizeNodeDialogComponent implements OnInit {
 
   label(c: ResizeCandidate): string {
     const sign = Number.parseFloat(c.monthlyDeltaEur) > 0 ? '+' : '';
-    const delta =
-      c.monthlyDeltaEur === 'n/a'
-        ? ''
-        : `, ${sign}${c.monthlyDeltaEur} €/month`;
+    const delta = c.monthlyDeltaEur === 'n/a' ? '' : `, ${sign}${c.monthlyDeltaEur} €/month`;
     return `${c.name}: ${c.cores} vCPU, ${c.memoryGb} GB, ${c.diskGb} GB disk${delta}`;
   }
 
@@ -225,8 +209,7 @@ export class ResizeNodeDialogComponent implements OnInit {
       .resize(this.clusterId(), this.nodeId(), {
         targetServerType: this.target(),
         ...(this.upgradeDisk() && { upgradeDisk: true }),
-        ...(copies &&
-          copies > (this.copiesTotal() ?? 0) && { copiesGiB: copies }),
+        ...(copies && copies > (this.copiesTotal() ?? 0) && { copiesGiB: copies }),
       })
       .subscribe({
         next: (op) => {

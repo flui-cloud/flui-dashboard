@@ -26,9 +26,7 @@ export class ClusterStorageService {
   readonly error = this.errorData.asReadonly();
 
   readonly status = computed(() => this.storageData()?.status ?? null);
-  readonly isReady = computed(
-    () => this.status() === ClusterStorageStatusDto.StatusEnum.Ready,
-  );
+  readonly isReady = computed(() => this.status() === ClusterStorageStatusDto.StatusEnum.Ready);
   readonly isDegraded = computed(
     () => this.status() === ClusterStorageStatusDto.StatusEnum.Degraded,
   );

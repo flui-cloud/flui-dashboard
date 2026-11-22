@@ -2,7 +2,8 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
 import { ApplicationListRowComponent } from './application-list-row.component';
 import { ListRow } from './applications-list-rows';
 
-export const READ_ONLY_DEMO_SHOWCASE_NOTE = 'A Flui project to look around. Like the rest of this demo, it is read-only.';
+export const READ_ONLY_DEMO_SHOWCASE_NOTE =
+  'A Flui project to look around. Like the rest of this demo, it is read-only.';
 
 /**
  * The API's sentence promises a space of one's own beside the showcase, which a
@@ -23,7 +24,9 @@ export function showcaseNote(apiWhy: string, readOnlyDemo: boolean): string {
       <div class="flex items-baseline gap-2">
         <h2 class="text-sm font-semibold text-foreground">In the showcase</h2>
         @if (readOnly()) {
-          <span class="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+          <span
+            class="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+          >
             read-only
           </span>
         }

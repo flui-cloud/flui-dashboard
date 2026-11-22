@@ -141,29 +141,56 @@ async function main() {
   const offered = (list.body?.result?.tools ?? []).map((t) => t.name).sort();
   step('the agent asks what it may do', { status: list.status, count: offered.length, offered });
 
-  const apps = JSON.parse(toolText(await mcp(minted.key, 2, 'tools/call', {
-    name: 'app_list', arguments: {},
-  })) ?? '[]');
+  const apps = JSON.parse(
+    toolText(
+      await mcp(minted.key, 2, 'tools/call', {
+        name: 'app_list',
+        arguments: {},
+      }),
+    ) ?? '[]',
+  );
   step('the agent lists the applications', { count: apps.length, slugs: apps.map((a) => a.slug) });
 
   if (INSTALL) {
-    const started = JSON.parse(toolText(await mcp(minted.key, 3, 'tools/call', {
-      name: 'app_install', arguments: { slug: INSTALL, displayName: `e2e ${INSTALL}` },
-    })) ?? '{}');
-    step('the agent installs', { slug: INSTALL, operationId: started.operationId, status: started.status });
+    const started = JSON.parse(
+      toolText(
+        await mcp(minted.key, 3, 'tools/call', {
+          name: 'app_install',
+          arguments: { slug: INSTALL, displayName: `e2e ${INSTALL}` },
+        }),
+      ) ?? '{}',
+    );
+    step('the agent installs', {
+      slug: INSTALL,
+      operationId: started.operationId,
+      status: started.status,
+    });
     for (let i = 0; i < 20 && started.operationId; i++) {
       await page.waitForTimeout(6_000);
-      const op = JSON.parse(toolText(await mcp(minted.key, 4, 'tools/call', {
-        name: 'operation_status', arguments: { operationId: started.operationId },
-      })) ?? '{}');
-      if (op.done) { step('the install finished', { status: op.status, error: op.error }); break; }
+      const op = JSON.parse(
+        toolText(
+          await mcp(minted.key, 4, 'tools/call', {
+            name: 'operation_status',
+            arguments: { operationId: started.operationId },
+          }),
+        ) ?? '{}',
+      );
+      if (op.done) {
+        step('the install finished', { status: op.status, error: op.error });
+        break;
+      }
     }
   }
 
   if (apps[0]) {
-    const logs = JSON.parse(toolText(await mcp(minted.key, 5, 'tools/call', {
-      name: 'app_logs', arguments: { applicationId: apps[0].id, since: '24h' },
-    })) ?? '{}');
+    const logs = JSON.parse(
+      toolText(
+        await mcp(minted.key, 5, 'tools/call', {
+          name: 'app_logs',
+          arguments: { applicationId: apps[0].id, since: '24h' },
+        }),
+      ) ?? '{}',
+    );
     step('the agent reads its own logs', { app: apps[0].slug, lines: logs.count });
   }
 

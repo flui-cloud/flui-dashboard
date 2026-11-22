@@ -88,9 +88,15 @@ function pageObservations(input: ApplicationSurfaceInput, app: Application): Obs
   ].filter((observation): observation is Observation => observation !== null);
 }
 
-function healthCheckObservations(appId: string, checks: AppHealthChecks | null | undefined): Observation[] {
+function healthCheckObservations(
+  appId: string,
+  checks: AppHealthChecks | null | undefined,
+): Observation[] {
   if (checks?.app_id !== appId) return [];
-  if (!checks.read) return [{ key: 'flui.application.health_checks_read', presentedAs: { value: false }, source: 'api' }];
+  if (!checks.read)
+    return [
+      { key: 'flui.application.health_checks_read', presentedAs: { value: false }, source: 'api' },
+    ];
   return [
     valueObservation('flui.application.readiness_failures_1h', checks.readiness, 'api'),
     ...(checks.readiness_busy === undefined
@@ -98,11 +104,19 @@ function healthCheckObservations(appId: string, checks: AppHealthChecks | null |
       : [valueObservation('flui.application.readiness_busy_1h', checks.readiness_busy, 'api')]),
     valueObservation('flui.application.liveness_failures_1h', checks.liveness, 'api'),
     valueObservation('flui.application.startup_failures_1h', checks.startup, 'api'),
-    valueObservation('flui.application.restarts_by_liveness_1h', checks.restarts_by_liveness, 'api'),
+    valueObservation(
+      'flui.application.restarts_by_liveness_1h',
+      checks.restarts_by_liveness,
+      'api',
+    ),
   ];
 }
 
-function tabScope(pageId: string, activeTab: string, extra: Observation[] = []): SemanticScopeSnapshot {
+function tabScope(
+  pageId: string,
+  activeTab: string,
+  extra: Observation[] = [],
+): SemanticScopeSnapshot {
   const observation = textObservation('flui.application.active_tab', activeTab, 'ui');
   const observations = [...(observation ? [observation] : []), ...extra];
   return {
@@ -152,7 +166,9 @@ export function presentedContent(input: ApplicationSurfaceInput): PresentedConte
         tabScope(
           pageId,
           input.activeTab,
-          input.activeTab === 'monitoring' ? healthCheckObservations(app.id, input.healthChecks) : [],
+          input.activeTab === 'monitoring'
+            ? healthCheckObservations(app.id, input.healthChecks)
+            : [],
         ),
       ]
     : [pageScope];

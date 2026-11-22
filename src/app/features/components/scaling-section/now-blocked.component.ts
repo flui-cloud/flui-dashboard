@@ -43,7 +43,9 @@ import { ScalingGroupStore } from './scaling-group.store';
         <div class="mt-3 flex flex-wrap items-center gap-2">
           @for (exit of b.exits; track exit.kind) {
             @if (confirming() === exit.kind) {
-              <span class="inline-flex flex-wrap items-center gap-2 rounded-md border border-border bg-card px-2 py-1 text-xs">
+              <span
+                class="inline-flex flex-wrap items-center gap-2 rounded-md border border-border bg-card px-2 py-1 text-xs"
+              >
                 {{ confirmText(exit) }}
                 <button
                   type="button"
@@ -54,20 +56,24 @@ import { ScalingGroupStore } from './scaling-group.store';
                 >
                   {{ saving() ? 'Saving…' : 'Confirm' }}
                 </button>
-                <button type="button" class="text-muted-foreground" (click)="confirming.set(null)">Cancel</button>
+                <button type="button" class="text-muted-foreground" (click)="confirming.set(null)">
+                  Cancel
+                </button>
               </span>
             } @else if (exit.kind === 'attach') {
               <a
                 [routerLink]="['/cluster', group().clusterId, 'nodes']"
                 class="rounded-md border border-border bg-card px-2.5 py-1 text-xs font-medium hover:bg-muted"
                 data-testid="alarm-exit-attach"
-              >{{ exit.label }}</a>
+                >{{ exit.label }}</a
+              >
             } @else if (exit.kind === 'add-shape' && !exit.shape) {
               <a
                 [routerLink]="['/scaling', group().id, 'group']"
                 class="rounded-md border border-border bg-card px-2.5 py-1 text-xs font-medium hover:bg-muted"
                 data-testid="alarm-exit-add-shape"
-              >{{ exit.label }}</a>
+                >{{ exit.label }}</a
+              >
             } @else {
               <button
                 type="button"
@@ -149,7 +155,9 @@ export class ScalingNowBlockedComponent {
       case 'raise-cap':
         return exit.toEur === null
           ? null
-          : { limits: { hourlyBillingOnly: g.limits.hourlyBillingOnly, maxMonthlyCost: exit.toEur } };
+          : {
+              limits: { hourlyBillingOnly: g.limits.hourlyBillingOnly, maxMonthlyCost: exit.toEur },
+            };
       case 'raise-max-nodes':
         return exit.toNodes === null ? null : { bounds: { ...g.bounds, max: exit.toNodes } };
       case 'add-shape':

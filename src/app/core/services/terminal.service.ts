@@ -4,7 +4,7 @@ import { AppConfigService } from './app-config.service';
 import { WebSocketAuthService } from './websocket-auth.service';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class TerminalService {
   private readonly appConfig = inject(AppConfigService);
@@ -12,7 +12,9 @@ export class TerminalService {
   private socket: Socket | null = null;
   private dataCallback: ((data: string | Uint8Array) => void) | null = null;
 
-  private readonly _connectionState = signal<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected');
+  private readonly _connectionState = signal<'disconnected' | 'connecting' | 'connected' | 'error'>(
+    'disconnected',
+  );
   readonly connectionState = this._connectionState.asReadonly();
 
   private readonly _sessionId = signal<string | null>(null);
@@ -31,7 +33,7 @@ export class TerminalService {
       authToken?: string;
       useBootstrapKey?: boolean;
       clusterId?: string;
-    }
+    },
   ): void {
     if (this.socket?.connected) {
       this.disconnect();

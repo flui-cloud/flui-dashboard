@@ -32,7 +32,11 @@ export interface MailProvidersSurfaceContext {
   appVersion?: string;
 }
 
-function textObservation(key: string, value: string | undefined | null, source: ObservationSource): Observation | null {
+function textObservation(
+  key: string,
+  value: string | undefined | null,
+  source: ObservationSource,
+): Observation | null {
   return value ? { key, presentedAs: { text: value }, source } : null;
 }
 
@@ -60,7 +64,11 @@ function rowObservations(c: MailConnection): Observation[] {
 }
 
 function rowScope(c: MailConnection): SemanticScopeSnapshot {
-  const entity: EntityReference = { ref: mailConnectionEntityRef(c.id), label: c.label, role: 'related' };
+  const entity: EntityReference = {
+    ref: mailConnectionEntityRef(c.id),
+    label: c.label,
+    role: 'related',
+  };
   return {
     id: `${LIST_ID}:${c.id}`,
     parentId: LIST_ID,

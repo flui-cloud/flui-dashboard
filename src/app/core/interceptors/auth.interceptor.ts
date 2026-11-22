@@ -50,8 +50,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   const token = auth.getToken();
   const isRefreshCall = req.url.includes('/auth/refresh');
-  const outReq =
-    token && !isRefreshCall ? withBearer(req, token) : withSessionCookie(req);
+  const outReq = token && !isRefreshCall ? withBearer(req, token) : withSessionCookie(req);
 
   return next(outReq).pipe(
     catchError((err: unknown) => {
@@ -68,10 +67,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   );
 };
 
-function withBearer(
-  req: HttpRequest<unknown>,
-  token: string,
-): HttpRequest<unknown> {
+function withBearer(req: HttpRequest<unknown>, token: string): HttpRequest<unknown> {
   return req.clone({ setHeaders: { Authorization: `Bearer ${token}` } });
 }
 
@@ -139,10 +135,7 @@ function tryOidcRenew(
   oidc: OidcAuthService,
 ): Observable<HttpEvent<unknown>> {
   if (!oidc.hasRefreshToken()) {
-    return throwError(
-      () =>
-        new HttpErrorResponse({ status: 401, statusText: 'Unauthorized' }),
-    );
+    return throwError(() => new HttpErrorResponse({ status: 401, statusText: 'Unauthorized' }));
   }
 
   if (isOidcRenewing) {

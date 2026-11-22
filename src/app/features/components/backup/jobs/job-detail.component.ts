@@ -27,7 +27,8 @@ import { MaskIdPipe } from '../../../../shared/pipes/mask-id.pipe';
 @Component({
   selector: 'app-job-detail',
   standalone: true,
-  imports: [MaskIdPipe, 
+  imports: [
+    MaskIdPipe,
     BackupStatusBadgeComponent,
     BackupProgressModalComponent,
     BackupBackLinkComponent,
@@ -36,10 +37,7 @@ import { MaskIdPipe } from '../../../../shared/pipes/mask-id.pipe';
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="p-6 max-w-3xl space-y-4">
-      <app-backup-back-link
-        link="/management/backup/jobs"
-        label="Back to jobs"
-      />
+      <app-backup-back-link link="/management/backup/jobs" label="Back to jobs" />
 
       @if (job(); as j) {
         <header class="flex items-start justify-between">
@@ -50,9 +48,7 @@ import { MaskIdPipe } from '../../../../shared/pipes/mask-id.pipe';
           <app-backup-status-badge kind="job" [value]="j.status" />
         </header>
 
-        <div
-          class="rounded-lg border border-border bg-card p-5 grid grid-cols-2 gap-3 text-sm"
-        >
+        <div class="rounded-lg border border-border bg-card p-5 grid grid-cols-2 gap-3 text-sm">
           <div>
             <div class="text-xs text-muted-foreground">Trigger</div>
             <div class="capitalize">{{ j.triggerType.replace('_', ' ') }}</div>
@@ -109,11 +105,7 @@ import { MaskIdPipe } from '../../../../shared/pipes/mask-id.pipe';
               </div>
             </div>
 
-            <h4
-              class="text-xs uppercase tracking-wide text-muted-foreground mt-3"
-            >
-              Locations
-            </h4>
+            <h4 class="text-xs uppercase tracking-wide text-muted-foreground mt-3">Locations</h4>
             <ul class="space-y-1 text-sm">
               @for (loc of a.locations; track loc.id) {
                 <li class="flex items-center justify-between">
@@ -121,14 +113,9 @@ import { MaskIdPipe } from '../../../../shared/pipes/mask-id.pipe';
                     <span class="font-medium">{{
                       loc.destination?.name || loc.destinationId.slice(0, 8)
                     }}</span>
-                    <span class="text-muted-foreground ml-2 capitalize">{{
-                      loc.role
-                    }}</span>
+                    <span class="text-muted-foreground ml-2 capitalize">{{ loc.role }}</span>
                   </span>
-                  <app-backup-status-badge
-                    kind="location"
-                    [value]="loc.state"
-                  />
+                  <app-backup-status-badge kind="location" [value]="loc.state" />
                 </li>
               }
             </ul>
@@ -155,9 +142,10 @@ export class JobDetailComponent implements OnInit, OnDestroy {
   protected readonly opId = signal<string | null>(null);
 
   protected stops(j: BackupJob): Array<{ volume: string; seconds: number }> {
-    return Object.entries(j.metadata?.stoppedSeconds ?? {}).map(
-      ([volume, seconds]) => ({ volume, seconds }),
-    );
+    return Object.entries(j.metadata?.stoppedSeconds ?? {}).map(([volume, seconds]) => ({
+      volume,
+      seconds,
+    }));
   }
   protected readonly formatBytes = formatBytes;
 

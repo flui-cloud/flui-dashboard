@@ -185,10 +185,28 @@ export function presentedContent(input: BuildNamespaceSurfaceInput): PresentedCo
       valueObservation('flui.build_queue.clusters', input.clusterCount, 'api'),
       boolObservation('flui.build_queue.cluster_chosen', Boolean(input.selectedClusterId), 'ui'),
       boolObservation('flui.build_queue.refused', input.refused, 'api'),
-      resources ? valueObservation('flui.build_queue.queued', resources.queued.length, 'api') : null,
-      resources ? valueObservation('flui.build_queue.running', resources.tasks.length, 'api') : null,
-      resources ? valueObservation('flui.build_queue.cpu_requested', resources.totalCpuRequestMillicores, 'api', 'm') : null,
-      resources ? valueObservation('flui.build_queue.memory_requested', resources.totalMemoryRequestMiB, 'api', 'MiB') : null,
+      resources
+        ? valueObservation('flui.build_queue.queued', resources.queued.length, 'api')
+        : null,
+      resources
+        ? valueObservation('flui.build_queue.running', resources.tasks.length, 'api')
+        : null,
+      resources
+        ? valueObservation(
+            'flui.build_queue.cpu_requested',
+            resources.totalCpuRequestMillicores,
+            'api',
+            'm',
+          )
+        : null,
+      resources
+        ? valueObservation(
+            'flui.build_queue.memory_requested',
+            resources.totalMemoryRequestMiB,
+            'api',
+            'MiB',
+          )
+        : null,
     ]),
     state: {
       loading: input.isLoadingClusters || input.isLoadingResources,
@@ -205,14 +223,26 @@ export function presentedContent(input: BuildNamespaceSurfaceInput): PresentedCo
       [PODS_ID, 'Build Workers', resources.workers.map(workerRow), resources.workers.length],
     ];
     for (const [listId, label, rows, total] of lists) {
-      const { scopes: listScopes } = buildSurfaceList({ listId, parentId: PAGE_ID, label, rows, totalCount: total });
+      const { scopes: listScopes } = buildSurfaceList({
+        listId,
+        parentId: PAGE_ID,
+        label,
+        rows,
+        totalCount: total,
+      });
       listScopes[0] = { ...listScopes[0], state: { loading: false, empty: total === 0 } };
       scopes.push(...listScopes);
     }
   }
 
   let attention: AttentionTarget[] = input.selectedClusterId
-    ? [{ scopeId: PAGE_ID, entityRef: clusterEntityRef(input.selectedClusterId), reason: 'selection' }]
+    ? [
+        {
+          scopeId: PAGE_ID,
+          entityRef: clusterEntityRef(input.selectedClusterId),
+          reason: 'selection',
+        },
+      ]
     : [{ scopeId: PAGE_ID, reason: 'route' }];
 
   if (input.cleanup.open) {
@@ -222,14 +252,27 @@ export function presentedContent(input: BuildNamespaceSurfaceInput): PresentedCo
       kind: 'form',
       label: 'Clean up',
       observations: keep([
-        valueObservation('flui.build_queue.cleanup_older_than', input.cleanup.olderThanMinutes, 'ui', 'min'),
+        valueObservation(
+          'flui.build_queue.cleanup_older_than',
+          input.cleanup.olderThanMinutes,
+          'ui',
+          'min',
+        ),
         boolObservation('flui.build_queue.cleanup_running', input.cleanup.running, 'ui'),
         input.cleanup.previewTaskCount === null
           ? null
-          : valueObservation('flui.build_queue.cleanup_preview_tasks', input.cleanup.previewTaskCount, 'api'),
+          : valueObservation(
+              'flui.build_queue.cleanup_preview_tasks',
+              input.cleanup.previewTaskCount,
+              'api',
+            ),
         input.cleanup.previewWorkerCount === null
           ? null
-          : valueObservation('flui.build_queue.cleanup_preview_workers', input.cleanup.previewWorkerCount, 'api'),
+          : valueObservation(
+              'flui.build_queue.cleanup_preview_workers',
+              input.cleanup.previewWorkerCount,
+              'api',
+            ),
       ]),
     });
     // An opened panel is a view the user switched into, not a modal and not a selection.

@@ -2,12 +2,7 @@ import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@ang
 
 import { ActivatedRoute } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideRefreshCw,
-  lucideCircleAlert,
-  lucideBug,
-  lucideClock,
-} from '@ng-icons/lucide';
+import { lucideRefreshCw, lucideCircleAlert, lucideBug, lucideClock } from '@ng-icons/lucide';
 import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
 import { PodDebugService } from '../../../service/pod-debug.service';
 import { CrashDiagnosesService } from '../../../service/crash-diagnoses.service';
@@ -24,11 +19,9 @@ import { CrashDiagnosis } from '../../../model/crash-diagnosis.models';
     HlmButtonDirective,
     PodCardComponent,
     PodDetailComponent,
-    DiagnosisDetailDialogComponent
-],
-  providers: [
-    provideIcons({ lucideRefreshCw, lucideCircleAlert, lucideBug, lucideClock }),
+    DiagnosisDetailDialogComponent,
   ],
+  providers: [provideIcons({ lucideRefreshCw, lucideCircleAlert, lucideBug, lucideClock })],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-4">
@@ -40,8 +33,8 @@ import { CrashDiagnosis } from '../../../model/crash-diagnosis.models';
             Debug pods
           </h3>
           <p class="text-xs text-gray-500 dark:text-gray-400 max-w-xl">
-            On-demand snapshot of the application pods.
-            Rate limit: 10 req/min. No automatic polling.
+            On-demand snapshot of the application pods. Rate limit: 10 req/min. No automatic
+            polling.
           </p>
         </div>
         <div class="flex items-center gap-3">
@@ -74,7 +67,9 @@ import { CrashDiagnosis } from '../../../model/crash-diagnosis.models';
 
       <!-- Error -->
       @if (service.error()) {
-        <div class="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
+        <div
+          class="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm"
+        >
           <ng-icon name="lucideCircleAlert" class="h-4 w-4 shrink-0" />
           {{ service.error() }}
         </div>
@@ -82,11 +77,15 @@ import { CrashDiagnosis } from '../../../model/crash-diagnosis.models';
 
       <!-- Pods -->
       @if (service.loading() && service.pods().length === 0) {
-        <div class="flex items-center justify-center py-12 text-sm text-gray-500 dark:text-gray-400">
+        <div
+          class="flex items-center justify-center py-12 text-sm text-gray-500 dark:text-gray-400"
+        >
           Loading pods…
         </div>
       } @else if (service.pods().length === 0) {
-        <div class="flex flex-col items-center justify-center py-16 text-center border border-dashed border-gray-200 dark:border-gray-700 rounded-lg">
+        <div
+          class="flex flex-col items-center justify-center py-16 text-center border border-dashed border-gray-200 dark:border-gray-700 rounded-lg"
+        >
           <ng-icon name="lucideBug" class="h-10 w-10 text-gray-300 dark:text-gray-600 mb-3" />
           <p class="text-sm font-medium text-gray-700 dark:text-gray-300">No pod debug info</p>
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -145,7 +144,7 @@ export class AppPodDebugTabComponent implements OnInit {
   }
 
   togglePod(name: string) {
-    this.expandedPod.update(cur => (cur === name ? null : name));
+    this.expandedPod.update((cur) => (cur === name ? null : name));
   }
 
   async openDiagnosis(diagnosisId: string) {

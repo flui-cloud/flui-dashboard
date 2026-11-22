@@ -13,9 +13,7 @@ import { exampleSubject } from './messaging-format';
   providers: [provideIcons({ lucideLoader, lucideSend })],
   template: `
     <div class="rounded-md border border-border p-3">
-      <div
-        class="mb-2 flex items-center gap-2 text-sm font-medium text-foreground"
-      >
+      <div class="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
         <ng-icon name="lucideSend" class="h-4 w-4 text-muted-foreground" />
         Produce a message
       </div>
@@ -26,8 +24,7 @@ import { exampleSubject } from './messaging-format';
           class="mb-2 h-9 w-full rounded-md border border-border bg-background px-2 text-xs text-muted-foreground"
         >
           <option value="">
-            Fill subject from a {{ s.nouns().item }} ·
-            {{ s.nouns().routing.toLowerCase() }}…
+            Fill subject from a {{ s.nouns().item }} · {{ s.nouns().routing.toLowerCase() }}…
           </option>
           @for (st of s.streams(); track st.name) {
             @for (subj of st.subjects; track subj) {
@@ -44,9 +41,8 @@ import { exampleSubject } from './messaging-format';
       />
       <p class="mb-2 text-[11px] leading-snug text-muted-foreground">
         Publish a subject that a {{ s.nouns().item }}’s
-        {{ s.nouns().routing.toLowerCase() }} captures — not the
-        {{ s.nouns().item }} name. Pick one above to start, then edit the last
-        token.
+        {{ s.nouns().routing.toLowerCase() }} captures — not the {{ s.nouns().item }} name. Pick one
+        above to start, then edit the last token.
       </p>
       <textarea
         [(ngModel)]="pubPayload"
@@ -68,11 +64,11 @@ import { exampleSubject } from './messaging-format';
         </button>
         @if (s.publishResult(); as r) {
           <span class="text-xs text-emerald-600 dark:text-emerald-400"
-            >Routed to {{ r.stream
-            }}@if (r.seq != null) {
+            >Routed to {{ r.stream }}
+            @if (r.seq != null) {
               · seq {{ r.seq }}
-            }</span
-          >
+            }
+          </span>
         }
         @if (s.publishError()) {
           <span class="text-xs text-destructive">{{ s.publishError() }}</span>

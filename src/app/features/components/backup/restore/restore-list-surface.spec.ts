@@ -30,11 +30,15 @@ function input(over: Partial<RestoreListSurfaceInput> = {}): RestoreListSurfaceI
 }
 
 function snapshotOf(over: Partial<RestoreListSurfaceInput> = {}): SurfaceSnapshot {
-  return buildRestoreListSurface(input(over), { revision: 1, generatedAt: '2026-09-02T09:00:00.000Z' });
+  return buildRestoreListSurface(input(over), {
+    revision: 1,
+    generatedAt: '2026-09-02T09:00:00.000Z',
+  });
 }
 
 const listScope = (s: SurfaceSnapshot) => s.scopes.find((x) => x.kind === 'list')!;
-const rowScope = (s: SurfaceSnapshot, id: string) => s.scopes.find((x) => x.id === `backup-restore:list:${id}`)!;
+const rowScope = (s: SurfaceSnapshot, id: string) =>
+  s.scopes.find((x) => x.id === `backup-restore:list:${id}`)!;
 
 describe('restore list surface producer', () => {
   it('emits a snapshot that validates against the real schema and passes semantic checks', () => {
@@ -47,25 +51,38 @@ describe('restore list surface producer', () => {
 
   it('bumps the revision on real change', () => {
     const tracker = new RestoreListSurfaceRevision();
-    const first = buildRestoreListSurface(input(), { revision: tracker.next(presentedContent(input())), generatedAt: '2026-09-02T09:13:00.000Z' });
+    const first = buildRestoreListSurface(input(), {
+      revision: tracker.next(presentedContent(input())),
+      generatedAt: '2026-09-02T09:13:00.000Z',
+    });
     const changed = input({ restoreJobs: [{ ...RESTORE, status: 'failed' }] });
-    const second = buildRestoreListSurface(changed, { revision: tracker.next(presentedContent(changed)), generatedAt: '2026-09-02T09:14:00.000Z' });
+    const second = buildRestoreListSurface(changed, {
+      revision: tracker.next(presentedContent(changed)),
+      generatedAt: '2026-09-02T09:14:00.000Z',
+    });
     expect(second.surface.revision).toBe(first.surface.revision + 1);
     expect(validateSurfaceSemantics(second, { previousSnapshot: first })).toEqual([]);
   });
 
   it('flags a snapshot whose revision does not advance on the previous one', () => {
     const first = snapshotOf();
-    const stale = { ...snapshotOf(), surface: { ...snapshotOf().surface, revision: first.surface.revision } };
+    const stale = {
+      ...snapshotOf(),
+      surface: { ...snapshotOf().surface, revision: first.surface.revision },
+    };
     const issues = validateSurfaceSemantics(stale, { previousSnapshot: first });
-    expect(issues).toEqual([jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' })]);
+    expect(issues).toEqual([
+      jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' }),
+    ]);
   });
 
   it('is a list page with no selection: every row is related, never primary', () => {
     const snapshot = snapshotOf();
     expect(snapshot.attention).toEqual([{ scopeId: 'backup-restore', reason: 'route' }]);
     const row = rowScope(snapshot, 'restore-1');
-    expect(row.entities).toEqual([{ ref: restoreJobEntityRef('restore-1'), label: RESTORE.createdAt, role: 'related' }]);
+    expect(row.entities).toEqual([
+      { ref: restoreJobEntityRef('restore-1'), label: RESTORE.createdAt, role: 'related' },
+    ]);
   });
 
   it('presents target kind, status and created-at', () => {

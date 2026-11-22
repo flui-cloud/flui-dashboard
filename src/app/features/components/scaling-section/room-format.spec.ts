@@ -5,9 +5,7 @@ const room = (fit: FleetRoom['largestFit']): FleetRoom => ({ nodes: [], largestF
 
 describe('the room line', () => {
   it('says the largest app that still fits, and what a bigger one does', () => {
-    expect(
-      roomLine(room({ memoryMi: 2150, cpuMillicores: 1430, node: 'master' }), null),
-    ).toBe(
+    expect(roomLine(room({ memoryMi: 2150, cpuMillicores: 1430, node: 'master' }), null)).toBe(
       'The largest app that still fits: 2.1 GiB · 1.4 CPU (on master). Anything bigger makes Flui add a node.',
     );
   });

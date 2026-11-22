@@ -1,4 +1,14 @@
-import { Component, computed, effect, inject, input, output, signal, untracked, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+  untracked,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
@@ -17,10 +27,7 @@ import {
   ServerTypeOption,
 } from '../../services/provider-wizard.service';
 import { PricingService } from '../../services/pricing.service';
-import {
-  ArchitectureBadgeComponent,
-  architectureWarning,
-} from '../architecture-badge.component';
+import { ArchitectureBadgeComponent, architectureWarning } from '../architecture-badge.component';
 
 type CpuTypeFilter = 'all' | 'shared' | 'dedicated';
 
@@ -46,24 +53,26 @@ type CpuTypeFilter = 'all' | 'shared' | 'dedicated';
         <div class="flex items-center gap-2 mb-3">
           <ng-icon name="lucideMapPin" class="h-4 w-4 text-muted-foreground" />
           <label class="text-sm font-bold">Region</label>
-          <span class="text-xs text-muted-foreground">Prices vary by region — pick the cheapest that has the size you need</span>
+          <span class="text-xs text-muted-foreground"
+            >Prices vary by region — pick the cheapest that has the size you need</span
+          >
         </div>
-    
+
         @if (wizardService.isRegionLoading()) {
           <div class="flex items-center justify-center py-6">
             <ng-icon name="lucideLoader" class="h-6 w-6 animate-spin text-blue-500" />
           </div>
         }
-    
+
         @if (wizardService.serverTypeError() && !wizardService.isServerTypeLoading()) {
           <div
             class="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg text-sm mb-3"
-            >
+          >
             <ng-icon name="lucideCircleAlert" class="h-4 w-4" />
             <span>{{ wizardService.serverTypeError() }}</span>
           </div>
         }
-    
+
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
           @for (region of regions(); track region) {
             <button
@@ -72,14 +81,12 @@ type CpuTypeFilter = 'all' | 'shared' | 'dedicated';
               [disabled]="!isRegionSelectable(region)"
               [class]="regionCardClass(region)"
               class="flex items-center gap-3 p-3 border-2 rounded-lg text-left transition-all disabled:cursor-not-allowed disabled:opacity-50"
-              >
+            >
               <span class="text-2xl leading-none">{{ region.flagEmoji }}</span>
               <div class="min-w-0 flex-1">
                 <p class="text-sm font-semibold truncate">{{ region.name }}</p>
                 @if (cheapestByRegion()[region.id] !== undefined) {
-                  <p
-                    class="text-xs text-muted-foreground truncate"
-                    >
+                  <p class="text-xs text-muted-foreground truncate">
                     from €{{ pricingService.formatMonthlyPrice(cheapestByRegion()[region.id]) }}/mo
                   </p>
                 } @else {
@@ -90,22 +97,20 @@ type CpuTypeFilter = 'all' | 'shared' | 'dedicated';
                 <ng-icon
                   name="lucideCheck"
                   class="h-4 w-4 flex-shrink-0 text-blue-600 dark:text-blue-400"
-                  />
+                />
               }
             </button>
           }
         </div>
       </div>
-    
+
       <div>
         <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
           <div class="flex items-center gap-2">
             <ng-icon name="lucideServer" class="h-4 w-4 text-muted-foreground" />
             <label class="text-sm font-bold">Node size</label>
             @if (selectedRegionName()) {
-              <span class="text-xs text-muted-foreground">
-                in {{ selectedRegionName() }}
-              </span>
+              <span class="text-xs text-muted-foreground"> in {{ selectedRegionName() }} </span>
             }
           </div>
           <div class="flex items-center gap-2">
@@ -114,7 +119,7 @@ type CpuTypeFilter = 'all' | 'shared' | 'dedicated';
               [value]="cpuTypeFilter()"
               (change)="setCpuTypeFilter($any($event.target).value)"
               class="h-7 rounded-md border border-border bg-background px-2 py-0.5 text-xs"
-              >
+            >
               <option value="all">All</option>
               <option value="shared">Shared (VPS)</option>
               <option value="dedicated">Dedicated</option>
@@ -122,27 +127,23 @@ type CpuTypeFilter = 'all' | 'shared' | 'dedicated';
             <span class="text-xs text-muted-foreground">({{ filteredServerTypes().length }})</span>
           </div>
         </div>
-    
+
         @if (!selectedRegion()) {
           <div
             class="text-center py-8 text-sm text-muted-foreground border-2 border-dashed border-border rounded-lg"
-            >
+          >
             Select a region above to see available node sizes.
           </div>
         }
-    
+
         @if (selectedRegion() && wizardService.isServerTypeLoading()) {
-          <div
-            class="flex items-center justify-center py-8"
-            >
+          <div class="flex items-center justify-center py-8">
             <ng-icon name="lucideLoader" class="h-6 w-6 animate-spin text-blue-500" />
           </div>
         }
-    
+
         @if (selectedRegion() && !wizardService.isServerTypeLoading()) {
-          <div
-            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
-            >
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             @for (serverType of displayedServerTypes(); track serverType) {
               <button
                 type="button"
@@ -152,13 +153,16 @@ type CpuTypeFilter = 'all' | 'shared' | 'dedicated';
                 [attr.data-testid]="'server-type-' + serverType.id"
                 [class]="serverCardClass(serverType)"
                 class="relative p-4 border-2 rounded-lg text-left transition-all"
-                >
+              >
                 <div class="flex items-start justify-between mb-3">
                   <div class="min-w-0 flex items-center gap-1.5">
                     <p class="text-base font-bold truncate">{{ serverType.name }}</p>
                     <app-architecture-badge [architecture]="serverType.architecture" />
                   </div>
-                  <span [class]="cpuBadgeClass(serverType.cpuType)" class="px-2 py-0.5 text-xs font-medium rounded flex-shrink-0">
+                  <span
+                    [class]="cpuBadgeClass(serverType.cpuType)"
+                    class="px-2 py-0.5 text-xs font-medium rounded flex-shrink-0"
+                  >
                     {{ serverType.cpuType === 'dedicated' ? 'Dedicated' : 'Shared' }}
                   </span>
                 </div>
@@ -181,19 +185,21 @@ type CpuTypeFilter = 'all' | 'shared' | 'dedicated';
                 <div class="flex items-end justify-between pt-3 border-t border-border">
                   <div>
                     <p class="text-base font-bold">
-                      ~€{{ pricingService.formatMonthlyPrice(serverType.pricePerHour) }}<span class="text-xs font-normal text-muted-foreground">/mo</span>
+                      ~€{{ pricingService.formatMonthlyPrice(serverType.pricePerHour)
+                      }}<span class="text-xs font-normal text-muted-foreground">/mo</span>
                     </p>
-                    <p class="text-xs text-muted-foreground">€{{ serverType.pricePerHour.toFixed(4) }}/h</p>
+                    <p class="text-xs text-muted-foreground">
+                      €{{ serverType.pricePerHour.toFixed(4) }}/h
+                    </p>
                   </div>
                   @if (selectedServerTypeId() === serverType.id) {
-                    <ng-icon
-                      name="lucideCheck"
-                      class="h-5 w-5 text-blue-600 dark:text-blue-400"
-                      />
+                    <ng-icon name="lucideCheck" class="h-5 w-5 text-blue-600 dark:text-blue-400" />
                   }
                 </div>
                 @if (!serverType.managedFirewall) {
-                  <div class="mt-2 flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
+                  <div
+                    class="mt-2 flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400"
+                  >
                     <ng-icon name="lucideShieldOff" class="h-3 w-3" />
                     No managed firewall
                   </div>
@@ -208,7 +214,12 @@ type CpuTypeFilter = 'all' | 'shared' | 'dedicated';
           </div>
 
           @if (selectedArchitectureWarning(); as warning) {
-            <p class="mt-3 text-xs text-amber-600 dark:text-amber-400" data-testid="architecture-warning">{{ warning }}</p>
+            <p
+              class="mt-3 text-xs text-amber-600 dark:text-amber-400"
+              data-testid="architecture-warning"
+            >
+              {{ warning }}
+            </p>
           }
 
           @if (!isShowingAll() && hiddenServerTypeCount() > 0) {
@@ -216,7 +227,7 @@ type CpuTypeFilter = 'all' | 'shared' | 'dedicated';
               type="button"
               (click)="showAllSizes.set(true)"
               class="mt-3 flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-              >
+            >
               <span>Show all {{ filteredServerTypes().length }} sizes</span>
               <ng-icon name="lucideChevronDown" class="h-3.5 w-3.5" />
             </button>
@@ -226,23 +237,25 @@ type CpuTypeFilter = 'all' | 'shared' | 'dedicated';
               type="button"
               (click)="showAllSizes.set(false)"
               class="mt-3 flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
-              >
+            >
               <span>Show fewer sizes</span>
               <ng-icon name="lucideChevronUp" class="h-3.5 w-3.5" />
             </button>
           }
         }
 
-        @if (selectedRegion() && !wizardService.isServerTypeLoading() && filteredServerTypes().length === 0) {
-          <div
-            class="text-center py-8 text-sm text-muted-foreground"
-            >
+        @if (
+          selectedRegion() &&
+          !wizardService.isServerTypeLoading() &&
+          filteredServerTypes().length === 0
+        ) {
+          <div class="text-center py-8 text-sm text-muted-foreground">
             No node sizes match this filter in {{ selectedRegionName() }}.
           </div>
         }
       </div>
     </div>
-    `,
+  `,
   changeDetection: ChangeDetectionStrategy.Eager,
   styles: [],
 })
@@ -260,7 +273,7 @@ export class RegionServerSelectorComponent {
   readonly cpuTypeFilter = signal<CpuTypeFilter>('all');
 
   readonly regions = computed<ProviderRegion[]>(
-    () => this.wizardService.regionsData()[this.selectedProvider()] ?? []
+    () => this.wizardService.regionsData()[this.selectedProvider()] ?? [],
   );
 
   readonly serverTypesForRegion = computed<ServerTypeOption[]>(() => {
@@ -312,13 +325,13 @@ export class RegionServerSelectorComponent {
     const perGroup = Math.floor(budget / groups.length);
     const remainder = budget - perGroup * groups.length;
     const picked = groups.flatMap((group, i) =>
-      this.sampleSpread(group, perGroup + (i < remainder ? 1 : 0))
+      this.sampleSpread(group, perGroup + (i < remainder ? 1 : 0)),
     );
     return picked.sort((a, b) => a.pricePerHour - b.pricePerHour);
   });
 
   readonly hiddenServerTypeCount = computed<number>(
-    () => this.filteredServerTypes().length - this.curatedServerTypes().length
+    () => this.filteredServerTypes().length - this.curatedServerTypes().length,
   );
 
   readonly isShowingAll = computed<boolean>(() => {
@@ -329,7 +342,7 @@ export class RegionServerSelectorComponent {
   });
 
   readonly displayedServerTypes = computed<ServerTypeOption[]>(() =>
-    this.isShowingAll() ? this.filteredServerTypes() : this.curatedServerTypes()
+    this.isShowingAll() ? this.filteredServerTypes() : this.curatedServerTypes(),
   );
 
   readonly cheapestByRegion = computed<Record<string, number>>(() => {
@@ -337,8 +350,8 @@ export class RegionServerSelectorComponent {
     const catalog = this.wizardService.serverTypesData();
     const result: Record<string, number> = {};
     for (const region of this.regions()) {
-      const selectable = (catalog[`${provider}:${region.id}`] ?? []).filter(
-        (type) => this.isSelectable(type)
+      const selectable = (catalog[`${provider}:${region.id}`] ?? []).filter((type) =>
+        this.isSelectable(type),
       );
       if (selectable.length > 0) {
         result[region.id] = Math.min(...selectable.map((type) => type.pricePerHour));
@@ -350,8 +363,8 @@ export class RegionServerSelectorComponent {
   readonly selectedArchitectureWarning = computed(() =>
     architectureWarning(
       this.serverTypesForRegion().find((type) => type.id === this.selectedServerTypeId())
-        ?.architecture
-    )
+        ?.architecture,
+    ),
   );
 
   private readonly regionNamesById = computed<Record<string, string>>(() => {
@@ -361,7 +374,7 @@ export class RegionServerSelectorComponent {
   });
 
   readonly selectedRegionName = computed<string>(
-    () => this.regionNamesById()[this.selectedRegion()] ?? ''
+    () => this.regionNamesById()[this.selectedRegion()] ?? '',
   );
 
   constructor() {
@@ -375,7 +388,7 @@ export class RegionServerSelectorComponent {
             const firstAvailable = regions.find((region) => this.isRegionSelectable(region));
             if (firstAvailable) this.regionSelected.emit(firstAvailable.id);
           },
-          (error) => console.error('Failed to load server catalog:', error)
+          (error) => console.error('Failed to load server catalog:', error),
         );
       });
     });

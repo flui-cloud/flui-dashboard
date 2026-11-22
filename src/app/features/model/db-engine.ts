@@ -209,9 +209,7 @@ export function imageNameOf(imageRef: string | null | undefined): string {
   return repository.slice(repository.lastIndexOf('/') + 1);
 }
 
-export function databaseEngineOf(
-  app: ApplicationResponseDto | null | undefined,
-): DbEngine | null {
+export function databaseEngineOf(app: ApplicationResponseDto | null | undefined): DbEngine | null {
   if (!app || (!isBuildingBlock(app) && !isComposedComponent(app))) return null;
   const labels = (app.labels ?? {}) as Record<string, string>;
   const declared = labels[DB_ENGINE_LABEL] as DbEngine | undefined;
@@ -227,69 +225,47 @@ export function engineFamilyOf(
   return engine ? engineDescriptor(engine).family : null;
 }
 
-export function isQueryableDatabase(
-  app: ApplicationResponseDto | null | undefined,
-): boolean {
+export function isQueryableDatabase(app: ApplicationResponseDto | null | undefined): boolean {
   return engineFamilyOf(app) === 'sql';
 }
 
-export function isKeyValueDatabase(
-  app: ApplicationResponseDto | null | undefined,
-): boolean {
+export function isKeyValueDatabase(app: ApplicationResponseDto | null | undefined): boolean {
   return engineFamilyOf(app) === 'keyvalue';
 }
 
-export function isDocumentDatabase(
-  app: ApplicationResponseDto | null | undefined,
-): boolean {
+export function isDocumentDatabase(app: ApplicationResponseDto | null | undefined): boolean {
   return engineFamilyOf(app) === 'document';
 }
 
-export function isObjectStore(
-  app: ApplicationResponseDto | null | undefined,
-): boolean {
+export function isObjectStore(app: ApplicationResponseDto | null | undefined): boolean {
   return engineFamilyOf(app) === 'object-storage';
 }
 
-export function isSearchEngine(
-  app: ApplicationResponseDto | null | undefined,
-): boolean {
+export function isSearchEngine(app: ApplicationResponseDto | null | undefined): boolean {
   return engineFamilyOf(app) === 'search';
 }
 
-export function isMessagingServer(
-  app: ApplicationResponseDto | null | undefined,
-): boolean {
+export function isMessagingServer(app: ApplicationResponseDto | null | undefined): boolean {
   return engineFamilyOf(app) === 'messaging';
 }
 
-export function isCacheServer(
-  app: ApplicationResponseDto | null | undefined,
-): boolean {
+export function isCacheServer(app: ApplicationResponseDto | null | undefined): boolean {
   return engineFamilyOf(app) === 'cache';
 }
 
-export function isSecretsServer(
-  app: ApplicationResponseDto | null | undefined,
-): boolean {
+export function isSecretsServer(app: ApplicationResponseDto | null | undefined): boolean {
   return engineFamilyOf(app) === 'secrets';
 }
 
-export function isStreamingServer(
-  app: ApplicationResponseDto | null | undefined,
-): boolean {
+export function isStreamingServer(app: ApplicationResponseDto | null | undefined): boolean {
   return engineFamilyOf(app) === 'streaming';
 }
 
-export function isFulltextServer(
-  app: ApplicationResponseDto | null | undefined,
-): boolean {
+export function isFulltextServer(app: ApplicationResponseDto | null | undefined): boolean {
   return engineFamilyOf(app) === 'fulltext';
 }
 
-export function consoleRouteFor(
-  app: ApplicationResponseDto | null | undefined,
-): string | null {
+export function consoleRouteFor(app: ApplicationResponseDto | null | undefined): string | null {
   switch (engineFamilyOf(app)) {
     case 'sql':
       return '/db-console';

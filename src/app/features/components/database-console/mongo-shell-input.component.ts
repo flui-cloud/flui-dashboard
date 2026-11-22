@@ -9,7 +9,7 @@ import {
   input,
   signal,
   viewChild,
-  output
+  output,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
@@ -137,15 +137,21 @@ export class MongoShellInputComponent implements AfterViewInit, OnDestroy {
 
   private async mount(): Promise<void> {
     try {
-      const [{ EditorState, Prec }, view, { javascript }, { closeBrackets }, { minimalSetup }, highlight] =
-        await Promise.all([
-          import('@codemirror/state'),
-          import('@codemirror/view'),
-          import('@codemirror/lang-javascript'),
-          import('@codemirror/autocomplete'),
-          import('codemirror'),
-          import('./cm-highlight').then((m) => m.fluiHighlighting()),
-        ]);
+      const [
+        { EditorState, Prec },
+        view,
+        { javascript },
+        { closeBrackets },
+        { minimalSetup },
+        highlight,
+      ] = await Promise.all([
+        import('@codemirror/state'),
+        import('@codemirror/view'),
+        import('@codemirror/lang-javascript'),
+        import('@codemirror/autocomplete'),
+        import('codemirror'),
+        import('./cm-highlight').then((m) => m.fluiHighlighting()),
+      ]);
       const { EditorView, keymap } = view;
 
       const keys = Prec.highest(

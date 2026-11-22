@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -18,7 +26,9 @@ import { DecisionSource, decisionPanel } from './app-backup-decision';
     @if (panel(); as p) {
       <section
         class="card-surface p-4 space-y-2 border"
-        [class]="p.state === 'unprotected' ? 'border-amber-200 dark:border-amber-800' : 'border-border'"
+        [class]="
+          p.state === 'unprotected' ? 'border-amber-200 dark:border-amber-800' : 'border-border'
+        "
         data-testid="backup-decision"
       >
         @if (p.state === 'unprotected') {
@@ -26,7 +36,9 @@ import { DecisionSource, decisionPanel } from './app-backup-decision';
             <div class="min-w-0">
               <h2 class="text-sm font-semibold">Not backed up</h2>
               @if (p.why) {
-                <p class="text-xs text-muted-foreground" data-testid="backup-decision-why">{{ p.why }}</p>
+                <p class="text-xs text-muted-foreground" data-testid="backup-decision-why">
+                  {{ p.why }}
+                </p>
               }
             </div>
             @if (!confirming()) {
@@ -37,14 +49,18 @@ import { DecisionSource, decisionPanel } from './app-backup-decision';
                     (click)="protect.emit()"
                     class="px-3 py-1.5 text-xs font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700"
                     data-testid="backup-decision-protect"
-                  >Protect</button>
+                  >
+                    Protect
+                  </button>
                 }
                 <button
                   type="button"
                   (click)="confirming.set(true)"
                   class="px-3 py-1.5 text-xs rounded-md border border-border hover:bg-muted"
                   data-testid="backup-decision-skip"
-                >Don't back up this app</button>
+                >
+                  Don't back up this app
+                </button>
               </div>
             }
           </div>
@@ -64,10 +80,20 @@ import { DecisionSource, decisionPanel } from './app-backup-decision';
                 [disabled]="saving()"
                 class="px-3 py-1.5 text-xs font-medium rounded-md bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-50"
                 data-testid="backup-decision-confirm-skip"
-              >{{ saving() ? 'Saving…' : "Don't back up" }}</button>
-              <button type="button" (click)="cancel()" class="px-3 py-1.5 text-xs rounded-md hover:bg-muted">Cancel</button>
+              >
+                {{ saving() ? 'Saving…' : "Don't back up" }}
+              </button>
+              <button
+                type="button"
+                (click)="cancel()"
+                class="px-3 py-1.5 text-xs rounded-md hover:bg-muted"
+              >
+                Cancel
+              </button>
             </div>
-            <p class="text-xs text-muted-foreground">Flui stops asking for a backup. Nothing already taken is deleted.</p>
+            <p class="text-xs text-muted-foreground">
+              Flui stops asking for a backup. Nothing already taken is deleted.
+            </p>
           }
         } @else {
           <div class="flex flex-wrap items-start justify-between gap-3">
@@ -81,7 +107,9 @@ import { DecisionSource, decisionPanel } from './app-backup-decision';
                 <p class="text-xs text-muted-foreground" data-testid="backup-decision-running">
                   Still running:
                   @for (pol of p.running; track pol.path; let last = $last) {
-                    <a [routerLink]="pol.path" class="text-primary hover:underline">{{ pol.name }}</a>{{ last ? '' : ', ' }}
+                    <a [routerLink]="pol.path" class="text-primary hover:underline">{{
+                      pol.name
+                    }}</a>{{ last ? '' : ', ' }}
                   }
                   — pause it there if you want.
                 </p>
@@ -93,7 +121,9 @@ import { DecisionSource, decisionPanel } from './app-backup-decision';
               [disabled]="saving()"
               class="shrink-0 px-3 py-1.5 text-xs font-medium rounded-md border border-border hover:bg-muted disabled:opacity-50"
               data-testid="backup-decision-undo"
-            >{{ saving() ? 'Saving…' : 'Back up again' }}</button>
+            >
+              {{ saving() ? 'Saving…' : 'Back up again' }}
+            </button>
           </div>
         }
         @if (failure(); as f) {

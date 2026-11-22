@@ -12,7 +12,10 @@ describe('DashboardAgentStatusComponent', () => {
       imports: [DashboardAgentStatusComponent],
       providers: [
         provideRouter([]),
-        { provide: AgentActivityService, useValue: { agentActivityControllerIdentities: () => response } },
+        {
+          provide: AgentActivityService,
+          useValue: { agentActivityControllerIdentities: () => response },
+        },
       ],
     }).compileComponents();
     fixture = TestBed.createComponent(DashboardAgentStatusComponent);
@@ -23,7 +26,9 @@ describe('DashboardAgentStatusComponent', () => {
 
   it('says when the last agent was seen and nothing is working now', async () => {
     const lastActivityAt = new Date(Date.now() - 3 * 86_400_000).toISOString();
-    await build(of({ identities: [{ actorKind: 'api_key', actorKeyName: 'cli', lastActivityAt }] }));
+    await build(
+      of({ identities: [{ actorKind: 'api_key', actorKeyName: 'cli', lastActivityAt }] }),
+    );
     expect(card().textContent).toContain('Agent');
     expect(card().textContent).toContain('No agent working right now');
     expect(card().textContent).toContain('Last seen: cli · 3d ago');

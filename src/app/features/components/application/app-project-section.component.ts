@@ -10,19 +10,19 @@ import { ProjectBadgeComponent } from '../projects/project-badge.component';
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (!hidden()) {
-    <div class="card-surface text-sm" data-testid="overview-project">
-      <div class="flex flex-wrap items-center gap-3 px-4 py-2.5">
-        <span class="text-label shrink-0">Project</span>
-        <app-project-badge [project]="current()" />
-        <span class="flex-1"></span>
-        <span
-          class="text-xs text-muted-foreground"
-          title="The project is where the application runs. Moving it to another project means moving its data, which is not available yet."
-        >
-          Set when the app was created
-        </span>
+      <div class="card-surface text-sm" data-testid="overview-project">
+        <div class="flex flex-wrap items-center gap-3 px-4 py-2.5">
+          <span class="text-label shrink-0">Project</span>
+          <app-project-badge [project]="current()" />
+          <span class="flex-1"></span>
+          <span
+            class="text-xs text-muted-foreground"
+            title="The project is where the application runs. Moving it to another project means moving its data, which is not available yet."
+          >
+            Set when the app was created
+          </span>
+        </div>
       </div>
-    </div>
     }
   `,
 })
@@ -36,15 +36,11 @@ export class AppProjectSectionComponent {
 
   readonly current = computed(() => {
     const pid = this.application().projectId;
-    return pid
-      ? (this.projects.projects().find((p) => p.id === pid) ?? null)
-      : null;
+    return pid ? (this.projects.projects().find((p) => p.id === pid) ?? null) : null;
   });
 
   /** In a project the caller cannot see, as a showcase application is: say nothing rather than "Not in a project". */
-  readonly hidden = computed(
-    () => !!this.application().projectId && this.current() === null,
-  );
+  readonly hidden = computed(() => !!this.application().projectId && this.current() === null);
 
   constructor() {
     this.projects.loadProjects();

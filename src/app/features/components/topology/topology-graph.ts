@@ -1,7 +1,14 @@
 import { TopologyResponseDto } from '../../../core/api/model/topologyResponseDto';
 import { TopologyFocus, TopologyViewState } from './topology-state';
 import { INTERNET, MAX_NODES, TopologyGraph } from './topology-graph-model';
-import { appGraph, appsGraph, clusterGraph, fleetGraph, projectLit, stackGraph } from './topology-graph-levels';
+import {
+  appGraph,
+  appsGraph,
+  clusterGraph,
+  fleetGraph,
+  projectLit,
+  stackGraph,
+} from './topology-graph-levels';
 
 export * from './topology-graph-model';
 export { neighbourhood, projectLit } from './topology-graph-levels';
@@ -9,7 +16,9 @@ export { neighbourhood, projectLit } from './topology-graph-levels';
 /** The nodes in trouble, the nodes they are linked to, and the links between those. */
 export function problemsAndNeighbours(graph: TopologyGraph): TopologyGraph {
   const trouble = new Set(
-    graph.nodes.filter((n) => n.kind !== 'region' && (n.tone !== 'healthy' || n.problems > 0)).map((n) => n.id),
+    graph.nodes
+      .filter((n) => n.kind !== 'region' && (n.tone !== 'healthy' || n.problems > 0))
+      .map((n) => n.id),
   );
   const keep = new Set(trouble);
   for (const e of graph.edges) {
@@ -38,7 +47,11 @@ function readable(graph: TopologyGraph, all: boolean): TopologyGraph | null {
 
 /** The graph a level draws, collapsing to the level above when it would be unreadable. */
 export function topologyGraph(t: TopologyResponseDto, state: TopologyViewState): TopologyGraph {
-  const graph = centredGraph(t, state) ?? stackLevel(t, state) ?? clusterLevel(t, state) ?? fleetLevel(t, state);
+  const graph =
+    centredGraph(t, state) ??
+    stackLevel(t, state) ??
+    clusterLevel(t, state) ??
+    fleetLevel(t, state);
   return state.project ? onlyProject(t, graph, state.project) : graph;
 }
 
@@ -46,13 +59,27 @@ export function topologyGraph(t: TopologyResponseDto, state: TopologyViewState):
  * A project filter draws that project alone: its apps, the boxes holding them
  * and the Internet where it reaches them. Nothing else keeps a place on the map.
  */
-export function onlyProject(t: TopologyResponseDto, graph: TopologyGraph, projectId: string): TopologyGraph {
+export function onlyProject(
+  t: TopologyResponseDto,
+  graph: TopologyGraph,
+  projectId: string,
+): TopologyGraph {
   const lit = projectLit(t, graph, projectId);
-  const kept = new Set(graph.nodes.filter((n) => n.kind !== 'region' && n.kind !== 'internet' && lit.has(n.id)).map((n) => n.id));
+  const kept = new Set(
+    graph.nodes
+      .filter((n) => n.kind !== 'region' && n.kind !== 'internet' && lit.has(n.id))
+      .map((n) => n.id),
+  );
   if (!kept.size) return graph;
-  const edges = graph.edges.filter((e) => (kept.has(e.from) || e.from === INTERNET) && kept.has(e.to));
+  const edges = graph.edges.filter(
+    (e) => (kept.has(e.from) || e.from === INTERNET) && kept.has(e.to),
+  );
   for (const n of graph.nodes) {
-    if (n.kind === 'region' && graph.nodes.some((child) => child.parent === n.id && kept.has(child.id))) kept.add(n.id);
+    if (
+      n.kind === 'region' &&
+      graph.nodes.some((child) => child.parent === n.id && kept.has(child.id))
+    )
+      kept.add(n.id);
   }
   if (edges.some((e) => e.from === INTERNET)) kept.add(INTERNET);
   return { ...graph, nodes: graph.nodes.filter((n) => kept.has(n.id)), edges };
@@ -93,9 +120,16 @@ function fleetByApps(t: TopologyResponseDto, state: TopologyViewState): Topology
 }
 
 /** What a focused element keeps lit: itself, its neighbours and the edges between them. */
-export function litBy(graph: TopologyGraph, focus: TopologyFocus | null): { nodes: Set<string>; edges: Set<string> } | null {
+export function litBy(
+  graph: TopologyGraph,
+  focus: TopologyFocus | null,
+): { nodes: Set<string>; edges: Set<string> } | null {
   if (!focus) return null;
-  const selves = new Set(graph.nodes.filter((n) => n.focus?.type === focus.type && n.focus.id === focus.id).map((n) => n.id));
+  const selves = new Set(
+    graph.nodes
+      .filter((n) => n.focus?.type === focus.type && n.focus.id === focus.id)
+      .map((n) => n.id),
+  );
   const edge = graph.edges.find((e) => e.focus?.type === focus.type && e.focus.id === focus.id);
   if (edge) return { nodes: new Set([edge.from, edge.to]), edges: new Set([edge.id]) };
   if (!selves.size) return null;

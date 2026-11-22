@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { ExplainComponent } from '../../../shared/components/explain.component';
 import { ToastService } from '../../../shared/services/toast.service';
@@ -34,7 +42,10 @@ import { ScalingApiService } from '../../service/scaling-api.service';
             {{ switchLabel() }}
           </button>
         } @else {
-          <span class="inline-flex flex-wrap items-center gap-2 text-xs" data-testid="scaling-mode-confirm">
+          <span
+            class="inline-flex flex-wrap items-center gap-2 text-xs"
+            data-testid="scaling-mode-confirm"
+          >
             @if (needsCap()) {
               <label class="inline-flex items-center gap-1">
                 <span>Spending ceiling €</span>

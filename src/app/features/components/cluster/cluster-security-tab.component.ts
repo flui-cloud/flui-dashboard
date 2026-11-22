@@ -1,9 +1,21 @@
-import { Component, inject, signal, computed, OnInit, viewChild, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  inject,
+  signal,
+  computed,
+  OnInit,
+  viewChild,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
-  lucideShieldCheck, lucideLoader, lucideAlertCircle, lucideCheckCircle,
-  lucideCircle, lucideAlertTriangle,
+  lucideShieldCheck,
+  lucideLoader,
+  lucideAlertCircle,
+  lucideCheckCircle,
+  lucideCircle,
+  lucideAlertTriangle,
 } from '@ng-icons/lucide';
 import { AuthzInstallService } from '../../service/authz-install.service';
 import { ClusterService } from '../../service/cluster.service';
@@ -16,25 +28,34 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
   imports: [NgIconComponent, ConfirmationDialogComponent],
   providers: [
     provideIcons({
-      lucideShieldCheck, lucideLoader, lucideAlertCircle, lucideCheckCircle,
-      lucideCircle, lucideAlertTriangle,
+      lucideShieldCheck,
+      lucideLoader,
+      lucideAlertCircle,
+      lucideCheckCircle,
+      lucideCircle,
+      lucideAlertTriangle,
     }),
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="space-y-6 max-w-2xl">
-
       <!-- Main panel -->
-      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 space-y-4">
+      <div
+        class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 space-y-4"
+      >
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <ng-icon name="lucideShieldCheck" class="h-5 w-5 text-blue-600 dark:text-blue-400" />
-            <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Internal app protection (flui-authz)</h3>
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-white">
+              Internal app protection (flui-authz)
+            </h3>
           </div>
           <!-- Status badge -->
           @if (statusLabel(); as label) {
-            <span class="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full"
-              [class]="statusBadgeClass()">
+            <span
+              class="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full"
+              [class]="statusBadgeClass()"
+            >
               <span class="w-1.5 h-1.5 rounded-full inline-block" [class]="statusDotClass()"></span>
               {{ label }}
             </span>
@@ -42,8 +63,8 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
         </div>
 
         <p class="text-sm text-gray-600 dark:text-gray-400">
-          Checks the Flui sign-in on this cluster for internal apps and for routes that
-          require one. The control cluster does not need it.
+          Checks the Flui sign-in on this cluster for internal apps and for routes that require one.
+          The control cluster does not need it.
         </p>
 
         <!-- Installed date -->
@@ -71,7 +92,9 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
 
         <!-- Error message -->
         @if (authzService.error()) {
-          <div class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-sm text-red-700 dark:text-red-400">
+          <div
+            class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-sm text-red-700 dark:text-red-400"
+          >
             <ng-icon name="lucideAlertCircle" class="h-4 w-4 mt-0.5 flex-shrink-0" />
             <span>{{ authzService.error() }}</span>
           </div>
@@ -79,7 +102,9 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
 
         <!-- FAILED error message from DTO -->
         @if (authzService.install()?.status === 'FAILED' && authzService.install()?.errorMessage) {
-          <div class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-sm text-red-700 dark:text-red-400">
+          <div
+            class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-sm text-red-700 dark:text-red-400"
+          >
             <ng-icon name="lucideAlertCircle" class="h-4 w-4 mt-0.5 flex-shrink-0" />
             <span>{{ authzService.install()!.errorMessage }}</span>
           </div>
@@ -126,7 +151,6 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
           }
         </div>
       </div>
-
     </div>
 
     <app-confirmation-dialog
@@ -161,8 +185,10 @@ export class ClusterSecurityTabComponent implements OnInit {
 
   protected statusBadgeClass = computed(() => {
     const s = this.authzService.install()?.status;
-    if (s === this.Status.Running) return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400';
-    if (s === this.Status.Failed) return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400';
+    if (s === this.Status.Running)
+      return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400';
+    if (s === this.Status.Failed)
+      return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400';
     if (s === this.Status.Pending || s === this.Status.Installing)
       return 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400';
     return 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400';
@@ -214,6 +240,10 @@ export class ClusterSecurityTabComponent implements OnInit {
   }
 
   protected formatDate(iso: string): string {
-    return new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+    return new Date(iso).toLocaleDateString(undefined, {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
   }
 }

@@ -1,4 +1,11 @@
-import { Component, inject, signal, computed, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  inject,
+  signal,
+  computed,
+  OnInit,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
@@ -83,10 +90,7 @@ import {
         class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4"
       >
         <div class="flex items-center gap-2">
-          <ng-icon
-            name="lucideCircleAlert"
-            class="h-4 w-4 text-red-600 dark:text-red-400"
-          />
+          <ng-icon name="lucideCircleAlert" class="h-4 w-4 text-red-600 dark:text-red-400" />
           <p class="text-sm text-red-700 dark:text-red-400">{{ error() }}</p>
         </div>
       </div>
@@ -98,14 +102,9 @@ import {
         <div class="card-surface p-4">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
-              <ng-icon
-                name="lucideCalendar"
-                class="h-5 w-5 text-muted-foreground"
-              />
+              <ng-icon name="lucideCalendar" class="h-5 w-5 text-muted-foreground" />
               <div>
-                <h3 class="text-sm font-medium text-foreground">
-                  Billing period
-                </h3>
+                <h3 class="text-sm font-medium text-foreground">Billing period</h3>
                 <p class="text-xs text-sub">
                   {{ formatDate(b.billingPeriod.start) }} —
                   {{ formatDate(b.billingPeriod.end) }}
@@ -114,16 +113,13 @@ import {
             </div>
             <div class="text-right">
               <p class="text-xs text-sub">
-                {{ b.billingPeriod.elapsedHours }}h /
-                {{ b.billingPeriod.totalHours }}h elapsed
+                {{ b.billingPeriod.elapsedHours }}h / {{ b.billingPeriod.totalHours }}h elapsed
               </p>
               <div class="mt-1 w-32 bg-muted rounded-full h-1.5">
                 <div
                   class="bg-blue-600 h-1.5 rounded-full transition-all"
                   [style.width.%]="
-                    (b.billingPeriod.elapsedHours /
-                      b.billingPeriod.totalHours) *
-                    100
+                    (b.billingPeriod.elapsedHours / b.billingPeriod.totalHours) * 100
                   "
                 ></div>
               </div>
@@ -134,14 +130,13 @@ import {
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div class="card-surface p-5">
             <div class="flex items-center gap-2 mb-3">
-              <ng-icon
-                name="lucideCreditCard"
-                class="h-4 w-4 text-green-600 dark:text-green-400"
-              />
+              <ng-icon name="lucideCreditCard" class="h-4 w-4 text-green-600 dark:text-green-400" />
               <span class="text-label">Spent so far</span>
             </div>
             <p class="text-2xl font-bold text-value">
-              {{ money(shown(b, { gross: b.monthToDate.totalGross, net: b.monthToDate.totalNet })) }}
+              {{
+                money(shown(b, { gross: b.monthToDate.totalGross, net: b.monthToDate.totalNet }))
+              }}
             </p>
             <p class="text-xs text-sub mt-1">
               {{ vatLabel(b) }}
@@ -156,13 +151,23 @@ import {
               <div class="flex justify-between text-xs">
                 <span class="text-sub">Machines</span>
                 <span class="text-value font-medium">{{
-                  money(shown(b, { gross: b.monthToDate.breakdown.computeGross, net: b.monthToDate.breakdown.computeNet }))
+                  money(
+                    shown(b, {
+                      gross: b.monthToDate.breakdown.computeGross,
+                      net: b.monthToDate.breakdown.computeNet,
+                    })
+                  )
                 }}</span>
               </div>
               <div class="flex justify-between text-xs">
                 <span class="text-sub">Storage</span>
                 <span class="text-value font-medium">{{
-                  money(shown(b, { gross: b.monthToDate.breakdown.storageGross, net: b.monthToDate.breakdown.storageNet }))
+                  money(
+                    shown(b, {
+                      gross: b.monthToDate.breakdown.storageGross,
+                      net: b.monthToDate.breakdown.storageNet,
+                    })
+                  )
                 }}</span>
               </div>
             </div>
@@ -171,10 +176,7 @@ import {
           @if (b.forecast; as f) {
             <div class="card-surface p-5">
               <div class="flex items-center gap-2 mb-3">
-                <ng-icon
-                  name="lucideTrendingUp"
-                  class="h-4 w-4 text-blue-600 dark:text-blue-400"
-                />
+                <ng-icon name="lucideTrendingUp" class="h-4 w-4 text-blue-600 dark:text-blue-400" />
                 <span class="text-label">Expected by month end</span>
               </div>
               <p class="text-2xl font-bold text-value">
@@ -193,13 +195,17 @@ import {
                 <div class="flex justify-between text-xs">
                   <span class="text-sub">Machines</span>
                   <span class="text-value font-medium">{{
-                    money(shown(b, { gross: f.breakdown.computeGross, net: f.breakdown.computeNet }))
+                    money(
+                      shown(b, { gross: f.breakdown.computeGross, net: f.breakdown.computeNet })
+                    )
                   }}</span>
                 </div>
                 <div class="flex justify-between text-xs">
                   <span class="text-sub">Storage</span>
                   <span class="text-value font-medium">{{
-                    money(shown(b, { gross: f.breakdown.storageGross, net: f.breakdown.storageNet }))
+                    money(
+                      shown(b, { gross: f.breakdown.storageGross, net: f.breakdown.storageNet })
+                    )
                   }}</span>
                 </div>
               </div>
@@ -208,10 +214,7 @@ import {
 
           <div class="card-surface p-5">
             <div class="flex items-center gap-2 mb-3">
-              <ng-icon
-                name="lucideGauge"
-                class="h-4 w-4 text-purple-600 dark:text-purple-400"
-              />
+              <ng-icon name="lucideGauge" class="h-4 w-4 text-purple-600 dark:text-purple-400" />
               <span class="text-label">Monthly cost of this setup</span>
             </div>
             <p class="text-2xl font-bold text-value">
@@ -219,21 +222,31 @@ import {
             </p>
             <p class="text-xs text-sub mt-1">{{ vatLabel(b) }}</p>
             <p class="text-xs text-sub mt-2">
-              {{ b.runRate.activeNodes }} machine{{ b.runRate.activeNodes !== 1 ? 's' : '' }}
-              and {{ b.runRate.activeVolumes }} volume{{ b.runRate.activeVolumes !== 1 ? 's' : '' }}
+              {{ b.runRate.activeNodes }} machine{{ b.runRate.activeNodes !== 1 ? 's' : '' }} and
+              {{ b.runRate.activeVolumes }} volume{{ b.runRate.activeVolumes !== 1 ? 's' : '' }}
               as they are now, over a whole month
             </p>
             <div class="mt-3 pt-3 border-t border-border space-y-1">
               <div class="flex justify-between text-xs">
                 <span class="text-sub">Machines</span>
                 <span class="text-value font-medium">{{
-                  money(shown(b, { gross: b.runRate.breakdown.computeGross, net: b.runRate.breakdown.computeNet }))
+                  money(
+                    shown(b, {
+                      gross: b.runRate.breakdown.computeGross,
+                      net: b.runRate.breakdown.computeNet,
+                    })
+                  )
                 }}</span>
               </div>
               <div class="flex justify-between text-xs">
                 <span class="text-sub">Storage</span>
                 <span class="text-value font-medium">{{
-                  money(shown(b, { gross: b.runRate.breakdown.storageGross, net: b.runRate.breakdown.storageNet }))
+                  money(
+                    shown(b, {
+                      gross: b.runRate.breakdown.storageGross,
+                      net: b.runRate.breakdown.storageNet,
+                    })
+                  )
                 }}</span>
               </div>
             </div>
@@ -247,13 +260,17 @@ import {
             }
             @if (b.unpricedItems) {
               <p>
-                {{ b.unpricedItems }} machine{{ b.unpricedItems !== 1 ? 's or volumes' : ' or volume' }}
-                could not be priced and {{ b.unpricedItems !== 1 ? 'are' : 'is' }} left out of these figures.
+                {{ b.unpricedItems }} machine{{
+                  b.unpricedItems !== 1 ? 's or volumes' : ' or volume'
+                }}
+                could not be priced and {{ b.unpricedItems !== 1 ? 'are' : 'is' }} left out of these
+                figures.
               </p>
             }
             @if (b.listPricedItems) {
               <p>
-                {{ b.listPricedItems }} priced at today's list price: they started before Flui recorded the price they started at.
+                {{ b.listPricedItems }} priced at today's list price: they started before Flui
+                recorded the price they started at.
               </p>
             }
           </div>
@@ -263,15 +280,14 @@ import {
           <div class="card-surface">
             <div class="p-4 border-b border-border flex items-center justify-between">
               <div class="flex items-center gap-2">
-                <ng-icon
-                  name="lucideServer"
-                  class="h-4 w-4 text-muted-foreground"
-                />
+                <ng-icon name="lucideServer" class="h-4 w-4 text-muted-foreground" />
                 <h3 class="text-sm font-medium text-foreground">
                   Machines ({{ g.active.length }})
                 </h3>
               </div>
-              <a routerLink="/infrastructure/costs" class="text-xs text-primary hover:underline">All costs</a>
+              <a routerLink="/infrastructure/costs" class="text-xs text-primary hover:underline"
+                >All costs</a
+              >
             </div>
             <div class="divide-y divide-border">
               @for (node of g.active; track node.nodeId) {
@@ -283,9 +299,7 @@ import {
                   class="w-full p-4 flex items-center justify-between text-left hover:bg-muted/40"
                   (click)="showRemoved.set(!showRemoved())"
                 >
-                  <span class="text-sm text-sub">
-                    {{ g.removed.length }} removed this month
-                  </span>
+                  <span class="text-sm text-sub"> {{ g.removed.length }} removed this month </span>
                   <span class="flex items-center gap-2 text-sm font-semibold text-value">
                     {{ money(b.vat?.included ? g.removedGross : g.removedNet) }}
                     <ng-icon
@@ -346,9 +360,7 @@ import {
 
             @if (node.segments.length > 1) {
               <div class="mt-3 pt-3 border-t border-border space-y-1">
-                <p class="text-xs text-sub font-medium mb-1">
-                  Server type changes this month:
-                </p>
+                <p class="text-xs text-sub font-medium mb-1">Server type changes this month:</p>
                 @for (seg of node.segments; track $index) {
                   <div class="flex items-center justify-between text-xs">
                     <span class="text-sub">
@@ -371,30 +383,20 @@ import {
           <div class="card-surface">
             <div class="p-4 border-b border-border">
               <div class="flex items-center gap-2">
-                <ng-icon
-                  name="lucideHardDrive"
-                  class="h-4 w-4 text-muted-foreground"
-                />
+                <ng-icon name="lucideHardDrive" class="h-4 w-4 text-muted-foreground" />
                 <h3 class="text-sm font-medium text-foreground">
                   Volumes ({{ b.monthToDate.volumes.length }})
                 </h3>
               </div>
             </div>
             <div class="divide-y divide-border">
-              @for (
-                vol of b.monthToDate.volumes;
-                track vol.volumeProviderId
-              ) {
-                <div
-                  class="p-4 flex items-start justify-between"
-                >
+              @for (vol of b.monthToDate.volumes; track vol.volumeProviderId) {
+                <div class="p-4 flex items-start justify-between">
                   <div>
                     <p class="text-sm font-medium text-value">
                       {{ vol.kind }} · {{ vol.currentSizeGb }} GB
                     </p>
-                    <p class="text-xs text-sub mt-0.5">
-                      ID: {{ vol.volumeProviderId | maskId }}
-                    </p>
+                    <p class="text-xs text-sub mt-0.5">ID: {{ vol.volumeProviderId | maskId }}</p>
                   </div>
                   <div class="text-right">
                     <p class="text-sm font-semibold text-value">

@@ -31,10 +31,7 @@ const PERIOD_MS: Record<AuditPeriod, number> = {
   '30d': 30 * DAY_MS,
 };
 
-function actorKindOf(
-  kind: AuditActorKind,
-  email: string | null | undefined,
-): AuditActorKind {
+function actorKindOf(kind: AuditActorKind, email: string | null | undefined): AuditActorKind {
   if (ACTOR_KINDS.has(kind)) return kind;
   return email ? 'user' : 'system';
 }
@@ -58,15 +55,11 @@ export function toAuditEvent(e: ApiAuditEvent): AuditEvent {
   };
 }
 
-export function toAuditParams(
-  f: AuditFilter,
-  now: number = Date.now(),
-): Record<string, string> {
+export function toAuditParams(f: AuditFilter, now: number = Date.now()): Record<string, string> {
   const params: Record<string, string> = {};
   const email = f.email?.trim();
   if (email) params['email'] = email;
-  if (f.period)
-    params['since'] = new Date(now - PERIOD_MS[f.period]).toISOString();
+  if (f.period) params['since'] = new Date(now - PERIOD_MS[f.period]).toISOString();
   if (f.dataAccessOnly) params['dataAccess'] = 'true';
   if (f.refusedOnly) params['outcome'] = 'refused';
   if (f.before) params['before'] = f.before;

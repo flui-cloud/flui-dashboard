@@ -159,7 +159,10 @@ async function main() {
   });
   await shot('03-question-agent.png');
   await page.keyboard.press('Escape').catch(() => {});
-  await page.locator('.fixed.inset-0 button:has-text("Cancel")').click().catch(() => {});
+  await page
+    .locator('.fixed.inset-0 button:has-text("Cancel")')
+    .click()
+    .catch(() => {});
   await page.waitForTimeout(500);
 
   const sessionRow = page
@@ -174,7 +177,10 @@ async function main() {
       .slice(0, 400),
   });
   await shot('04-question-session.png');
-  await page.locator('.fixed.inset-0 button:has-text("Cancel")').click().catch(() => {});
+  await page
+    .locator('.fixed.inset-0 button:has-text("Cancel")')
+    .click()
+    .catch(() => {});
 
   report.finishedAt = new Date().toISOString();
   await writeFile(path.join(OUT, 'report.json'), redact(JSON.stringify(report, null, 2)));

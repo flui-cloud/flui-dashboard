@@ -1,4 +1,13 @@
-import { Component, OnInit, OnDestroy, computed, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  computed,
+  effect,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -29,15 +38,10 @@ import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
 @Component({
   selector: 'app-firewall-cluster-management',
   standalone: true,
-  imports: [MaskIdPipe,
-    ReadOnlySectionDirective,
-    FormsModule,
-    RouterLink,
-    StatTileComponent,
-],
+  imports: [MaskIdPipe, ReadOnlySectionDirective, FormsModule, RouterLink, StatTileComponent],
   templateUrl: './firewall-cluster-management.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  styleUrls: ['./firewall-cluster-management.component.scss']
+  styleUrls: ['./firewall-cluster-management.component.scss'],
 })
 export class FirewallClusterManagementComponent implements OnInit, OnDestroy {
   private readonly firewallService = inject(FirewallV2Service);
@@ -59,24 +63,35 @@ export class FirewallClusterManagementComponent implements OnInit, OnDestroy {
   readonly tiles = computed<StatTileData[]>(() => {
     const s = this.stats();
     const notes = (entries: [number, string, StatTileNote['tone']][]): StatTileNote[] =>
-      entries.filter(([count]) => count > 0).map(([count, text, tone]) => ({ text: `${count} ${text}`, tone }));
+      entries
+        .filter(([count]) => count > 0)
+        .map(([count, text, tone]) => ({ text: `${count} ${text}`, tone }));
     return [
       { label: 'Firewalls', value: String(s.total) },
       { label: 'In sync', value: String(s.inSync) },
       {
         label: 'In progress',
         value: String(s.pending + s.reconciling),
-        notes: notes([[s.pending, 'pending', 'muted'], [s.reconciling, 'reconciling', 'muted']]),
+        notes: notes([
+          [s.pending, 'pending', 'muted'],
+          [s.reconciling, 'reconciling', 'muted'],
+        ]),
       },
       {
         label: 'Out of sync',
         value: String(s.drift + s.error),
-        notes: notes([[s.drift, 'drift', 'warn'], [s.error, 'error', 'bad']]),
+        notes: notes([
+          [s.drift, 'drift', 'warn'],
+          [s.error, 'error', 'bad'],
+        ]),
       },
       {
         label: 'Coverage gaps',
         value: String(s.partial + s.orphaned),
-        notes: notes([[s.partial, 'partial coverage', 'warn'], [s.orphaned, 'orphaned', 'bad']]),
+        notes: notes([
+          [s.partial, 'partial coverage', 'warn'],
+          [s.orphaned, 'orphaned', 'bad'],
+        ]),
       },
     ];
   });
@@ -116,7 +131,7 @@ export class FirewallClusterManagementComponent implements OnInit, OnDestroy {
     { value: ReconciliationStatus.DRIFT, label: 'Drift Detected' },
     { value: ReconciliationStatus.PENDING, label: 'Pending' },
     { value: ReconciliationStatus.ERROR, label: 'Error' },
-    { value: ReconciliationStatus.RECONCILING, label: 'Reconciling' }
+    { value: ReconciliationStatus.RECONCILING, label: 'Reconciling' },
   ];
 
   // Coverage options for filter
@@ -125,7 +140,7 @@ export class FirewallClusterManagementComponent implements OnInit, OnDestroy {
     { value: 'FULL', label: 'Full Coverage' },
     { value: 'PARTIAL', label: 'Partial Coverage' },
     { value: 'ORPHANED', label: 'Orphaned' },
-    { value: 'UNKNOWN', label: 'Unknown' }
+    { value: 'UNKNOWN', label: 'Unknown' },
   ];
 
   ngOnInit(): void {
@@ -156,7 +171,7 @@ export class FirewallClusterManagementComponent implements OnInit, OnDestroy {
   async reconcileFirewall(firewallId: string, event: Event) {
     event.stopPropagation();
 
-    this.reconciling.update(set => {
+    this.reconciling.update((set) => {
       set.add(firewallId);
       return new Set(set);
     });
@@ -164,7 +179,7 @@ export class FirewallClusterManagementComponent implements OnInit, OnDestroy {
     try {
       await this.firewallService.reconcile(firewallId);
     } finally {
-      this.reconciling.update(set => {
+      this.reconciling.update((set) => {
         set.delete(firewallId);
         return new Set(set);
       });
@@ -192,9 +207,12 @@ export class FirewallClusterManagementComponent implements OnInit, OnDestroy {
 
   coverageDotClass(status: CoverageStatus): string | null {
     switch (status) {
-      case 'PARTIAL':  return 'bg-amber-500';
-      case 'ORPHANED': return 'bg-destructive';
-      default:         return null;
+      case 'PARTIAL':
+        return 'bg-amber-500';
+      case 'ORPHANED':
+        return 'bg-destructive';
+      default:
+        return null;
     }
   }
 
@@ -217,23 +235,32 @@ export class FirewallClusterManagementComponent implements OnInit, OnDestroy {
   getNodeDotClass(status: FirewallNodeInfoDto.StatusEnum): string {
     const base = 'inline-block h-2 w-2 rounded-full';
     switch (status) {
-      case 'ready':    return `${base} bg-green-500`;
+      case 'ready':
+        return `${base} bg-green-500`;
       case 'creating':
-      case 'joining':  return `${base} bg-primary`;
-      case 'error':    return `${base} bg-destructive`;
-      default:         return `${base} bg-muted-foreground/50`;
+      case 'joining':
+        return `${base} bg-primary`;
+      case 'error':
+        return `${base} bg-destructive`;
+      default:
+        return `${base} bg-muted-foreground/50`;
     }
   }
 
   getClusterStatusClass(status: FirewallClusterInfoDto.ClusterStatusEnum): string {
     switch (status) {
-      case 'ready':    return STATUS_TEXT.ok;
+      case 'ready':
+        return STATUS_TEXT.ok;
       case 'creating':
-      case 'scaling':  return STATUS_TEXT.info;
+      case 'scaling':
+        return STATUS_TEXT.info;
       case 'error':
-      case 'deletion_failed': return STATUS_TEXT.danger;
-      case 'stopped':  return STATUS_TEXT.warn;
-      default:         return STATUS_TEXT.muted;
+      case 'deletion_failed':
+        return STATUS_TEXT.danger;
+      case 'stopped':
+        return STATUS_TEXT.warn;
+      default:
+        return STATUS_TEXT.muted;
     }
   }
 }
@@ -258,10 +285,15 @@ const STATUS_TEXT: Record<Tone, string> = {
 
 function statusTone(status: ReconciliationStatus | string): Tone {
   switch (status) {
-    case ReconciliationStatus.IN_SYNC:     return 'ok';
-    case ReconciliationStatus.RECONCILING: return 'info';
-    case ReconciliationStatus.DRIFT:       return 'warn';
-    case ReconciliationStatus.ERROR:       return 'danger';
-    default:                               return 'muted';
+    case ReconciliationStatus.IN_SYNC:
+      return 'ok';
+    case ReconciliationStatus.RECONCILING:
+      return 'info';
+    case ReconciliationStatus.DRIFT:
+      return 'warn';
+    case ReconciliationStatus.ERROR:
+      return 'danger';
+    default:
+      return 'muted';
   }
 }

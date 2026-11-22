@@ -60,7 +60,10 @@ import {
               <span aria-hidden="true">·</span>
               <span>{{ t.stats.totalApps }} apps</span>
               <span class="ml-2 inline-flex items-center gap-1.5">
-                <span class="h-1.5 w-1.5 rounded-full" [class]="store.live() ? 'dot-healthy' : 'dot-pending'"></span>
+                <span
+                  class="h-1.5 w-1.5 rounded-full"
+                  [class]="store.live() ? 'dot-healthy' : 'dot-pending'"
+                ></span>
                 {{ store.live() ? 'Live' : 'Connecting' }}
               </span>
             </p>
@@ -70,32 +73,57 @@ import {
           @if (store.snapshot()?.projects?.length) {
             <label class="flex items-center gap-2 text-xs">
               <span class="text-muted-foreground">Project</span>
-              <select class="h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground"
-                      [value]="store.state().project ?? ''"
-                      (change)="store.update({ project: $any($event.target).value || null })">
+              <select
+                class="h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground"
+                [value]="store.state().project ?? ''"
+                (change)="store.update({ project: $any($event.target).value || null })"
+              >
                 <option value="">All projects</option>
                 @for (p of store.snapshot()!.projects; track p.id) {
-                  <option [value]="p.id" [selected]="store.state().project === p.id">{{ p.name }}</option>
+                  <option [value]="p.id" [selected]="store.state().project === p.id">
+                    {{ p.name }}
+                  </option>
                 }
               </select>
             </label>
           }
-          <button type="button" class="h-8 rounded-md border px-3 text-xs font-medium"
-                  [class.border-border]="!store.systemApps.shownOnMap()" [class.bg-card]="!store.systemApps.shownOnMap()"
-                  [class.text-muted-foreground]="!store.systemApps.shownOnMap()"
-                  [style.border-color]="store.systemApps.shownOnMap() ? 'hsl(var(--brand))' : null"
-                  [style.color]="store.systemApps.shownOnMap() ? 'hsl(var(--brand))' : null"
-                  [attr.aria-pressed]="store.systemApps.shownOnMap()"
-                  title="The apps Flui itself runs. Shown to whoever sees every cluster."
-                  (click)="store.systemApps.toggleOnMap()">System apps</button>
-          <app-topology-choice label="View" [choices]="views" [value]="store.state().view"
-                               (changed)="store.update({ view: $any($event) })" />
-          <app-topology-choice label="Show as" [choices]="layouts" [value]="store.state().list ? 'list' : 'map'"
-                               (changed)="store.update({ list: $event === 'list' })" />
-          <button type="button" class="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-50"
-                  [disabled]="!store.snapshot() || exporting() || !exportable()"
-                  [title]="exportable() ? 'Save the map you are looking at as an image' : 'Open the map to export it'"
-                  (click)="exportImage()">
+          <button
+            type="button"
+            class="h-8 rounded-md border px-3 text-xs font-medium"
+            [class.border-border]="!store.systemApps.shownOnMap()"
+            [class.bg-card]="!store.systemApps.shownOnMap()"
+            [class.text-muted-foreground]="!store.systemApps.shownOnMap()"
+            [style.border-color]="store.systemApps.shownOnMap() ? 'hsl(var(--brand))' : null"
+            [style.color]="store.systemApps.shownOnMap() ? 'hsl(var(--brand))' : null"
+            [attr.aria-pressed]="store.systemApps.shownOnMap()"
+            title="The apps Flui itself runs. Shown to whoever sees every cluster."
+            (click)="store.systemApps.toggleOnMap()"
+          >
+            System apps
+          </button>
+          <app-topology-choice
+            label="View"
+            [choices]="views"
+            [value]="store.state().view"
+            (changed)="store.update({ view: $any($event) })"
+          />
+          <app-topology-choice
+            label="Show as"
+            [choices]="layouts"
+            [value]="store.state().list ? 'list' : 'map'"
+            (changed)="store.update({ list: $event === 'list' })"
+          />
+          <button
+            type="button"
+            class="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-50"
+            [disabled]="!store.snapshot() || exporting() || !exportable()"
+            [title]="
+              exportable()
+                ? 'Save the map you are looking at as an image'
+                : 'Open the map to export it'
+            "
+            (click)="exportImage()"
+          >
             {{ exporting() ? 'Exporting…' : 'Export image' }}
           </button>
         </div>
@@ -113,17 +141,27 @@ import {
           <main class="min-h-0 space-y-4 overflow-y-auto">
             @if (drillView(); as d) {
               @if (d.kind === 'capacity') {
-                <app-topology-capacity [snapshot]="d.snapshot" [clusterId]="d.id" [focus]="store.focus()"
-                                       (selected)="select($event)" (back)="store.update({ drill: null })" />
+                <app-topology-capacity
+                  [snapshot]="d.snapshot"
+                  [clusterId]="d.id"
+                  [focus]="store.focus()"
+                  (selected)="select($event)"
+                  (back)="store.update({ drill: null })"
+                />
               } @else {
-                <app-topology-request-path [snapshot]="d.snapshot" [appId]="d.id" (back)="store.update({ drill: null })" />
+                <app-topology-request-path
+                  [snapshot]="d.snapshot"
+                  [appId]="d.id"
+                  (back)="store.update({ drill: null })"
+                />
               }
             } @else if (store.state().list) {
               <app-topology-list
                 [snapshot]="store.snapshot()"
                 [focus]="store.focus()"
                 [project]="store.state().project"
-                (selected)="select($event)" />
+                (selected)="select($event)"
+              />
             } @else if (store.snapshot(); as t) {
               @if (store.state().view === 'services') {
                 <app-topology-services
@@ -132,24 +170,27 @@ import {
                   [focus]="store.focus()"
                   (selected)="select($event)"
                   (opened)="open($event)"
-                  (levelChanged)="store.update($event)" />
+                  (levelChanged)="store.update($event)"
+                />
               } @else {
-              <app-topology-infrastructure
-                [snapshot]="t"
-                [focus]="store.focus()"
-                [colorBy]="store.state().colorBy"
-                [groupBy]="store.state().groupBy"
-                [project]="store.state().project"
-                (selected)="select($event)"
-                (opened)="open($event)"
-                (colorByChanged)="store.update({ colorBy: $event })"
-                (groupByChanged)="store.update({ groupBy: $event })" />
-              <app-topology-infra-panels
-                [snapshot]="t"
-                [focus]="store.focus()"
-                [colorBy]="store.state().colorBy"
-                [guest]="store.guest()"
-                (selected)="select($event)" />
+                <app-topology-infrastructure
+                  [snapshot]="t"
+                  [focus]="store.focus()"
+                  [colorBy]="store.state().colorBy"
+                  [groupBy]="store.state().groupBy"
+                  [project]="store.state().project"
+                  (selected)="select($event)"
+                  (opened)="open($event)"
+                  (colorByChanged)="store.update({ colorBy: $event })"
+                  (groupByChanged)="store.update({ groupBy: $event })"
+                />
+                <app-topology-infra-panels
+                  [snapshot]="t"
+                  [focus]="store.focus()"
+                  [colorBy]="store.state().colorBy"
+                  [guest]="store.guest()"
+                  (selected)="select($event)"
+                />
               }
             }
           </main>
@@ -161,7 +202,8 @@ import {
             [guest]="store.guest()"
             (selected)="select($event)"
             (cleared)="clear()"
-            (drilled)="store.update($event)" />
+            (drilled)="store.update($event)"
+          />
         </div>
       }
     </div>
@@ -186,8 +228,10 @@ export class TopologyPageComponent implements OnInit, OnDestroy {
     const s = this.store.state();
     const snapshot = this.store.snapshot();
     if (!s.drill || !snapshot) return null;
-    if (s.drill === 'capacity' && s.cluster) return { kind: 'capacity' as const, id: s.cluster, snapshot };
-    if (s.drill === 'path' && s.focus?.type === 'app') return { kind: 'path' as const, id: s.focus.id, snapshot };
+    if (s.drill === 'capacity' && s.cluster)
+      return { kind: 'capacity' as const, id: s.cluster, snapshot };
+    if (s.drill === 'path' && s.focus?.type === 'app')
+      return { kind: 'path' as const, id: s.focus.id, snapshot };
     return null;
   });
   private readonly surfaceRevision = new TopologySurfaceRevision();

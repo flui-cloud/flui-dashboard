@@ -19,10 +19,12 @@ export class AgentKeyProjectsService {
   private readonly projectsApi = inject(ProjectsService);
 
   list() {
-    return this.projectsApi.projectsControllerList().pipe(
-      map((projects: Array<{ id: string; name: string }>) =>
-        projects.map((p) => ({ id: p.id, name: p.name })),
-      ),
-    );
+    return this.projectsApi
+      .projectsControllerList()
+      .pipe(
+        map((projects: Array<{ id: string; name: string }>) =>
+          projects.map((p) => ({ id: p.id, name: p.name })),
+        ),
+      );
   }
 }

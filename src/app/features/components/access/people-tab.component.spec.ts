@@ -16,8 +16,20 @@ describe('PeopleTabComponent visitors', () => {
 
   const el = () => fixture.nativeElement as HTMLElement;
   const rows = [
-    { id: 'p-1', email: 'mario@example.com', role: 'user', state: 'USER_STATE_ACTIVE', kind: 'person' },
-    { id: 'v-1', email: 'visitor-1@demo.local', role: 'user', state: 'USER_STATE_ACTIVE', kind: 'visitor' },
+    {
+      id: 'p-1',
+      email: 'mario@example.com',
+      role: 'user',
+      state: 'USER_STATE_ACTIVE',
+      kind: 'person',
+    },
+    {
+      id: 'v-1',
+      email: 'visitor-1@demo.local',
+      role: 'user',
+      state: 'USER_STATE_ACTIVE',
+      kind: 'visitor',
+    },
   ];
 
   beforeEach(() => {
@@ -56,7 +68,9 @@ describe('PeopleTabComponent visitors', () => {
     const visitor = el().querySelector('[data-testid="visitor-badge"]')!.closest('tr')!;
     expect(visitor.querySelector('button[title="Generate invite link"]')).toBeNull();
     expect(visitor.querySelector('select')).toBeNull();
-    expect(visitor.querySelector('[data-testid="visitor-role"]')?.textContent).toContain('Read-only');
+    expect(visitor.querySelector('[data-testid="visitor-role"]')?.textContent).toContain(
+      'Read-only',
+    );
 
     const person = Array.from(el().querySelectorAll('tbody tr')).find((r) =>
       r.textContent?.includes('mario@example.com'),

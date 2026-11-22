@@ -58,9 +58,7 @@ describe('deleting the wildcard issuers of a cluster', () => {
 
   it('offers no delete control to one who may not — the route asks cluster:manage', async () => {
     await mount(false);
-    expect(fixture.nativeElement.textContent).toContain(
-      'letsencrypt-production-wildcard',
-    );
+    expect(fixture.nativeElement.textContent).toContain('letsencrypt-production-wildcard');
     expect(deleteButton()).toBeNull();
   });
 });

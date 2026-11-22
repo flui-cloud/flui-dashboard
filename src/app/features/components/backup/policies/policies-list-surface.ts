@@ -43,7 +43,11 @@ export interface PoliciesListSurfaceContext {
   appVersion?: string;
 }
 
-function textObservation(key: string, value: string | undefined | null, source: ObservationSource): Observation | null {
+function textObservation(
+  key: string,
+  value: string | undefined | null,
+  source: ObservationSource,
+): Observation | null {
   return value ? { key, presentedAs: { text: value }, source } : null;
 }
 
@@ -53,16 +57,28 @@ function rowObservations({ policy, clusterName, activity }: PolicyRow): Observat
     textObservation('flui.backup.policy.cluster', clusterName, 'derived'),
     textObservation('flui.backup.policy.profile', policy.profile, 'api'),
     textObservation('flui.backup.policy.schedule', policy.cronSchedule || 'on-demand', 'api'),
-    textObservation('flui.backup.policy.schedule_description', activity?.schedule.description, 'api'),
+    textObservation(
+      'flui.backup.policy.schedule_description',
+      activity?.schedule.description,
+      'api',
+    ),
     textObservation('flui.backup.policy.health', activity?.health.state, 'api'),
-    textObservation('flui.backup.policy.last_run_at', lastRun ? (lastRun.startedAt ?? lastRun.finishedAt) : null, 'api'),
+    textObservation(
+      'flui.backup.policy.last_run_at',
+      lastRun ? (lastRun.startedAt ?? lastRun.finishedAt) : null,
+      'api',
+    ),
     textObservation('flui.backup.policy.next_run_at', activity?.schedule.nextRunAt, 'api'),
     textObservation('flui.backup.policy.status', policy.status, 'api'),
   ].filter((observation): observation is Observation => observation !== null);
 }
 
 function rowScope(row: PolicyRow): SemanticScopeSnapshot {
-  const entity: EntityReference = { ref: policyEntityRef(row.policy.id), label: row.policy.name, role: 'related' };
+  const entity: EntityReference = {
+    ref: policyEntityRef(row.policy.id),
+    label: row.policy.name,
+    role: 'related',
+  };
   return {
     id: `${LIST_ID}:${row.policy.id}`,
     parentId: LIST_ID,
@@ -87,7 +103,11 @@ export function presentedContent(input: PoliciesListSurfaceInput): PresentedCont
     label: 'Backup policies',
   };
 
-  const filterObservation = textObservation('flui.backup.policies.cluster_filter', input.clusterFilterName, 'ui');
+  const filterObservation = textObservation(
+    'flui.backup.policies.cluster_filter',
+    input.clusterFilterName,
+    'ui',
+  );
 
   const listScope: SemanticScopeSnapshot = {
     id: LIST_ID,

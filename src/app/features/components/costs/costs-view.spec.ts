@@ -18,9 +18,33 @@ const hetzner: CostProvider = {
   vatRatePercent: '19',
   months: [m('2026-08', false, 20), m('2026-09', true, 11.24, 12.31)],
   clusters: [
-    { clusterId: 'c1', clusterName: 'control', region: 'fsn1', removed: false, months: [m('2026-08', false, 20), m('2026-09', true, 10.94, 12.01)], unpriced: 0, listPriced: 0 },
-    { clusterId: 'c2', clusterName: 'wc-1', region: 'nbg1', removed: true, months: [m('2026-08', false, 0), m('2026-09', true, 0.3, 0.3)], unpriced: 0, listPriced: 0 },
-    { clusterId: 'c3', clusterName: 'idle', region: 'nbg1', removed: true, months: [m('2026-08', false, 0), m('2026-09', true, 0, 0)], unpriced: 0, listPriced: 0 },
+    {
+      clusterId: 'c1',
+      clusterName: 'control',
+      region: 'fsn1',
+      removed: false,
+      months: [m('2026-08', false, 20), m('2026-09', true, 10.94, 12.01)],
+      unpriced: 0,
+      listPriced: 0,
+    },
+    {
+      clusterId: 'c2',
+      clusterName: 'wc-1',
+      region: 'nbg1',
+      removed: true,
+      months: [m('2026-08', false, 0), m('2026-09', true, 0.3, 0.3)],
+      unpriced: 0,
+      listPriced: 0,
+    },
+    {
+      clusterId: 'c3',
+      clusterName: 'idle',
+      region: 'nbg1',
+      removed: true,
+      months: [m('2026-08', false, 0), m('2026-09', true, 0, 0)],
+      unpriced: 0,
+      listPriced: 0,
+    },
   ],
   unpriced: 0,
   listPriced: 0,
@@ -60,7 +84,9 @@ describe('the Costs section', () => {
 
   it('names the VAT the provider applies, or says there is none published', () => {
     expect(vatNote(hetzner)).toBe('19% VAT on this account');
-    expect(vatNote({ ...hetzner, vatIncluded: false, vatRatePercent: null })).toBe('Prices published without VAT');
+    expect(vatNote({ ...hetzner, vatIncluded: false, vatRatePercent: null })).toBe(
+      'Prices published without VAT',
+    );
   });
 
   it('shows no figures for a provider Flui cannot price', () => {
@@ -70,6 +96,8 @@ describe('the Costs section', () => {
       priced: false,
       clusters: [{ ...hetzner.clusters[0], unpriced: 1 }],
     };
-    expect(clusterRows(byos)[0]).toEqual(jasmine.objectContaining({ spent: null, forecast: null, unpriced: 1 }));
+    expect(clusterRows(byos)[0]).toEqual(
+      jasmine.objectContaining({ spent: null, forecast: null, unpriced: 1 }),
+    );
   });
 });

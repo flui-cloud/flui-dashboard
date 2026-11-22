@@ -50,9 +50,7 @@ describe('ClusterReplicatedVolumesCardComponent', () => {
 
   it('says where the copies would go and asks twice before enabling', () => {
     const el = render(off);
-    expect(el.textContent).toContain(
-      'Enabling keeps copies on w1 and w2 (fsn1 and nbg1).',
-    );
+    expect(el.textContent).toContain('Enabling keeps copies on w1 and w2 (fsn1 and nbg1).');
     const button = el.querySelector(
       '[data-testid="replicated-volumes-enable"]',
     ) as HTMLButtonElement;
@@ -71,13 +69,9 @@ describe('ClusterReplicatedVolumesCardComponent', () => {
       storageNodes: ['w1', 'w2'],
       warnings: ['master holds copies but takes no applications.'],
     });
-    expect(el.textContent).toContain(
-      'Copies on w1 and w2, one in each location.',
-    );
+    expect(el.textContent).toContain('Copies on w1 and w2, one in each location.');
     expect(el.textContent).toContain('takes no applications');
-    expect(
-      el.querySelector('[data-testid="replicated-volumes-enable"]'),
-    ).toBeNull();
+    expect(el.querySelector('[data-testid="replicated-volumes-enable"]')).toBeNull();
   });
 
   function details(el: HTMLElement): string {
@@ -87,10 +81,7 @@ describe('ClusterReplicatedVolumesCardComponent', () => {
       ) as HTMLButtonElement
     ).click();
     fixture.detectChanges();
-    return (
-      el.querySelector('[data-testid="replicated-volumes-details"]')
-        ?.textContent ?? ''
-    );
+    return el.querySelector('[data-testid="replicated-volumes-details"]')?.textContent ?? '';
   }
 
   it('names the node that votes when two locations hold the copies', () => {
@@ -111,9 +102,7 @@ describe('ClusterReplicatedVolumesCardComponent', () => {
         tieBreakers: [],
       },
     });
-    expect(el.textContent).toContain(
-      'Enabling keeps copies on s1, s2 and s3 (a, b and c).',
-    );
+    expect(el.textContent).toContain('Enabling keeps copies on s1, s2 and s3 (a, b and c).');
     const text = details(el);
     expect(text).not.toContain('tie-breaking');
     expect(text).toContain(
@@ -126,11 +115,7 @@ describe('ClusterReplicatedVolumesCardComponent', () => {
       ...off,
       plan: { feasible: false, reason: 'No two nodes in one location.' },
     });
-    expect(el.textContent).toContain(
-      'Not possible yet: No two nodes in one location.',
-    );
-    expect(
-      el.querySelector('[data-testid="replicated-volumes-enable"]'),
-    ).toBeNull();
+    expect(el.textContent).toContain('Not possible yet: No two nodes in one location.');
+    expect(el.querySelector('[data-testid="replicated-volumes-enable"]')).toBeNull();
   });
 });

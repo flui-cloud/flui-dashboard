@@ -2,9 +2,18 @@ import { Component, inject, input, output, ChangeDetectionStrategy } from '@angu
 
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import {
-  lucideRocket, lucideRotateCcw, lucideArrowUpDown, lucideCpu,
-  lucideRefreshCw, lucidePlay, lucideSquare, lucideSettings,
-  lucideGitCommit, lucideLoader, lucideAlertCircle, lucideWand,
+  lucideRocket,
+  lucideRotateCcw,
+  lucideArrowUpDown,
+  lucideCpu,
+  lucideRefreshCw,
+  lucidePlay,
+  lucideSquare,
+  lucideSettings,
+  lucideGitCommit,
+  lucideLoader,
+  lucideAlertCircle,
+  lucideWand,
 } from '@ng-icons/lucide';
 import { AppAuditEventSummaryDto } from '../../../core/api/model/appAuditEventSummaryDto';
 import { AppRevisionsService, AuditEventType } from '../../service/app-revisions.service';
@@ -17,9 +26,18 @@ import { appEventText } from './app-recap-view';
   imports: [NgIconComponent],
   providers: [
     provideIcons({
-      lucideRocket, lucideRotateCcw, lucideArrowUpDown, lucideCpu,
-      lucideRefreshCw, lucidePlay, lucideSquare, lucideSettings,
-      lucideGitCommit, lucideLoader, lucideAlertCircle, lucideWand,
+      lucideRocket,
+      lucideRotateCcw,
+      lucideArrowUpDown,
+      lucideCpu,
+      lucideRefreshCw,
+      lucidePlay,
+      lucideSquare,
+      lucideSettings,
+      lucideGitCommit,
+      lucideLoader,
+      lucideAlertCircle,
+      lucideWand,
     }),
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -31,9 +49,11 @@ import { appEventText } from './app-recap-view';
           <button
             (click)="filterChange.emit(filter.value)"
             class="px-3 py-1 text-xs rounded-full border transition-colors font-medium"
-            [class]="activeFilter() === filter.value
-              ? 'bg-blue-600 text-white border-blue-600'
-              : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'"
+            [class]="
+              activeFilter() === filter.value
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+            "
           >
             {{ filter.label }}
           </button>
@@ -45,12 +65,16 @@ import { appEventText } from './app-recap-view';
           <ng-icon name="lucideLoader" class="h-6 w-6 animate-spin text-blue-600" />
         </div>
       } @else if (service.eventsError()) {
-        <div class="flex items-center gap-2 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
+        <div
+          class="flex items-center gap-2 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm"
+        >
           <ng-icon name="lucideAlertCircle" class="h-4 w-4 shrink-0" />
           {{ service.eventsError() }}
         </div>
       } @else if (service.events().length === 0) {
-        <p class="text-sm text-gray-500 dark:text-gray-400 py-6 text-center">No activity events found.</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400 py-6 text-center">
+          No activity events found.
+        </p>
       } @else {
         <div class="relative">
           <div class="absolute left-5 top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-700"></div>
@@ -61,29 +85,47 @@ import { appEventText } from './app-recap-view';
                   class="absolute left-3.5 top-2 w-3 h-3 rounded-full border-2 border-white dark:border-gray-800"
                   [class]="isAutoFix(event) ? 'bg-purple-500' : getEventDotColor(event.eventType)"
                 ></div>
-                <div class="flex-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                <div
+                  class="flex-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3"
+                >
                   <div class="flex items-start justify-between gap-2">
                     <div class="flex items-center gap-2 flex-wrap">
                       <ng-icon
                         [name]="isAutoFix(event) ? 'lucideWand' : getEventIcon(event.eventType)"
                         class="h-4 w-4 shrink-0"
-                        [class]="isAutoFix(event) ? 'text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400'"
+                        [class]="
+                          isAutoFix(event)
+                            ? 'text-purple-600 dark:text-purple-400'
+                            : 'text-gray-500 dark:text-gray-400'
+                        "
                       />
-                      <span class="text-sm font-medium text-gray-900 dark:text-white">{{ formatChangeMetadata(event) }}</span>
+                      <span class="text-sm font-medium text-gray-900 dark:text-white">{{
+                        formatChangeMetadata(event)
+                      }}</span>
                       @if (isAutoFix(event)) {
-                        <span class="text-xs inline-flex items-center gap-1 px-2 py-0.5 rounded bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400 font-medium">
+                        <span
+                          class="text-xs inline-flex items-center gap-1 px-2 py-0.5 rounded bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400 font-medium"
+                        >
                           Flui automatic remediation
                         </span>
                       }
                       @if (event.revisionNumber) {
-                        <span class="text-xs px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">#{{ event.revisionNumber }}</span>
+                        <span
+                          class="text-xs px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
+                          >#{{ event.revisionNumber }}</span
+                        >
                       }
                       @if (isCurrentRevision(event)) {
-                        <span class="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 font-medium">current</span>
+                        <span
+                          class="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 font-medium"
+                          >current</span
+                        >
                       }
                     </div>
                     <div class="flex items-center gap-2 shrink-0">
-                      <span class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">{{ formatDate(event.createdAt) }}</span>
+                      <span class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">{{
+                        formatDate(event.createdAt)
+                      }}</span>
                       @if (canRollback(event)) {
                         <button
                           (click)="rollback.emit(event)"
@@ -100,7 +142,9 @@ import { appEventText } from './app-recap-view';
                       }
                     </div>
                   </div>
-                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">by {{ formatActor(event.actor) }}</p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    by {{ formatActor(event.actor) }}
+                  </p>
                   @if (service.rollbackError() && service.rollingBack() === false) {
                     <!-- error shown at feed level -->
                   }
@@ -148,9 +192,11 @@ export class AppActivityFeedComponent {
   }
 
   canRollback(event: AppAuditEventSummaryDto): boolean {
-    return (event.eventType === 'deploy' || event.eventType === 'rollback')
-      && !this.isCurrentRevision(event)
-      && event.revisionNumber != null;
+    return (
+      (event.eventType === 'deploy' || event.eventType === 'rollback') &&
+      !this.isCurrentRevision(event) &&
+      event.revisionNumber != null
+    );
   }
 
   isAutoFix(event: AppAuditEventSummaryDto): boolean {
@@ -161,9 +207,15 @@ export class AppActivityFeedComponent {
 
   getEventIcon(type: string): string {
     const icons: Record<string, string> = {
-      deploy: 'lucideRocket', rollback: 'lucideRotateCcw', scale: 'lucideArrowUpDown',
-      resource_update: 'lucideCpu', restart: 'lucideRefreshCw', start: 'lucidePlay',
-      stop: 'lucideSquare', config_update: 'lucideSettings', created: 'lucideGitCommit',
+      deploy: 'lucideRocket',
+      rollback: 'lucideRotateCcw',
+      scale: 'lucideArrowUpDown',
+      resource_update: 'lucideCpu',
+      restart: 'lucideRefreshCw',
+      start: 'lucidePlay',
+      stop: 'lucideSquare',
+      config_update: 'lucideSettings',
+      created: 'lucideGitCommit',
       reconciled: 'lucideRefreshCw',
     };
     return icons[type] ?? 'lucideGitCommit';
@@ -171,9 +223,15 @@ export class AppActivityFeedComponent {
 
   getEventDotColor(type: string): string {
     const colors: Record<string, string> = {
-      deploy: 'bg-green-500', rollback: 'bg-orange-500', scale: 'bg-blue-500',
-      resource_update: 'bg-purple-500', restart: 'bg-yellow-500', start: 'bg-green-400',
-      stop: 'bg-red-400', config_update: 'bg-gray-400', created: 'bg-blue-600',
+      deploy: 'bg-green-500',
+      rollback: 'bg-orange-500',
+      scale: 'bg-blue-500',
+      resource_update: 'bg-purple-500',
+      restart: 'bg-yellow-500',
+      start: 'bg-green-400',
+      stop: 'bg-red-400',
+      config_update: 'bg-gray-400',
+      created: 'bg-blue-600',
       reconciled: 'bg-teal-500',
     };
     return colors[type] ?? 'bg-gray-400';
@@ -185,8 +243,11 @@ export class AppActivityFeedComponent {
 
   formatDate(iso: string): string {
     const d = new Date(iso);
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-      + ' ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    return (
+      d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) +
+      ' ' +
+      d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    );
   }
 
   formatChangeMetadata(event: AppAuditEventSummaryDto): string {

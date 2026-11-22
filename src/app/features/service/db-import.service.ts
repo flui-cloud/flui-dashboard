@@ -4,13 +4,7 @@ import { Observable } from 'rxjs';
 import { AppConfigService } from '../../core/services/app-config.service';
 
 export type DbImportStatus =
-  | 'checking'
-  | 'copying'
-  | 'streaming'
-  | 'cutting-over'
-  | 'completed'
-  | 'failed'
-  | 'aborted';
+  'checking' | 'copying' | 'streaming' | 'cutting-over' | 'completed' | 'failed' | 'aborted';
 
 export interface DbImportSource {
   host: string;
@@ -35,12 +29,7 @@ export interface DbImportView {
   endedAt: string | null;
 }
 
-export const ACTIVE_IMPORT: DbImportStatus[] = [
-  'checking',
-  'copying',
-  'streaming',
-  'cutting-over',
-];
+export const ACTIVE_IMPORT: DbImportStatus[] = ['checking', 'copying', 'streaming', 'cutting-over'];
 
 export const IMPORT_STATE_TEXT: Record<DbImportStatus, string> = {
   checking: 'Checking the source and copying the schema',
@@ -78,11 +67,7 @@ export class DbImportService {
     return this.http.get<DbImportView | null>(this.url(appId));
   }
 
-  start(
-    appId: string,
-    source: DbImportSource,
-    password: string,
-  ): Observable<DbImportView> {
+  start(appId: string, source: DbImportSource, password: string): Observable<DbImportView> {
     return this.http.post<DbImportView>(this.url(appId), { source, password });
   }
 

@@ -23,19 +23,40 @@ import { DeferredListComponent } from './deferred-list.component';
           <h3 class="m-0 text-sm font-semibold text-foreground">Maintenance</h3>
           <p class="m-0 mt-0.5 text-[13px] text-muted-foreground">
             {{ reading()?.says ?? 'Reading…' }}
-            @if (reading()?.nextOpening && reading()?.mode !== 'anytime') { · next {{ label(reading()!.nextOpening) }} }
+            @if (reading()?.nextOpening && reading()?.mode !== 'anytime') {
+              · next {{ label(reading()!.nextOpening) }}
+            }
           </p>
         </div>
-        <div class="inline-flex rounded-md border border-border p-0.5 text-[12px]" role="group" aria-label="Maintenance window">
+        <div
+          class="inline-flex rounded-md border border-border p-0.5 text-[12px]"
+          role="group"
+          aria-label="Maintenance window"
+        >
           @for (m of modes; track m.value) {
-            <button type="button" class="rounded px-2 py-0.5"
-              [class]="reading()?.mode === m.value ? 'bg-muted font-medium text-foreground' : 'text-muted-foreground'"
-              (click)="choose(m.value)" [attr.data-testid]="'maintenance-mode-' + m.value">{{ m.label }}</button>
+            <button
+              type="button"
+              class="rounded px-2 py-0.5"
+              [class]="
+                reading()?.mode === m.value
+                  ? 'bg-muted font-medium text-foreground'
+                  : 'text-muted-foreground'
+              "
+              (click)="choose(m.value)"
+              [attr.data-testid]="'maintenance-mode-' + m.value"
+            >
+              {{ m.label }}
+            </button>
           }
         </div>
       </div>
       @if (editingOwn()) {
-        <app-maintenance-window-editor [value]="reading()?.window ?? null" [saving]="saving()" (saved)="saveOwn($event)" (cancelled)="editingOwn.set(false)" />
+        <app-maintenance-window-editor
+          [value]="reading()?.window ?? null"
+          [saving]="saving()"
+          (saved)="saveOwn($event)"
+          (cancelled)="editingOwn.set(false)"
+        />
       }
       <app-deferred-list [rows]="held()" [cancellable]="true" (cancelAction)="cancel($event)" />
     </section>

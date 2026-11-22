@@ -46,7 +46,13 @@ type Tab = 'profile' | 'security';
       @if (visitor()) {
         <p class="text-sm text-muted-foreground" data-testid="visitor-note">
           This demo is read-only.
-          <a [href]="installUrl" target="_blank" rel="noopener" class="font-medium text-primary hover:underline">Install Flui</a>
+          <a
+            [href]="installUrl"
+            target="_blank"
+            rel="noopener"
+            class="font-medium text-primary hover:underline"
+            >Install Flui</a
+          >
           to have your own.
         </p>
       } @else {
@@ -56,9 +62,11 @@ type Tab = 'profile' | 'security';
               type="button"
               (click)="tab.set(t.id)"
               class="inline-flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors"
-              [class]="tab() === t.id
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground'"
+              [class]="
+                tab() === t.id
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              "
               [attr.data-tab]="t.id"
             >
               <ng-icon [name]="t.icon" class="h-4 w-4" />
@@ -68,7 +76,11 @@ type Tab = 'profile' | 'security';
         </nav>
 
         @if (local()) {
-          @if (tab() === 'profile') { <app-profile-tab /> } @else { <app-security-tab /> }
+          @if (tab() === 'profile') {
+            <app-profile-tab />
+          } @else {
+            <app-security-tab />
+          }
         } @else if (error()) {
           <p class="text-sm text-destructive" data-testid="account-error">{{ error() }}</p>
         } @else if (overview(); as o) {

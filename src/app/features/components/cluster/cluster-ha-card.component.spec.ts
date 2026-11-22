@@ -1,10 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
-import {
-  ClusterHaService,
-  ClusterHaView,
-} from '../../service/cluster-ha.service';
+import { ClusterHaService, ClusterHaView } from '../../service/cluster-ha.service';
 import { ClusterHaCardComponent } from './cluster-ha-card.component';
 
 const standard: ClusterHaView = {
@@ -22,9 +19,7 @@ const standard: ClusterHaView = {
   unsupported: null,
   servers: { count: 1, ready: 1, zones: ['fsn1'] },
   survives: ['the loss of a worker, for applications with two or more copies'],
-  doesNotSurvive: [
-    'the loss of the master: nothing can change until it returns',
-  ],
+  doesNotSurvive: ['the loss of the master: nothing can change until it returns'],
   warnings: [],
   missing: [
     {
@@ -60,18 +55,14 @@ describe('ClusterHaCardComponent', () => {
   it('says in one line what is still missing, and keeps the rest behind a button', () => {
     const el = render(standard);
     expect(el.textContent).toContain('Standard');
-    expect(el.textContent).toContain(
-      'it still needs a server in nbg1, a server in hel1.',
+    expect(el.textContent).toContain('it still needs a server in nbg1, a server in hel1.');
+    expect(el.querySelector('[data-testid="cluster-ha-zones"]')!.textContent).toContain(
+      'hel1: vote',
     );
-    expect(
-      el.querySelector('[data-testid="cluster-ha-zones"]')!.textContent,
-    ).toContain('hel1: vote');
     expect(el.querySelector('[data-testid="cluster-ha-details"]')).toBeNull();
     (el.querySelector('button') as HTMLButtonElement).click();
     fixture.detectChanges();
-    const details = el.querySelector(
-      '[data-testid="cluster-ha-details"]',
-    )!.textContent!;
+    const details = el.querySelector('[data-testid="cluster-ha-details"]')!.textContent!;
     expect(details).toContain('Survives the loss of a worker');
     expect(details).toContain('Does not survive the loss of the master');
   });
@@ -86,8 +77,7 @@ describe('ClusterHaCardComponent', () => {
     const el = render({
       ...standard,
       topology: null,
-      unsupported:
-        'Flui has not validated a highly available layout for us-east yet.',
+      unsupported: 'Flui has not validated a highly available layout for us-east yet.',
       missing: [],
     });
     expect(el.textContent).toContain('us-east');

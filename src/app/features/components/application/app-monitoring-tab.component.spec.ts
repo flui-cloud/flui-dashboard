@@ -9,12 +9,19 @@ import { ApplicationMetricsService } from '../../../core/api/api/applicationMetr
 import { ApplicationMonitoringService } from '../../service/application-monitoring.service';
 import type { AppHistoryPoint } from '../../model/application.models';
 import { AppHealthChecks, AppHealthChecksService } from '../../service/app-health-checks.service';
-import { AppCapacityAdvice, AppCapacityAdviceService } from '../../service/app-capacity-advice.service';
+import {
+  AppCapacityAdvice,
+  AppCapacityAdviceService,
+} from '../../service/app-capacity-advice.service';
 import { AppRuntimeService } from '../../service/app-runtime.service';
 import { AppMonitoringTabComponent } from './app-monitoring-tab.component';
 import { ApplicationService } from '../../service/application.service';
 
-type Status = { replicas_ready: number | null; replicas_desired: number | null; replicas_unavailable: number | null };
+type Status = {
+  replicas_ready: number | null;
+  replicas_desired: number | null;
+  replicas_unavailable: number | null;
+};
 
 class FakeMonitoring {
   readonly current = signal<Record<string, unknown> | null>(null);
@@ -23,7 +30,9 @@ class FakeMonitoring {
   readonly error = signal<string | null>(null);
   readonly pollingPaused = signal(false);
   readonly canRetry = signal(true);
-  readonly statusMetrics = computed(() => (this.current()?.['status'] as Status | undefined) ?? null);
+  readonly statusMetrics = computed(
+    () => (this.current()?.['status'] as Status | undefined) ?? null,
+  );
   readonly podPhases = signal([]);
   startPolling = jasmine.createSpy('startPolling');
   stopPolling = jasmine.createSpy('stopPolling');
@@ -36,7 +45,10 @@ function metrics(status: Partial<Status> | null) {
     memory: { usage_bytes: 100, limits_bytes: 1000 },
     network: { receive_bytes_rate: 1, transmit_bytes_rate: 1 },
     replicas: [],
-    status: status === null ? null : { replicas_ready: 2, replicas_desired: 2, replicas_unavailable: 0, ...status },
+    status:
+      status === null
+        ? null
+        : { replicas_ready: 2, replicas_desired: 2, replicas_unavailable: 0, ...status },
   };
 }
 
@@ -46,7 +58,11 @@ describe('application monitoring tab', () => {
   let fixture: ComponentFixture<AppMonitoringTabComponent>;
   let monitoring: FakeMonitoring;
   let points: AppHistoryPoint[];
-  let health: { checks: ReturnType<typeof signal<AppHealthChecks | null>>; start: jasmine.Spy; stop: jasmine.Spy };
+  let health: {
+    checks: ReturnType<typeof signal<AppHealthChecks | null>>;
+    start: jasmine.Spy;
+    stop: jasmine.Spy;
+  };
   let capacity: {
     advice: ReturnType<typeof signal<AppCapacityAdvice | null>>;
     start: jasmine.Spy;
@@ -73,15 +89,25 @@ describe('application monitoring tab', () => {
       stop: jasmine.createSpy('stop'),
       load: jasmine.createSpy('load').and.resolveTo(),
     };
-    runtime = { savingReplicas: signal(false), updateReplicas: jasmine.createSpy('updateReplicas').and.resolveTo(true) };
-    health = { checks: signal(checks), start: jasmine.createSpy('start'), stop: jasmine.createSpy('stop') };
+    runtime = {
+      savingReplicas: signal(false),
+      updateReplicas: jasmine.createSpy('updateReplicas').and.resolveTo(true),
+    };
+    health = {
+      checks: signal(checks),
+      start: jasmine.createSpy('start'),
+      stop: jasmine.createSpy('stop'),
+    };
     monitoring = new FakeMonitoring();
     monitoring.current.set(metrics(status));
     await TestBed.configureTestingModule({
       imports: [AppMonitoringTabComponent],
       providers: [
         { provide: ApplicationService, useValue: { selectedApplication: () => null } },
-        { provide: ActivatedRoute, useValue: { parent: { snapshot: { paramMap: convertToParamMap({ id: 'app-1' }) } } } },
+        {
+          provide: ActivatedRoute,
+          useValue: { parent: { snapshot: { paramMap: convertToParamMap({ id: 'app-1' }) } } },
+        },
         { provide: UserEventsService, useValue: { onAlert: () => () => undefined } },
         { provide: ApplicationMonitoringService, useValue: monitoring },
         { provide: AppHealthChecksService, useValue: health },
@@ -89,7 +115,9 @@ describe('application monitoring tab', () => {
         { provide: AppRuntimeService, useValue: runtime },
         {
           provide: ApplicationMetricsService,
-          useValue: { applicationMetricsControllerGetAppMetricsHistory: () => of({ data_points: points }) },
+          useValue: {
+            applicationMetricsControllerGetAppMetricsHistory: () => of({ data_points: points }),
+          },
         },
       ],
     })
@@ -126,7 +154,9 @@ describe('application monitoring tab', () => {
     ]);
     const note = tile('CPU').querySelector('[data-testid="stat-tile-note"]')!;
     expect(note.textContent).toContain('Held back by its limit 42% of the time');
-    expect(note.querySelector('[title]')!.getAttribute('title')).toContain('More replicas spread the load');
+    expect(note.querySelector('[title]')!.getAttribute('title')).toContain(
+      'More replicas spread the load',
+    );
   });
 
   it('stays quiet when throttling is low', async () => {
@@ -148,7 +178,9 @@ describe('application monitoring tab', () => {
   });
 
   it('says all ready only with counts that are all ready', async () => {
-    await build({}, [{ timestamp: 1, datetime: minute(0), replicas_ready: 2, replicas_desired: 2 }]);
+    await build({}, [
+      { timestamp: 1, datetime: minute(0), replicas_ready: 2, replicas_desired: 2 },
+    ]);
     expect(tile('Replicas').textContent).toContain('2/2');
     expect(tile('Replicas').textContent).toContain('all ready');
     expect(tile('Replicas').querySelector('[data-testid="stat-tile-note"]')).toBeNull();
@@ -190,9 +222,11 @@ describe('application monitoring tab', () => {
       await build({}, [], checks());
       expect(tile('Health checks').textContent).toContain('0');
       expect(notes('Health checks')).toHaveSize(0);
-      expect(tile('Health checks').querySelector('[data-testid="stat-tile-hint"]')!.getAttribute('title')).toContain(
-        'More replicas keep the route open.',
-      );
+      expect(
+        tile('Health checks')
+          .querySelector('[data-testid="stat-tile-hint"]')!
+          .getAttribute('title'),
+      ).toContain('More replicas keep the route open.');
     });
 
     it('shows a dash, never zero, when the cluster could not be asked', async () => {
@@ -202,19 +236,25 @@ describe('application monitoring tab', () => {
     });
 
     it('says how often the app was too busy to answer, marked amber', async () => {
-      await build({}, [], checks({ readiness: 3, readiness_busy: 3, last_failure_at: '2026-10-09T10:20:00.000Z' }));
+      await build(
+        {},
+        [],
+        checks({ readiness: 3, readiness_busy: 3, last_failure_at: '2026-10-09T10:20:00.000Z' }),
+      );
       const [line] = notes('Health checks');
       expect(line.textContent).toMatch(/Too busy to answer 3 times · last at \d{2}:\d{2}/);
-      expect(line.querySelector('[data-testid="stat-tile-note-dot"]')!.className).toContain('bg-amber-500');
+      expect(line.querySelector('[data-testid="stat-tile-note-dot"]')!.className).toContain(
+        'bg-amber-500',
+      );
     });
 
     it('does not count a copy starting or stopping as a busy one', async () => {
       await build({}, [], checks({ readiness: 84, readiness_busy: 0 }));
       expect(tile('Health checks').textContent).toContain('0');
       expect(notes('Health checks')).toHaveSize(0);
-      expect(tile('Health checks').querySelector('[data-testid="stat-tile-footnote"]')!.textContent).toContain(
-        '84 while starting',
-      );
+      expect(
+        tile('Health checks').querySelector('[data-testid="stat-tile-footnote"]')!.textContent,
+      ).toContain('84 while starting');
     });
 
     it('says the liveness check restarted it, marked red', async () => {
@@ -223,7 +263,9 @@ describe('application monitoring tab', () => {
       expect(lines).toHaveSize(2);
       expect(lines[0].textContent).toContain('Too busy to answer 1 time');
       expect(lines[1].textContent).toContain('Restarted 2 times by its liveness check');
-      expect(lines[1].querySelector('[data-testid="stat-tile-note-dot"]')!.className).toContain('bg-destructive');
+      expect(lines[1].querySelector('[data-testid="stat-tile-note-dot"]')!.className).toContain(
+        'bg-destructive',
+      );
     });
   });
 
@@ -239,7 +281,8 @@ describe('application monitoring tab', () => {
       thresholds: { window_minutes: 15 },
       ...over,
     });
-    const banner = () => (fixture.nativeElement as HTMLElement).querySelector('[data-testid="capacity-advice"]');
+    const banner = () =>
+      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="capacity-advice"]');
 
     it('says what to do in one line, with the reasons behind Why', async () => {
       await build({}, [], null, advice());
@@ -249,12 +292,16 @@ describe('application monitoring tab', () => {
       expect(banner()!.querySelector('[data-testid="capacity-advice-reasons"]')).toBeNull();
       (banner()!.querySelector('[data-testid="capacity-advice-why"]') as HTMLButtonElement).click();
       fixture.detectChanges();
-      expect(banner()!.querySelector('[data-testid="capacity-advice-reasons"]')!.textContent).toContain('91%');
+      expect(
+        banner()!.querySelector('[data-testid="capacity-advice-reasons"]')!.textContent,
+      ).toContain('91%');
     });
 
     it('runs one more copy when asked, then reads the advice again', async () => {
       await build({}, [], null, advice());
-      const apply = banner()!.querySelector('[data-testid="capacity-advice-apply"]') as HTMLButtonElement;
+      const apply = banner()!.querySelector(
+        '[data-testid="capacity-advice-apply"]',
+      ) as HTMLButtonElement;
       expect(apply.textContent).toContain('Run 2 copies');
       apply.click();
       await fixture.whenStable();
@@ -263,7 +310,15 @@ describe('application monitoring tab', () => {
     });
 
     it('offers no button when the advice is not more copies', async () => {
-      await build({}, [], null, advice({ advice: 'add_node', sentence: 'Another copy has nowhere to run: add a node first.' }));
+      await build(
+        {},
+        [],
+        null,
+        advice({
+          advice: 'add_node',
+          sentence: 'Another copy has nowhere to run: add a node first.',
+        }),
+      );
       expect(banner()!.querySelector('[data-testid="capacity-advice-apply"]')).toBeNull();
     });
 

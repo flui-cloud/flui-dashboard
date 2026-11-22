@@ -1,9 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient, withXhr } from '@angular/common/http';
-import {
-  HttpTestingController,
-  provideHttpClientTesting,
-} from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { AppConfigService } from '../../core/services/app-config.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { IamService } from './iam.service';
@@ -73,10 +70,7 @@ describe('IamService role pickers', () => {
 
   it('offers only what this person may confer, and keeps the bins that work', () => {
     iam.roles.set(ROLES);
-    expect(iam.grantableRoles().map((r) => r.key)).toEqual([
-      'viewer',
-      'maintainer',
-    ]);
+    expect(iam.grantableRoles().map((r) => r.key)).toEqual(['viewer', 'maintainer']);
     expect(iam.isGrantable('owner')).toBeFalse();
     expect(iam.isRevocable('sandbox')).toBeTrue();
     expect(iam.isRevocable('owner')).toBeFalse();

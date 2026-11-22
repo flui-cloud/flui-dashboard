@@ -25,9 +25,7 @@ export class SearchConsoleService {
   }
 
   getConnectionInfo(appId: string): Observable<SearchConnectionInfo> {
-    return this.http.get<SearchConnectionInfo>(
-      `${this.base(appId)}/connection-info`,
-    );
+    return this.http.get<SearchConnectionInfo>(`${this.base(appId)}/connection-info`);
   }
 
   getClusterInfo(appId: string): Observable<SearchClusterInfo> {
@@ -38,14 +36,8 @@ export class SearchConsoleService {
     return this.http.get<SearchIndex[]>(`${this.base(appId)}/indices`);
   }
 
-  getMapping(
-    appId: string,
-    index: string,
-  ): Observable<Record<string, unknown>> {
-    return this.http.post<Record<string, unknown>>(
-      `${this.base(appId)}/mapping`,
-      { index },
-    );
+  getMapping(appId: string, index: string): Observable<Record<string, unknown>> {
+    return this.http.post<Record<string, unknown>>(`${this.base(appId)}/mapping`, { index });
   }
 
   query(appId: string, req: SearchQueryRequest): Observable<SearchResponse> {
@@ -63,32 +55,17 @@ export class SearchConsoleService {
     });
   }
 
-  assist(
-    appId: string,
-    req: SearchAssistRequest,
-  ): Observable<SearchAssistResult> {
-    return this.http.post<SearchAssistResult>(
-      `${this.base(appId)}/assist`,
-      req,
-    );
+  assist(appId: string, req: SearchAssistRequest): Observable<SearchAssistResult> {
+    return this.http.post<SearchAssistResult>(`${this.base(appId)}/assist`, req);
   }
 
   /** Dev Tools console: run one raw REST call (read-only gate enforced server-side). */
-  runRaw(
-    appId: string,
-    req: SearchRawRequest,
-  ): Observable<SearchRawResponse> {
+  runRaw(appId: string, req: SearchRawRequest): Observable<SearchRawResponse> {
     return this.http.post<SearchRawResponse>(`${this.base(appId)}/raw`, req);
   }
 
   /** Dev Tools copilot: NL → one raw REST request for the console editor. */
-  assistRaw(
-    appId: string,
-    req: SearchAssistRequest,
-  ): Observable<SearchRawAssistResult> {
-    return this.http.post<SearchRawAssistResult>(
-      `${this.base(appId)}/assist-raw`,
-      req,
-    );
+  assistRaw(appId: string, req: SearchAssistRequest): Observable<SearchRawAssistResult> {
+    return this.http.post<SearchRawAssistResult>(`${this.base(appId)}/assist-raw`, req);
   }
 }

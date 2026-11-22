@@ -4,7 +4,7 @@ import {
   effect,
   inject,
   signal,
-  viewChild
+  viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -24,24 +24,13 @@ import {
 import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog.component';
 import { SecretsConsoleStateService } from './secrets-console-state.service';
 import { SecretsVersionHistoryComponent } from './secrets-version-history.component';
-import {
-  joinPath,
-  parseBulk,
-  rowsToData,
-  toEnv,
-  toJson,
-} from './secrets-format';
+import { joinPath, parseBulk, rowsToData, toEnv, toJson } from './secrets-format';
 
 @Component({
   selector: 'app-secrets-editor',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    NgIcon,
-    FormsModule,
-    ConfirmationDialogComponent,
-    SecretsVersionHistoryComponent,
-  ],
+  imports: [NgIcon, FormsModule, ConfirmationDialogComponent, SecretsVersionHistoryComponent],
   providers: [
     provideIcons({
       lucideCheck,
@@ -67,15 +56,11 @@ import {
           Select a secret, or create one with “New”.
         </div>
       } @else {
-        <div
-          class="flex flex-wrap items-center gap-2 border-b border-border px-4 py-3"
-        >
+        <div class="flex flex-wrap items-center gap-2 border-b border-border px-4 py-3">
           <ng-icon name="lucideKeyRound" class="h-4 w-4 text-primary" />
           @if (s.isNew()) {
             <span class="shrink-0 font-mono text-sm text-muted-foreground"
-              >{{ s.server()?.mount || 'secret' }}/{{
-                s.prefix() ? s.prefix() + '/' : ''
-              }}</span
+              >{{ s.server()?.mount || 'secret' }}/{{ s.prefix() ? s.prefix() + '/' : '' }}</span
             >
             <input
               type="text"
@@ -85,9 +70,8 @@ import {
             />
             <p class="w-full text-[11px] text-muted-foreground">
               Creates the secret
-              <span class="font-mono text-foreground">{{ previewPath() }}</span
-              >. Use <span class="font-mono">/</span> in the name to nest into
-              sub-folders.
+              <span class="font-mono text-foreground">{{ previewPath() }}</span>. Use
+              <span class="font-mono">/</span> in the name to nest into sub-folders.
             </p>
           } @else {
             <span class="truncate font-mono text-sm font-medium text-foreground">{{
@@ -114,13 +98,7 @@ import {
                 @for (v of sec.versions; track v.version) {
                   <option [value]="v.version">
                     v{{ v.version
-                    }}{{
-                      v.destroyed
-                        ? ' · destroyed'
-                        : v.deleted
-                          ? ' · deleted'
-                          : ''
-                    }}
+                    }}{{ v.destroyed ? ' · destroyed' : v.deleted ? ' · deleted' : '' }}
                   </option>
                 }
               </select>
@@ -136,9 +114,7 @@ import {
             }
           </div>
         } @else {
-          <div
-            class="flex flex-wrap items-center gap-2 border-b border-border px-4 py-2.5"
-          >
+          <div class="flex flex-wrap items-center gap-2 border-b border-border px-4 py-2.5">
             <div class="inline-flex rounded-lg border border-border p-0.5">
               <button
                 type="button"
@@ -247,20 +223,22 @@ import {
                         placeholder="value"
                         class="h-9 w-full rounded-lg border border-border bg-background pl-2.5 pr-16 font-mono text-xs text-foreground disabled:opacity-70"
                       />
-                      <div
-                        class="absolute right-1 top-1/2 flex -translate-y-1/2 items-center"
-                      >
+                      <div class="absolute right-1 top-1/2 flex -translate-y-1/2 items-center">
                         <button
                           type="button"
                           (click)="s.toggleReveal($index)"
                           [disabled]="s.maskModeOn()"
-                          [title]="s.maskModeOn() ? 'Turn off mask mode to reveal' : (s.isRevealed($index) ? 'Hide' : 'Reveal')"
+                          [title]="
+                            s.maskModeOn()
+                              ? 'Turn off mask mode to reveal'
+                              : s.isRevealed($index)
+                                ? 'Hide'
+                                : 'Reveal'
+                          "
                           class="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
                         >
                           <ng-icon
-                            [name]="
-                              s.isRevealed($index) ? 'lucideEyeOff' : 'lucideEye'
-                            "
+                            [name]="s.isRevealed($index) ? 'lucideEyeOff' : 'lucideEye'"
                             class="h-3.5 w-3.5"
                           />
                         </button>
@@ -271,11 +249,7 @@ import {
                           title="Copy value"
                         >
                           <ng-icon
-                            [name]="
-                              s.copied() === 'row' + $index
-                                ? 'lucideCheck'
-                                : 'lucideCopy'
-                            "
+                            [name]="s.copied() === 'row' + $index ? 'lucideCheck' : 'lucideCopy'"
                             class="h-3.5 w-3.5"
                             [class.text-emerald-500]="s.copied() === 'row' + $index"
                           />
@@ -303,15 +277,11 @@ import {
               </button>
             }
 
-            <div
-              class="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-4"
-            >
+            <div class="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-4">
               <button
                 type="button"
                 (click)="save()"
-                [disabled]="
-                  s.saving() || s.readOnly() || (s.isNew() && !newLeaf.trim())
-                "
+                [disabled]="s.saving() || s.readOnly() || (s.isNew() && !newLeaf.trim())"
                 class="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3.5 text-sm font-medium text-primary-foreground disabled:opacity-50"
               >
                 @if (s.saving()) {
@@ -340,9 +310,7 @@ import {
                 </button>
               }
               @if (s.readOnly()) {
-                <span class="text-xs text-muted-foreground"
-                  >Turn off read-only to change.</span
-                >
+                <span class="text-xs text-muted-foreground">Turn off read-only to change.</span>
               }
               @if (s.saveOk()) {
                 <span

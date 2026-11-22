@@ -1,9 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
-import {
-  NodeResizePreview,
-  NodeResizeService,
-} from '../../service/node-resize.service';
+import { NodeResizePreview, NodeResizeService } from '../../service/node-resize.service';
 import { NodeDisksService } from '../../service/node-disks.service';
 import { ResizeNodeDialogComponent } from './resize-node-dialog.component';
 
@@ -39,9 +36,7 @@ const preview = (refusal: string | null = null): NodeResizePreview => ({
   ],
   highAvailability: {
     refusal,
-    switchovers: [
-      { namespace: 'p', cluster: 'orders-db-ha', target: 'orders-db-ha-2' },
-    ],
+    switchovers: [{ namespace: 'p', cluster: 'orders-db-ha', target: 'orders-db-ha-2' }],
   },
 });
 
@@ -50,9 +45,7 @@ describe('ResizeNodeDialogComponent', () => {
   let resize: jasmine.Spy;
 
   function render(p: NodeResizePreview, provider = 'hetzner', copies = true) {
-    resize = jasmine
-      .createSpy('resize')
-      .and.returnValue(of({ id: 'op-1', status: 'PENDING' }));
+    resize = jasmine.createSpy('resize').and.returnValue(of({ id: 'op-1', status: 'PENDING' }));
     TestBed.configureTestingModule({
       imports: [ResizeNodeDialogComponent],
       providers: [
@@ -93,9 +86,7 @@ describe('ResizeNodeDialogComponent', () => {
     const el = render(preview());
     expect(fixture.componentInstance.target()).toBe('cx32');
     expect(el.textContent).toContain('Stops while the node is off: orders-db');
-    expect(el.textContent).toContain(
-      'The primary of orders-db-ha moves to orders-db-ha-2 first',
-    );
+    expect(el.textContent).toContain('The primary of orders-db-ha moves to orders-db-ha-2 first');
   });
 
   it('cannot be confirmed while the cluster refuses it, and says why', () => {
@@ -104,12 +95,11 @@ describe('ResizeNodeDialogComponent', () => {
         'w3 is not ready: switching off w1 now would leave the cluster without the majority it needs to keep running.',
       ),
     );
+    expect(el.querySelector('[data-testid="resize-refusal"]')!.textContent).toContain(
+      'w3 is not ready',
+    );
     expect(
-      el.querySelector('[data-testid="resize-refusal"]')!.textContent,
-    ).toContain('w3 is not ready');
-    expect(
-      (el.querySelector('[data-testid="resize-confirm"]') as HTMLButtonElement)
-        .disabled,
+      (el.querySelector('[data-testid="resize-confirm"]') as HTMLButtonElement).disabled,
     ).toBeTrue();
   });
 
@@ -119,9 +109,7 @@ describe('ResizeNodeDialogComponent', () => {
     expect(el.querySelector('[data-testid="resize-copies"]')).toBeNull();
     TestBed.resetTestingModule();
     el = render(preview(), 'hetzner', true);
-    expect(
-      el.querySelector('[data-testid="resize-upgrade-disk"]'),
-    ).not.toBeNull();
+    expect(el.querySelector('[data-testid="resize-upgrade-disk"]')).not.toBeNull();
     expect(el.querySelector('[data-testid="resize-copies"]')).not.toBeNull();
   });
 
@@ -137,9 +125,8 @@ describe('ResizeNodeDialogComponent', () => {
       copiesGiB: 40,
     });
     expect(
-      (fixture.nativeElement as HTMLElement).querySelector(
-        '[data-testid="resize-done"]',
-      )!.textContent,
+      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="resize-done"]')!
+        .textContent,
     ).toContain('Resize queued');
   });
 });

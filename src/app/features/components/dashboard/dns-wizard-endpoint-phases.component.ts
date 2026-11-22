@@ -10,9 +10,9 @@ interface PhaseStep {
 
 const BASE_PHASES: PhaseStep[] = [
   { phase: 'creating-endpoint', label: 'Create endpoint' },
-  { phase: 'checking-dns',      label: 'Verify DNS' },
-  { phase: 'reconciling',       label: 'Reconcile ingress' },
-  { phase: 'issuing-cert',      label: 'Issue staging certificate' },
+  { phase: 'checking-dns', label: 'Verify DNS' },
+  { phase: 'reconciling', label: 'Reconcile ingress' },
+  { phase: 'issuing-cert', label: 'Issue staging certificate' },
   { phase: 'upgrading-to-prod', label: 'Upgrade to production certificate' },
   { phase: 'issuing-prod-cert', label: 'Issue production certificate' },
 ];
@@ -20,15 +20,15 @@ const BASE_PHASES: PhaseStep[] = [
 const PHASES_BY_SLUG: Record<string, PhaseStep[]> = {
   'flui-api': [
     ...BASE_PHASES,
-    { phase: 'syncing-api',  label: 'Sync API config' },
-    { phase: 'rollout-api',  label: 'Rollout' },
+    { phase: 'syncing-api', label: 'Sync API config' },
+    { phase: 'rollout-api', label: 'Rollout' },
   ],
   'flui-web': [
     ...BASE_PHASES,
-    { phase: 'syncing-web',  label: 'Sync web config' },
-    { phase: 'rollout-web',  label: 'Rollout' },
+    { phase: 'syncing-web', label: 'Sync web config' },
+    { phase: 'rollout-web', label: 'Rollout' },
   ],
-  'zitadel': [
+  zitadel: [
     ...BASE_PHASES,
     { phase: 'syncing-auth', label: 'Sync auth domain' },
     { phase: 'rollout-auth', label: 'Rollout' },
@@ -36,11 +36,18 @@ const PHASES_BY_SLUG: Record<string, PhaseStep[]> = {
 };
 
 const PHASE_ORDER: AppEndpointPhase[] = [
-  'creating-endpoint', 'checking-dns', 'reconciling', 'issuing-cert',
-  'upgrading-to-prod', 'issuing-prod-cert',
-  'syncing-auth', 'rollout-auth',
-  'syncing-api', 'rollout-api',
-  'syncing-web', 'rollout-web',
+  'creating-endpoint',
+  'checking-dns',
+  'reconciling',
+  'issuing-cert',
+  'upgrading-to-prod',
+  'issuing-prod-cert',
+  'syncing-auth',
+  'rollout-auth',
+  'syncing-api',
+  'rollout-api',
+  'syncing-web',
+  'rollout-web',
 ];
 
 function phaseIndex(p: AppEndpointPhase): number {

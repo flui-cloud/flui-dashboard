@@ -20,16 +20,22 @@ import { AppAvailability } from '../../service/fleet.service';
           <span
             class="max-w-[16rem] truncate rounded-full border border-dashed border-border px-2.5 py-0.5 font-mono text-xs text-foreground"
             [title]="endpointHost() + (health().label ? ' · ' + health().label : '')"
-          >internet</span>
+            >internet</span
+          >
           <span class="text-primary" aria-hidden="true">→</span>
         }
         @for (c of front(); track c.app.id) {
-          <span class="rounded-full border border-primary/30 px-2.5 py-0.5 text-xs font-semibold text-foreground">{{ c.role }}</span>
+          <span
+            class="rounded-full border border-primary/30 px-2.5 py-0.5 text-xs font-semibold text-foreground"
+            >{{ c.role }}</span
+          >
         }
         @if (back().length) {
           <span class="text-muted-foreground" aria-hidden="true">⇢</span>
           @for (c of back(); track c.app.id) {
-            <span class="rounded-full bg-muted px-2.5 py-0.5 text-xs text-foreground">{{ c.role }}</span>
+            <span class="rounded-full bg-muted px-2.5 py-0.5 text-xs text-foreground">{{
+              c.role
+            }}</span>
           }
         }
         <span class="ml-auto inline-flex items-center gap-1.5 text-xs text-muted-foreground">

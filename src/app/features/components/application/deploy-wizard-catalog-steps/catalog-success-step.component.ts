@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, computed, effect, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnDestroy,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
@@ -46,7 +54,10 @@ interface InternalReadiness {
   template: `
     @let inst = install();
     @if (inst && waiting(); as wait) {
-      <div class="flex flex-col items-center gap-4 py-6 text-center" data-testid="install-waiting-for-room">
+      <div
+        class="flex flex-col items-center gap-4 py-6 text-center"
+        data-testid="install-waiting-for-room"
+      >
         <div class="flex h-14 w-14 items-center justify-center rounded-full bg-amber-500/10">
           <ng-icon name="lucideLoader" class="h-8 w-8 text-amber-500 animate-spin" />
         </div>
@@ -55,17 +66,24 @@ interface InternalReadiness {
             {{ inst.displayName }} is installed and waiting for room
           </h3>
           <p class="text-sm text-muted-foreground">
-            {{ wait.says ?? 'No node has room for what it reserves yet. It starts on its own as soon as one joins.' }}
+            {{
+              wait.says ??
+                'No node has room for what it reserves yet. It starts on its own as soon as one joins.'
+            }}
           </p>
         </div>
         <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
-          <a [routerLink]="['/cluster', inst.clusterId, 'scaling']"
-            class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90">
+          <a
+            [routerLink]="['/cluster', inst.clusterId, 'scaling']"
+            class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90"
+          >
             Open scaling
           </a>
           @if (detailRoute(); as route) {
-            <a [routerLink]="route"
-              class="inline-flex items-center gap-2 rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-muted">
+            <a
+              [routerLink]="route"
+              class="inline-flex items-center gap-2 rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-muted"
+            >
               <ng-icon name="lucideLayoutDashboard" class="h-4 w-4" />
               {{ isComposedInstall() ? 'Bundle details' : 'App details' }}
             </a>
@@ -78,9 +96,7 @@ interface InternalReadiness {
           <ng-icon name="lucideCircleCheck" class="h-8 w-8 text-green-500" />
         </div>
         <div class="space-y-1">
-          <h3 class="text-lg font-semibold text-foreground">
-            {{ inst.displayName }} is running
-          </h3>
+          <h3 class="text-lg font-semibold text-foreground">{{ inst.displayName }} is running</h3>
           @if (inst.resolvedFqdn) {
             <p class="text-sm text-muted-foreground">
               Available at
@@ -97,8 +113,8 @@ interface InternalReadiness {
             </p>
           } @else if (isInternalApp()) {
             <p class="text-sm text-muted-foreground">
-              Gets a private URL on your cluster's internal domain, protected by Flui authentication.
-              Accessible from the internet — Flui login required to open.
+              Gets a private URL on your cluster's internal domain, protected by Flui
+              authentication. Accessible from the internet — Flui login required to open.
             </p>
           } @else {
             <p class="text-sm text-muted-foreground">
@@ -176,7 +192,9 @@ interface InternalReadiness {
               Open app
               <ng-icon name="lucideExternalLink" class="h-3.5 w-3.5" />
             </a>
-          } @else if (isInternalApp() && internalReadiness().isReady && internalApp()?.internalUrl) {
+          } @else if (
+            isInternalApp() && internalReadiness().isReady && internalApp()?.internalUrl
+          ) {
             <a
               [href]="internalApp()!.internalUrl"
               target="_blank"
@@ -190,10 +208,7 @@ interface InternalReadiness {
             </a>
           }
           @if (detailRoute(); as route) {
-            <a
-              [routerLink]="route"
-              [class]="appDetailsButtonClass()"
-            >
+            <a [routerLink]="route" [class]="appDetailsButtonClass()">
               <ng-icon name="lucideLayoutDashboard" class="h-4 w-4" />
               {{ isComposedInstall() ? 'Bundle details' : 'App details' }}
             </a>
@@ -217,9 +232,7 @@ export class CatalogSuccessStepComponent implements OnDestroy {
   private waitingChecked: string | null = null;
 
   protected readonly install = computed(() => this.state.currentInstall());
-  protected readonly firstAppId = computed(
-    () => this.install()?.applicationIds?.[0] ?? null,
-  );
+  protected readonly firstAppId = computed(() => this.install()?.applicationIds?.[0] ?? null);
 
   protected readonly isComposedInstall = computed(
     () => this.state.catalogDetail()?.appType === 'composed',
@@ -265,16 +278,19 @@ export class CatalogSuccessStepComponent implements OnDestroy {
     ),
   );
 
-  protected readonly readiness = computed(() =>
-    evaluateEndpointReadiness(this.matchedEndpoint()),
-  );
+  protected readonly readiness = computed(() => evaluateEndpointReadiness(this.matchedEndpoint()));
 
   /** Readiness of the internal URL, mirroring the AppOverviewTab pattern:
    *  an internal app is ready once the backend populates `internalUrl` on the
    *  Application (which happens after the internal DNS + wildcard TLS reconcile). */
   protected readonly internalReadiness = computed<InternalReadiness>(() => {
     if (!this.isInternalApp()) {
-      return { state: 'loading', label: 'Checking internal endpoint…', isReady: false, isTerminal: false };
+      return {
+        state: 'loading',
+        label: 'Checking internal endpoint…',
+        isReady: false,
+        isTerminal: false,
+      };
     }
     const app = this.internalApp();
     if (!app) {

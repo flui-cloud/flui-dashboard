@@ -1,9 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  input,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, signal } from '@angular/core';
 import { NodeInstallLogComponent } from '../node-install-log/node-install-log.component';
 
 /** The install log of a purchase, opened in place and followed live: reading it is the point, the file is secondary. */

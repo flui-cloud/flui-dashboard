@@ -51,11 +51,7 @@ import { formatDate } from './snapshot-format';
               <td class="px-4 py-3 text-xs whitespace-nowrap">
                 <span class="inline-flex items-center gap-1.5">
                   @if (b.encrypted) {
-                    <ng-icon
-                      name="lucideLock"
-                      class="h-3 w-3 text-emerald-600"
-                      title="Encrypted"
-                    />
+                    <ng-icon name="lucideLock" class="h-3 w-3 text-emerald-600" title="Encrypted" />
                   }
                   {{ b.createdAt ? formatDate(b.createdAt) : '—' }}
                 </span>
@@ -93,7 +89,9 @@ import { formatDate } from './snapshot-format';
                     (click)="browse.emit(b)"
                     [disabled]="!b.browsable"
                     class="p-1.5 rounded hover:bg-muted transition-colors disabled:opacity-40"
-                    [title]="b.browsable ? 'Browse files' : 'This backup can only be restored whole'"
+                    [title]="
+                      b.browsable ? 'Browse files' : 'This backup can only be restored whole'
+                    "
                   >
                     <ng-icon name="lucideFolderOpen" class="h-3.5 w-3.5" />
                   </button>

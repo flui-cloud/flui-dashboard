@@ -1,10 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  input,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { SectionGroup } from '../../model/scaling-section.models';
 import { ScalingGroupStore } from './scaling-group.store';
 import { ExplainComponent } from '../../../shared/components/explain.component';
@@ -28,16 +22,10 @@ import { TIGHT_PERCENT, cores, gib, nodeUsageLine, roomLine, share } from './roo
     @if (room(); as r) {
       <section class="space-y-2" data-testid="room">
         <h2 class="m-0 flex items-center gap-1.5">
-          <app-explain
-            [floating]="true"
-            label="Room"
-            labelClass="text-label"
-            testid="room-why"
-          >
-            What apps reserve on each node against what it can hold, after the
-            reserve kept for the system. This is what decides whether the next
-            app fits or Flui adds a node. Below each node: what the apps use now,
-            and what they may grow to at their limits.
+          <app-explain [floating]="true" label="Room" labelClass="text-label" testid="room-why">
+            What apps reserve on each node against what it can hold, after the reserve kept for the
+            system. This is what decides whether the next app fits or Flui adds a node. Below each
+            node: what the apps use now, and what they may grow to at their limits.
           </app-explain>
         </h2>
 
@@ -82,13 +70,27 @@ import { TIGHT_PERCENT, cores, gib, nodeUsageLine, roomLine, share } from './roo
                   @if (usage(node); as u) {
                     <span
                       class="text-[12px]"
-                      [class]="u.overcommitted ? 'text-amber-700 dark:text-amber-400' : 'text-muted-foreground'"
+                      [class]="
+                        u.overcommitted
+                          ? 'text-amber-700 dark:text-amber-400'
+                          : 'text-muted-foreground'
+                      "
                       [attr.data-testid]="'room-usage-' + node.name"
-                    >{{ u.text }}</span>
+                      >{{ u.text }}</span
+                    >
                   }
                   @if (node.apps?.length) {
-                    <span class="truncate text-[12px] text-muted-foreground" [title]="node.apps!.join(', ')" [attr.data-testid]="'room-apps-' + node.name">
-                      Runs {{ node.apps!.length === 1 ? node.apps![0] : node.apps!.length + ' apps: ' + node.apps!.join(', ') }}
+                    <span
+                      class="truncate text-[12px] text-muted-foreground"
+                      [title]="node.apps!.join(', ')"
+                      [attr.data-testid]="'room-apps-' + node.name"
+                    >
+                      Runs
+                      {{
+                        node.apps!.length === 1
+                          ? node.apps![0]
+                          : node.apps!.length + ' apps: ' + node.apps!.join(', ')
+                      }}
                     </span>
                   }
                 </span>
@@ -100,10 +102,17 @@ import { TIGHT_PERCENT, cores, gib, nodeUsageLine, roomLine, share } from './roo
                 data-testid="room-node-joining"
               >
                 <span class="min-w-0">
-                  <span [class]="t.mono" class="block truncate">{{ group().purchase?.shape ?? 'new node' }}{{ group().purchase?.region ? ' · ' + group().purchase?.region : '' }}</span>
-                  <span class="text-[12px] text-muted-foreground">worker · joining ({{ group().purchase?.progress }}%)</span>
+                  <span [class]="t.mono" class="block truncate"
+                    >{{ group().purchase?.shape ?? 'new node'
+                    }}{{ group().purchase?.region ? ' · ' + group().purchase?.region : '' }}</span
+                  >
+                  <span class="text-[12px] text-muted-foreground"
+                    >worker · joining ({{ group().purchase?.progress }}%)</span
+                  >
                 </span>
-                <span class="text-[12px] text-muted-foreground">Takes apps once it has joined.</span>
+                <span class="text-[12px] text-muted-foreground"
+                  >Takes apps once it has joined.</span
+                >
               </li>
             }
           </ul>

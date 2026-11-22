@@ -1,9 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  input,
-  model,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, model } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideChevronDown, lucideChevronRight } from '@ng-icons/lucide';
 
@@ -19,9 +14,7 @@ let nextId = 0;
     <div
       class="rounded-lg border transition-colors"
       [class]="
-        tone() === 'attention'
-          ? 'border-amber-500/40 bg-amber-500/[0.05]'
-          : 'border-border bg-card'
+        tone() === 'attention' ? 'border-amber-500/40 bg-amber-500/[0.05]' : 'border-border bg-card'
       "
     >
       <button
@@ -59,11 +52,7 @@ let nextId = 0;
       </button>
 
       @if (open()) {
-        <div
-          [id]="id"
-          class="border-t border-border px-4 py-4"
-          [attr.data-testid]="testid()"
-        >
+        <div [id]="id" class="border-t border-border px-4 py-4" [attr.data-testid]="testid()">
           <ng-content />
         </div>
       }

@@ -59,9 +59,10 @@ describe('fleet-history geometry', () => {
 
   describe('shapesInOrder', () => {
     it('keeps first appearance and does not repeat', () => {
-      expect(
-        shapesInOrder([{ cx22: 1 }, { cx32: 2, cx22: 1 }, { cx22: 3 }]),
-      ).toEqual(['cx22', 'cx32']);
+      expect(shapesInOrder([{ cx22: 1 }, { cx32: 2, cx22: 1 }, { cx22: 3 }])).toEqual([
+        'cx22',
+        'cx32',
+      ]);
     });
 
     it('is empty for no points', () => {
@@ -80,13 +81,7 @@ describe('fleet-history geometry', () => {
     it('leaves one node of headroom above the peak', () => {
       const scale = nodeScale([1, 3, 2]);
       expect(scale.yMax).toBe(4);
-      expect(scale.ticks.map((t) => t.label)).toEqual([
-        '0',
-        '1',
-        '2',
-        '3',
-        '4',
-      ]);
+      expect(scale.ticks.map((t) => t.label)).toEqual(['0', '1', '2', '3', '4']);
     });
 
     it('still draws an axis for an empty fleet', () => {
@@ -192,13 +187,12 @@ describe('fleet-history geometry', () => {
     });
 
     it('has an answer for an outcome it does not know', () => {
-      expect(
-        outcomeBadgeClass('held' as Parameters<typeof outcomeBadgeClass>[0]),
-      ).toContain('badge');
+      expect(outcomeBadgeClass('held' as Parameters<typeof outcomeBadgeClass>[0])).toContain(
+        'badge',
+      );
     });
   });
 });
-
 
 describe('reading a drag on the plot', () => {
   const plot = { left: 40, right: 740, top: 10, bottom: 200 };

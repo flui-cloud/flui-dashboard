@@ -92,11 +92,19 @@ export interface AgentsSurfaceContext {
   appVersion?: string;
 }
 
-function textObservation(key: string, value: string | undefined | null, source: ObservationSource): Observation | null {
+function textObservation(
+  key: string,
+  value: string | undefined | null,
+  source: ObservationSource,
+): Observation | null {
   return value ? { key, presentedAs: { text: value }, source } : null;
 }
 
-function valueObservation(key: string, value: number | boolean, source: ObservationSource): Observation {
+function valueObservation(
+  key: string,
+  value: number | boolean,
+  source: ObservationSource,
+): Observation {
   return { key, presentedAs: { value }, source };
 }
 
@@ -109,7 +117,9 @@ function pageObservations(input: AgentsSurfaceInput): Observation[] {
   return [
     textObservation('flui.agents.ceiling', input.ceiling, 'derived'),
     valueObservation('flui.agents.waiting_count', input.waitingRows.length, 'derived'),
-    input.expiredCount > 0 ? valueObservation('flui.agents.expired_count', input.expiredCount, 'derived') : null,
+    input.expiredCount > 0
+      ? valueObservation('flui.agents.expired_count', input.expiredCount, 'derived')
+      : null,
     valueObservation('flui.agents.granted_count', input.grantRows.length, 'derived'),
     valueObservation('flui.agents.activity_total', input.activityTotal, 'api'),
     textObservation('flui.agents.activity_scope', input.activityScope, 'api'),
@@ -155,7 +165,11 @@ function grantRowScope(row: AgentGrantRow): SemanticScopeSnapshot {
     kind: 'region',
     entities: [entity],
     observations: [
-      textObservation('flui.agent_grant.scope', bindingSummary(concession.binding) ?? splitAction(concession.action).pattern, 'derived'),
+      textObservation(
+        'flui.agent_grant.scope',
+        bindingSummary(concession.binding) ?? splitAction(concession.action).pattern,
+        'derived',
+      ),
       textObservation('flui.agent_grant.agent_name', row.agentName, 'api'),
       textObservation('flui.agent_grant.created_at', concession.createdAt, 'api'),
       textObservation('flui.agent_grant.last_used_at', concession.lastUsedAt, 'api'),
@@ -247,7 +261,9 @@ export function presentedContent(input: AgentsSurfaceInput): PresentedContent {
     requestsListScope,
     ...requestRows.map((row) => requestRowScope(row, row.proposal.id === input.followedProposalId)),
     ...(grantRows.length ? [grantsListScope, ...grantRows.map(grantRowScope)] : []),
-    ...(actorRows.length ? [actorsListScope, ...actorRows.map((row) => actorRowScope(row, actorRefOf(row.identity)))] : []),
+    ...(actorRows.length
+      ? [actorsListScope, ...actorRows.map((row) => actorRowScope(row, actorRefOf(row.identity)))]
+      : []),
   ];
 
   let attention: AttentionTarget[];
@@ -261,7 +277,10 @@ export function presentedContent(input: AgentsSurfaceInput): PresentedContent {
       entities: [{ ref, label: input.revokeTarget.sentence, role: 'selected' }],
     });
     attention = [{ scopeId: OVERLAY_ID, entityRef: ref, reason: 'overlay' }];
-  } else if (input.followedProposalId && requestRows.some((r) => r.proposal.id === input.followedProposalId)) {
+  } else if (
+    input.followedProposalId &&
+    requestRows.some((r) => r.proposal.id === input.followedProposalId)
+  ) {
     attention = [
       {
         scopeId: `${REQUESTS_LIST_ID}:${input.followedProposalId}`,
@@ -276,7 +295,10 @@ export function presentedContent(input: AgentsSurfaceInput): PresentedContent {
   return { scopes, attention };
 }
 
-export function buildAgentsSurface(input: AgentsSurfaceInput, context: AgentsSurfaceContext): SurfaceSnapshot {
+export function buildAgentsSurface(
+  input: AgentsSurfaceInput,
+  context: AgentsSurfaceContext,
+): SurfaceSnapshot {
   const content = presentedContent(input);
   return {
     schemaVersion: '0.2',

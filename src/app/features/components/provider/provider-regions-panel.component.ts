@@ -1,9 +1,21 @@
-import { Component, computed, effect, inject, input, signal, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideGlobe, lucideLoader } from '@ng-icons/lucide';
 import { ProvidersService } from '../../service/providers.service';
-import { ProviderConfigurationDto, ProviderDefinitionDto, ProviderRegionDto } from '../../../core/api';
+import {
+  ProviderConfigurationDto,
+  ProviderDefinitionDto,
+  ProviderRegionDto,
+} from '../../../core/api';
 
 @Component({
   selector: 'provider-regions-panel',
@@ -15,7 +27,9 @@ import { ProviderConfigurationDto, ProviderDefinitionDto, ProviderRegionDto } fr
     <section class="bg-card border border-border rounded-xl overflow-hidden">
       <header class="px-6 py-4 border-b border-border bg-muted/30 flex items-center gap-2">
         <ng-icon name="lucideGlobe" class="h-4 w-4 text-muted-foreground" />
-        <h2 class="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Enabled regions</h2>
+        <h2 class="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          Enabled regions
+        </h2>
         <span class="ml-auto text-xs text-muted-foreground">
           {{ enabledRegionObjects().length }} active
         </span>
@@ -29,9 +43,14 @@ import { ProviderConfigurationDto, ProviderDefinitionDto, ProviderRegionDto } fr
         } @else if (configuration().enabledRegions.length > 0) {
           <div class="flex flex-wrap gap-2">
             @for (region of enabledRegionObjects(); track region.id) {
-              <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-muted text-sm font-medium">
-                @if (region.flagEmoji) { <span>{{ region.flagEmoji }}</span> }
-                @else { <ng-icon name="lucideGlobe" class="h-3.5 w-3.5 text-muted-foreground" /> }
+              <span
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-muted text-sm font-medium"
+              >
+                @if (region.flagEmoji) {
+                  <span>{{ region.flagEmoji }}</span>
+                } @else {
+                  <ng-icon name="lucideGlobe" class="h-3.5 w-3.5 text-muted-foreground" />
+                }
                 {{ region.displayName || region.id }}
               </span>
             }
@@ -61,8 +80,8 @@ export class ProviderRegionsPanelComponent {
   protected enabledRegionObjects = computed<ProviderRegionDto[]>(() => {
     const supported = this.supportedRegions();
     const supportedById = new Map(supported.map((r) => [r.id, r]));
-    return this.configuration().enabledRegions
-      .map((id) => supportedById.get(id))
+    return this.configuration()
+      .enabledRegions.map((id) => supportedById.get(id))
       .filter((r): r is ProviderRegionDto => r !== undefined);
   });
 
@@ -70,7 +89,13 @@ export class ProviderRegionsPanelComponent {
     effect(() => {
       const id = this.provider().id;
       const fromCapabilities = this.provider().capabilities?.supportedRegions ?? [];
-      if (!id || fromCapabilities.length || this.fetchedRegions() !== null || this.isLoadingRegions()) return;
+      if (
+        !id ||
+        fromCapabilities.length ||
+        this.fetchedRegions() !== null ||
+        this.isLoadingRegions()
+      )
+        return;
       this.loadRegions(id);
     });
   }

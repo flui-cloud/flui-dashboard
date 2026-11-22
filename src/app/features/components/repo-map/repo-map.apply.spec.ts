@@ -3,11 +3,7 @@ import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { WritableSignal, signal } from '@angular/core';
 
 import { RepoMapComponent } from './repo-map.component';
-import {
-  ApplyRefusal,
-  RepoApplyResult,
-  RepoMapService,
-} from '../../service/repo-map.service';
+import { ApplyRefusal, RepoApplyResult, RepoMapService } from '../../service/repo-map.service';
 import { RepositoryService } from '../../service/repository.service';
 import { ClusterService } from '../../service/cluster.service';
 import { ClusterStatus } from '../../model/cluster.models';
@@ -25,7 +21,13 @@ const mapResponse = (outcome: string, rendered: boolean): RepositoryMapResponseD
     repositoryId: 'r-1',
     repoFullName: 'acme/storefront',
     branch: 'main',
-    read: { ok: true, repoFullName: 'acme/storefront', ref: 'main', commitSha: '4f9c2a1b77de', limits: {} },
+    read: {
+      ok: true,
+      repoFullName: 'acme/storefront',
+      ref: 'main',
+      commitSha: '4f9c2a1b77de',
+      limits: {},
+    },
     map: {
       units: [
         {
@@ -68,11 +70,17 @@ const mapResponse = (outcome: string, rendered: boolean): RepositoryMapResponseD
       },
     },
     render: rendered
-      ? { units: [{ unitId: '.', name: 'storefront', manifest: {}, yaml: 'kind: Application\n' }], skipped: [], notes: [] }
+      ? {
+          units: [{ unitId: '.', name: 'storefront', manifest: {}, yaml: 'kind: Application\n' }],
+          skipped: [],
+          notes: [],
+        }
       : { units: [], skipped: [{ unitId: '.', reason: 'no port could be determined' }], notes: [] },
   }) as unknown as RepositoryMapResponseDto;
 
-const unit = (over: Partial<RepoApplyResult['units'][number]>): RepoApplyResult['units'][number] => ({
+const unit = (
+  over: Partial<RepoApplyResult['units'][number]>,
+): RepoApplyResult['units'][number] => ({
   unitId: '.',
   name: 'storefront',
   applicationId: 'app-1',
@@ -114,10 +122,12 @@ interface Harness {
 
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 
-async function build(options: {
-  response?: RepositoryMapResponseDto;
-  clusterId?: string;
-} = {}): Promise<Harness> {
+async function build(
+  options: {
+    response?: RepositoryMapResponseDto;
+    clusterId?: string;
+  } = {},
+): Promise<Harness> {
   const applyResult = signal<RepoApplyResult | null>(null);
   const applyRefusal = signal<ApplyRefusal | null>(null);
   const applying = signal(false);
@@ -193,7 +203,8 @@ async function build(options: {
   };
 }
 
-const applyButton = (el: HTMLElement) => el.querySelector('button[aria-disabled]') as HTMLButtonElement;
+const applyButton = (el: HTMLElement) =>
+  el.querySelector('button[aria-disabled]') as HTMLButtonElement;
 const text = (el: HTMLElement) => (el.innerText || el.textContent || '').replace(/\s+/g, ' ');
 
 describe('the apply button says why it cannot be pressed', () => {

@@ -12,7 +12,11 @@ import { Component, input, computed, ChangeDetectionStrategy } from '@angular/co
         <span class="text-xs text-muted-foreground tabular-nums">{{ status() }}</span>
       </div>
       <div class="mt-3 h-1 w-full rounded-full bg-muted">
-        <div class="h-1 rounded-full transition-all duration-500 ease-out" [class]="barClass()" [style.width.%]="progress()"></div>
+        <div
+          class="h-1 rounded-full transition-all duration-500 ease-out"
+          [class]="barClass()"
+          [style.width.%]="progress()"
+        ></div>
       </div>
     </div>
   `,

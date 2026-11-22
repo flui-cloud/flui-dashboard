@@ -34,58 +34,103 @@ const SIZE: Record<TileDensity, { width: string; height: string }> = {
   template: `
     <div class="space-y-4">
       <div class="flex flex-wrap items-center gap-3">
-        <app-topology-choice label="Group by" [choices]="groupChoices" [value]="groupBy()"
-                             (changed)="groupByChanged.emit($any($event))" />
-        <app-topology-choice label="Color by" [choices]="colorChoices" [value]="colorBy()"
-                             (changed)="colorByChanged.emit($any($event))" />
+        <app-topology-choice
+          label="Group by"
+          [choices]="groupChoices"
+          [value]="groupBy()"
+          (changed)="groupByChanged.emit($any($event))"
+        />
+        <app-topology-choice
+          label="Color by"
+          [choices]="colorChoices"
+          [value]="colorBy()"
+          (changed)="colorByChanged.emit($any($event))"
+        />
       </div>
 
       @if (colorBy() === 'network') {
-        <app-topology-network-strip [snapshot]="snapshot()" [focus]="focus()" (selected)="selected.emit($event)" />
+        <app-topology-network-strip
+          [snapshot]="snapshot()"
+          [focus]="focus()"
+          (selected)="selected.emit($event)"
+        />
       }
 
       @if (!snapshot().servers.length) {
         <section class="card-surface space-y-1 p-6" aria-label="No servers">
-          <h2 class="text-sm font-semibold text-foreground">{{ silent() ? 'No server could be read' : 'No server yet' }}</h2>
+          <h2 class="text-sm font-semibold text-foreground">
+            {{ silent() ? 'No server could be read' : 'No server yet' }}
+          </h2>
           <p class="text-sub">
-            {{ silent() ? silent() + ' of ' + snapshot().clusters.length + ' clusters are not answering. Their servers appear here as soon as they do.' : 'Servers appear here once a cluster has some.' }}
+            {{
+              silent()
+                ? silent() +
+                  ' of ' +
+                  snapshot().clusters.length +
+                  ' clusters are not answering. Their servers appear here as soon as they do.'
+                : 'Servers appear here once a cluster has some.'
+            }}
           </p>
         </section>
       }
 
       <div class="flex flex-wrap items-start gap-4" (keydown)="move($event)">
         @for (group of groups(); track group.key) {
-          <section class="card-surface p-4 transition-opacity"
-                   [class.opacity-50]="group.dimmed"
-                   [style.border-color]="group.replicas ? 'hsl(var(--brand))' : null"
-                   [attr.aria-label]="group.name + ', ' + group.meta">
+          <section
+            class="card-surface p-4 transition-opacity"
+            [class.opacity-50]="group.dimmed"
+            [style.border-color]="group.replicas ? 'hsl(var(--brand))' : null"
+            [attr.aria-label]="group.name + ', ' + group.meta"
+          >
             <header class="mb-3 flex items-baseline gap-2">
               @if (group.clusterId) {
-                <button type="button" class="text-sm font-semibold text-foreground hover:underline"
-                        (click)="selected.emit({ type: 'cluster', id: group.clusterId })">{{ group.name }}</button>
+                <button
+                  type="button"
+                  class="text-sm font-semibold text-foreground hover:underline"
+                  (click)="selected.emit({ type: 'cluster', id: group.clusterId })"
+                >
+                  {{ group.name }}
+                </button>
               } @else {
                 <span class="text-sm font-semibold text-foreground">{{ group.name }}</span>
               }
               <span class="text-sub">{{ group.meta }}</span>
               @if (group.replicas) {
-                <span class="ml-auto text-xs font-semibold" style="color: hsl(var(--brand))">{{ group.replicas }} replica{{ group.replicas === 1 ? '' : 's' }}</span>
+                <span class="ml-auto text-xs font-semibold" style="color: hsl(var(--brand))"
+                  >{{ group.replicas }} replica{{ group.replicas === 1 ? '' : 's' }}</span
+                >
               }
             </header>
-            <div class="grid" [class.gap-3]="group.density === 'card'" [class.gap-1.5]="group.density !== 'card'"
-                 [style.grid-template-columns]="'repeat(' + group.columns + ', ' + SIZE[group.density].width + ')'">
+            <div
+              class="grid"
+              [class.gap-3]="group.density === 'card'"
+              [class.gap-1.5]="group.density !== 'card'"
+              [style.grid-template-columns]="
+                'repeat(' + group.columns + ', ' + SIZE[group.density].width + ')'
+              "
+            >
               @for (tile of group.tiles; track tile.server.id) {
-                <button type="button"
-                        class="relative rounded-lg text-left transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
-                        [style.height]="SIZE[group.density].height"
-                        [style.outline]="tile.replicas || tile.focused ? '1px solid hsl(var(--brand))' : null"
-                        [style.outline-offset.px]="2"
-                        [class.opacity-30]="tile.dimmed"
-                        [attr.data-columns]="group.columns"
-                        [attr.aria-label]="ariaOf(tile)"
-                        [attr.aria-pressed]="tile.focused"
-                        (click)="selected.emit({ type: 'server', id: tile.server.id })"
-                        (dblclick)="opened.emit({ type: 'server', id: tile.server.id })">
-                  <app-topology-server-tile class="h-full" [tile]="tile" [look]="look(tile)" [density]="group.density" />
+                <button
+                  type="button"
+                  class="relative rounded-lg text-left transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+                  [style.height]="SIZE[group.density].height"
+                  [style.outline]="
+                    tile.replicas || tile.focused ? '1px solid hsl(var(--brand))' : null
+                  "
+                  [style.outline-offset.px]="2"
+                  [class.opacity-30]="tile.dimmed"
+                  [attr.data-columns]="group.columns"
+                  [attr.aria-label]="ariaOf(tile)"
+                  [attr.aria-pressed]="tile.focused"
+                  (click)="selected.emit({ type: 'server', id: tile.server.id })"
+                  (dblclick)="opened.emit({ type: 'server', id: tile.server.id })"
+                >
+                  <app-topology-server-tile
+                    class="h-full"
+                    [tile]="tile"
+                    [look]="look(tile)"
+                    [density]="group.density"
+                  />
                 </button>
               }
             </div>
@@ -94,28 +139,46 @@ const SIZE: Record<TileDensity, { width: string; height: string }> = {
       </div>
 
       @if (snapshot().servers.length) {
-      <p class="text-sub flex flex-wrap items-center gap-x-4 gap-y-1" aria-label="Legend">
-        @if (colorBy() === 'network') {
-          @for (kind of networkOrder; track kind) {
+        <p class="text-sub flex flex-wrap items-center gap-x-4 gap-y-1" aria-label="Legend">
+          @if (colorBy() === 'network') {
+            @for (kind of networkOrder; track kind) {
+              <span class="inline-flex items-center gap-1.5">
+                <span
+                  class="h-3 w-3 rounded-sm border-2"
+                  [style.background]="legendLook(kind).background"
+                  [style.border-color]="legendLook(kind).border"
+                ></span>
+                {{ networkLabel[kind] }}
+              </span>
+            }
+          } @else {
             <span class="inline-flex items-center gap-1.5">
-              <span class="h-3 w-3 rounded-sm border-2" [style.background]="legendLook(kind).background" [style.border-color]="legendLook(kind).border"></span>
-              {{ networkLabel[kind] }}
+              {{ colorBy() === 'pods' ? 'Fewer replicas' : '30%' }}
+              <span
+                class="h-2.5 w-24 rounded-sm"
+                style="background: linear-gradient(90deg, hsl(var(--brand) / 0.12), hsl(var(--brand) / 0.9))"
+              ></span>
+              {{ colorBy() === 'pods' ? 'More' : '89%' }}
             </span>
+            @if (colorBy() !== 'pods') {
+              <span class="inline-flex items-center gap-1.5"
+                ><span
+                  class="h-3 w-3 rounded-sm"
+                  style="background: hsl(var(--destructive))"
+                ></span>
+                90% or more</span
+              >
+            }
           }
-        } @else {
-          <span class="inline-flex items-center gap-1.5">
-            {{ colorBy() === 'pods' ? 'Fewer replicas' : '30%' }}
-            <span class="h-2.5 w-24 rounded-sm" style="background: linear-gradient(90deg, hsl(var(--brand) / 0.12), hsl(var(--brand) / 0.9))"></span>
-            {{ colorBy() === 'pods' ? 'More' : '89%' }}
-          </span>
-          @if (colorBy() !== 'pods') {
-            <span class="inline-flex items-center gap-1.5"><span class="h-3 w-3 rounded-sm" style="background: hsl(var(--destructive))"></span> 90% or more</span>
+          @if (hasArm()) {
+            <span class="inline-flex items-center gap-1.5"
+              ><span class="rounded-sm px-0.5 font-mono text-[8px] uppercase ring-1 ring-current"
+                >arm</span
+              >
+              Arm server</span
+            >
           }
-        }
-        @if (hasArm()) {
-          <span class="inline-flex items-center gap-1.5"><span class="rounded-sm px-0.5 font-mono text-[8px] uppercase ring-1 ring-current">arm</span> Arm server</span>
-        }
-      </p>
+        </p>
       }
     </div>
   `,
@@ -128,8 +191,12 @@ export class TopologyInfrastructureComponent {
   readonly project = input<string | null>(null);
 
   /** The arm marker is explained only where one is drawn: otherwise the legend reads as a claim. */
-  protected readonly hasArm = computed(() => this.snapshot().servers.some((s) => s.architecture === 'arm'));
-  protected readonly silent = computed(() => this.snapshot().clusters.filter((c) => c.status === 'down').length);
+  protected readonly hasArm = computed(() =>
+    this.snapshot().servers.some((s) => s.architecture === 'arm'),
+  );
+  protected readonly silent = computed(
+    () => this.snapshot().clusters.filter((c) => c.status === 'down').length,
+  );
   readonly selected = output<TopologyFocus>();
   readonly opened = output<TopologyFocus>();
   readonly colorByChanged = output<TopologyColorBy>();
@@ -149,7 +216,10 @@ export class TopologyInfrastructureComponent {
   );
 
   /** The tile map as it stands, as an image: the same groups, colours, highlights and fading. */
-  exportView(palette: ExportPalette, header: ExportHeader): { svg: string; width: number; height: number } {
+  exportView(
+    palette: ExportPalette,
+    header: ExportHeader,
+  ): { svg: string; width: number; height: number } {
     const TILE_W = 200;
     const TILE_H = 76;
     const GAP = 12;
@@ -222,7 +292,9 @@ export class TopologyInfrastructureComponent {
     if (!columns) return;
     const jump = { ArrowUp: -columns, ArrowDown: columns }[event.key] ?? step;
     if (!jump) return;
-    const tiles = Array.from(target.parentElement?.querySelectorAll<HTMLElement>('button[data-columns]') ?? []);
+    const tiles = Array.from(
+      target.parentElement?.querySelectorAll<HTMLElement>('button[data-columns]') ?? [],
+    );
     const next = tiles[tiles.indexOf(target) + jump];
     if (next) {
       next.focus();

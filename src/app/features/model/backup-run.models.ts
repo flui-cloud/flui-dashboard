@@ -1,11 +1,5 @@
 export type BackupHealthState =
-  | 'ok'
-  | 'running'
-  | 'failed'
-  | 'missed'
-  | 'paused'
-  | 'never_run'
-  | 'on_demand';
+  'ok' | 'running' | 'failed' | 'missed' | 'paused' | 'never_run' | 'on_demand';
 
 export type BackupRunStored = 'present' | 'expired' | 'missing' | 'unknown';
 

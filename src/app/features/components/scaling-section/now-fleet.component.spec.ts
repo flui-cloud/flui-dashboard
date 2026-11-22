@@ -23,7 +23,11 @@ describe('the fleet of a scaling group', () => {
 
   beforeEach(() => {
     const store = {
-      fleet: signal({ data: { nodes: [node('n-1', 'x86'), node('n-2', null)], unavailable: null }, loading: false, failed: null }),
+      fleet: signal({
+        data: { nodes: [node('n-1', 'x86'), node('n-2', null)], unavailable: null },
+        loading: false,
+        failed: null,
+      }),
       row: signal({ data: { nodes: 2 }, loading: false, failed: null }),
       reload: () => undefined,
     };
@@ -34,7 +38,9 @@ describe('the fleet of a scaling group', () => {
     fixture = TestBed.createComponent(ScalingNowFleetComponent);
     fixture.componentRef.setInput('group', { standingOrders: [] } as unknown as SectionGroup);
     fixture.detectChanges();
-    (fixture.nativeElement.querySelector('[data-testid="fleet-toggle"]') as HTMLButtonElement).click();
+    (
+      fixture.nativeElement.querySelector('[data-testid="fleet-toggle"]') as HTMLButtonElement
+    ).click();
     fixture.detectChanges();
   });
 

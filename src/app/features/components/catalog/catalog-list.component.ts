@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, computed, effect, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnDestroy,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -18,7 +26,16 @@ import { CatalogService } from '../../service/catalog.service';
 import { SandboxService } from '../../../core/services/sandbox.service';
 import { CatalogResponseDto } from '../../../core/api/model/models';
 import { CatalogCardComponent } from './catalog-card.component';
-import { CatalogScope, CatalogSection, SECTION_LABEL, SECTION_ORDER, catalogScopeOf, catalogSectionOf, inCatalogScope, scopeCopy } from './catalog-scope';
+import {
+  CatalogScope,
+  CatalogSection,
+  SECTION_LABEL,
+  SECTION_ORDER,
+  catalogScopeOf,
+  catalogSectionOf,
+  inCatalogScope,
+  scopeCopy,
+} from './catalog-scope';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
 import {
   CatalogListSurfaceInput,
@@ -100,7 +117,7 @@ interface CatalogSectionGroup {
           />
           <input
             type="search"
-            placeholder="Search apps — try &quot;password manager&quot; or &quot;analytics&quot;..."
+            placeholder='Search apps — try "password manager" or "analytics"...'
             [(ngModel)]="searchQuery"
             class="w-full rounded-lg border border-border bg-background py-3 pl-10 pr-10 text-sm
                    text-foreground placeholder:text-muted-foreground
@@ -158,11 +175,15 @@ interface CatalogSectionGroup {
               />
               <span>Tags</span>
               @if (activeTags().length > 0) {
-                <span class="rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-primary">
+                <span
+                  class="rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-primary"
+                >
                   {{ activeTags().length }} selected
                 </span>
               }
-              <span class="text-[11px] normal-case tracking-normal text-muted-foreground/70 group-hover:text-foreground/70">
+              <span
+                class="text-[11px] normal-case tracking-normal text-muted-foreground/70 group-hover:text-foreground/70"
+              >
                 {{ tagsExpanded() ? '— hide' : '— show all ' + tags().length }}
               </span>
             </button>
@@ -192,11 +213,7 @@ interface CatalogSectionGroup {
             } @else if (activeTags().length > 0) {
               <div class="flex flex-wrap gap-2">
                 @for (tag of activeTags(); track tag) {
-                  <button
-                    type="button"
-                    (click)="toggleTag(tag)"
-                    [class]="chipClass(true)"
-                  >
+                  <button type="button" (click)="toggleTag(tag)" [class]="chipClass(true)">
                     {{ tag }}
                   </button>
                 }
@@ -240,7 +257,9 @@ interface CatalogSectionGroup {
             </button>
           </div>
         } @else if (filteredApps().length === 0) {
-          <div class="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border p-10 text-center">
+          <div
+            class="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border p-10 text-center"
+          >
             <ng-icon name="lucideStore" class="h-10 w-10 text-muted-foreground" />
             <div class="space-y-1">
               <p class="text-sm font-medium text-foreground">No apps match your filters</p>
@@ -282,7 +301,9 @@ interface CatalogSectionGroup {
               <div class="mb-8">
                 <h3 class="mb-3 text-sm font-semibold text-foreground">
                   {{ group.label }}
-                  <span class="ml-1 text-xs font-normal text-muted-foreground">({{ group.apps.length }})</span>
+                  <span class="ml-1 text-xs font-normal text-muted-foreground"
+                    >({{ group.apps.length }})</span
+                  >
                 </h3>
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   @for (app of group.apps; track app.id) {
@@ -308,7 +329,9 @@ export class CatalogListComponent implements OnDestroy {
 
   readonly scope = computed<CatalogScope | null>(() => catalogScopeOf(this.appKind()));
 
-  readonly heroTitle = computed(() => scopeCopy(this.scope())?.title ?? 'Deploy open-source apps in one click');
+  readonly heroTitle = computed(
+    () => scopeCopy(this.scope())?.title ?? 'Deploy open-source apps in one click',
+  );
 
   readonly heroSubtitle = computed(() => {
     return (
@@ -394,9 +417,11 @@ export class CatalogListComponent implements OnDestroy {
         buckets.set(kind, [app]);
       }
     }
-    return SECTION_ORDER
-      .filter((k) => buckets.has(k))
-      .map((k) => ({ kind: k, label: SECTION_LABEL[k], apps: buckets.get(k)! }));
+    return SECTION_ORDER.filter((k) => buckets.has(k)).map((k) => ({
+      kind: k,
+      label: SECTION_LABEL[k],
+      apps: buckets.get(k)!,
+    }));
   });
 
   private readonly currentSurface = inject(CurrentSurfaceService);
@@ -422,9 +447,10 @@ export class CatalogListComponent implements OnDestroy {
       showSystemApps: this.showSystemApps(),
       totalCount: this.catalog.catalog().length,
       shownCount: this.filteredApps().length,
-      groups: scoped && this.flatGrid()
-        ? [{ kind: scoped, label: SECTION_LABEL[scoped], rows: this.filteredApps().map(row) }]
-        : this.kindGroups().map((g) => ({ kind: g.kind, label: g.label, rows: g.apps.map(row) })),
+      groups:
+        scoped && this.flatGrid()
+          ? [{ kind: scoped, label: SECTION_LABEL[scoped], rows: this.filteredApps().map(row) }]
+          : this.kindGroups().map((g) => ({ kind: g.kind, label: g.label, rows: g.apps.map(row) })),
       isLoading: this.catalog.listLoading(),
       hasListError: Boolean(this.catalog.listError()),
     };
@@ -489,8 +515,7 @@ export class CatalogListComponent implements OnDestroy {
   }
 
   chipClass(active: boolean): string {
-    const base =
-      'rounded-full px-3 py-1 text-xs font-medium transition border';
+    const base = 'rounded-full px-3 py-1 text-xs font-medium transition border';
     return active
       ? `${base} bg-primary text-primary-foreground border-primary`
       : `${base} bg-background text-foreground border-border hover:border-primary/50 hover:text-primary`;

@@ -1,10 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  input,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
 import {
   AgentActivityEntry,
   AgentIdentityActivity,
@@ -32,9 +26,7 @@ import { formatTimeSince } from '../../model/dns.models';
             <p class="m-0 text-[13px] font-medium text-foreground">
               {{ actor.name }}
               @if (actor.revoked) {
-                <span class="ml-1.5 text-[11px] font-normal text-muted-foreground">
-                  revoked
-                </span>
+                <span class="ml-1.5 text-[11px] font-normal text-muted-foreground"> revoked </span>
               }
             </p>
             <p class="m-0 text-[12px] text-muted-foreground">
@@ -47,8 +39,8 @@ import { formatTimeSince } from '../../model/dns.models';
 
     @if (rows().length === 0) {
       <p class="m-0 text-sm text-muted-foreground" data-testid="no-activity">
-        Nothing has been done through an agent yet. This fills itself in as they
-        work — it is written by the act, not by anyone reporting one.
+        Nothing has been done through an agent yet. This fills itself in as they work — it is
+        written by the act, not by anyone reporting one.
       </p>
     } @else {
       <div class="flex flex-col" data-testid="activity-log">
@@ -93,8 +85,7 @@ import { formatTimeSince } from '../../model/dns.models';
                   (click)="toggleError(row.id)"
                   data-testid="activity-error-toggle"
                 >
-                  {{ shown() === row.id ? 'Hide' : 'Show' }} the message it was
-                  refused with
+                  {{ shown() === row.id ? 'Hide' : 'Show' }} the message it was refused with
                 </button>
                 @if (shown() === row.id) {
                   <p
@@ -112,8 +103,7 @@ import { formatTimeSince } from '../../model/dns.models';
 
       @if (scope() === 'instance') {
         <p class="m-0 text-[12px] text-muted-foreground" data-testid="activity-scope">
-          You administer access here, so this is every agent on the instance, not
-          only yours.
+          You administer access here, so this is every agent on the instance, not only yours.
         </p>
       }
 
@@ -135,9 +125,7 @@ export class AgentActivityLogComponent {
 
   protected readonly shown = signal<string | null>(null);
 
-  protected readonly more = computed(() =>
-    Math.max(0, this.total() - this.entries().length),
-  );
+  protected readonly more = computed(() => Math.max(0, this.total() - this.entries().length));
 
   protected readonly rows = computed(() =>
     this.entries().map((entry) => {

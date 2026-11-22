@@ -73,19 +73,38 @@ const AUTH_DESCRIPTIONS: Record<AuthMode, string> = {
             <div class="space-y-2" data-testid="sso-who">
               <p class="text-sm font-medium">Who signs in?</p>
               <label class="flex items-start gap-2 text-sm">
-                <input type="radio" name="sso-who" class="mt-1" [checked]="!state.catalogIdentityInstallId()" (change)="state.catalogIdentityInstallId.set(null)" />
+                <input
+                  type="radio"
+                  name="sso-who"
+                  class="mt-1"
+                  [checked]="!state.catalogIdentityInstallId()"
+                  (change)="state.catalogIdentityInstallId.set(null)"
+                />
                 <span>
                   <span class="font-medium">Your team</span>
-                  <span class="block text-xs text-muted-foreground">Flui sign-in: the people who use Flui.</span>
+                  <span class="block text-xs text-muted-foreground"
+                    >Flui sign-in: the people who use Flui.</span
+                  >
                 </span>
               </label>
               @for (i of identityInstalls(); track i.identityInstallId) {
                 <label class="flex items-start gap-2 text-sm" [class.opacity-50]="!i.managed">
-                  <input type="radio" name="sso-who" class="mt-1" [disabled]="!i.managed" [checked]="state.catalogIdentityInstallId() === i.identityInstallId" (change)="state.catalogIdentityInstallId.set(i.identityInstallId)" />
+                  <input
+                    type="radio"
+                    name="sso-who"
+                    class="mt-1"
+                    [disabled]="!i.managed"
+                    [checked]="state.catalogIdentityInstallId() === i.identityInstallId"
+                    (change)="state.catalogIdentityInstallId.set(i.identityInstallId)"
+                  />
                   <span>
                     <span class="font-medium">{{ i.name }}</span>
                     <span class="block text-xs text-muted-foreground">
-                      {{ i.managed ? 'The app’s own users, from this identity install.' : 'Reinstall it to manage it from Flui.' }}
+                      {{
+                        i.managed
+                          ? 'The app’s own users, from this identity install.'
+                          : 'Reinstall it to manage it from Flui.'
+                      }}
                     </span>
                   </span>
                 </label>
@@ -190,14 +209,11 @@ export class CatalogFeaturesStepComponent {
 
   optionClass(key: string): string {
     const base = 'flex items-start gap-3 rounded-lg border border-border p-3 transition';
-    return this.isBlocked(key)
-      ? `${base} opacity-60`
-      : `${base} cursor-pointer hover:bg-accent/40`;
+    return this.isBlocked(key) ? `${base} opacity-60` : `${base} cursor-pointer hover:bg-accent/40`;
   }
 
   cardClass(active: boolean): string {
-    const base =
-      'flex flex-col items-start rounded-lg border p-4 text-left transition w-full';
+    const base = 'flex flex-col items-start rounded-lg border p-4 text-left transition w-full';
     return active
       ? `${base} border-primary bg-primary/5`
       : `${base} border-border hover:bg-accent/40`;

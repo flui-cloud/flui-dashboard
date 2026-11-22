@@ -1,10 +1,15 @@
-import { Component, OnInit, computed, inject, input, signal, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  computed,
+  inject,
+  input,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideArrowRight, lucideCirclePlus, lucideInfo } from '@ng-icons/lucide';
-import {
-  HlmCardDirective,
-  HlmCardContentDirective,
-} from '@spartan-ng/ui-card-helm';
+import { HlmCardDirective, HlmCardContentDirective } from '@spartan-ng/ui-card-helm';
 import { HlmBadgeDirective } from '@spartan-ng/ui-badge-helm';
 import { IamService } from '../../service/iam.service';
 import {
@@ -24,12 +29,7 @@ const SELECT_CLASS =
 @Component({
   selector: 'app-grant-builder',
   standalone: true,
-  imports: [
-    NgIcon,
-    HlmCardDirective,
-    HlmCardContentDirective,
-    HlmBadgeDirective,
-  ],
+  imports: [NgIcon, HlmCardDirective, HlmCardContentDirective, HlmBadgeDirective],
   providers: [provideIcons({ lucideArrowRight, lucideCirclePlus, lucideInfo })],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './grant-builder.component.html',
@@ -70,9 +70,7 @@ export class GrantBuilderComponent implements OnInit {
     else if (role === PLATFORM_OPERATOR_ROLE) this.duration.set('1d');
   }
 
-  readonly expiryPreview = computed(() =>
-    grantExpiry(this.duration(), this.endDate()),
-  );
+  readonly expiryPreview = computed(() => grantExpiry(this.duration(), this.endDate()));
 
   readonly endValid = computed(() => {
     if (this.duration() === 'never') return true;
@@ -92,9 +90,7 @@ export class GrantBuilderComponent implements OnInit {
       case 'everything':
         return { type: 'global' };
       case 'kind':
-        return this.kindValue()
-          ? { type: 'selector', selector: { kind: this.kindValue() } }
-          : null;
+        return this.kindValue() ? { type: 'selector', selector: { kind: this.kindValue() } } : null;
       case 'cluster':
         return this.clusterId() ? { type: 'cluster', cluster: this.clusterId() } : null;
       case 'project':
@@ -117,9 +113,7 @@ export class GrantBuilderComponent implements OnInit {
     return s ? this.iam.matchApps(s) : [];
   });
 
-  readonly canSave = computed(
-    () => !!this.principal() && !!this.scope() && this.endValid(),
-  );
+  readonly canSave = computed(() => !!this.principal() && !!this.scope() && this.endValid());
 
   readonly compiled = computed(() => JSON.stringify(this.scope()));
 
@@ -140,15 +134,21 @@ export class GrantBuilderComponent implements OnInit {
       case 'kind':
         return this.kindValue() ? `${this.kindValue().toLowerCase()} apps` : 'apps of a kind…';
       case 'cluster':
-        return this.clusterId() ? `cluster ${this.iam.clusterName(this.clusterId())}` : 'a cluster…';
+        return this.clusterId()
+          ? `cluster ${this.iam.clusterName(this.clusterId())}`
+          : 'a cluster…';
       case 'project':
         return this.project() ? `project ${this.project()}` : 'a project…';
       case 'app':
         return this.selectedApps().length ? `apps ${this.selectedApps().join(', ')}` : 'apps…';
       case 'tag':
-        return this.selectedTags().length ? `apps tagged ${this.selectedTags().join(', ')}` : 'tagged apps…';
+        return this.selectedTags().length
+          ? `apps tagged ${this.selectedTags().join(', ')}`
+          : 'tagged apps…';
       case 'section':
-        return this.sectionKey() ? `section ${this.iam.sectionName(this.sectionKey())}` : 'a section…';
+        return this.sectionKey()
+          ? `section ${this.iam.sectionName(this.sectionKey())}`
+          : 'a section…';
     }
   }
 

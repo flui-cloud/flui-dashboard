@@ -29,8 +29,7 @@ const setUp = (opts: {
       {
         provide: PermissionService,
         useValue: {
-          isSectionReadOnly: (key: string) =>
-            (opts.readOnlySections ?? []).includes(key),
+          isSectionReadOnly: (key: string) => (opts.readOnlySections ?? []).includes(key),
         },
       },
       {
@@ -47,8 +46,7 @@ const setUp = (opts: {
   });
   const fixture = TestBed.createComponent(HostComponent);
   fixture.detectChanges();
-  return (id: string): HTMLElement =>
-    fixture.nativeElement.querySelector(`#${id}`);
+  return (id: string): HTMLElement => fixture.nativeElement.querySelector(`#${id}`);
 };
 
 describe('ReadOnlySectionDirective', () => {

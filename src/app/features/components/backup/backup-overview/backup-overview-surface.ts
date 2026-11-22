@@ -51,10 +51,18 @@ function pageObservations(input: BackupOverviewSurfaceInput): Observation[] {
     valueObservation('flui.backup.destinations_count', input.destinationsCount, 'derived'),
     valueObservation('flui.backup.policies_count', input.policiesCount, 'derived'),
     input.degradedPoliciesCount > 0
-      ? valueObservation('flui.backup.policies_degraded_count', input.degradedPoliciesCount, 'derived')
+      ? valueObservation(
+          'flui.backup.policies_degraded_count',
+          input.degradedPoliciesCount,
+          'derived',
+        )
       : null,
     input.attentionPolicies?.length
-      ? valueObservation('flui.backup.policies_attention_count', input.attentionPolicies.length, 'derived')
+      ? valueObservation(
+          'flui.backup.policies_attention_count',
+          input.attentionPolicies.length,
+          'derived',
+        )
       : null,
     valueObservation('flui.backup.restore_jobs_count', input.restoreJobsCount, 'derived'),
     textObservation('flui.backup.total_usage', input.totalUsageText, 'derived'),

@@ -1,4 +1,12 @@
-import { Component, computed, effect, inject, signal, viewChild, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+  viewChild,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -19,12 +27,20 @@ import { ProviderFirewallExtended, ProviderFirewallFilterState } from '../../mod
 import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
 import { HlmInputDirective } from '@spartan-ng/ui-input-helm';
 import { HlmBadgeDirective } from '@spartan-ng/ui-badge-helm';
-import { HlmCardDirective, HlmCardHeaderDirective, HlmCardTitleDirective, HlmCardContentDirective } from '@spartan-ng/ui-card-helm';
+import {
+  HlmCardDirective,
+  HlmCardHeaderDirective,
+  HlmCardTitleDirective,
+  HlmCardContentDirective,
+} from '@spartan-ng/ui-card-helm';
 import { ProviderBadgeComponent } from './provider-badge.component';
 import { UsageStatusBadgeComponent } from './usage-status-badge.component';
 import { BrnSelectModule } from '@spartan-ng/brain/select';
 import { HlmSelectModule } from '@spartan-ng/ui-select-helm';
-import { DeleteConfirmationDialogComponent, DeleteConfirmationData } from '../../../shared/components/delete-confirmation-dialog.component';
+import {
+  DeleteConfirmationDialogComponent,
+  DeleteConfirmationData,
+} from '../../../shared/components/delete-confirmation-dialog.component';
 
 @Component({
   selector: 'app-firewall-provider-instances',
@@ -44,8 +60,8 @@ import { DeleteConfirmationDialogComponent, DeleteConfirmationData } from '../..
     UsageStatusBadgeComponent,
     BrnSelectModule,
     HlmSelectModule,
-    DeleteConfirmationDialogComponent
-],
+    DeleteConfirmationDialogComponent,
+  ],
   providers: [
     provideIcons({
       lucideSearch,
@@ -73,24 +89,31 @@ import { DeleteConfirmationDialogComponent, DeleteConfirmationData } from '../..
       <div class="flex items-center justify-between">
         <div>
           <h1 class="text-3xl font-bold tracking-tight">Provider Firewalls</h1>
-          <p class="text-muted-foreground mt-1">
-            Manage firewalls created on cloud providers
-          </p>
+          <p class="text-muted-foreground mt-1">Manage firewalls created on cloud providers</p>
         </div>
         <button hlmBtn (click)="refresh()" [disabled]="firewallService.loadingProviderFirewalls()">
-          <ng-icon name="lucideRefreshCw" class="mr-2 h-4 w-4" [class.animate-spin]="firewallService.loadingProviderFirewalls()" />
+          <ng-icon
+            name="lucideRefreshCw"
+            class="mr-2 h-4 w-4"
+            [class.animate-spin]="firewallService.loadingProviderFirewalls()"
+          />
           Refresh
         </button>
       </div>
 
       <!-- Warning Message -->
-      <div class="rounded-lg bg-yellow-50 dark:bg-gray-800/60 border-2 border-yellow-300 dark:border-gray-700/50 p-4 flex items-start gap-3">
-        <ng-icon name="lucideTriangleAlert" class="h-5 w-5 text-yellow-700 dark:text-yellow-400 mt-0.5" />
+      <div
+        class="rounded-lg bg-yellow-50 dark:bg-gray-800/60 border-2 border-yellow-300 dark:border-gray-700/50 p-4 flex items-start gap-3"
+      >
+        <ng-icon
+          name="lucideTriangleAlert"
+          class="h-5 w-5 text-yellow-700 dark:text-yellow-400 mt-0.5"
+        />
         <div class="flex-1">
           <h3 class="font-semibold text-yellow-800 dark:text-yellow-300">⚠️ Emergency Use Only</h3>
           <p class="text-sm text-yellow-700 dark:text-yellow-400 mt-1">
-            Direct provider firewall management should only be used for emergency situations.
-            For normal firewall operations, please use the <strong>Cluster Firewalls</strong> section
+            Direct provider firewall management should only be used for emergency situations. For
+            normal firewall operations, please use the <strong>Cluster Firewalls</strong> section
             which provides desired-state management with drift detection and reconciliation.
           </p>
         </div>
@@ -102,7 +125,9 @@ import { DeleteConfirmationDialogComponent, DeleteConfirmationData } from '../..
           <ng-icon name="lucideTriangleAlert" class="h-5 w-5 text-destructive mt-0.5" />
           <div class="flex-1">
             <h3 class="font-semibold text-destructive">Error loading firewalls</h3>
-            <p class="text-sm text-destructive/90 mt-1">{{ firewallService.providerFirewallsErrorMessage() }}</p>
+            <p class="text-sm text-destructive/90 mt-1">
+              {{ firewallService.providerFirewallsErrorMessage() }}
+            </p>
           </div>
         </div>
       }
@@ -124,7 +149,9 @@ import { DeleteConfirmationDialogComponent, DeleteConfirmationData } from '../..
             <h3 hlmCardTitle class="text-sm font-medium">In Use</h3>
           </div>
           <div hlmCardContent>
-            <div class="text-2xl font-bold text-green-600 dark:text-green-400">{{ stats().inUse }}</div>
+            <div class="text-2xl font-bold text-green-600 dark:text-green-400">
+              {{ stats().inUse }}
+            </div>
             <p class="text-xs text-muted-foreground">Attached to clusters</p>
           </div>
         </div>
@@ -134,7 +161,9 @@ import { DeleteConfirmationDialogComponent, DeleteConfirmationData } from '../..
             <h3 hlmCardTitle class="text-sm font-medium">Unused</h3>
           </div>
           <div hlmCardContent>
-            <div class="text-2xl font-bold text-orange-600 dark:text-orange-400">{{ stats().unused }}</div>
+            <div class="text-2xl font-bold text-orange-600 dark:text-orange-400">
+              {{ stats().unused }}
+            </div>
             <p class="text-xs text-muted-foreground">Available for deletion</p>
           </div>
         </div>
@@ -162,7 +191,10 @@ import { DeleteConfirmationDialogComponent, DeleteConfirmationData } from '../..
           <div class="grid gap-4 md:grid-cols-3">
             <!-- Search -->
             <div class="relative">
-              <ng-icon name="lucideSearch" class="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <ng-icon
+                name="lucideSearch"
+                class="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground"
+              />
               <input
                 hlmInput
                 type="text"
@@ -183,7 +215,10 @@ import { DeleteConfirmationDialogComponent, DeleteConfirmationData } from '../..
                   <option [value]="p.id">{{ p.displayName }}</option>
                 }
               </select>
-              <ng-icon name="lucideFilter" class="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <ng-icon
+                name="lucideFilter"
+                class="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none"
+              />
             </div>
 
             <!-- Usage Filter -->
@@ -196,7 +231,10 @@ import { DeleteConfirmationDialogComponent, DeleteConfirmationData } from '../..
                 <option [ngValue]="true">In Use</option>
                 <option [ngValue]="false">Unused</option>
               </select>
-              <ng-icon name="lucideFilter" class="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <ng-icon
+                name="lucideFilter"
+                class="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none"
+              />
             </div>
           </div>
         </div>
@@ -207,7 +245,10 @@ import { DeleteConfirmationDialogComponent, DeleteConfirmationData } from '../..
         <div hlmCardContent class="p-0">
           @if (firewallService.loadingProviderFirewalls()) {
             <div class="p-12 text-center">
-              <ng-icon name="lucideRefreshCw" class="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
+              <ng-icon
+                name="lucideRefreshCw"
+                class="h-8 w-8 animate-spin mx-auto text-muted-foreground"
+              />
               <p class="mt-4 text-sm text-muted-foreground">Loading provider firewalls...</p>
             </div>
           } @else if (filteredFirewalls().length === 0) {
@@ -227,13 +268,27 @@ import { DeleteConfirmationDialogComponent, DeleteConfirmationData } from '../..
               <table class="w-full">
                 <thead class="border-b bg-muted/50">
                   <tr>
-                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Name</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Provider</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Status</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Cluster</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Servers</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Rules</th>
-                    <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider">Actions</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                      Name
+                    </th>
+                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                      Provider
+                    </th>
+                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                      Cluster
+                    </th>
+                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                      Servers
+                    </th>
+                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                      Rules
+                    </th>
+                    <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody class="divide-y">
@@ -247,7 +302,11 @@ import { DeleteConfirmationDialogComponent, DeleteConfirmationData } from '../..
                             <div class="text-xs text-muted-foreground">{{ firewall.id }}</div>
                           </div>
                           @if (isObservabilityFirewall(firewall)) {
-                            <span hlmBadge variant="outline" class="text-xs bg-purple-50 dark:bg-gray-700/50 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-gray-600/50">
+                            <span
+                              hlmBadge
+                              variant="outline"
+                              class="text-xs bg-purple-50 dark:bg-gray-700/50 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-gray-600/50"
+                            >
                               Control
                             </span>
                           }
@@ -261,7 +320,9 @@ import { DeleteConfirmationDialogComponent, DeleteConfirmationData } from '../..
 
                       <!-- Status -->
                       <td class="px-4 py-3">
-                        <app-usage-status-badge [inUse]="isObservabilityFirewall(firewall) ? true : firewall.inUse" />
+                        <app-usage-status-badge
+                          [inUse]="isObservabilityFirewall(firewall) ? true : firewall.inUse"
+                        />
                       </td>
 
                       <!-- Cluster -->
@@ -314,7 +375,11 @@ import { DeleteConfirmationDialogComponent, DeleteConfirmationData } from '../..
                             (click)="deleteFirewall(firewall)"
                             [disabled]="firewall.inUse || deleting() === firewall.id"
                             class="text-destructive hover:text-destructive hover:bg-destructive/10"
-                            [title]="firewall.inUse ? 'Cannot delete a firewall that is currently in use' : 'Delete firewall'"
+                            [title]="
+                              firewall.inUse
+                                ? 'Cannot delete a firewall that is currently in use'
+                                : 'Delete firewall'
+                            "
                           >
                             <ng-icon name="lucideTrash2" class="h-4 w-4" />
                           </button>
@@ -358,9 +423,12 @@ export class FirewallProviderInstancesComponent {
   constructor() {
     this.providersService.loadProviders();
     // Load provider firewalls on init
-    effect(() => {
-      this.firewallService.loadProviderFirewalls();
-    }, { allowSignalWrites: true });
+    effect(
+      () => {
+        this.firewallService.loadProviderFirewalls();
+      },
+      { allowSignalWrites: true },
+    );
   }
 
   stats = computed(() => this.firewallService.providerFirewallStats());
@@ -414,7 +482,10 @@ export class FirewallProviderInstancesComponent {
   }
 
   isObservabilityFirewall(firewall: ProviderFirewallExtended): boolean {
-    return firewall.labels?.['flui-cluster-type'] === 'control' || firewall.labels?.['flui-cluster-type'] === 'observability';
+    return (
+      firewall.labels?.['flui-cluster-type'] === 'control' ||
+      firewall.labels?.['flui-cluster-type'] === 'observability'
+    );
   }
 
   deleteFirewall(firewall: ProviderFirewallExtended): void {
@@ -435,7 +506,8 @@ export class FirewallProviderInstancesComponent {
       description: 'You are about to delete this firewall from the cloud provider.',
       itemName: firewall.name,
       itemDescription: `Provider: ${firewall.provider.charAt(0).toUpperCase() + firewall.provider.slice(1)} | Rules: ${firewall.rules.length} | Servers: ${firewall.appliedServers.length}`,
-      warningMessage: 'This action cannot be undone. The firewall will be permanently deleted from the provider.',
+      warningMessage:
+        'This action cannot be undone. The firewall will be permanently deleted from the provider.',
       confirmButtonText: 'Delete Firewall',
     };
 
@@ -456,7 +528,8 @@ export class FirewallProviderInstancesComponent {
       this.deleteDialog().close();
       this.firewallToDelete = null;
     } catch (error: any) {
-      const errorMessage = error?.error?.message || error?.message || 'An unexpected error occurred';
+      const errorMessage =
+        error?.error?.message || error?.message || 'An unexpected error occurred';
       alert(`Failed to delete firewall: ${errorMessage}`);
       this.deleteDialog().close();
     } finally {

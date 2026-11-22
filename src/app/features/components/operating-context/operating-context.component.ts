@@ -35,10 +35,7 @@ import {
   needsReview,
   suspectFirst,
 } from '../../model/operating-context.models';
-import {
-  ContextFocus,
-  OperatingContextService,
-} from '../../service/operating-context.service';
+import { ContextFocus, OperatingContextService } from '../../service/operating-context.service';
 import { ContextNoteCardComponent } from './context-note-card.component';
 import { ContextNoteFormComponent } from './context-note-form.component';
 import { ExplainComponent } from '../../../shared/components/explain.component';
@@ -103,54 +100,59 @@ type ContextTab = 'attention' | 'holding' | 'archive';
 
       <!-- ── What reaches a given thing ────────────────────────── -->
       @if (!firstRun()) {
-      <section class="space-y-2" data-testid="focus">
-        <div class="flex flex-wrap items-end gap-3">
-          <div class="space-y-1">
-            <label class="block text-[12px] font-medium text-foreground" for="focus-slug">
-              Application
-            </label>
-            <input
-              id="focus-slug"
-              [class]="fieldClass"
-              placeholder="slug"
-              [ngModel]="focusSlug()"
-              (ngModelChange)="focusSlug.set($event)"
-              data-testid="focus-slug"
-            />
-          </div>
-          <div class="space-y-1">
-            <label class="block text-[12px] font-medium text-foreground" for="focus-cluster">
-              Cluster
-            </label>
-            <select
-              id="focus-cluster"
-              [class]="selectClass"
-              [ngModel]="focusCluster()"
-              (ngModelChange)="focusCluster.set($event)"
-              data-testid="focus-cluster"
-            >
-              <option value="">Any cluster</option>
-              @for (cluster of clusters(); track cluster.id) {
-                <option [value]="cluster.id">{{ cluster.name }}</option>
-              }
-            </select>
-          </div>
-          <button hlmBtn size="sm" variant="outline" (click)="load()" data-testid="focus-apply">
-            Show what reaches it
-          </button>
-          @if (focused()) {
-            <button hlmBtn size="sm" variant="ghost" (click)="clearFocus()" data-testid="focus-clear">
-              <ng-icon name="lucideX" class="mr-1.5 h-3.5 w-3.5" />
-              Everything again
+        <section class="space-y-2" data-testid="focus">
+          <div class="flex flex-wrap items-end gap-3">
+            <div class="space-y-1">
+              <label class="block text-[12px] font-medium text-foreground" for="focus-slug">
+                Application
+              </label>
+              <input
+                id="focus-slug"
+                [class]="fieldClass"
+                placeholder="slug"
+                [ngModel]="focusSlug()"
+                (ngModelChange)="focusSlug.set($event)"
+                data-testid="focus-slug"
+              />
+            </div>
+            <div class="space-y-1">
+              <label class="block text-[12px] font-medium text-foreground" for="focus-cluster">
+                Cluster
+              </label>
+              <select
+                id="focus-cluster"
+                [class]="selectClass"
+                [ngModel]="focusCluster()"
+                (ngModelChange)="focusCluster.set($event)"
+                data-testid="focus-cluster"
+              >
+                <option value="">Any cluster</option>
+                @for (cluster of clusters(); track cluster.id) {
+                  <option [value]="cluster.id">{{ cluster.name }}</option>
+                }
+              </select>
+            </div>
+            <button hlmBtn size="sm" variant="outline" (click)="load()" data-testid="focus-apply">
+              Show what reaches it
             </button>
-          }
-        </div>
-        <app-explain label="Two axes, not a hierarchy" testid="reach-why">
-          What a thing is, and where it runs. A resource receives every note
-          whose region contains it — down both at once, neither taking
-          precedence.
-        </app-explain>
-      </section>
+            @if (focused()) {
+              <button
+                hlmBtn
+                size="sm"
+                variant="ghost"
+                (click)="clearFocus()"
+                data-testid="focus-clear"
+              >
+                <ng-icon name="lucideX" class="mr-1.5 h-3.5 w-3.5" />
+                Everything again
+              </button>
+            }
+          </div>
+          <app-explain label="Two axes, not a hierarchy" testid="reach-why">
+            What a thing is, and where it runs. A resource receives every note whose region contains
+            it — down both at once, neither taking precedence.
+          </app-explain>
+        </section>
       }
 
       @if (loadError(); as message) {
@@ -174,23 +176,18 @@ type ContextTab = 'attention' | 'holding' | 'archive';
               Nothing has been written down yet
             </h2>
             <p class="m-0 text-sm text-muted-foreground">
-              The local conventions nobody can work out from the code — why the
-              master is left alone, when deploys happen, which cluster is not to
-              be touched. Everybody here reads them, and so does every agent
-              before it changes anything.
+              The local conventions nobody can work out from the code — why the master is left
+              alone, when deploys happen, which cluster is not to be touched. Everybody here reads
+              them, and so does every agent before it changes anything.
             </p>
           </div>
 
           <div class="rounded-lg border border-dashed border-border p-4 text-left">
-            <p class="m-0 text-[11px] uppercase tracking-wide text-muted-foreground">
-              For example
-            </p>
-            <p class="m-0 mt-1.5 text-sm font-medium text-foreground">
-              The master is not resized
-            </p>
+            <p class="m-0 text-[11px] uppercase tracking-wide text-muted-foreground">For example</p>
+            <p class="m-0 mt-1.5 text-sm font-medium text-foreground">The master is not resized</p>
             <p class="m-0 mt-0.5 text-[13px] text-muted-foreground">
-              The API runs on it, so resizing takes the control plane down.
-              Add a node from the cluster's Scaling tab instead.
+              The API runs on it, so resizing takes the control plane down. Add a node from the
+              cluster's Scaling tab instead.
             </p>
           </div>
 
@@ -308,8 +305,8 @@ type ContextTab = 'attention' | 'holding' | 'archive';
               labelClass="text-sm text-muted-foreground"
               testid="nothing-to-review"
             >
-              A note that leans on a live fact appears here the moment the
-              platform stops agreeing with it.
+              A note that leans on a live fact appears here the moment the platform stops agreeing
+              with it.
             </app-explain>
           }
         </section>
@@ -324,7 +321,10 @@ type ContextTab = 'attention' | 'holding' | 'archive';
           </div>
 
           @for (group of conflicts(); track group.topic) {
-            <div class="space-y-2 rounded-lg border border-dashed border-border p-3" data-testid="conflict">
+            <div
+              class="space-y-2 rounded-lg border border-dashed border-border p-3"
+              data-testid="conflict"
+            >
               <p class="m-0 flex items-center gap-2 text-[12px] text-muted-foreground">
                 <ng-icon name="lucideCircleAlert" class="h-3.5 w-3.5 shrink-0" />
                 <span class="font-mono text-foreground">{{ group.topic }}</span>
@@ -333,8 +333,8 @@ type ContextTab = 'attention' | 'holding' | 'archive';
                   labelClass="text-[12px] text-muted-foreground"
                   [testid]="'conflict-why-' + group.topic"
                 >
-                  Being written at a narrower level does not make a note more
-                  right, and one of the two is very often simply older.
+                  Being written at a narrower level does not make a note more right, and one of the
+                  two is very often simply older.
                 </app-explain>
               </p>
               @for (entry of group.entries; track entry.id) {
@@ -404,38 +404,38 @@ type ContextTab = 'attention' | 'holding' | 'archive';
               labelClass="text-[12px] text-muted-foreground"
               testid="archive-why"
             >
-              A rule that was true once explains a decision that was made once.
-              These are read here and nowhere else — a withdrawn rule is never
-              handed to an agent as advice, and its premise is not asked again,
-              so each one says what was believed on the day it was withdrawn.
+              A rule that was true once explains a decision that was made once. These are read here
+              and nowhere else — a withdrawn rule is never handed to an agent as advice, and its
+              premise is not asked again, so each one says what was believed on the day it was
+              withdrawn.
             </app-explain>
 
-              @if (archiveLoading()) {
-                <div class="space-y-3" data-testid="archive-loading" aria-busy="true">
-                  @for (row of [1, 2]; track row) {
-                    <div class="card-surface space-y-2 p-4">
-                      <div class="skeleton h-4 w-48"></div>
-                      <div class="skeleton h-3 w-64"></div>
-                    </div>
-                  }
-                </div>
-              } @else if (archiveError()) {
-                <p class="m-0 text-sm text-muted-foreground" data-testid="archive-error">
-                  {{ archiveError() }}
-                </p>
-              } @else {
-                @for (entry of archived(); track entry.id) {
-                  <app-context-note-card
-                    [entry]="entry"
-                    [clusterNames]="clusterNames()"
-                    [readOnly]="true"
-                  />
-                } @empty {
-                  <p class="m-0 text-sm text-muted-foreground" data-testid="archive-empty">
-                    Nothing has been retired here yet.
-                  </p>
+            @if (archiveLoading()) {
+              <div class="space-y-3" data-testid="archive-loading" aria-busy="true">
+                @for (row of [1, 2]; track row) {
+                  <div class="card-surface space-y-2 p-4">
+                    <div class="skeleton h-4 w-48"></div>
+                    <div class="skeleton h-3 w-64"></div>
+                  </div>
                 }
+              </div>
+            } @else if (archiveError()) {
+              <p class="m-0 text-sm text-muted-foreground" data-testid="archive-error">
+                {{ archiveError() }}
+              </p>
+            } @else {
+              @for (entry of archived(); track entry.id) {
+                <app-context-note-card
+                  [entry]="entry"
+                  [clusterNames]="clusterNames()"
+                  [readOnly]="true"
+                />
+              } @empty {
+                <p class="m-0 text-sm text-muted-foreground" data-testid="archive-empty">
+                  Nothing has been retired here yet.
+                </p>
               }
+            }
           </section>
         }
       }
@@ -502,9 +502,7 @@ export class OperatingContextComponent implements OnInit, OnDestroy {
     Object.fromEntries(this.clusters().map((c) => [c.id, c.name])),
   );
 
-  protected readonly focused = computed(
-    () => !!this.focusSlug().trim() || !!this.focusCluster(),
-  );
+  protected readonly focused = computed(() => !!this.focusSlug().trim() || !!this.focusCluster());
 
   protected readonly review = computed(() =>
     suspectFirst(this.entries().filter((e) => needsReview(e.confidence))),
@@ -541,9 +539,7 @@ export class OperatingContextComponent implements OnInit, OnDestroy {
       firstRun: this.firstRun(),
       focusSlug: this.focusSlug(),
       focusClusterId: this.focusCluster(),
-      focusClusterName: this.focusCluster()
-        ? this.clusterNames()[this.focusCluster()]
-        : undefined,
+      focusClusterName: this.focusCluster() ? this.clusterNames()[this.focusCluster()] : undefined,
       clusterNames: this.clusterNames(),
       activeTab: this.tab(),
       writeRefused: this.readOnlyHere(),
@@ -591,9 +587,7 @@ export class OperatingContextComponent implements OnInit, OnDestroy {
   }
 
   private openingTab(): ContextTab {
-    return this.review().length || this.conflicts().length
-      ? 'attention'
-      : 'holding';
+    return this.review().length || this.conflicts().length ? 'attention' : 'holding';
   }
 
   private openOnWhatMatters(): void {
@@ -653,9 +647,7 @@ export class OperatingContextComponent implements OnInit, OnDestroy {
       error: (err: unknown) => {
         this.archived.set([]);
         this.archiveLoading.set(false);
-        this.archiveError.set(
-          messageOf(err, 'What was retired here could not be read.'),
-        );
+        this.archiveError.set(messageOf(err, 'What was retired here could not be read.'));
       },
     });
   }
@@ -673,9 +665,7 @@ export class OperatingContextComponent implements OnInit, OnDestroy {
       error: (err: unknown) => {
         this.entries.set([]);
         this.loading.set(false);
-        this.loadError.set(
-          messageOf(err, 'What has been decided here could not be read.'),
-        );
+        this.loadError.set(messageOf(err, 'What has been decided here could not be read.'));
       },
     });
     this.api.advice(focus).subscribe({
@@ -718,11 +708,7 @@ export class OperatingContextComponent implements OnInit, OnDestroy {
   }
 
   protected reword(event: { id: string; edit: EditContextEntry }): void {
-    this.act(
-      event.id,
-      this.api.edit(event.id, event.edit),
-      'That wording was not saved.',
-    );
+    this.act(event.id, this.api.edit(event.id, event.edit), 'That wording was not saved.');
   }
 
   private act(id: string, call: Observable<unknown>, fallback: string): void {
@@ -781,8 +767,7 @@ export class OperatingContextComponent implements OnInit, OnDestroy {
 }
 
 function messageOf(err: unknown, fallback: string): string {
-  const message = (err as { error?: { message?: unknown } } | null)?.error
-    ?.message;
+  const message = (err as { error?: { message?: unknown } } | null)?.error?.message;
   if (typeof message === 'string' && message.trim()) return message;
   if (Array.isArray(message) && typeof message[0] === 'string') {
     return message[0];

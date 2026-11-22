@@ -50,10 +50,14 @@ function pageObservations(input: DeployWizardSurfaceInput): Observation[] {
   // currently being deployed (`selectFlow()` resets these signals on switch anyway, but the
   // producer does not rely on that: it gates on the active flow explicitly).
   if (input.flowSubtype === 'existing-repo') {
-    observations.push(textObservation('flui.deploy.repository', input.selectedRepositoryFullName, 'ui'));
+    observations.push(
+      textObservation('flui.deploy.repository', input.selectedRepositoryFullName, 'ui'),
+    );
   }
   if (input.flowSubtype === 'template') {
-    observations.push(textObservation('flui.deploy.template', input.selectedTemplate?.displayName, 'ui'));
+    observations.push(
+      textObservation('flui.deploy.template', input.selectedTemplate?.displayName, 'ui'),
+    );
   }
   return observations.filter((observation): observation is Observation => observation !== null);
 }
@@ -120,7 +124,10 @@ export function presentedContent(input: DeployWizardSurfaceInput): PresentedCont
     observations: pageObservations(input),
   };
 
-  const scopes: SemanticScopeSnapshot[] = [pageScope, stepScope(input.currentStepId, input.currentStepTitle)];
+  const scopes: SemanticScopeSnapshot[] = [
+    pageScope,
+    stepScope(input.currentStepId, input.currentStepTitle),
+  ];
   const attention: AttentionTarget[] = [{ scopeId: PAGE_ID, reason: 'route' }];
 
   return { scopes, attention };

@@ -25,12 +25,16 @@ function input(over: Partial<GithubSetupWizardSurfaceInput> = {}): GithubSetupWi
 }
 
 function snapshotOf(over: Partial<GithubSetupWizardSurfaceInput> = {}): SurfaceSnapshot {
-  return buildGithubSetupWizardSurface(input(over), { revision: 1, generatedAt: '2026-09-02T09:00:00.000Z' });
+  return buildGithubSetupWizardSurface(input(over), {
+    revision: 1,
+    generatedAt: '2026-09-02T09:00:00.000Z',
+  });
 }
 
 const pageScope = (s: SurfaceSnapshot) => s.scopes.find((x) => x.id === 'github-setup-wizard')!;
 const stepScope = (s: SurfaceSnapshot) => s.scopes.find((x) => x.kind === 'region')!;
-const observation = (s: SurfaceSnapshot, key: string) => pageScope(s).observations?.find((o) => o.key === key);
+const observation = (s: SurfaceSnapshot, key: string) =>
+  pageScope(s).observations?.find((o) => o.key === key);
 
 describe('github setup wizard surface producer', () => {
   it('emits a snapshot that validates against the real schema and passes semantic checks', () => {
@@ -58,9 +62,14 @@ describe('github setup wizard surface producer', () => {
 
   it('flags a snapshot whose revision does not advance on the previous one', () => {
     const first = snapshotOf();
-    const stale = { ...snapshotOf(), surface: { ...snapshotOf().surface, revision: first.surface.revision } };
+    const stale = {
+      ...snapshotOf(),
+      surface: { ...snapshotOf().surface, revision: first.surface.revision },
+    };
     const issues = validateSurfaceSemantics(stale, { previousSnapshot: first });
-    expect(issues).toEqual([jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' })]);
+    expect(issues).toEqual([
+      jasmine.objectContaining({ code: 'invalid-revision', severity: 'error' }),
+    ]);
   });
 
   it('is a singleton config wizard with no domain entity: attention names only the page', () => {
@@ -79,18 +88,31 @@ describe('github setup wizard surface producer', () => {
 
   it('presents whether GitHub is already configured, and with which method — never a credential', () => {
     const snapshot = snapshotOf({
-      configuredStatus: { configured: true, authMethod: 'github_app', appSlug: 'flui-acme' } as never,
+      configuredStatus: {
+        configured: true,
+        authMethod: 'github_app',
+        appSlug: 'flui-acme',
+      } as never,
     });
     expect(observation(snapshot, 'flui.github_setup.configured')?.presentedAs.value).toBe(true);
-    expect(observation(snapshot, 'flui.github_setup.existing_auth_method')?.presentedAs.text).toBe('github_app');
-    expect(observation(snapshot, 'flui.github_setup.existing_app_slug')?.presentedAs.text).toBe('flui-acme');
+    expect(observation(snapshot, 'flui.github_setup.existing_auth_method')?.presentedAs.text).toBe(
+      'github_app',
+    );
+    expect(observation(snapshot, 'flui.github_setup.existing_app_slug')?.presentedAs.text).toBe(
+      'flui-acme',
+    );
   });
 
   it('presents PAT validation outcome (login, missing-scope count) once validated, never the token', () => {
     const snapshot = snapshotOf({
       currentStepIndex: 1,
       selectedMethod: 'pat',
-      patValidation: { valid: true, login: 'octocat', scopes: ['repo'], missingScopes: ['admin:repo_hook'] } as never,
+      patValidation: {
+        valid: true,
+        login: 'octocat',
+        scopes: ['repo'],
+        missingScopes: ['admin:repo_hook'],
+      } as never,
     });
     const step = stepScope(snapshot);
     const obs = (key: string) => step.observations?.find((o) => o.key === key);
@@ -100,7 +122,11 @@ describe('github setup wizard surface producer', () => {
   });
 
   it('presents manual-mode for a GitHub App configure step', () => {
-    const snapshot = snapshotOf({ currentStepIndex: 1, selectedMethod: 'github_app', manualMode: true });
+    const snapshot = snapshotOf({
+      currentStepIndex: 1,
+      selectedMethod: 'github_app',
+      manualMode: true,
+    });
     const step = stepScope(snapshot);
     expect(step.observations).toEqual([
       { key: 'flui.github_setup.manual_mode', presentedAs: { value: true }, source: 'ui' },

@@ -25,8 +25,7 @@ export interface OrphanedClaims {
   note?: string;
 }
 
-export const claimRef = (claim: OrphanedClaim): string =>
-  `${claim.namespace}/${claim.name}`;
+export const claimRef = (claim: OrphanedClaim): string => `${claim.namespace}/${claim.name}`;
 
 @Injectable({ providedIn: 'root' })
 export class ClusterOrphanedClaimsService {
@@ -55,9 +54,7 @@ export class ClusterOrphanedClaimsService {
     this.loadingData.set(true);
     this.errorData.set(null);
     try {
-      this.data.set(
-        await firstValueFrom(this.http.get<OrphanedClaims>(this.base(clusterId))),
-      );
+      this.data.set(await firstValueFrom(this.http.get<OrphanedClaims>(this.base(clusterId))));
     } catch (error: unknown) {
       this.data.set(null);
       this.errorData.set(messageOf(error, 'Could not read the volumes on this cluster'));

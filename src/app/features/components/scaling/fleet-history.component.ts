@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  input,
-  output,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideEuro, lucideServer } from '@ng-icons/lucide';
 import {
@@ -93,19 +86,13 @@ interface DecisionMarker {
           </div>
 
           @if (mode() === 'nodes') {
-            <div
-              class="flex flex-wrap items-center gap-x-4 gap-y-1"
-              data-testid="legend-shapes"
-            >
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1" data-testid="legend-shapes">
               @for (b of bands(); track b.shape) {
                 <span
                   class="inline-flex items-center gap-1.5 text-[12px] text-muted-foreground"
                   [attr.data-testid]="'legend-' + b.shape"
                 >
-                  <span
-                    class="h-2.5 w-2.5 rounded-sm"
-                    [style.background-color]="b.color"
-                  ></span>
+                  <span class="h-2.5 w-2.5 rounded-sm" [style.background-color]="b.color"></span>
                   <span class="font-mono text-foreground">{{ b.shape }}</span>
                   <span class="tabular-nums">{{ b.count }}</span>
                 </span>
@@ -118,9 +105,8 @@ interface DecisionMarker {
               labelClass="text-[12px] text-muted-foreground"
               testid="spend-why"
             >
-              Nodes are billed by the hour and the cap is written per month, so
-              the line is the hourly rate carried over 730 hours. It is a run
-              rate, not an invoice.
+              Nodes are billed by the hour and the cap is written per month, so the line is the
+              hourly rate carried over 730 hours. It is a run rate, not an invoice.
             </app-explain>
           }
         </div>
@@ -259,12 +245,7 @@ interface DecisionMarker {
                 (blur)="hovered.set(null)"
               >
                 <title>{{ m.aria }}</title>
-                <circle
-                  [attr.cx]="m.x"
-                  [attr.cy]="markerY"
-                  r="13"
-                  fill="transparent"
-                />
+                <circle [attr.cx]="m.x" [attr.cy]="markerY" r="13" fill="transparent" />
                 <circle
                   [attr.cx]="m.x"
                   [attr.cy]="markerY"
@@ -278,23 +259,14 @@ interface DecisionMarker {
             }
           </svg>
 
-          <div
-            class="flex flex-wrap items-center gap-x-4 gap-y-1"
-            data-testid="legend-decisions"
-          >
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-1" data-testid="legend-decisions">
             <span class="text-label">Decisions</span>
-            <span
-              class="inline-flex items-center gap-1.5 text-[12px] text-muted-foreground"
-            >
+            <span class="inline-flex items-center gap-1.5 text-[12px] text-muted-foreground">
               <span class="h-2.5 w-2.5 rounded-full bg-muted-foreground"></span>
               acted
             </span>
-            <span
-              class="inline-flex items-center gap-1.5 text-[12px] text-muted-foreground"
-            >
-              <span
-                class="h-2.5 w-2.5 rounded-full border-2 border-muted-foreground"
-              ></span>
+            <span class="inline-flex items-center gap-1.5 text-[12px] text-muted-foreground">
+              <span class="h-2.5 w-2.5 rounded-full border-2 border-muted-foreground"></span>
               did not
             </span>
             <app-explain
@@ -303,9 +275,8 @@ interface DecisionMarker {
               labelClass="text-[12px] text-muted-foreground"
               testid="declines-why"
             >
-              “Why did you not scale?” is the only question anybody asks an
-              autoscaler, so the times it added nothing sit on the same axis,
-              at the same size, as the times it did.
+              “Why did you not scale?” is the only question anybody asks an autoscaler, so the times
+              it added nothing sit on the same axis, at the same size, as the times it did.
             </app-explain>
           </div>
         } @else {
@@ -315,8 +286,8 @@ interface DecisionMarker {
             labelClass="text-sm text-muted-foreground"
             testid="no-history"
           >
-            The fleet is counted from node lifetimes. A group that has never
-            changed shape has nothing to draw.
+            The fleet is counted from node lifetimes. A group that has never changed shape has
+            nothing to draw.
           </app-explain>
         }
       </div>
@@ -373,9 +344,7 @@ export class FleetHistoryComponent {
     [...this.decisions()].sort((a, b) => Date.parse(a.at) - Date.parse(b.at)),
   );
 
-  private readonly shapeColors = [0, 4, 6, 9, 10, 8, 5].map(
-    (i) => DISTRIBUTION_PALETTE[i],
-  );
+  private readonly shapeColors = [0, 4, 6, 9, 10, 8, 5].map((i) => DISTRIBUTION_PALETTE[i]);
 
   private readonly outcomeColors: Record<
     ScalingDecision['outcome'],
@@ -394,13 +363,9 @@ export class FleetHistoryComponent {
     'node-removed': { color: DEFAULT_CHART_COLORS.neutral[0], acted: true },
   };
 
-  private readonly shapes = computed(() =>
-    shapesInOrder(this.points().map((p) => p.byShape)),
-  );
+  private readonly shapes = computed(() => shapesInOrder(this.points().map((p) => p.byShape)));
 
-  private readonly spend = computed(() =>
-    this.points().map((p) => p.hourlyEur * HOURS_PER_MONTH),
-  );
+  private readonly spend = computed(() => this.points().map((p) => p.hourlyEur * HOURS_PER_MONTH));
 
   private readonly cap = computed<number | null>(() => this.monthlyCap());
 
@@ -424,9 +389,7 @@ export class FleetHistoryComponent {
     bottom: this.plotB,
   };
 
-  private readonly xs = computed(() =>
-    this.points().map((p) => this.x(p.at.getTime())),
-  );
+  private readonly xs = computed(() => this.points().map((p) => this.x(p.at.getTime())));
 
   protected readonly yTicks = computed(() =>
     this.scale().ticks.map((t) => ({ ...t, y: this.y(t.v) })),

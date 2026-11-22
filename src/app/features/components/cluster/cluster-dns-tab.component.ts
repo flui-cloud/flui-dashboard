@@ -1,7 +1,23 @@
-import { Component, inject, signal, OnInit, computed, Injector, afterNextRender, viewChild, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  inject,
+  signal,
+  OnInit,
+  computed,
+  Injector,
+  afterNextRender,
+  viewChild,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideGlobe, lucideLoader, lucidePlusCircle, lucideRefreshCw, lucideAlertCircle } from '@ng-icons/lucide';
+import {
+  lucideGlobe,
+  lucideLoader,
+  lucidePlusCircle,
+  lucideRefreshCw,
+  lucideAlertCircle,
+} from '@ng-icons/lucide';
 import { ClusterService } from '../../service/cluster.service';
 import { ClusterDnsZoneService } from '../../service/cluster-dns-zone.service';
 import { AppEndpointsService } from '../../service/app-endpoints.service';
@@ -34,12 +50,17 @@ import { ToastService } from '../../../shared/services/toast.service';
     ConfirmationDialogComponent,
   ],
   providers: [
-    provideIcons({ lucideGlobe, lucideLoader, lucidePlusCircle, lucideRefreshCw, lucideAlertCircle }),
+    provideIcons({
+      lucideGlobe,
+      lucideLoader,
+      lucidePlusCircle,
+      lucideRefreshCw,
+      lucideAlertCircle,
+    }),
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="card-surface p-6 space-y-6">
-
       @if (isLoading()) {
         <div class="animate-pulse space-y-6">
           <!-- Zone section skeleton -->
@@ -54,7 +75,7 @@ import { ToastService } from '../../../shared/services/toast.service';
           <div class="border-t border-border pt-6 space-y-3">
             <div class="skeleton h-4 w-36"></div>
             <div class="flex gap-2">
-              @for (i of [1,2]; track i) {
+              @for (i of [1, 2]; track i) {
                 <div class="skeleton h-16 flex-1"></div>
               }
             </div>
@@ -65,22 +86,25 @@ import { ToastService } from '../../../shared/services/toast.service';
               <div class="skeleton h-4 w-28"></div>
               <div class="skeleton h-6 w-24"></div>
             </div>
-            @for (i of [1,2,3]; track i) {
+            @for (i of [1, 2, 3]; track i) {
               <div class="skeleton h-12 rounded-lg"></div>
             }
           </div>
         </div>
       } @else {
-
         <!-- Error banners -->
         @if (clusterDnsZoneService.error()) {
-          <div class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400">
+          <div
+            class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400"
+          >
             <ng-icon name="lucideAlertCircle" class="h-4 w-4 mt-0.5 flex-shrink-0" />
             <span>{{ clusterDnsZoneService.error() }}</span>
           </div>
         }
         @if (appEndpointsService.error()) {
-          <div class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400">
+          <div
+            class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400"
+          >
             <ng-icon name="lucideAlertCircle" class="h-4 w-4 mt-0.5 flex-shrink-0" />
             <span>{{ appEndpointsService.error() }}</span>
           </div>
@@ -134,7 +158,11 @@ import { ToastService } from '../../../shared/services/toast.service';
                 class="p-1 rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 disabled:opacity-50 transition-colors"
                 title="Refresh endpoints"
               >
-                <ng-icon name="lucideRefreshCw" class="h-3.5 w-3.5" [class.animate-spin]="refreshingEndpoints()" />
+                <ng-icon
+                  name="lucideRefreshCw"
+                  class="h-3.5 w-3.5"
+                  [class.animate-spin]="refreshingEndpoints()"
+                />
               </button>
             </div>
           </div>
@@ -171,7 +199,11 @@ import { ToastService } from '../../../shared/services/toast.service';
     <app-confirmation-dialog
       #deleteEndpointDialog
       title="Delete Endpoint"
-      [message]="endpointToDelete() ? 'Delete endpoint ' + endpointToDelete()!.fqdn + '? This cannot be undone.' : ''"
+      [message]="
+        endpointToDelete()
+          ? 'Delete endpoint ' + endpointToDelete()!.fqdn + '? This cannot be undone.'
+          : ''
+      "
       confirmText="Delete"
       variant="danger"
       (confirmed)="executeDeleteEndpoint()"
@@ -198,8 +230,10 @@ export class ClusterDnsTabComponent implements OnInit {
   protected reconcilingZoneId = signal<string | null>(null);
   protected endpointToDelete = signal<AppEndpointResponseDto | null>(null);
 
-  readonly deleteEndpointDialog = viewChild.required<ConfirmationDialogComponent>('deleteEndpointDialog');
-  readonly issuersSection = viewChild.required<ClusterCertificateIssuersComponent>('issuersSection');
+  readonly deleteEndpointDialog =
+    viewChild.required<ConfirmationDialogComponent>('deleteEndpointDialog');
+  readonly issuersSection =
+    viewChild.required<ClusterCertificateIssuersComponent>('issuersSection');
   readonly zoneSection = viewChild.required<ClusterDnsZoneSectionComponent>('zoneSection');
 
   protected clusterId = computed(() => this.clusterService.cluster()?.id ?? '');
@@ -207,16 +241,17 @@ export class ClusterDnsTabComponent implements OnInit {
 
   protected clusterApps = computed<AppOption[]>(() => {
     const id = this.clusterId();
-    return this.applicationService.applications()
-      .filter(a => a.clusterId === id)
-      .map(a => ({ id: a.id, name: a.name, slug: a.slug, isInternal: !hasPublicEndpoint(a) }));
+    return this.applicationService
+      .applications()
+      .filter((a) => a.clusterId === id)
+      .map((a) => ({ id: a.id, name: a.name, slug: a.slug, isInternal: !hasPublicEndpoint(a) }));
   });
 
   ngOnInit(): void {
     void (async () => {
       const cluster = this.clusterService.cluster();
       if (!cluster?.id) return;
-  
+
       this.isLoading.set(true);
       await Promise.all([
         this.clusterDnsZoneService.loadAssignment(cluster.id),
@@ -226,12 +261,17 @@ export class ClusterDnsTabComponent implements OnInit {
         this.applicationService.loadApplications(),
       ]);
       this.isLoading.set(false);
-  
+
       const fragment = this.route.snapshot.fragment;
       if (fragment === 'standard-certificate-issuers') {
-        afterNextRender(() => {
-          document.getElementById('standard-certificate-issuers')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, { injector: this.injector });
+        afterNextRender(
+          () => {
+            document
+              .getElementById('standard-certificate-issuers')
+              ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          },
+          { injector: this.injector },
+        );
       }
     })();
   }
@@ -295,7 +335,7 @@ export class ClusterDnsTabComponent implements OnInit {
 
   protected toggleAddForm(): void {
     this.editingEndpoint.set(undefined);
-    this.showEndpointForm.update(v => !v);
+    this.showEndpointForm.update((v) => !v);
   }
 
   protected editEndpoint(ep: AppEndpointResponseDto): void {
@@ -319,7 +359,8 @@ export class ClusterDnsTabComponent implements OnInit {
   }
 
   protected async onSaveEndpoint(
-    event: { clusterId: string; dto: CreateAppEndpointDto } | { id: string; dto: UpdateAppEndpointDto }
+    event:
+      { clusterId: string; dto: CreateAppEndpointDto } | { id: string; dto: UpdateAppEndpointDto },
   ): Promise<void> {
     let endpointId: string | null = null;
     if ('clusterId' in event) {

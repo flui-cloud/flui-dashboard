@@ -1,4 +1,13 @@
-import { Component, OnInit, computed, inject, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  computed,
+  inject,
+  input,
+  output,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -58,9 +67,11 @@ import { VNetInfo, VNetStatus } from '../../model/vnet.models';
               Loading VNets...
             </div>
           } @else if (availableVNets().length === 0) {
-            <div class="rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20 p-3 text-sm text-amber-900 dark:text-amber-200">
-              No VNets available for provider <strong>{{ provider() }}</strong>. Create a
-              VNet first.
+            <div
+              class="rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20 p-3 text-sm text-amber-900 dark:text-amber-200"
+            >
+              No VNets available for provider <strong>{{ provider() }}</strong>. Create a VNet
+              first.
             </div>
           } @else {
             <div>
@@ -129,8 +140,13 @@ import { VNetInfo, VNetStatus } from '../../model/vnet.models';
           }
 
           @if (errorMessage(); as err) {
-            <div class="rounded-lg border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20 p-3 flex items-start gap-2">
-              <ng-icon name="lucideCircleAlert" class="h-4 w-4 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+            <div
+              class="rounded-lg border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20 p-3 flex items-start gap-2"
+            >
+              <ng-icon
+                name="lucideCircleAlert"
+                class="h-4 w-4 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0"
+              />
               <p class="text-xs text-red-900 dark:text-red-200">{{ err }}</p>
             </div>
           }
@@ -186,13 +202,13 @@ export class AttachVNetDialogComponent implements OnInit {
   readonly errorMessage = this.clusterService.attachVNetError;
 
   readonly availableVNets = computed<VNetInfo[]>(() =>
-    this.vnetService.vnets().filter(v => v.status === VNetStatus.ACTIVE),
+    this.vnetService.vnets().filter((v) => v.status === VNetStatus.ACTIVE),
   );
 
   readonly subnets = computed(() => {
     const id = this.selectedVNetId();
     if (!id) return [];
-    return this.availableVNets().find(v => v.id === id)?.subnets ?? [];
+    return this.availableVNets().find((v) => v.id === id)?.subnets ?? [];
   });
 
   readonly canSubmit = computed(

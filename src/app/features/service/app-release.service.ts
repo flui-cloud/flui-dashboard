@@ -90,9 +90,10 @@ export class AppReleaseService {
       previousImageRef: e.previousImageRef ?? undefined,
       buildId: e.buildId ?? undefined,
       failureReason: e.failureReason ?? undefined,
-      startedAt: this.currentReleaseSignal()?.operationId === e.operationId
-        ? this.currentReleaseSignal()!.startedAt
-        : e.timestamp,
+      startedAt:
+        this.currentReleaseSignal()?.operationId === e.operationId
+          ? this.currentReleaseSignal()!.startedAt
+          : e.timestamp,
       completedAt: e.status === 'IN_PROGRESS' ? null : e.timestamp,
     };
     this.currentReleaseSignal.set(next);

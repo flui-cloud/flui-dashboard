@@ -42,9 +42,7 @@ export class NodeResizeService {
   }
 
   preview(clusterId: string, nodeId: string): Observable<NodeResizePreview> {
-    return this.http.get<NodeResizePreview>(
-      `${this.url(clusterId, nodeId)}/preview`,
-    );
+    return this.http.get<NodeResizePreview>(`${this.url(clusterId, nodeId)}/preview`);
   }
 
   resize(
@@ -56,9 +54,6 @@ export class NodeResizeService {
       copiesGiB?: number;
     },
   ): Observable<{ id: string; status: string }> {
-    return this.http.post<{ id: string; status: string }>(
-      this.url(clusterId, nodeId),
-      body,
-    );
+    return this.http.post<{ id: string; status: string }>(this.url(clusterId, nodeId), body);
   }
 }

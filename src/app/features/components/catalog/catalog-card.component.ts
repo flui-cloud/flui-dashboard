@@ -51,10 +51,17 @@ interface Ratings {
             <div class="mt-2 flex items-center gap-1.5">
               <span
                 class="inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:border-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300"
-                [attr.title]="installedCount() === 1 ? 'Installed once' : 'Installed ' + installedCount() + ' times'"
+                [attr.title]="
+                  installedCount() === 1
+                    ? 'Installed once'
+                    : 'Installed ' + installedCount() + ' times'
+                "
               >
                 <ng-icon name="lucideCheck" class="h-3 w-3" />
-                Installed@if (installedCount() > 1) { · {{ installedCount() }} }
+                Installed
+                @if (installedCount() > 1) {
+                  · {{ installedCount() }}
+                }
               </span>
               @if (updateAvailable()) {
                 <span

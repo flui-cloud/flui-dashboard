@@ -162,7 +162,7 @@ describe('ClusterAvailabilityChoiceComponent', () => {
     expect(last().pricePerHour).toBeCloseTo(0.06, 5);
   }));
 
-  it('says when Flui has the three zones only on the provider\'s word', fakeAsync(() => {
+  it("says when Flui has the three zones only on the provider's word", fakeAsync(() => {
     render(() => possible);
     chooseThreeLocations();
     expect(q('ha-plan-unmeasured')).toBeNull();

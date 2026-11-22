@@ -5,7 +5,7 @@ import {
   OnInit,
   output,
   signal,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
 } from '@angular/core';
 
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -44,7 +44,11 @@ export interface ProviderItem {
         >
           <ng-icon
             name="lucideRefreshCw"
-            [class]="providersService.isLoading() ? 'h-4 w-4 mr-2 text-muted-foreground animate-spin' : 'h-4 w-4 mr-2 text-muted-foreground'"
+            [class]="
+              providersService.isLoading()
+                ? 'h-4 w-4 mr-2 text-muted-foreground animate-spin'
+                : 'h-4 w-4 mr-2 text-muted-foreground'
+            "
           />
           Refresh
         </button>
@@ -109,7 +113,11 @@ export interface ProviderItem {
           <div class="col-span-full card-surface px-5 py-10 text-center">
             <p class="text-sm font-medium text-foreground">No providers found</p>
             <p class="mt-1 text-sm text-muted-foreground">
-              @if (hasActiveFilters()) { Nothing matches these filters. } @else { No provider is available yet. }
+              @if (hasActiveFilters()) {
+                Nothing matches these filters.
+              } @else {
+                No provider is available yet.
+              }
             </p>
             @if (hasActiveFilters()) {
               <button
@@ -149,23 +157,23 @@ export class ProvidersOverviewComponent implements OnInit {
     const allProviders: ProviderItem[] = [];
 
     // First, add all available providers
-    availableProviders.forEach(provider => {
+    availableProviders.forEach((provider) => {
       // Check if this provider is already configured
-      const existingConfig = configuredProviders.find(c => c.provider === provider.id);
+      const existingConfig = configuredProviders.find((c) => c.provider === provider.id);
 
       if (existingConfig) {
         // This provider is configured, add it as a configured item
         allProviders.push({
           type: 'configured',
           data: existingConfig,
-          id: `configured-${existingConfig.id}`
+          id: `configured-${existingConfig.id}`,
         });
       } else {
         // This provider is not configured, add it as an available item
         allProviders.push({
           type: 'available',
           data: provider,
-          id: `available-${provider.id}`
+          id: `available-${provider.id}`,
         });
       }
     });
@@ -173,9 +181,10 @@ export class ProvidersOverviewComponent implements OnInit {
     // Filter based on search and filter criteria
     return allProviders.filter((item) => {
       // Get the provider definition for both types
-      const providerDefinition = item.type === 'available'
-        ? item.data
-        : this.providersService.getProviderById(item.data.provider);
+      const providerDefinition =
+        item.type === 'available'
+          ? item.data
+          : this.providersService.getProviderById(item.data.provider);
 
       const itemStatus = item.type === 'available' ? 'not_configured' : item.data.status;
 
@@ -195,22 +204,20 @@ export class ProvidersOverviewComponent implements OnInit {
 
   readonly activeProvidersCount = computed(
     () =>
-      this.providersService
-        .configuredProviders()
-        .filter((c) => c.status === ProviderStatus.ACTIVE).length
+      this.providersService.configuredProviders().filter((c) => c.status === ProviderStatus.ACTIVE)
+        .length,
   );
 
   readonly totalRegionsCount = computed(() =>
     this.providersService
       .activeProviders()
-      .reduce((total, config) => total + config.enabledRegions.length, 0)
+      .reduce((total, config) => total + config.enabledRegions.length, 0),
   );
 
   readonly attentionCount = computed(
     () =>
-      this.providersService
-        .configuredProviders()
-        .filter((c) => c.status === ProviderStatus.ERROR).length
+      this.providersService.configuredProviders().filter((c) => c.status === ProviderStatus.ERROR)
+        .length,
   );
 
   readonly tiles = computed<StatTileData[]>(() => {
@@ -237,9 +244,7 @@ export class ProvidersOverviewComponent implements OnInit {
 
   hasActiveFilters(): boolean {
     return (
-      this.searchTerm() !== '' ||
-      this.statusFilter() !== '' ||
-      this.credentialTypeFilter() !== ''
+      this.searchTerm() !== '' || this.statusFilter() !== '' || this.credentialTypeFilter() !== ''
     );
   }
 
