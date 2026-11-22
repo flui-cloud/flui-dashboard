@@ -1,0 +1,237 @@
+@if (environmentNetwork(); as env) {
+  <fl-alert
+    tone="info"
+    title="Joins the environment network"
+    data-testid="joins-environment-network"
+  >
+    On the control cluster's provider, every cluster shares its private network:
+    <span class="fl-mono">{{ env.name }}</span> ({{ env.ipRange }}). Nothing to choose here.
+  </fl-alert>
+} @else {
+  @if (canBuildNetwork()) {
+    <fieldset class="fl-fieldset">
+      <legend>Private network</legend>
+      <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <label class="fl-radiocard">
+          <input
+            type="radio"
+            name="cluster-network-source"
+            [checked]="!fluiBuilds()"
+            (change)="fluiBuildsChange.emit(false)"
+          />
+          <span class="fl-radiocard__text">
+            <span class="fl-radiocard__title">Use an existing network</span>
+            <span class="fl-radiocard__desc">The machines already share one</span>
+          </span>
+        </label>
+        <label class="fl-radiocard">
+          <input
+            type="radio"
+            name="cluster-network-source"
+            [checked]="fluiBuilds()"
+            (change)="fluiBuildsChange.emit(true)"
+          />
+          <span class="fl-radiocard__text">
+            <span class="fl-radiocard__title">Let Flui build one</span>
+            <span class="fl-radiocard__desc">The machines share nothing</span>
+          </span>
+        </label>
+      </div>
+
+      @if (fluiBuilds()) {
+        <div class="flex flex-col items-start gap-1">
+          <button
+            flButton="ghost"
+            size="sm"
+            type="button"
+            [attr.aria-expanded]="showHelp()"
+            (click)="helpToggle.emit()"
+          >
+            {{ showHelp() ? 'Hide details' : 'What does this do?' }}
+          </button>
+          @if (showHelp()) {
+            <p class="m-0 text-fl-body-sm text-fl-ink-muted">
+              Every node gets an address on an encrypted network Flui builds between them, and
+              Kubernetes binds to it. Without one, traffic between your applications crosses the
+              public internet unencrypted.
+            </p>
+          }
+        </div>
+        <fl-field label="Address range (optional)" for="flui-network-cidr">
+          <div class="fl-input fl-input--lg max-w-sm">
+            <input
+              id="flui-network-cidr"
+              type="text"
+              aria-label="Address range (optional)"
+              class="fl-mono"
+              placeholder="10.201.0.0/24"
+              [value]="cidr()"
+              (input)="cidrChange.emit($any($event.target).value)"
+            />
+          </div>
+        </fl-field>
+      }
+    </fieldset>
+  }
+
+  @if (!fluiBuilds()) {
+    <app-vnet-selector
+      [provider]="provider()"
+      [region]="region()"
+      [required]="vnetRequired()"
+      [description]="vnetDescription()"
+      (vnetSelected)="vnetSelected.emit($event)"
+    />
+
+    @if (vnet(); as net) {
+      <fieldset class="fl-fieldset border-t border-fl-border pt-4">
+        <legend>Subnet</legend>
+        <p class="m-0 text-fl-body-sm text-fl-ink-muted">
+          The subnet every cluster node attaches to.
+        </p>
+
+        @if (net.subnets.length === 0) {
+          <fl-alert tone="warning" title="This VNet has no subnets">
+            Add one before you continue, or pick another VNet.
+            @if (!showAddForm()) {
+              <button alertActions flButton size="sm" type="button" (click)="openAdd.emit()">
+                <fl-icon name="lucidePlus" />
+                Add subnet
+              </button>
+            }
+          </fl-alert>
+        } @else {
+          <div class="fl-table-wrap rounded-fl-lg border border-fl-border">
+            <table flTable density="dense">
+              <thead>
+                <tr>
+                  <th scope="col" class="is-fit"><span class="fl-sr">Selected</span></th>
+                  <th scope="col">Range</th>
+                  <th scope="col">Zone</th>
+                  <th scope="col">Gateway</th>
+                  <th scope="col" class="is-num">Servers</th>
+                  <th scope="col">Note</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (subnet of subnets(); track subnet.id) {
+                  @let canUse = usable(subnet);
+                  <tr
+                    [class.is-selected]="selectedSubnetId() === subnet.id"
+                    [class.cursor-pointer]="canUse"
+                    [class.text-fl-ink-muted]="!canUse"
+                    [attr.aria-disabled]="!canUse"
+                    (click)="canUse && subnetSelect.emit(subnet.id)"
+                    (keydown.enter)="canUse && subnetSelect.emit(subnet.id)"
+                  >
+                    <td class="is-fit">
+                      <input
+                        type="radio"
+                        name="cluster-subnet"
+                        [checked]="selectedSubnetId() === subnet.id"
+                        [disabled]="!canUse"
+                        [attr.aria-label]="'Use subnet ' + subnet.ipRange"
+                      />
+                    </td>
+                    <td class="fl-mono">{{ subnet.ipRange }}</td>
+                    <td>{{ subnet.networkZone }}</td>
+                    <td class="fl-mono">{{ subnet.gateway || '-' }}</td>
+                    <td class="is-num">{{ subnet.attachedServerIds.length }}</td>
+                    <td class="text-fl-ink-muted">{{ note(subnet) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          @if (!showAddForm()) {
+            <div>
+              <button flButton size="sm" type="button" (click)="openAdd.emit()">
+                <fl-icon name="lucidePlus" />
+                Add another subnet
+              </button>
+            </div>
+          }
+        }
+
+        @if (showAddForm()) {
+          <fieldset
+            class="flex min-w-0 flex-col gap-4 rounded-fl-lg border border-fl-border p-4"
+            [attr.aria-label]="'Add a subnet to ' + net.name"
+          >
+            <h3 class="m-0 text-fl-body-sm font-semibold">Add a subnet to {{ net.name }}</h3>
+            @if (addError(); as err) {
+              <fl-alert tone="error" title="Could not add the subnet">{{ err }}</fl-alert>
+            }
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+              @if (zones().length > 0) {
+                <fl-field label="Network zone" for="add-subnet-zone">
+                  <span class="fl-select-wrap">
+                    <select
+                      id="add-subnet-zone"
+                      class="fl-select"
+                      aria-labelledby="add-subnet-zone-label"
+                      (change)="zoneChange.emit($any($event.target).value)"
+                    >
+                      @for (option of zones(); track option.id) {
+                        <option [value]="option.id" [selected]="option.id === zone()">
+                          {{ option.displayName }}
+                        </option>
+                      }
+                    </select>
+                  </span>
+                </fl-field>
+              }
+              <fl-field
+                label="IP range (CIDR)"
+                for="add-subnet-range"
+                [hint]="'Inside the VNet range ' + net.ipRange + '.'"
+                [error]="ipRange() && !cidrValid() ? 'Not a valid range for this provider.' : null"
+              >
+                <div class="fl-input fl-input--lg">
+                  <input
+                    id="add-subnet-range"
+                    type="text"
+                    aria-label="IP range (CIDR)"
+                    class="fl-mono"
+                    placeholder="10.0.0.0/24"
+                    [value]="ipRange()"
+                    (input)="ipRangeChange.emit($any($event.target).value)"
+                  />
+                </div>
+              </fl-field>
+            </div>
+            <div class="fl-row">
+              <button
+                flButton
+                type="button"
+                [disabled]="adding() || !addValid()"
+                (click)="submitAdd.emit()"
+              >
+                @if (adding()) {
+                  <fl-spinner label="Adding" />
+                  Adding…
+                } @else {
+                  Add and select
+                }
+              </button>
+              <button
+                flButton="ghost"
+                type="button"
+                [disabled]="adding()"
+                (click)="closeAdd.emit()"
+              >
+                Cancel
+              </button>
+            </div>
+          </fieldset>
+        }
+
+        @if (selectedSubnetId()) {
+          <fl-alert tone="info" title="Nodes attach automatically">
+            Every node of the cluster joins this subnet while the cluster is created.
+          </fl-alert>
+        }
+      </fieldset>
+    }
+  }
+}

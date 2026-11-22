@@ -8,20 +8,9 @@ import {
   effect,
   inject,
   untracked,
-  ChangeDetectionStrategy,
 } from '@angular/core';
 
 import { RouterLink } from '@angular/router';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideCloud,
-  lucideMapPin,
-  lucideServer,
-  lucideLoader,
-  lucideCircleAlert,
-  lucideShield,
-  lucideShieldOff,
-} from '@ng-icons/lucide';
 import {
   ProviderWizardService,
   ProviderOption,
@@ -29,322 +18,36 @@ import {
   ServerTypeOption,
 } from '../../services/provider-wizard.service';
 import { PricingService } from '../../services/pricing.service';
-import { ProviderMarkComponent } from '../provider-mark.component';
-import { ArchitectureBadgeComponent, architectureWarning } from '../architecture-badge.component';
+import { architectureLabel, architectureWarning } from '../architecture-badge.component';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlButton } from '../../../ui/primitives/button';
 
-/**
- * Provider Region Selector Component
- *
- * Reusable component for selecting cloud provider, region, and server type.
- * Handles Steps 1-3 of provider-based wizards.
- *
- * Used by:
- * - Cluster Creation Wizard
- * - Build Agent Wizard
- * - Future wizards (Load Balancer, Database, etc.)
- *
- * Features:
- * - Provider selection with region count
- * - Region selection with country flags
- * - Server type selection with CPU type filtering (All | Shared | Dedicated)
- * - Loading states and error handling
- * - Auto-loading of dependent data
- */
 @Component({
   selector: 'app-provider-region-selector',
-  standalone: true,
-  imports: [NgIconComponent, ProviderMarkComponent, RouterLink, ArchitectureBadgeComponent],
-  providers: [
-    provideIcons({
-      lucideCloud,
-      lucideMapPin,
-      lucideServer,
-      lucideLoader,
-      lucideCircleAlert,
-      lucideShield,
-      lucideShieldOff,
-    }),
-  ],
-  template: `
-    <div class="space-y-4">
-      <!-- Step 1: Provider Selection -->
-      @if (currentStep() === 1) {
-        <div>
-          <!-- Loading State -->
-          @if (wizardService.isProviderLoading()) {
-            <div class="flex items-center justify-center py-8">
-              <ng-icon name="lucideLoader" size="24" class="animate-spin text-blue-500"></ng-icon>
-            </div>
-          }
-          <!-- Error State -->
-          @if (wizardService.providerError() && !wizardService.isProviderLoading()) {
-            <div class="flex items-center gap-2 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
-              <ng-icon name="lucideCircleAlert" size="16"></ng-icon>
-              <span>{{ wizardService.providerError() }}</span>
-            </div>
-          }
-          <!-- Provider lock note -->
-          @if (lockedProvider()) {
-            <div
-              class="flex items-center gap-2 mb-3 p-3 bg-slate-50 text-slate-600 rounded-lg text-sm"
-            >
-              <ng-icon name="lucideShield" size="16"></ng-icon>
-              <span>Workloads must run on the same provider as the control cluster.</span>
-            </div>
-          }
-          @if (
-            !wizardService.isProviderLoading() &&
-            !wizardService.providerError() &&
-            !hasConfiguredProvider()
-          ) {
-            <div
-              data-testid="no-provider-configured"
-              class="flex items-center gap-2 mb-3 p-3 bg-amber-50 text-amber-800 rounded-lg text-sm"
-            >
-              <ng-icon name="lucideCircleAlert" size="16"></ng-icon>
-              <span>No provider is connected yet. Connect one to create a cluster.</span>
-              <a
-                routerLink="/management/providers"
-                class="ml-auto font-medium underline underline-offset-2"
-                >Providers</a
-              >
-            </div>
-          }
-          <!-- Provider Grid -->
-          @if (!wizardService.isProviderLoading() && !wizardService.providerError()) {
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-              @for (provider of wizardService.providersData(); track provider) {
-                <div
-                  (click)="!isProviderDisabled(provider) && selectProvider(provider.id)"
-                  [class]="getProviderCardClass(provider)"
-                  class="relative p-3 border-2 rounded-lg transition-all"
-                  [class.cursor-pointer]="!isProviderDisabled(provider)"
-                  [class.cursor-not-allowed]="isProviderDisabled(provider)"
-                >
-                  <div class="flex flex-col items-center gap-2 text-center">
-                    <app-provider-mark [name]="provider.name" [size]="40" />
-                    <div>
-                      <p class="text-sm font-semibold text-slate-900 leading-tight">
-                        {{ provider.name }}
-                      </p>
-                      <p class="text-xs text-slate-500">{{ provider.regions }} regions</p>
-                    </div>
-                    @if (provider.comingSoon) {
-                      <span
-                        class="px-1.5 py-0.5 text-xs font-medium bg-slate-200 text-slate-600 rounded"
-                      >
-                        Soon
-                      </span>
-                    } @else if (!provider.configured) {
-                      <span class="text-xs text-slate-500">Not connected</span>
-                      <a
-                        [routerLink]="['/management/providers']"
-                        [queryParams]="{ configure: provider.id }"
-                        [attr.data-testid]="'connect-provider-' + provider.id"
-                        class="text-xs font-medium text-blue-600 hover:underline"
-                      >
-                        Connect {{ provider.name }}
-                      </a>
-                    }
-                  </div>
-                </div>
-              }
-            </div>
-          }
-        </div>
-      }
-
-      <!-- Step 2: Region Selection -->
-      @if (currentStep() === 2) {
-        <div>
-          <!-- Loading State -->
-          @if (wizardService.isRegionLoading()) {
-            <div class="flex items-center justify-center py-8">
-              <ng-icon name="lucideLoader" size="24" class="animate-spin text-blue-500"></ng-icon>
-            </div>
-          }
-          <!-- Error State -->
-          @if (wizardService.regionError() && !wizardService.isRegionLoading()) {
-            <div class="flex items-center gap-2 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
-              <ng-icon name="lucideCircleAlert" size="16"></ng-icon>
-              <span>{{ wizardService.regionError() }}</span>
-            </div>
-          }
-          <!-- Region Grid -->
-          @if (!wizardService.isRegionLoading() && !wizardService.regionError()) {
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
-              @for (region of regions(); track region) {
-                <div
-                  (click)="region.available && selectRegion(region.id)"
-                  [class]="getRegionCardClass(region)"
-                  class="p-3 border-2 rounded-lg transition-all"
-                  [class.cursor-pointer]="region.available"
-                  [class.cursor-not-allowed]="!region.available"
-                  [class.opacity-50]="!region.available"
-                >
-                  <div class="flex items-center gap-2">
-                    <span class="text-xl leading-none">{{ region.flagEmoji }}</span>
-                    <div class="min-w-0">
-                      <p class="text-sm font-semibold text-slate-900 truncate">
-                        {{ region.name }}
-                      </p>
-                      <p class="text-xs text-slate-500 truncate">
-                        {{ region.country }}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              }
-            </div>
-          }
-        </div>
-      }
-
-      <!-- Step 3: Server Type Selection -->
-      @if (currentStep() === 3) {
-        <div>
-          <!-- CPU Type Filter -->
-          <div class="mb-3 flex items-center gap-2">
-            <label class="text-xs font-medium text-slate-700">CPU:</label>
-            <select
-              [value]="cpuTypeFilter()"
-              (change)="setCpuTypeFilter($any($event.target).value)"
-              class="h-7 rounded-md border border-slate-300 bg-white px-2 py-0.5 text-xs text-slate-900"
-            >
-              <option value="all">All</option>
-              <option value="shared">Shared (VPS)</option>
-              <option value="dedicated">Dedicated</option>
-            </select>
-            <span class="text-xs text-slate-500">({{ filteredServerTypes().length }})</span>
-          </div>
-          <!-- Loading State -->
-          @if (wizardService.isServerTypeLoading()) {
-            <div class="flex items-center justify-center py-8">
-              <ng-icon name="lucideLoader" size="24" class="animate-spin text-blue-500"></ng-icon>
-            </div>
-          }
-          <!-- Error State -->
-          @if (wizardService.serverTypeError() && !wizardService.isServerTypeLoading()) {
-            <div class="flex items-center gap-2 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
-              <ng-icon name="lucideCircleAlert" size="16"></ng-icon>
-              <span>{{ wizardService.serverTypeError() }}</span>
-            </div>
-          }
-          <!-- Server Type Grid -->
-          @if (!wizardService.isServerTypeLoading() && !wizardService.serverTypeError()) {
-            <div
-              class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-72 overflow-y-auto pr-1"
-            >
-              @for (serverType of filteredServerTypes(); track serverType) {
-                <div
-                  (click)="isSelectable(serverType) && selectServerType(serverType.id)"
-                  [attr.title]="architectureWarning(serverType.architecture)"
-                  [class]="getServerTypeCardClass(serverType)"
-                  [class.opacity-50]="!isSelectable(serverType)"
-                  [class.cursor-not-allowed]="!isSelectable(serverType)"
-                  [class.cursor-pointer]="isSelectable(serverType)"
-                  class="p-3 border-2 rounded-lg transition-all"
-                >
-                  <div class="flex items-center justify-between mb-2">
-                    <p class="flex items-center gap-1.5 text-sm font-semibold text-slate-900">
-                      {{ serverType.name }}
-                      <app-architecture-badge [architecture]="serverType.architecture" />
-                    </p>
-                    <div class="flex items-center gap-1">
-                      @if (serverType.managedFirewall) {
-                        <ng-icon
-                          name="lucideShield"
-                          size="12"
-                          class="text-green-600"
-                          title="Managed firewall supported"
-                        ></ng-icon>
-                      }
-                      @if (!serverType.managedFirewall) {
-                        <ng-icon
-                          name="lucideShieldOff"
-                          size="12"
-                          class="text-slate-400"
-                          title="No managed firewall"
-                        ></ng-icon>
-                      }
-                      <span
-                        [class]="getCpuTypeBadgeClass(serverType.cpuType)"
-                        class="px-1.5 py-0.5 text-xs font-medium rounded"
-                      >
-                        {{ serverType.cpuType === 'dedicated' ? 'Ded' : 'VPS' }}
-                      </span>
-                    </div>
-                  </div>
-                  <div class="grid grid-cols-3 gap-1 text-xs mb-2">
-                    <div class="text-center">
-                      <p class="text-slate-500">vCPU</p>
-                      <p class="font-medium text-slate-900">
-                        {{ serverType.vcpu }}
-                      </p>
-                    </div>
-                    <div class="text-center">
-                      <p class="text-slate-500">RAM</p>
-                      <p class="font-medium text-slate-900">{{ serverType.ram }}GB</p>
-                    </div>
-                    <div class="text-center">
-                      <p class="text-slate-500">Disk</p>
-                      <p class="font-medium text-slate-900">
-                        {{ serverType.storageType === 'local' ? serverType.disk + 'G' : 'Net' }}
-                      </p>
-                    </div>
-                  </div>
-                  <div
-                    class="flex justify-between items-center text-xs pt-2 border-t border-slate-200"
-                  >
-                    <span class="text-slate-500"
-                      >~€{{ pricingService.formatMonthlyPrice(serverType.pricePerHour) }}/mo</span
-                    >
-                    <span class="text-slate-400">€{{ serverType.pricePerHour.toFixed(4) }}/h</span>
-                  </div>
-                </div>
-              }
-            </div>
-          }
-          @if (selectedArchitectureWarning(); as warning) {
-            <p class="mt-2 text-xs text-amber-800" data-testid="architecture-warning">
-              {{ warning }}
-            </p>
-          }
-          <!-- Empty State -->
-          @if (!wizardService.isServerTypeLoading() && filteredServerTypes().length === 0) {
-            <div class="text-center py-8">
-              <p class="text-sm text-slate-500">No server types match the selected filter.</p>
-            </div>
-          }
-        </div>
-      }
-    </div>
-  `,
-  changeDetection: ChangeDetectionStrategy.Eager,
-  styles: [],
+  imports: [RouterLink, FlAlert, FlLoadingState, FlEmptyState, FlTable, FlButton],
+  host: { class: 'fl-stack' },
+  templateUrl: './provider-region-selector.component.html',
 })
 export class ProviderRegionSelectorComponent implements OnInit {
   readonly wizardService = inject(ProviderWizardService);
   readonly pricingService = inject(PricingService);
 
-  // === Inputs ===
-  readonly currentStep = input.required<number>(); // 1, 2, or 3
+  readonly currentStep = input.required<number>();
   readonly selectedProvider = input<string>('');
   readonly selectedRegion = input<string>('');
   readonly selectedServerTypeId = input<string>('');
   readonly lockedProvider = input<string | null>(null);
 
-  // === Outputs ===
   readonly providerSelected = output<string>();
   readonly regionSelected = output<string>();
   readonly serverTypeSelected = output<string>();
 
-  // === State ===
   readonly cpuTypeFilter = signal<'all' | 'shared' | 'dedicated'>('all');
   readonly regions = signal<ProviderRegion[]>([]);
   readonly serverTypes = signal<ServerTypeOption[]>([]);
 
-  // === Computed ===
   readonly hasConfiguredProvider = computed(() =>
     this.wizardService.providersData().some((p) => !p.comingSoon && p.configured),
   );
@@ -363,11 +66,6 @@ export class ProviderRegionSelectorComponent implements OnInit {
     ),
   );
 
-  // === Effects ===
-
-  /**
-   * Load regions when provider changes
-   */
   constructor() {
     effect(() => {
       const provider = this.selectedProvider();
@@ -381,9 +79,6 @@ export class ProviderRegionSelectorComponent implements OnInit {
       }
     });
 
-    /**
-     * Load server types when region changes
-     */
     effect(() => {
       const provider = this.selectedProvider();
       const region = this.selectedRegion();
@@ -400,7 +95,6 @@ export class ProviderRegionSelectorComponent implements OnInit {
 
   ngOnInit(): void {
     void (async () => {
-      // Load providers on init
       if (this.currentStep() === 1) {
         try {
           await this.wizardService.loadProviders();
@@ -410,8 +104,6 @@ export class ProviderRegionSelectorComponent implements OnInit {
       }
     })();
   }
-
-  // === Methods ===
 
   selectProvider(providerId: string): void {
     const locked = this.lockedProvider();
@@ -437,63 +129,10 @@ export class ProviderRegionSelectorComponent implements OnInit {
     this.cpuTypeFilter.set(value as 'all' | 'shared' | 'dedicated');
   }
 
-  // === Styling Methods ===
-
-  getProviderCardClass(provider: ProviderOption): string {
-    if (!provider.comingSoon && !provider.configured) {
-      return 'border-dashed border-slate-300 bg-slate-50';
-    }
-    if (this.isProviderDisabled(provider)) {
-      return 'border-slate-200 bg-slate-50 cursor-not-allowed opacity-60';
-    }
-
-    const isSelected = this.selectedProvider() === provider.id;
-
-    if (isSelected) {
-      return 'border-blue-500 bg-blue-50';
-    }
-
-    return 'border-slate-200 hover:border-blue-300 hover:bg-slate-50';
-  }
-
-  getRegionCardClass(region: ProviderRegion): string {
-    if (!region.available) {
-      return 'border-slate-200 bg-slate-50';
-    }
-
-    const isSelected = this.selectedRegion() === region.id;
-
-    if (isSelected) {
-      return 'border-blue-500 bg-blue-50';
-    }
-
-    return 'border-slate-200 hover:border-blue-300 hover:bg-slate-50';
-  }
-
   protected readonly architectureWarning = architectureWarning;
+  protected readonly architectureLabel = architectureLabel;
 
   isSelectable(serverType: ServerTypeOption): boolean {
     return serverType.managedFirewall;
-  }
-
-  getServerTypeCardClass(serverType: ServerTypeOption): string {
-    if (!this.isSelectable(serverType)) {
-      return 'border-slate-200 bg-slate-50';
-    }
-
-    const isSelected = this.selectedServerTypeId() === serverType.id;
-
-    if (isSelected) {
-      return 'border-blue-500 bg-blue-50';
-    }
-
-    return 'border-slate-200 hover:border-blue-300 hover:bg-slate-50';
-  }
-
-  getCpuTypeBadgeClass(cpuType: 'shared' | 'dedicated'): string {
-    if (cpuType === 'dedicated') {
-      return 'bg-purple-100 text-purple-800';
-    }
-    return 'bg-blue-100 text-blue-800';
   }
 }

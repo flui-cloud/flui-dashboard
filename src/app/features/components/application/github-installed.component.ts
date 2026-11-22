@@ -1,110 +1,91 @@
-import { Component, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
-
-import { FormsModule } from '@angular/forms';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideGithub,
-  lucideCheck,
-  lucideTriangleAlert,
-  lucideLoader,
-  lucideKey,
-} from '@ng-icons/lucide';
 import { GithubAppOAuthService } from '../../../core/services/github-app-oauth.service';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+import { FlStatus } from '../../../ui/primitives/status';
 import { GhcrPatModalComponent } from './ghcr-pat-modal.component';
 
 @Component({
   selector: 'app-github-installed',
-  standalone: true,
-  imports: [FormsModule, NgIconComponent, GhcrPatModalComponent],
-  providers: [
-    provideIcons({
-      lucideGithub,
-      lucideCheck,
-      lucideTriangleAlert,
-      lucideLoader,
-      lucideKey,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FlPanel, FlAlert, FlButton, FlSpinner, FlStatus, GhcrPatModalComponent],
   template: `
-    <div class="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-      <div class="max-w-md w-full bg-white rounded-lg p-8">
-        <div
-          class="w-16 h-16 mx-auto rounded-full bg-slate-900 flex items-center justify-center mb-6"
-        >
-          <ng-icon name="lucideGithub" size="32" class="text-white" />
-        </div>
+    <div class="flex min-h-screen items-center justify-center bg-fl-surface-subtle p-4">
+      <fl-panel class="w-full max-w-md" title="GitHub connection">
+        <ng-container panelActions>
+          @switch (state()) {
+            @case ('error') {
+              <fl-status tone="error" label="Incomplete" />
+            }
+            @case ('pat-needed') {
+              <fl-status tone="warning" label="Token needed" />
+            }
+            @case ('success') {
+              <fl-status tone="success" label="Connected" />
+            }
+            @default {
+              <fl-status tone="progress" label="Finishing" />
+            }
+          }
+        </ng-container>
 
         @if (state() === 'error') {
-          <div class="text-center">
-            <div class="flex items-center justify-center gap-2 mb-3">
-              <ng-icon name="lucideTriangleAlert" size="20" class="text-amber-600" />
-              <h1 class="text-lg font-semibold text-slate-900">Connection incomplete</h1>
+          <div class="flex flex-col gap-4">
+            <fl-alert tone="error" title="Connection incomplete">
+              {{ errorLabel() }}
+              @if (errorDetails()) {
+                <span class="fl-mono mt-1 block">{{ errorDetails() }}</span>
+              }
+            </fl-alert>
+            <div>
+              <button flButton="primary" type="button" (click)="goToRepositories()">
+                Return to dashboard
+              </button>
             </div>
-            <p class="text-sm text-slate-500 mb-1">{{ errorLabel() }}</p>
-            @if (errorDetails()) {
-              <p class="text-xs text-slate-400 mb-6 font-mono">
-                {{ errorDetails() }}
-              </p>
-            }
-            <button
-              (click)="goToRepositories()"
-              class="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors"
-            >
-              Return to dashboard
-            </button>
           </div>
         } @else if (state() === 'pat-needed') {
-          <div>
-            <div class="flex items-center justify-center gap-2 mb-3">
-              <ng-icon name="lucideCheck" size="20" class="text-green-600" />
-              <h1 class="text-lg font-semibold text-slate-900">
-                @if (login()) {
-                  Connected as &#64;{{ login() }}
-                } @else {
-                  GitHub App connected
-                }
-              </h1>
-            </div>
-            <p class="text-sm text-slate-500 text-center mb-6">
-              One more step: provide a classic Personal Access Token so Flui can pull the container
+          <div class="flex flex-col gap-4">
+            <p class="font-medium">
+              @if (login()) {
+                Connected as &#64;{{ login() }}
+              } @else {
+                GitHub App connected
+              }
+            </p>
+            <p class="text-fl-ink-secondary">
+              One more step: provide a classic personal access token so Flui can pull the container
               images from your GHCR registry.
             </p>
-            <button
-              (click)="showModal.set(true)"
-              class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700"
-            >
-              <ng-icon name="lucideKey" size="16" />
-              <span>Provide token</span>
-            </button>
-            <button
-              (click)="goToRepositories()"
-              class="w-full mt-3 text-xs text-slate-500 hover:text-slate-700"
-            >
-              Skip for now (deploys won't be able to pull images)
-            </button>
+            <div class="fl-row">
+              <button flButton="primary" type="button" (click)="showModal.set(true)">
+                Provide token
+              </button>
+              <button flButton="ghost" type="button" (click)="goToRepositories()">
+                Skip for now
+              </button>
+            </div>
+            <p class="text-fl-caption text-fl-ink-muted">
+              Until the token is set, deploys cannot pull images.
+            </p>
           </div>
         } @else if (state() === 'success') {
-          <div class="text-center">
-            <div class="flex items-center justify-center gap-2 mb-3">
-              <ng-icon name="lucideCheck" size="20" class="text-green-600" />
-              <h1 class="text-lg font-semibold text-slate-900">All set!</h1>
-            </div>
-            <p class="text-sm text-slate-500 mb-6">
+          <div class="flex flex-col gap-3">
+            <p class="font-medium">All set</p>
+            <p class="text-fl-ink-secondary">
               @if (login()) {
-                Connected as
-                <span class="font-medium text-slate-700">&#64;{{ login() }}</span
+                Connected as <span class="fl-mono">&#64;{{ login() }}</span
                 >.
               }
               Redirecting you back to the dashboard…
             </p>
-            <ng-icon name="lucideLoader" size="24" class="animate-spin text-slate-400 mx-auto" />
+            <fl-spinner label="Redirecting" />
           </div>
         } @else {
-          <p class="text-sm text-slate-500 text-center">Finishing up…</p>
+          <p class="text-fl-ink-secondary">Finishing up…</p>
         }
-      </div>
+      </fl-panel>
     </div>
 
     @if (showModal()) {

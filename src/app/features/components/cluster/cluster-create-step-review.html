@@ -1,0 +1,148 @@
+<app-deploy-review-group
+  title="Infrastructure"
+  step="infrastructure"
+  [editable]="editable()"
+  (edit)="edit.emit($event)"
+>
+  <fl-key-value class="fl-kv--compact">
+    <fl-kv-item key="Name" [mono]="true">{{ name() }}</fl-kv-item>
+    <fl-kv-item key="Provider">{{ providerName() }}</fl-kv-item>
+    <fl-kv-item key="Region">{{ regionName() }}</fl-kv-item>
+  </fl-key-value>
+</app-deploy-review-group>
+
+<app-deploy-review-group
+  title="Resources"
+  step="resources"
+  [editable]="editable()"
+  (edit)="edit.emit($event)"
+>
+  @if (serverType(); as size) {
+    <fl-key-value class="fl-kv--compact">
+      <fl-kv-item key="Node size" [mono]="true">{{ size.name }}</fl-kv-item>
+      <fl-kv-item key="Specs">
+        <span class="fl-num"
+          >{{ size.vcpu }} vCPU, {{ size.ram }} GB RAM, {{ size.disk }} GB disk</span
+        >
+      </fl-kv-item>
+      <fl-kv-item key="CPU">{{ size.cpuType === 'dedicated' ? 'Dedicated' : 'Shared' }}</fl-kv-item>
+      @if (architecture(); as arch) {
+        <fl-kv-item key="Architecture">{{ arch }}</fl-kv-item>
+      }
+      <fl-kv-item key="Price per node">
+        <span class="fl-mono fl-num">€{{ size.pricePerHour }}/h</span>
+        @if (serverMonthly() !== null) {
+          <span class="fl-num text-fl-ink-muted"> ~€{{ serverMonthly() }}/mo</span>
+        }
+      </fl-kv-item>
+      <fl-kv-item key="Nodes"
+        ><span class="fl-num">{{ nodes() }}</span></fl-kv-item
+      >
+      @if (highlyAvailable()) {
+        <fl-kv-item key="Availability" data-testid="review-availability">
+          Three locations, <span class="fl-mono">{{ availabilityZones() }}</span>
+        </fl-kv-item>
+      }
+    </fl-key-value>
+    @if (warning(); as text) {
+      <fl-alert tone="warning" title="Arm server">
+        <span data-testid="architecture-warning">{{ text }}</span>
+      </fl-alert>
+    }
+  }
+</app-deploy-review-group>
+
+<app-deploy-review-group
+  title="SSH key"
+  step="ssh-keys"
+  [editable]="editable()"
+  (edit)="edit.emit($event)"
+>
+  <fl-key-value class="fl-kv--compact">
+    <fl-kv-item key="Key">
+      @if (sshKey(); as key) {
+        {{ key.name }} <span class="text-fl-ink-muted">({{ key.type }})</span>
+      } @else {
+        <span class="text-fl-ink-muted">No SSH key selected</span>
+      }
+    </fl-kv-item>
+  </fl-key-value>
+</app-deploy-review-group>
+
+<app-deploy-review-group
+  title="Network"
+  step="network"
+  [editable]="editable()"
+  (edit)="edit.emit($event)"
+>
+  <fl-key-value class="fl-kv--compact">
+    @if (environmentNetwork(); as env) {
+      <fl-kv-item key="Environment network" [mono]="true"
+        >{{ env.name }} · {{ env.ipRange }}</fl-kv-item
+      >
+    } @else if (vnet(); as net) {
+      <fl-kv-item key="VNet">{{ net.name || 'N/A' }}</fl-kv-item>
+      <fl-kv-item key="VNet range" [mono]="true">{{ net.ipRange || 'N/A' }}</fl-kv-item>
+      <fl-kv-item key="Subnet" [mono]="true">{{ net.subnet || 'N/A' }}</fl-kv-item>
+    } @else {
+      <fl-kv-item key="Private network"
+        ><span class="text-fl-ink-muted">None selected</span></fl-kv-item
+      >
+    }
+  </fl-key-value>
+</app-deploy-review-group>
+
+<app-deploy-review-group
+  title="Public addresses"
+  step="endpoint"
+  [editable]="editable()"
+  (edit)="edit.emit($event)"
+>
+  <fl-key-value class="fl-kv--compact">
+    <fl-kv-item key="Default for this cluster">
+      {{ endpointMode() === 'ip' ? 'Test addresses' : 'Custom domains' }}
+    </fl-kv-item>
+    @if (endpointMode() === 'domain') {
+      <fl-kv-item key="DNS zone">
+        @if (zoneName(); as zone) {
+          <span class="fl-mono">{{ zone }}</span>
+        } @else {
+          <span class="text-fl-ink-muted">None. Attach one to the cluster after creation.</span>
+        }
+      </fl-kv-item>
+    }
+  </fl-key-value>
+</app-deploy-review-group>
+
+<app-deploy-review-group
+  title="Firewall"
+  step="firewall"
+  [editable]="editable()"
+  (edit)="edit.emit($event)"
+>
+  @if (firewallEnabled()) {
+    <fl-key-value class="fl-kv--compact">
+      <fl-kv-item key="Cluster type">Workload (K3s)</fl-kv-item>
+      <fl-kv-item key="Rules"
+        ><span class="fl-num">{{ ruleCount() }}</span></fl-kv-item
+      >
+      <fl-kv-item key="Custom source CIDRs"
+        ><span class="fl-num">{{ sourceCidrs() }}</span> configured</fl-kv-item
+      >
+    </fl-key-value>
+  } @else {
+    <p class="m-0 text-fl-body-sm text-fl-ink-muted">
+      Custom rules are off. Flui applies the default rules for this cluster type.
+    </p>
+  }
+</app-deploy-review-group>
+
+<app-deploy-review-group title="Cost">
+  <fl-key-value class="fl-kv--compact">
+    <fl-kv-item key="Estimated monthly cost">
+      <span class="fl-mono fl-num">€{{ monthlyCost() }}/month</span>
+      <span class="text-fl-ink-muted"> for {{ nodes() }} node{{ nodes() > 1 ? 's' : '' }}</span>
+    </fl-kv-item>
+  </fl-key-value>
+  <p class="m-0 text-fl-body-sm text-fl-ink-muted">Based on 24/7 usage. Actual costs may vary.</p>
+</app-deploy-review-group>

@@ -1,14 +1,9 @@
-import {
-  Component,
-  computed,
-  effect,
-  input,
-  output,
-  signal,
-  ChangeDetectionStrategy,
-} from '@angular/core';
+import { Component, computed, effect, input, output, signal } from '@angular/core';
 import { PROJECT_PRESET_COLORS, Project } from '../../model/project.model';
 import { stripHyphenEdges } from '../../../shared/utils/slug';
+import { FlDialog } from '../../../ui/overlays/dialog-frame';
+import { FlField } from '../../../ui/patterns/field';
+import { FlButton } from '../../../ui/primitives/button';
 
 export interface ProjectFormValue {
   name: string;
@@ -16,105 +11,82 @@ export interface ProjectFormValue {
   color?: string;
 }
 
-const FIELD =
-  'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2';
+const HEX = /^#[0-9a-fA-F]{6}$/;
+
+let nextId = 0;
 
 @Component({
   selector: 'app-project-form',
-  standalone: true,
-  imports: [],
-  host: { class: 'block' },
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FlDialog, FlField, FlButton],
   template: `
-    <div class="space-y-3">
-      <div class="grid gap-3" [class.sm:grid-cols-2]="withDescription()">
-        <div>
-          <label class="block text-xs font-medium text-muted-foreground mb-1">Name</label>
+    <fl-dialog [title]="project() ? 'Edit ' + project()!.name : 'New project'">
+      <fl-field label="Name" [for]="uid + '-name'" [hint]="slugHint()">
+        <div class="fl-input fl-input--lg">
           <input
-            [class]="fieldClass"
+            [id]="uid + '-name'"
+            autocomplete="off"
             placeholder="my-project"
             [value]="name()"
             (input)="name.set(value($event))"
             (keydown.enter)="submit()"
           />
-          @if (slug()) {
-            <p class="mt-1 text-[11px] font-mono text-muted-foreground">{{ slug() }}</p>
-          }
         </div>
-        @if (withDescription()) {
-          <div>
-            <label class="block text-xs font-medium text-muted-foreground mb-1">Description</label>
-            <input
-              [class]="fieldClass"
-              [value]="description()"
-              (input)="description.set(value($event))"
-            />
-          </div>
-        }
-      </div>
-
-      <div>
-        <label class="block text-xs font-medium text-muted-foreground mb-1">Color</label>
-        <div class="flex flex-wrap items-center gap-2">
-          @for (c of presetColors; track c) {
-            <button
-              type="button"
-              (click)="color.set(c)"
-              [title]="c"
-              class="h-7 w-7 rounded-full border-2 transition"
-              [style.background]="c"
-              [class]="
-                color() === c
-                  ? 'border-foreground ring-2 ring-ring ring-offset-1 ring-offset-background'
-                  : 'border-border hover:border-foreground/40'
-              "
-            ></button>
-          }
+      </fl-field>
+      @if (withDescription()) {
+        <fl-field label="Description" [for]="uid + '-description'" hint="Optional">
+          <textarea
+            class="fl-textarea"
+            rows="2"
+            [id]="uid + '-description'"
+            [value]="description()"
+            (input)="description.set(value($event))"
+          ></textarea>
+        </fl-field>
+      }
+      <fl-field label="Color" [for]="uid + '-color'" hint="Optional, as a hex value">
+        <div class="fl-row">
           <input
             type="color"
+            class="h-8 w-10 cursor-pointer"
+            aria-label="Pick a color"
+            [attr.list]="uid + '-presets'"
             [value]="colorOrDefault()"
             (input)="color.set(value($event))"
-            class="h-7 w-9 rounded border border-border bg-background p-0.5 cursor-pointer"
-            title="Custom color"
           />
-          <input
-            [class]="hexFieldClass"
-            type="text"
-            placeholder="#22aa88"
-            maxlength="7"
-            [value]="color()"
-            (input)="color.set(value($event))"
-          />
+          <datalist [id]="uid + '-presets'">
+            @for (c of presetColors; track c) {
+              <option [value]="c"></option>
+            }
+          </datalist>
+          <div class="fl-input fl-input--lg">
+            <input
+              class="fl-mono"
+              type="text"
+              maxlength="7"
+              autocomplete="off"
+              placeholder="No color"
+              [id]="uid + '-color'"
+              [value]="color()"
+              (input)="color.set(value($event))"
+            />
+          </div>
           @if (color()) {
-            <button
-              type="button"
-              (click)="color.set('')"
-              class="text-xs text-muted-foreground hover:text-foreground underline"
-            >
-              clear
-            </button>
+            <button flButton="ghost" size="sm" type="button" (click)="color.set('')">Clear</button>
           }
         </div>
-      </div>
-
-      <div class="flex items-center justify-end gap-2">
+      </fl-field>
+      <ng-container dialogFooter>
+        <button flButton="ghost" type="button" (click)="cancelled.emit()">Cancel</button>
         <button
+          flButton="primary"
           type="button"
-          (click)="cancelled.emit()"
-          class="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
-        >
-          Cancel
-        </button>
-        <button
-          type="button"
-          (click)="submit()"
           [disabled]="!canSubmit() || busy()"
-          class="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+          (click)="submit()"
         >
           {{ submitLabel() }}
         </button>
-      </div>
-    </div>
+      </ng-container>
+    </fl-dialog>
   `,
 })
 export class ProjectFormComponent {
@@ -126,10 +98,7 @@ export class ProjectFormComponent {
   readonly saved = output<ProjectFormValue>();
   readonly cancelled = output<void>();
 
-  protected readonly fieldClass = FIELD;
-  protected readonly hexFieldClass =
-    'h-7 w-24 rounded-md border border-input bg-background px-2 text-xs font-mono ' +
-    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
+  protected readonly uid = `project-form-${nextId++}`;
   protected readonly presetColors = PROJECT_PRESET_COLORS;
 
   protected readonly name = signal('');
@@ -145,8 +114,12 @@ export class ProjectFormComponent {
       .toLowerCase()
       .trim()
       .replace(/[^a-z0-9]+/g, '-');
-    const base = stripHyphenEdges(rawBase).slice(0, 60);
-    return base ? `slug: ${base}` : '';
+    return stripHyphenEdges(rawBase).slice(0, 60);
+  });
+
+  protected readonly slugHint = computed(() => {
+    const slug = this.slug();
+    return slug ? `Slug: ${slug}` : 'Shown in lists and used to build the slug';
   });
 
   constructor() {
@@ -164,7 +137,7 @@ export class ProjectFormComponent {
 
   protected colorOrDefault(): string {
     const c = this.color();
-    return /^#[0-9a-fA-F]{6}$/.test(c) ? c : '#6366f1';
+    return HEX.test(c) ? c : PROJECT_PRESET_COLORS[8];
   }
 
   protected submit(): void {

@@ -1,0 +1,113 @@
+<div class="fl-page">
+  <fl-page-header [title]="title()" [breadcrumb]="breadcrumb()">
+    <fl-status headerStatus [tone]="state().tone" [label]="state().label" />
+    @if (completed()) {
+      <span headerMeta>The cluster is running on {{ providerName() }}</span>
+    } @else if (trackerService.stepsTotal() > 0) {
+      <span headerMeta class="fl-num">
+        Step {{ trackerService.stepIndex() + 1 }} of {{ trackerService.stepsTotal() }}
+      </span>
+    }
+    <span headerMeta class="fl-num">{{ progress() }}%</span>
+    @if (elapsed()) {
+      <span headerMeta>
+        Elapsed <span class="fl-mono fl-num">{{ elapsed() }}</span>
+      </span>
+    }
+    @if (!completed() && !failed()) {
+      <span headerMeta
+        >Setting up the cluster on {{ providerName() }}. This takes a few minutes.</span
+      >
+    }
+    @if (completed()) {
+      <ng-container headerActions>
+        <button flButton="ghost" type="button" (click)="backToClusters()">Back to clusters</button>
+        <button flButton="primary" type="button" (click)="openCluster()">
+          Open cluster
+          <fl-icon name="lucideArrowRight" />
+        </button>
+      </ng-container>
+    }
+  </fl-page-header>
+
+  @if (failed()) {
+    <fl-alert tone="error" title="The cluster was not created">
+      Delete it from the cluster list and create a new one.
+      @if (trackerService.operation()?.errorMessage; as message) {
+        <span class="mt-1 block whitespace-pre-wrap break-words fl-mono">{{ message }}</span>
+      }
+      <button alertActions flButton size="sm" type="button" (click)="backToClusters()">
+        Back to clusters
+      </button>
+    </fl-alert>
+  }
+
+  <div class="grid grid-cols-1 items-start gap-5 lg:grid-cols-3">
+    <div class="fl-stack lg:col-span-2">
+      @if (steps().length > 0) {
+        <app-deploy-progress-steps [steps]="steps()" [now]="now()" />
+      } @else {
+        <fl-panel title="Steps"><fl-loading-state [rows]="4" /></fl-panel>
+      }
+
+      @if (installLog().length > 0) {
+        <fl-panel title="Install log">
+          <ng-container panelActions>
+            <button flButton="ghost" size="sm" type="button" (click)="copyLog()">
+              <fl-icon name="lucideCopy" />
+              Copy
+            </button>
+            <button
+              flButton="ghost"
+              size="sm"
+              type="button"
+              [disabled]="downloadingLog()"
+              (click)="downloadLog()"
+            >
+              @if (downloadingLog()) {
+                <fl-spinner label="Downloading" />
+              } @else {
+                <fl-icon name="lucideDownload" />
+              }
+              Download
+            </button>
+          </ng-container>
+          <div
+            #logContainer
+            class="fl-mono h-64 overflow-y-auto whitespace-pre-wrap break-all rounded-fl-md border border-fl-border bg-fl-surface-subtle p-3 text-fl-ink"
+          >
+            {{ installLog() }}
+          </div>
+        </fl-panel>
+      }
+    </div>
+
+    <fl-panel title="Details">
+      <fl-key-value class="fl-kv--compact">
+        @if (operationId) {
+          <fl-kv-item key="Operation ID">
+            <fl-copy-id
+              [value]="operationId"
+              [display]="operationId.substring(0, 12) + '…'"
+              label="operation ID"
+            />
+          </fl-kv-item>
+        }
+        @if (clusterInfo()?.id; as id) {
+          <fl-kv-item key="Cluster ID">
+            <fl-copy-id [value]="id" [display]="id.substring(0, 12) + '…'" label="cluster ID" />
+          </fl-kv-item>
+        }
+        <fl-kv-item key="Provider">{{ providerName() }}</fl-kv-item>
+        @if (clusterInfo()?.region; as region) {
+          <fl-kv-item key="Region" [mono]="true">{{ region }}</fl-kv-item>
+        }
+        @if (startedTime()) {
+          <fl-kv-item key="Started"
+            ><span class="fl-num">{{ startedTime() }}</span></fl-kv-item
+          >
+        }
+      </fl-key-value>
+    </fl-panel>
+  </div>
+</div>

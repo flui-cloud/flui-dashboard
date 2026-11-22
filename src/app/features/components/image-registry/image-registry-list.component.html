@@ -1,0 +1,182 @@
+<div class="fl-page">
+  <fl-page-header [title]="'Image registry (' + service.images().length + ')'">
+    <span headerMeta>Container images built by Flui</span>
+    <ng-container headerActions>
+      <button
+        flButton
+        type="button"
+        [iconOnly]="true"
+        aria-label="Refresh"
+        title="Refresh"
+        [disabled]="service.loading()"
+        (click)="refresh()"
+      >
+        <fl-icon name="lucideRefreshCw" />
+      </button>
+    </ng-container>
+  </fl-page-header>
+
+  @if (service.refused()) {
+    <fl-alert data-testid="image-registry-refused" tone="info" title="Not available">
+      {{ service.refusalMessage() ?? 'This is not part of the trial.' }}
+    </fl-alert>
+  }
+
+  @if (service.errorMessage()) {
+    <fl-alert data-testid="image-registry-error" tone="error" title="Could not load the images">
+      {{ service.errorMessage() }}
+    </fl-alert>
+  }
+
+  @if (actionError()) {
+    <fl-alert tone="error" title="Request failed">{{ actionError() }}</fl-alert>
+  }
+
+  <fl-panel [flush]="true">
+    <div panelToolbar class="fl-toolbar" role="toolbar" aria-label="Filters">
+      <div class="fl-toolbar__group">
+        <label class="fl-input">
+          <fl-icon name="lucideSearch" [size]="14" />
+          <span class="fl-sr">Search</span>
+          <input
+            type="search"
+            placeholder="Search by image, branch or commit"
+            aria-label="Search images"
+            [(ngModel)]="searchQuery"
+          />
+        </label>
+        <label class="fl-input">
+          <fl-icon name="lucideTag" [size]="14" />
+          <span class="fl-sr">Tag</span>
+          <input
+            type="search"
+            placeholder="Tag"
+            aria-label="Filter by tag"
+            [(ngModel)]="tagFilter"
+          />
+        </label>
+      </div>
+      <div class="fl-toolbar__group">
+        <span class="fl-toolbar__info"
+          >{{ filteredImages().length }}
+          {{ filteredImages().length === 1 ? 'image' : 'images' }}</span
+        >
+      </div>
+    </div>
+
+    @if (service.loading()) {
+      <fl-loading-state [rows]="4" />
+    } @else if (filteredImages().length === 0) {
+      <fl-empty-state
+        icon="lucideImage"
+        [title]="hasFilters() ? 'No matching images' : 'No images yet'"
+        [body]="
+          hasFilters()
+            ? 'Nothing matches these filters.'
+            : 'Images appear here after your first build.'
+        "
+      />
+    } @else {
+      <div class="fl-table-wrap">
+        <table flTable density="dense" data-testid="image-registry-table">
+          <thead>
+            <tr>
+              <th scope="col">Repository</th>
+              <th scope="col">Commit</th>
+              <th scope="col">Branch</th>
+              <th scope="col">Tags</th>
+              <th scope="col" class="is-num">Size</th>
+              <th scope="col">Used by</th>
+              <th scope="col" class="is-num">Pushed</th>
+              <th scope="col" class="is-fit"><span class="fl-sr">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (img of filteredImages(); track img.id) {
+              <tr [attr.data-testid]="'image-row-' + img.id">
+                <td class="fl-cell-name">
+                  <div class="fl-row">
+                    <span class="fl-mono" [title]="img.imageRef">{{
+                      truncateRef(img.imageRef)
+                    }}</span>
+                    @if (img.isCurrentlyDeployed) {
+                      <fl-status tone="success" label="Live" />
+                    }
+                  </div>
+                </td>
+                <td class="fl-mono">{{ img.commitSha.slice(0, 7) }}</td>
+                <td class="fl-mono">{{ img.branch }}</td>
+                <td>
+                  @if (img.fluiTags.length === 0) {
+                    <span class="text-fl-ink-muted">—</span>
+                  } @else {
+                    <div class="fl-row">
+                      @for (tag of img.fluiTags.slice(0, visibleTags); track tag) {
+                        <fl-tag class="fl-mono">{{ tag }}</fl-tag>
+                      }
+                      @if (img.fluiTags.length > visibleTags) {
+                        <fl-tag class="fl-mono" [title]="img.fluiTags.slice(visibleTags).join(', ')"
+                          >+{{ img.fluiTags.length - visibleTags }}</fl-tag
+                        >
+                      }
+                    </div>
+                  }
+                </td>
+                <td class="is-num">{{ formatSize(img.sizeBytes) }}</td>
+                <td>
+                  <a class="fl-link" [routerLink]="['/apps/applications', img.appId]">{{
+                    appName(img.appId)
+                  }}</a>
+                </td>
+                <td class="is-num">{{ formatDate(img.createdAt) }}</td>
+                <td class="is-fit">
+                  <fl-actions-menu
+                    label="Image actions"
+                    [compact]="true"
+                    [items]="rowActions(img)"
+                    [attr.data-testid]="'image-actions-' + img.id"
+                    (action)="onRowAction(img, $event)"
+                  />
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </fl-panel>
+</div>
+
+@if (tagImage(); as img) {
+  <div
+    class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+    (click)="$event.target === $event.currentTarget && tagImageId.set(null)"
+    (keydown.escape)="tagImageId.set(null)"
+  >
+    <dialog open class="fl-dialog relative" aria-modal="true" aria-labelledby="image-tags-title">
+      <header class="fl-dialog__header">
+        <h2 class="fl-dialog__title" id="image-tags-title">
+          Tags of <span class="fl-mono">{{ truncateRef(img.imageRef) }}</span>
+        </h2>
+        <button
+          type="button"
+          class="fl-dialog__close"
+          aria-label="Close"
+          (click)="tagImageId.set(null)"
+        >
+          <fl-icon name="lucideX" />
+        </button>
+      </header>
+      <div class="fl-dialog__body">
+        <app-flui-tag-manager
+          [tags]="img.fluiTags"
+          (addTag)="onAddTag(img.id, $event)"
+          (removeTag)="onRemoveTag(img.id, $event)"
+        />
+      </div>
+      <footer class="fl-dialog__footer">
+        <button flButton type="button" (click)="tagImageId.set(null)">Done</button>
+      </footer>
+    </dialog>
+  </div>
+}

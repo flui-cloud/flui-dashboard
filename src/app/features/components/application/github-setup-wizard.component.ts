@@ -1,580 +1,144 @@
-import {
-  Component,
-  OnDestroy,
-  OnInit,
-  inject,
-  signal,
-  computed,
-  effect,
-  ChangeDetectionStrategy,
-} from '@angular/core';
-
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { FormsModule } from '@angular/forms';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideGithub,
-  lucideKey,
-  lucideCheckCircle,
-  lucideLoader,
-  lucideAlertCircle,
-  lucideExternalLink,
-  lucideStar,
-  lucideChevronDown,
-  lucideChevronRight,
-} from '@ng-icons/lucide';
 import { environment } from '../../../../environments/environment';
-import {
-  WizardShellComponent,
-  WizardStep,
-} from '../../../shared/components/wizard-shell/wizard-shell.component';
 import {
   GithubSetupWizardService,
   SetupMethod,
   organizationProblem,
 } from '../../service/github-setup-wizard.service';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import { ConfirmService } from '../../../ui/overlays/confirm';
+import { Crumb } from '../../../ui/patterns/breadcrumb';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
+import { FlPageHeader } from '../../../ui/patterns/page-header';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlWizardSteps, WizardStep } from '../../../ui/patterns/wizard-steps';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+import { FlStatus } from '../../../ui/primitives/status';
 import {
   GithubSetupWizardSurfaceInput,
   GithubSetupWizardSurfaceRevision,
   buildGithubSetupWizardSurface,
   presentedContent,
 } from './github-setup-wizard-surface';
-
-const PAT_DEEP_LINK =
-  'https://github.com/settings/tokens/new' +
-  '?scopes=repo,workflow,user:email,admin:repo_hook,write:packages,read:packages,delete:packages' +
-  '&description=Flui';
+import { existingLabel, methodLabel } from './github-setup-helpers';
+import { GithubSetupMethodStep } from './github-setup-method-step';
+import { GithubSetupAppStep } from './github-setup-app-step';
+import { GithubSetupPatStep } from './github-setup-pat-step';
 
 @Component({
   selector: 'app-github-setup-wizard',
-  standalone: true,
-  imports: [FormsModule, NgIconComponent, WizardShellComponent],
-  providers: [
-    provideIcons({
-      lucideGithub,
-      lucideKey,
-      lucideCheckCircle,
-      lucideLoader,
-      lucideAlertCircle,
-      lucideExternalLink,
-      lucideStar,
-      lucideChevronDown,
-      lucideChevronRight,
-    }),
+  imports: [
+    FlPageHeader,
+    FlPanel,
+    FlWizardSteps,
+    FlKeyValue,
+    FlKvItem,
+    FlButton,
+    FlSpinner,
+    FlStatus,
+    GithubSetupMethodStep,
+    GithubSetupAppStep,
+    GithubSetupPatStep,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <app-wizard-shell
-      wizardTitle="GitHub Integration Setup"
-      wizardDescription="Connect Flui to GitHub so users can deploy from their repositories"
-      [steps]="steps()"
-      [currentStepIndex]="currentStepIndex()"
-      [createButtonText]="createButtonText()"
-      (next)="onNext()"
-      (previous)="onPrevious()"
-      (cancelled)="onCancel()"
-      (create)="onCreate()"
-    >
-      <!-- Step 0: Method Selection -->
-      @if (currentStepIndex() === 0) {
-        <div class="space-y-4">
-          @if (wizardService.configuredStatus()?.configured) {
-            <div class="flex items-start gap-3 p-4 rounded-lg border border-amber-200 bg-amber-50">
-              <ng-icon
-                name="lucideAlertCircle"
-                size="20"
-                class="text-amber-600 flex-shrink-0 mt-0.5"
-              />
-              <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-amber-900">GitHub is already configured</p>
-                <p class="text-xs text-amber-800 mt-0.5">
-                  Active: <span class="font-mono">{{ existingLabel() }}</span>. Configuring a new
-                  method overwrites the current setup. To remove the integration entirely, click
-                  Reset.
-                </p>
-              </div>
-              <button
-                type="button"
-                (click)="resetIntegration()"
-                [disabled]="wizardService.isConfiguring()"
-                class="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border border-amber-300 text-amber-800 hover:bg-amber-100 disabled:opacity-50"
-              >
-                @if (wizardService.isConfiguring()) {
-                  <ng-icon name="lucideLoader" size="12" class="animate-spin" />
-                }
-                Reset
-              </button>
-            </div>
-          }
+    <div class="fl-page">
+      <fl-page-header title="Set up GitHub" [breadcrumb]="breadcrumb">
+        <span headerMeta>Connect Flui to GitHub so people can deploy from their repositories.</span>
+      </fl-page-header>
 
-          <p class="text-sm text-slate-600">
-            Choose how Flui connects to GitHub. This is a one-time system configuration.
-          </p>
+      <div class="fl-wizard">
+        <nav aria-label="Steps">
+          <fl-wizard-steps [steps]="wizardSteps()" [current]="currentStepIndex()" />
+        </nav>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-            <!-- PAT card (recommended) -->
-            <button
-              (click)="selectMethod('pat')"
-              [class]="getMethodCardClass('pat')"
-              class="relative flex flex-col items-start text-left p-5 rounded-fl-lg border-2 transition-all duration-200"
-            >
-              <span
-                class="absolute -top-2.5 right-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-fl-sm text-xs font-medium bg-fl-surface text-blue-700 border"
-              >
-                <ng-icon name="lucideStar" size="10" /> Recommended
-              </span>
-              <div class="flex items-center gap-3 mb-3">
-                <div class="p-2 rounded-lg bg-slate-100">
-                  <ng-icon name="lucideKey" size="20" class="text-slate-700" />
-                </div>
-                <span class="font-semibold text-sm text-slate-900">Personal Access Token</span>
-                @if (wizardService.selectedMethod() === 'pat') {
-                  <ng-icon name="lucideCheckCircle" size="16" class="ml-auto text-blue-600" />
-                }
-              </div>
-              <p class="text-xs text-slate-500 leading-relaxed">
-                The quickest way in. Each person pastes a classic token that covers both their
-                repositories and container images. Nothing to register on GitHub.
-              </p>
-              <ul class="mt-3 space-y-1">
-                <li class="text-xs text-slate-500 flex items-center gap-1.5">
-                  <span class="text-[hsl(var(--ok))]">✓</span> Ready in a minute, no App to create
-                </li>
-                <li class="text-xs text-slate-500 flex items-center gap-1.5">
-                  <span class="text-amber-500">△</span> Org PAT policies may block
-                </li>
-                <li class="text-xs text-slate-500 flex items-center gap-1.5">
-                  <span class="text-amber-500">△</span> Token expires &amp; must be rotated
-                </li>
-              </ul>
-            </button>
-            <!-- GitHub App card -->
-            <button
-              (click)="selectMethod('github_app')"
-              [class]="getMethodCardClass('github_app')"
-              class="flex flex-col items-start text-left p-5 rounded-fl-lg border-2 transition-all duration-200"
-            >
-              <div class="flex items-center gap-3 mb-3">
-                <div class="p-2 rounded-lg bg-slate-100">
-                  <ng-icon name="lucideGithub" size="20" class="text-slate-700" />
-                </div>
-                <span class="font-semibold text-sm text-slate-900">GitHub App</span>
+        <fl-panel [title]="stepTitle()" [flush]="true">
+          <div class="p-4">
+            @switch (currentStepIndex()) {
+              @case (0) {
+                <app-github-setup-method-step
+                  [method]="wizardService.selectedMethod()"
+                  [configuredLabel]="configuredLabel()"
+                  [configuring]="wizardService.isConfiguring()"
+                  (methodSelect)="selectMethod($event)"
+                  (resetIntegration)="resetIntegration()"
+                />
+              }
+              @case (1) {
                 @if (wizardService.selectedMethod() === 'github_app') {
-                  <ng-icon name="lucideCheckCircle" size="16" class="ml-auto text-blue-600" />
-                }
-              </div>
-              <p class="text-xs text-slate-500 leading-relaxed">
-                For teams and organisations: one App shared by everyone, created on GitHub with one
-                click, so nobody keeps a personal token.
-              </p>
-              <ul class="mt-3 space-y-1">
-                <li class="text-xs text-slate-500 flex items-center gap-1.5">
-                  <span class="text-[hsl(var(--ok))]">✓</span> Works for any account or org
-                </li>
-                <li class="text-xs text-slate-500 flex items-center gap-1.5">
-                  <span class="text-[hsl(var(--ok))]">✓</span> Auto webhooks for deploy-on-push
-                </li>
-                <li class="text-xs text-slate-500 flex items-center gap-1.5">
-                  <span class="text-[hsl(var(--ok))]">✓</span> Bot identity, no token rotation
-                </li>
-              </ul>
-            </button>
-          </div>
-        </div>
-      }
-
-      <!-- Step 1: Configuration -->
-      @if (currentStepIndex() === 1) {
-        @if (wizardService.selectedMethod() === 'github_app') {
-          <div class="space-y-5">
-            @if (!manualMode()) {
-              <!-- Manifest flow (default) -->
-              <div class="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <p class="text-xs text-blue-800">
-                  We'll redirect you to GitHub with the App configuration pre-filled. Confirm there
-                  and you'll come back here with everything connected.
-                </p>
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">
-                  App name <span class="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  [ngModel]="wizardService.manifestForm().name"
-                  (ngModelChange)="wizardService.updateManifestForm({ name: $event })"
-                  placeholder="flui-acme"
-                  class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <p class="mt-1 text-xs text-slate-400">
-                  Must be unique across GitHub. Pick something descriptive (your company or
-                  instance).
-                </p>
-              </div>
-
-              <div>
-                <label
-                  for="github-app-organization"
-                  class="block text-sm font-medium text-slate-700 mb-1"
-                >
-                  Create it under an organisation
-                  <span class="text-slate-400 font-normal">(optional)</span>
-                </label>
-                <input
-                  id="github-app-organization"
-                  type="text"
-                  autocomplete="off"
-                  [ngModel]="wizardService.manifestForm().organization"
-                  (ngModelChange)="wizardService.updateManifestForm({ organization: $event })"
-                  placeholder="acme"
-                  class="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                @if (organizationProblem(); as problem) {
-                  <p class="mt-1 text-xs text-red-600">{{ problem }}</p>
+                  <app-github-setup-app-step
+                    [manualMode]="manualMode()"
+                    [manifest]="wizardService.manifestForm()"
+                    [appForm]="wizardService.githubAppForm()"
+                    [defaultPublicApiUrl]="defaultPublicApiUrl()"
+                    [configuring]="wizardService.isConfiguring()"
+                    [error]="wizardService.error()"
+                    (manifestChange)="wizardService.updateManifestForm($event)"
+                    (appFormChange)="wizardService.updateGitHubAppForm($event)"
+                    (toggleManual)="toggleManualMode()"
+                  />
                 } @else {
-                  <p class="mt-1 text-xs text-slate-400">
-                    Leave empty to create it on your own account. You must be an owner of the
-                    organisation.
-                  </p>
+                  <app-github-setup-pat-step
+                    [token]="wizardService.patForm().token"
+                    [validation]="wizardService.patValidation()"
+                    [configuring]="wizardService.isConfiguring()"
+                    [error]="wizardService.error()"
+                    (tokenChange)="wizardService.updatePatForm({ token: $event })"
+                    (validate)="onValidatePat()"
+                  />
                 }
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">
-                  Flui public URL <span class="text-red-500">*</span>
-                </label>
-                <input
-                  type="url"
-                  [ngModel]="wizardService.manifestForm().publicApiUrl"
-                  (ngModelChange)="wizardService.updateManifestForm({ publicApiUrl: $event })"
-                  [placeholder]="defaultPublicApiUrl()"
-                  class="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <p class="mt-1 text-xs text-slate-500">
-                  Base URL where this Flui API is reachable. The OAuth callback, the manifest
-                  callback and (if webhooks are on) the webhook URL are all derived from this.
-                </p>
-                @if (derivedUrls(); as urls) {
-                  <div class="mt-2 p-3 rounded border border-slate-200 bg-slate-50 space-y-1.5">
-                    <p class="text-xs font-medium text-slate-700">
-                      GitHub will be configured with:
-                    </p>
-                    <p class="text-xs font-mono text-slate-600 break-all">
-                      <span class="text-slate-500">OAuth callback:</span>
-                      {{ urls.callback }}
-                    </p>
-                    <p class="text-xs font-mono text-slate-600 break-all">
-                      <span class="text-slate-500">Manifest redirect:</span>
-                      {{ urls.redirect }}
-                    </p>
-                    @if (wizardService.manifestForm().webhooksEnabled) {
-                      <p class="text-xs font-mono text-slate-600 break-all">
-                        <span class="text-slate-500">Webhook:</span>
-                        {{ urls.webhook }}
-                      </p>
+              }
+              @case (2) {
+                <div class="fl-stack">
+                  <fl-status tone="success" label="GitHub integration configured" />
+                  <p class="m-0 text-fl-body-sm text-fl-ink-muted">
+                    @if (wizardService.selectedMethod() === 'github_app') {
+                      The GitHub App is active. People can now install it on their accounts or
+                      organizations and import repositories.
+                    } @else {
+                      The personal access token is saved and ready to use.
                     }
-                  </div>
-                }
-                @if (isLocalPublicApiUrl()) {
-                  <div
-                    class="mt-2 flex items-start gap-2 p-2 rounded border border-amber-200 bg-amber-50"
-                  >
-                    <ng-icon
-                      name="lucideAlertCircle"
-                      size="14"
-                      class="text-amber-600 flex-shrink-0 mt-0.5"
-                    />
-                    <p class="text-xs text-amber-800">
-                      This URL points to localhost — GitHub won't be able to reach the webhook (if
-                      enabled) nor complete the user-authorization redirect from a different
-                      machine. In development, expose your API through a tunnel and paste the
-                      tunnel's public URL here.
-                    </p>
-                  </div>
-                }
-              </div>
+                  </p>
+                  <fl-key-value class="fl-kv--compact">
+                    <fl-kv-item key="Auth method">{{ methodName() }}</fl-kv-item>
+                  </fl-key-value>
+                </div>
+              }
+            }
+          </div>
 
-              <label class="flex items-start gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  [ngModel]="wizardService.manifestForm().webhooksEnabled"
-                  (ngModelChange)="wizardService.updateManifestForm({ webhooksEnabled: $event })"
-                  class="mt-1"
-                />
-                <span class="text-sm text-slate-700">
-                  Enable webhooks for deploy-on-push
-                  <span class="block text-xs text-slate-500 mt-0.5">
-                    Needs the Flui public URL above to be reachable from github.com.
-                  </span>
-                </span>
-              </label>
-
-              <label class="flex items-start gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  [ngModel]="wizardService.manifestForm().publicApp"
-                  (ngModelChange)="wizardService.updateManifestForm({ publicApp: $event })"
-                  class="mt-1"
-                />
-                <span class="text-sm text-slate-700">
-                  Allow installation on other accounts / organizations
-                  <span class="block text-xs text-slate-500 mt-0.5">
-                    Off (default): only the account that owns the App can install it. Turn on if you
-                    need to access repos under accounts or organizations different from the one
-                    creating the App.
-                  </span>
-                </span>
-              </label>
-
+          <div class="fl-wizard__footer border-t border-fl-border px-4 py-3">
+            <button flButton="ghost" type="button" (click)="onCancel()">Cancel</button>
+            <button
+              flButton
+              type="button"
+              [disabled]="currentStepIndex() === 0"
+              (click)="onPrevious()"
+            >
+              Previous
+            </button>
+            @if (currentStepIndex() < 2) {
               <button
+                flButton="primary"
                 type="button"
-                (click)="toggleManualMode()"
-                class="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700"
+                [disabled]="!canProceed()"
+                (click)="onNext()"
               >
-                <ng-icon name="lucideChevronRight" size="12" />
-                I already have a GitHub App
+                @if (currentStepIndex() === 1 && wizardService.isConfiguring()) {
+                  <fl-spinner label="Saving" />
+                }
+                Next
               </button>
             } @else {
-              <!-- Manual mode (existing App) -->
-              <div class="p-4 bg-amber-50 rounded-lg border border-amber-200">
-                <p class="text-xs text-amber-800">
-                  Paste credentials from your existing GitHub App. Prefer the guided flow above for
-                  new installations.
-                </p>
-              </div>
-
-              <div class="space-y-4">
-                <div>
-                  <label class="block text-sm font-medium text-slate-700 mb-1">
-                    App ID <span class="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    [ngModel]="wizardService.githubAppForm().appId"
-                    (ngModelChange)="wizardService.updateGitHubAppForm({ appId: $event })"
-                    placeholder="123456"
-                    class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label class="block text-sm font-medium text-slate-700 mb-1">
-                    Private Key (PEM) <span class="text-red-500">*</span>
-                  </label>
-                  <textarea
-                    [ngModel]="wizardService.githubAppForm().privateKey"
-                    (ngModelChange)="wizardService.updateGitHubAppForm({ privateKey: $event })"
-                    placeholder="-----BEGIN RSA PRIVATE KEY-----&#10;...&#10;-----END RSA PRIVATE KEY-----"
-                    rows="4"
-                    class="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  ></textarea>
-                </div>
-
-                <div>
-                  <label class="block text-sm font-medium text-slate-700 mb-1">
-                    Webhook Secret <span class="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="password"
-                    [ngModel]="wizardService.githubAppForm().webhookSecret"
-                    (ngModelChange)="wizardService.updateGitHubAppForm({ webhookSecret: $event })"
-                    placeholder="••••••••••••••••••••"
-                    class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label class="block text-sm font-medium text-slate-700 mb-1">
-                    App Slug <span class="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    [ngModel]="wizardService.githubAppForm().appSlug"
-                    (ngModelChange)="wizardService.updateGitHubAppForm({ appSlug: $event })"
-                    placeholder="flui-cloud"
-                    class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-
-              <button
-                type="button"
-                (click)="toggleManualMode()"
-                class="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700"
-              >
-                <ng-icon name="lucideChevronDown" size="12" />
-                Back to guided flow
+              <button flButton="primary" type="button" (click)="onCreate()">
+                Go to repositories
               </button>
             }
-
-            @if (wizardService.isConfiguring()) {
-              <div class="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <ng-icon name="lucideLoader" size="16" class="text-blue-600 animate-spin" />
-                <p class="text-xs text-blue-700">
-                  {{
-                    manualMode()
-                      ? 'Validating credentials with GitHub…'
-                      : 'Preparing manifest and redirecting to GitHub…'
-                  }}
-                </p>
-              </div>
-            }
-
-            @if (wizardService.error()) {
-              <div class="flex items-start gap-2 p-3 bg-red-50 rounded-lg border border-red-200">
-                <ng-icon
-                  name="lucideAlertCircle"
-                  size="16"
-                  class="text-red-600 flex-shrink-0 mt-0.5"
-                />
-                <p class="text-xs text-red-700">{{ wizardService.error() }}</p>
-              </div>
-            }
           </div>
-        } @else {
-          <!-- PAT mode -->
-          <div class="space-y-5">
-            <div class="p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <p class="text-xs text-blue-800 mb-2">
-                Open GitHub with the required scopes pre-selected, generate a classic PAT, then
-                paste it back here. We'll validate it before saving. This single token covers
-                cloning private repos, registering webhooks, and pulling images from GHCR.
-              </p>
-              <a
-                [href]="patDeepLink"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700"
-              >
-                Create a token on GitHub
-                <ng-icon name="lucideExternalLink" size="12" />
-              </a>
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">
-                Personal Access Token <span class="text-red-500">*</span>
-              </label>
-              <input
-                type="password"
-                autocomplete="off"
-                [ngModel]="wizardService.patForm().token"
-                (ngModelChange)="wizardService.updatePatForm({ token: $event })"
-                placeholder="ghp_••••••••••••••••••••"
-                class="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <button
-                type="button"
-                [disabled]="!wizardService.patForm().token || wizardService.isConfiguring()"
-                (click)="onValidatePat()"
-                class="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-              >
-                @if (wizardService.isConfiguring()) {
-                  <ng-icon name="lucideLoader" size="12" class="animate-spin" />
-                }
-                Validate
-              </button>
-            </div>
-
-            @if (wizardService.patValidation(); as v) {
-              @if (v.valid && (v.missingScopes?.length ?? 0) === 0) {
-                <div class="flex items-start gap-2 p-3 bg-muted/30 rounded-lg border border-border">
-                  <ng-icon
-                    name="lucideCheckCircle"
-                    size="16"
-                    class="text-[hsl(var(--ok))] flex-shrink-0 mt-0.5"
-                  />
-                  <div class="text-xs text-muted-foreground">
-                    <p>
-                      Authenticated as <strong>&#64;{{ v.login }}</strong
-                      >.
-                    </p>
-                    <p class="mt-0.5">
-                      Scopes: <span class="font-mono">{{ (v.scopes ?? []).join(', ') }}</span>
-                    </p>
-                  </div>
-                </div>
-              } @else if (v.valid) {
-                <div
-                  class="flex items-start gap-2 p-3 bg-amber-50 rounded-lg border border-amber-200"
-                >
-                  <ng-icon
-                    name="lucideAlertCircle"
-                    size="16"
-                    class="text-amber-600 flex-shrink-0 mt-0.5"
-                  />
-                  <div class="text-xs text-amber-800">
-                    <p>
-                      Authenticated as <strong>&#64;{{ v.login }}</strong
-                      >, but the token is missing scopes:
-                    </p>
-                    <p class="mt-0.5 font-mono">{{ (v.missingScopes ?? []).join(', ') }}</p>
-                    <p class="mt-1">
-                      Re-create the token with these scopes checked, otherwise webhooks / packages
-                      won't work.
-                    </p>
-                  </div>
-                </div>
-              } @else {
-                <div class="flex items-start gap-2 p-3 bg-red-50 rounded-lg border border-red-200">
-                  <ng-icon
-                    name="lucideAlertCircle"
-                    size="16"
-                    class="text-red-600 flex-shrink-0 mt-0.5"
-                  />
-                  <p class="text-xs text-red-700">
-                    {{ patErrorLabel(v.error, v.message) }}
-                  </p>
-                </div>
-              }
-            }
-
-            <p class="text-xs text-slate-500">
-              Using <strong>classic</strong> PATs. Fine-grained PATs are not supported yet because
-              they can't grant <span class="font-mono">admin:repo_hook</span>, required to register
-              webhooks.
-            </p>
-
-            @if (wizardService.error() && !wizardService.patValidation()) {
-              <div class="flex items-start gap-2 p-3 bg-red-50 rounded-lg border border-red-200">
-                <ng-icon
-                  name="lucideAlertCircle"
-                  size="16"
-                  class="text-red-600 flex-shrink-0 mt-0.5"
-                />
-                <p class="text-xs text-red-700">{{ wizardService.error() }}</p>
-              </div>
-            }
-          </div>
-        }
-      }
-
-      <!-- Step 2: Done -->
-      @if (currentStepIndex() === 2) {
-        <div class="flex flex-col items-center py-8 text-center space-y-4">
-          <ng-icon name="lucideCheckCircle" size="24" class="text-[hsl(var(--ok))]" />
-          <div>
-            <h3 class="text-base font-semibold text-slate-900">GitHub integration configured</h3>
-            <p class="text-sm text-slate-500 mt-1">
-              @if (wizardService.selectedMethod() === 'github_app') {
-                GitHub App is active. Users can now install it on their accounts or organizations
-                and start importing repositories.
-              } @else {
-                PAT mode is active. Your Personal Access Token is saved and ready to use.
-              }
-            </p>
-          </div>
-          <div class="p-3 bg-slate-50 rounded-lg text-left w-full max-w-xs">
-            <p class="text-xs text-slate-500">Auth method</p>
-            <p class="text-sm font-medium text-slate-900 mt-0.5">
-              {{ methodLabel() }}
-            </p>
-          </div>
-        </div>
-      }
-    </app-wizard-shell>
+        </fl-panel>
+      </div>
+    </div>
   `,
 })
 export class GithubSetupWizardComponent implements OnInit, OnDestroy {
@@ -582,10 +146,15 @@ export class GithubSetupWizardComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly currentSurface = inject(CurrentSurfaceService);
+  private readonly confirm = inject(ConfirmService);
 
   readonly currentStepIndex = signal(0);
   readonly manualMode = signal(false);
-  readonly patDeepLink = PAT_DEEP_LINK;
+
+  protected readonly breadcrumb: readonly Crumb[] = [
+    { label: 'Repositories', link: '/apps/repositories' },
+    { label: 'Set up GitHub' },
+  ];
 
   private readonly surfaceRevision = new GithubSetupWizardSurfaceRevision();
 
@@ -614,54 +183,36 @@ export class GithubSetupWizardComponent implements OnInit, OnDestroy {
     this.currentSurface.set(null);
   }
 
-  readonly methodLabel = computed(() => {
-    switch (this.wizardService.selectedMethod()) {
-      case 'github_app':
-        return 'GitHub App';
-      case 'pat':
-        return 'Personal Access Token';
-      default:
-        return '—';
-    }
-  });
+  readonly methodName = computed(() => methodLabel(this.wizardService.selectedMethod()));
 
-  readonly steps = computed<WizardStep[]>(() => {
-    const method = this.wizardService.selectedMethod();
+  readonly configuredLabel = computed(() => existingLabel(this.wizardService.configuredStatus()));
+
+  protected readonly wizardSteps = computed<WizardStep[]>(() => {
     const step = this.currentStepIndex();
-
-    const configDescription =
-      method === 'github_app' ? 'Create or connect a GitHub App' : 'Validate and save your PAT';
-    const configIcon = method === 'pat' ? 'lucideKey' : 'lucideGithub';
-
     return [
-      {
-        id: 'method',
-        title: 'Choose Method',
-        description: 'GitHub App or PAT',
-        icon: 'lucideGithub',
-        isValid: method !== null,
-        isCompleted: step > 0,
-      },
-      {
-        id: 'configure',
-        title: 'Configure',
-        description: configDescription,
-        icon: configIcon,
-        isValid: this.isConfigureStepValid(),
-        isCompleted: step > 1,
-      },
-      {
-        id: 'done',
-        title: 'Done',
-        description: 'Setup complete',
-        icon: 'lucideCheckCircle',
-        isValid: true,
-        isCompleted: false,
-      },
+      { name: 'Choose a method', summary: step > 0 ? this.methodName() : undefined },
+      { name: 'Configure' },
+      { name: 'Done' },
     ];
   });
 
-  readonly createButtonText = computed(() => 'Go to Repositories');
+  protected readonly stepTitle = computed(() => {
+    switch (this.currentStepIndex()) {
+      case 0:
+        return 'Choose a method';
+      case 1:
+        return this.wizardService.selectedMethod() === 'github_app'
+          ? 'Create or connect a GitHub App'
+          : 'Validate and save your token';
+      default:
+        return 'Setup complete';
+    }
+  });
+
+  protected readonly canProceed = computed(() => {
+    if (this.currentStepIndex() === 0) return this.wizardService.selectedMethod() !== null;
+    return this.isConfigureStepValid();
+  });
 
   ngOnInit(): void {
     this.wizardService.reset();
@@ -683,22 +234,18 @@ export class GithubSetupWizardComponent implements OnInit, OnDestroy {
 
   async resetIntegration(): Promise<void> {
     if (this.wizardService.isConfiguring()) return;
-    const ok = globalThis.confirm(
-      'This removes the current GitHub integration configuration. Users will lose access to GitHub-backed repositories until you reconfigure. Proceed?',
-    );
+    const ok = await this.confirm.confirm({
+      title: 'Reset the GitHub integration',
+      body: 'This removes the current GitHub integration configuration. People lose access to GitHub-backed repositories until you set it up again.',
+      confirmLabel: 'Reset',
+      destructive: true,
+    });
     if (!ok) return;
     const success = await this.wizardService.resetIntegration();
     if (success) {
       this.currentStepIndex.set(0);
       this.manualMode.set(false);
     }
-  }
-
-  existingLabel(): string {
-    const s = this.wizardService.configuredStatus();
-    if (!s?.configured) return '';
-    const mode = s.authMethod === 'github_app' ? 'GitHub App' : 'Personal Access Token';
-    return s.appSlug ? `${mode} — ${s.appSlug}` : mode;
   }
 
   selectMethod(method: SetupMethod): void {
@@ -711,35 +258,6 @@ export class GithubSetupWizardComponent implements OnInit, OnDestroy {
 
   defaultPublicApiUrl(): string {
     return environment.apiBaseUrl.replace(/\/$/, '');
-  }
-
-  organizationProblem(): string | null {
-    return organizationProblem(this.wizardService.manifestForm().organization);
-  }
-
-  isLocalPublicApiUrl(): boolean {
-    const url = this.wizardService.manifestForm().publicApiUrl.trim();
-    if (!url) return false;
-    return /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)/i.test(url);
-  }
-
-  derivedUrls(): { callback: string; redirect: string; webhook: string } | null {
-    const raw = this.wizardService.manifestForm().publicApiUrl.trim();
-    if (!raw || !/^https?:\/\//i.test(raw)) return null;
-    const base = raw.replace(/\/$/, '');
-    return {
-      callback: `${base}/api/v1/repositories/github-app/user-callback`,
-      redirect: `${base}/api/v1/repositories/github/setup/github-app/manifest-callback`,
-      webhook: `${base}/api/v1/webhooks/github-app`,
-    };
-  }
-
-  getMethodCardClass(method: SetupMethod): string {
-    const selected = this.wizardService.selectedMethod() === method;
-    if (selected) {
-      return 'border-blue-500 bg-blue-50';
-    }
-    return 'border-slate-200 bg-white hover:border-slate-300';
   }
 
   isConfigureStepValid(): boolean {
@@ -760,23 +278,6 @@ export class GithubSetupWizardComponent implements OnInit, OnDestroy {
       return !organizationProblem(f.organization);
     }
     return false;
-  }
-
-  patErrorLabel(error?: string, message?: string): string {
-    switch (error) {
-      case 'invalid_token':
-        return 'Invalid token — GitHub rejected it (401).';
-      case 'sso_required':
-        return 'This token needs SSO authorization for one of your organizations. Authorize it on GitHub and try again.';
-      case 'empty_token':
-        return 'Paste a token to validate.';
-      case 'github_unreachable':
-        return `Could not reach GitHub: ${message ?? 'unknown error'}`;
-      default: {
-        const suffix = message ? `: ${message}` : '.';
-        return `Token validation failed${suffix}`;
-      }
-    }
   }
 
   async onValidatePat(): Promise<void> {

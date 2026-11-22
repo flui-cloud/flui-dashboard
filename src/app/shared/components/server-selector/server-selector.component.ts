@@ -1,205 +1,120 @@
-import {
-  Component,
-  OnInit,
-  input,
-  output,
-  signal,
-  computed,
-  inject,
-  effect,
-  ChangeDetectionStrategy,
-} from '@angular/core';
+import { Component, OnInit, input, output, signal, computed, inject, effect } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideServer,
-  lucideSearch,
-  lucideLoader,
-  lucideCircleAlert,
-  lucideCheck,
-  lucideX,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideSearch, lucideServer, lucideX } from '@ng-icons/lucide';
 import { VirtualInstancesService } from '../../../core/api/api/virtualInstances.service';
 import { InstanceWithLabels } from '../../../features/model/instance.models';
 import { InstanceStatusBadgeComponent } from '../../../features/components/compute/instance-status-badge.component';
 import { firstValueFrom } from 'rxjs';
-import { ProviderMarkComponent } from '../provider-mark.component';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
 
-/**
- * Server Selector Component
- *
- * Reusable component for selecting servers/instances to attach to a subnet.
- *
- * Features:
- * - List available servers filtered by provider
- * - Search/filter servers by name
- * - Exclude already-attached servers
- * - Single or multi-select mode
- * - Loading states and error handling
- * - Shows server details (provider, status, IP, resources)
- */
 @Component({
   selector: 'app-server-selector',
-  standalone: true,
-  imports: [FormsModule, NgIconComponent, InstanceStatusBadgeComponent, ProviderMarkComponent],
-  providers: [
-    provideIcons({
-      lucideServer,
-      lucideSearch,
-      lucideLoader,
-      lucideCircleAlert,
-      lucideCheck,
-      lucideX,
-    }),
+  imports: [
+    FormsModule,
+    InstanceStatusBadgeComponent,
+    FlAlert,
+    FlEmptyState,
+    FlLoadingState,
+    FlTable,
+    FlButton,
+    FlIcon,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  providers: [provideIcons({ lucideSearch, lucideServer, lucideX })],
+  host: { class: 'flex flex-col gap-3' },
   template: `
-    <div class="space-y-4">
-      <!-- Search Bar -->
-      <div class="relative">
-        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <ng-icon name="lucideSearch" size="18" class="text-slate-400"></ng-icon>
-        </div>
-        <input
-          type="text"
-          [(ngModel)]="searchQuery"
-          (ngModelChange)="onSearchChange()"
-          placeholder="Search servers by name..."
-          class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
-      </div>
-
-      <!-- Loading State -->
-      @if (isLoading()) {
-        <div class="flex items-center justify-center py-12">
-          <ng-icon name="lucideLoader" size="32" class="animate-spin text-blue-500"></ng-icon>
-        </div>
-      }
-
-      <!-- Error State -->
-      @if (error() && !isLoading()) {
-        <div class="flex items-center gap-2 p-4 bg-red-50 text-red-700 rounded-lg">
-          <ng-icon name="lucideCircleAlert" size="20"></ng-icon>
-          <span>{{ error() }}</span>
-        </div>
-      }
-
-      <!-- Servers List -->
-      @if (!isLoading() && !error()) {
-        <div class="space-y-2 max-h-96 overflow-y-auto">
-          <!-- Server Cards -->
-          @for (server of filteredServers(); track server) {
-            <div
-              (click)="selectServer(server)"
-              [class]="getServerCardClass(server)"
-              class="p-4 border-2 rounded-lg cursor-pointer transition-all"
-            >
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3 flex-1 min-w-0">
-                  <!-- Provider Icon -->
-                  <app-provider-mark [name]="server.provider" [size]="40" />
-                  <!-- Server Info -->
-                  <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2">
-                      <h3 class="font-semibold text-slate-900 truncate">
-                        {{ server.displayName || server.name }}
-                      </h3>
-                      <app-instance-status-badge [status]="server.status || 'unknown'" />
-                    </div>
-                    <div class="flex items-center gap-4 mt-1 text-sm text-slate-500">
-                      @if (server.ipConfig?.v4?.ip) {
-                        <span class="font-mono">{{ server.ipConfig?.v4?.ip }}</span>
-                      }
-                      @if (server.cpuCores) {
-                        <span>{{ server.cpuCores }} CPU</span>
-                      }
-                      @if (server.ramMb) {
-                        <span>{{ formatMemory(server.ramMb) }}</span>
-                      }
-                      @if (server.region) {
-                        <span class="capitalize">{{ server.region }}</span>
-                      }
-                    </div>
-                  </div>
-                </div>
-                <!-- Selection Indicator -->
-                @if (isSelected(server)) {
-                  <ng-icon
-                    name="lucideCheck"
-                    size="24"
-                    class="flex-shrink-0 text-blue-600 ml-2"
-                  ></ng-icon>
-                }
-              </div>
-            </div>
-          }
-          <!-- Empty State -->
-          @if (filteredServers().length === 0) {
-            <div class="text-center py-12 text-slate-500">
-              <ng-icon name="lucideServer" size="48" class="mx-auto mb-3 opacity-30"></ng-icon>
-              @if (searchQuery()) {
-                <p>No servers found matching "{{ searchQuery() }}"</p>
-              }
-              @if (!searchQuery()) {
-                <p>No servers available</p>
-              }
-            </div>
-          }
-        </div>
-      }
-
-      <!-- Selected Count (Multi-select mode) -->
-      @if (multiSelect() && selectedServers().length > 0) {
-        <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-          <span class="text-sm font-medium text-blue-700">
-            {{ selectedServers().length }} server(s) selected
-          </span>
-          <button
-            (click)="clearSelection()"
-            class="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
-          >
-            <ng-icon name="lucideX" size="16"></ng-icon>
-            Clear
-          </button>
-        </div>
-      }
+    <div class="fl-input fl-input--lg">
+      <fl-icon name="lucideSearch" />
+      <input
+        type="text"
+        aria-label="Search servers by name"
+        placeholder="Search servers by name"
+        [(ngModel)]="searchQuery"
+      />
     </div>
+
+    @if (isLoading()) {
+      <fl-loading-state [rows]="3" />
+    } @else if (error()) {
+      <fl-alert tone="error" title="Could not load servers">{{ error() }}</fl-alert>
+    } @else if (filteredServers().length === 0) {
+      <fl-empty-state
+        icon="lucideServer"
+        [compact]="true"
+        [title]="
+          searchQuery() ? 'No servers match “' + searchQuery() + '”' : 'No servers available'
+        "
+      />
+    } @else {
+      <div class="fl-table-wrap max-h-96 overflow-y-auto rounded-fl-lg border border-fl-border">
+        <table flTable density="dense">
+          <thead>
+            <tr>
+              <th scope="col" class="is-fit"><span class="fl-sr">Selected</span></th>
+              <th scope="col">Server</th>
+              <th scope="col">Status</th>
+              <th scope="col">IP</th>
+              <th scope="col" class="is-num">CPU</th>
+              <th scope="col" class="is-num">Memory</th>
+              <th scope="col">Region</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (server of filteredServers(); track server.id) {
+              <tr
+                class="cursor-pointer"
+                [class.is-selected]="isSelected(server)"
+                (click)="selectServer(server)"
+              >
+                <td class="is-fit">
+                  <input
+                    [type]="multiSelect() ? 'checkbox' : 'radio'"
+                    name="server-selector"
+                    [checked]="isSelected(server)"
+                    [attr.aria-label]="'Select ' + (server.displayName || server.name)"
+                  />
+                </td>
+                <td class="font-medium">{{ server.displayName || server.name }}</td>
+                <td><app-instance-status-badge [status]="server.status || 'unknown'" /></td>
+                <td class="fl-mono">{{ server.ipConfig?.v4?.ip || '-' }}</td>
+                <td class="is-num">{{ server.cpuCores || '-' }}</td>
+                <td class="is-num">{{ formatMemory(server.ramMb) || '-' }}</td>
+                <td class="fl-mono">{{ server.region || '-' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    @if (multiSelect() && selectedServers().length > 0) {
+      <div class="fl-row justify-between">
+        <span class="fl-num text-fl-body-sm">{{ selectedServers().length }} selected</span>
+        <button flButton="ghost" size="sm" type="button" (click)="clearSelection()">
+          <fl-icon name="lucideX" />
+          Clear
+        </button>
+      </div>
+    }
   `,
 })
 export class ServerSelectorComponent implements OnInit {
   private readonly instancesApi = inject(VirtualInstancesService);
 
-  // ===== INPUTS =====
-
-  /**
-   * Filter servers by provider (optional)
-   */
   provider = input<string | undefined>(undefined);
 
-  /**
-   * Server IDs to exclude from the list (e.g., already attached)
-   */
   excludeServerIds = input<string[]>([]);
 
-  /**
-   * Enable multi-select mode
-   */
   multiSelect = input<boolean>(false);
 
-  // ===== OUTPUTS =====
-
-  /**
-   * Emitted when a server is selected (single select mode)
-   */
   serverSelected = output<InstanceWithLabels>();
 
-  /**
-   * Emitted when selection changes (multi-select mode)
-   */
   serversSelected = output<InstanceWithLabels[]>();
-
-  // ===== STATE SIGNALS =====
 
   availableServers = signal<InstanceWithLabels[]>([]);
   selectedServers = signal<InstanceWithLabels[]>([]);
@@ -207,20 +122,16 @@ export class ServerSelectorComponent implements OnInit {
   isLoading = signal<boolean>(false);
   error = signal<string | null>(null);
 
-  // ===== COMPUTED SIGNALS =====
-
   filteredServers = computed(() => {
     const servers = this.availableServers();
     const query = this.searchQuery().toLowerCase();
     const excluded = this.excludeServerIds();
 
     return servers.filter((server) => {
-      // Exclude servers in the exclude list
       if (excluded.includes(server.id || '')) {
         return false;
       }
 
-      // Filter by search query
       if (query) {
         const name = (server.displayName || server.name || '').toLowerCase();
         return name.includes(query);
@@ -230,10 +141,7 @@ export class ServerSelectorComponent implements OnInit {
     });
   });
 
-  // ===== LIFECYCLE =====
-
   constructor() {
-    // Reload servers when provider changes
     effect(() => {
       this.provider();
       this.loadServers();
@@ -244,8 +152,6 @@ export class ServerSelectorComponent implements OnInit {
     this.loadServers();
   }
 
-  // ===== METHODS =====
-
   async loadServers(): Promise<void> {
     this.isLoading.set(true);
     this.error.set(null);
@@ -253,12 +159,7 @@ export class ServerSelectorComponent implements OnInit {
     try {
       const provider = this.provider();
       const response = await firstValueFrom(
-        this.instancesApi.instancesControllerFindAll(
-          undefined, // status
-          undefined, // page
-          undefined, // limit
-          provider, // provider filter
-        ),
+        this.instancesApi.instancesControllerFindAll(undefined, undefined, undefined, provider),
       );
 
       this.availableServers.set((response.data || []) as InstanceWithLabels[]);
@@ -273,20 +174,16 @@ export class ServerSelectorComponent implements OnInit {
 
   selectServer(server: InstanceWithLabels): void {
     if (this.multiSelect()) {
-      // Multi-select mode: toggle selection
       this.selectedServers.update((selected) => {
         const index = selected.findIndex((s) => s.id === server.id);
         if (index === -1) {
-          // Not selected, add it
           return [...selected, server];
         } else {
-          // Already selected, remove it
           return selected.filter((s) => s.id !== server.id);
         }
       });
       this.serversSelected.emit(this.selectedServers());
     } else {
-      // Single select mode: replace selection
       this.selectedServers.set([server]);
       this.serverSelected.emit(server);
     }
@@ -299,15 +196,6 @@ export class ServerSelectorComponent implements OnInit {
   clearSelection(): void {
     this.selectedServers.set([]);
     this.serversSelected.emit([]);
-  }
-
-  onSearchChange(): void {
-    // Search is reactive via signal, no action needed
-  }
-
-  getServerCardClass(server: InstanceWithLabels): string {
-    const isSelected = this.isSelected(server);
-    return isSelected ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-blue-300';
   }
 
   formatMemory(mb: number | undefined): string {

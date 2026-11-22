@@ -1,26 +1,13 @@
-import {
-  Component,
-  OnInit,
-  computed,
-  inject,
-  signal,
-  input,
-  output,
-  ChangeDetectionStrategy,
-} from '@angular/core';
-
+import { Component, OnInit, computed, inject, signal, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideKey,
-  lucideExternalLink,
-  lucideAlertCircle,
-  lucideX,
-  lucideLoader,
-  lucideRefreshCw,
-  lucideCalendar,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideExternalLink, lucideX } from '@ng-icons/lucide';
 import { GithubAppOAuthService } from '../../../core/services/github-app-oauth.service';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlField } from '../../../ui/patterns/field';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
 
 export type GhcrPatModalMode = 'create' | 'rotate' | 'update-expiry';
 
@@ -35,128 +22,107 @@ const TODAY_PLUS_DAYS = (days: number): string => {
 
 @Component({
   selector: 'app-ghcr-pat-modal',
-  standalone: true,
-  imports: [FormsModule, NgIconComponent],
-  providers: [
-    provideIcons({
-      lucideKey,
-      lucideExternalLink,
-      lucideAlertCircle,
-      lucideX,
-      lucideLoader,
-      lucideRefreshCw,
-      lucideCalendar,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FormsModule, FlAlert, FlField, FlButton, FlIcon, FlSpinner],
+  providers: [provideIcons({ lucideExternalLink, lucideX })],
+  host: { '(document:keydown.escape)': 'onBackdrop()' },
   template: `
     <div
-      class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-      (click)="onBackdrop($event)"
+      class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+      (click)="onBackdrop()"
     >
-      <div class="bg-white rounded-lg max-w-md w-full" (click)="$event.stopPropagation()">
-        <div class="flex items-center justify-between p-5 border-b border-slate-200">
-          <h3 class="text-base font-semibold text-slate-900">{{ title() }}</h3>
-          <button (click)="cancelled.emit()" class="text-slate-400 hover:text-slate-600">
-            <ng-icon name="lucideX" class="h-5 w-5" />
+      <div
+        class="fl-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ghcr-pat-title"
+        (click)="$event.stopPropagation()"
+      >
+        <header class="fl-dialog__header">
+          <h2 class="fl-dialog__title" id="ghcr-pat-title">{{ title() }}</h2>
+          <button
+            type="button"
+            class="fl-dialog__close"
+            aria-label="Close"
+            (click)="cancelled.emit()"
+          >
+            <fl-icon name="lucideX" />
           </button>
-        </div>
+        </header>
 
-        <div class="p-5 space-y-3">
+        <div class="fl-dialog__body">
           @if (mode() !== 'update-expiry') {
+            <p>
+              Flui needs a classic token with
+              <span class="fl-mono">read:packages</span> (or
+              <span class="fl-mono">write:packages</span>) and
+              <span class="fl-mono">delete:packages</span>: GitHub App tokens cannot pull or delete
+              private container packages outside GitHub Actions.
+            </p>
             <a
+              class="fl-link inline-flex items-center gap-1"
               [href]="patCreateUrl"
               target="_blank"
               rel="noopener noreferrer"
-              class="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline"
             >
-              Create a classic token with read:packages and delete:packages
-              <ng-icon name="lucideExternalLink" class="h-3 w-3" />
+              Create the token on GitHub
+              <fl-icon name="lucideExternalLink" [size]="14" />
             </a>
 
-            <div>
-              <label class="block text-xs font-medium text-slate-700 mb-1">
-                Personal Access Token
-              </label>
+            <fl-field label="Personal access token" for="ghcr-pat-token">
+              <div class="fl-input fl-input--lg">
+                <input
+                  id="ghcr-pat-token"
+                  type="password"
+                  autocomplete="off"
+                  placeholder="ghp_…"
+                  [ngModel]="token()"
+                  (ngModelChange)="token.set($event)"
+                  [disabled]="busy()"
+                />
+              </div>
+            </fl-field>
+          }
+
+          <fl-field
+            label="Token expiration date"
+            for="ghcr-pat-expiry"
+            hint="Match the expiration set on GitHub. Flui warns you 14 days before."
+          >
+            <div class="fl-input fl-input--lg">
               <input
-                type="password"
-                [(ngModel)]="token"
-                placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                id="ghcr-pat-expiry"
+                type="date"
+                [ngModel]="expiresAt()"
+                (ngModelChange)="expiresAt.set($event)"
+                [min]="minDate"
                 [disabled]="busy()"
-                class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
               />
             </div>
-          }
-
-          <div>
-            <label class="block text-xs font-medium text-slate-700 mb-1">
-              Token expiration date
-            </label>
-            <input
-              type="date"
-              [(ngModel)]="expiresAt"
-              [min]="minDate"
-              [disabled]="busy()"
-              class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
-            />
-            <p class="text-xs text-slate-400 mt-1">
-              Match the expiration you set on GitHub. We'll warn you 14 days before.
-            </p>
-          </div>
-
-          @if (mode() !== 'update-expiry') {
-            <div class="p-3 bg-slate-50 rounded-lg">
-              <p class="text-xs text-slate-500">
-                Required scopes: <span class="font-mono">read:packages</span> (or
-                <span class="font-mono">write:packages</span>) and
-                <span class="font-mono">delete:packages</span>.
-              </p>
-              <p class="text-xs text-slate-400 mt-1">
-                Needed because GitHub App tokens can't pull or delete private container packages
-                outside of GitHub Actions.
-              </p>
-            </div>
-          }
+          </fl-field>
 
           @if (errorMsg()) {
-            <div class="flex items-start gap-2 p-3 bg-red-50 rounded-lg border border-red-200">
-              <ng-icon name="lucideAlertCircle" class="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5" />
-              <p class="text-xs text-red-700">{{ errorMsg() }}</p>
-            </div>
+            <fl-alert tone="error" title="Could not save the token">{{ errorMsg() }}</fl-alert>
           }
         </div>
 
-        <div class="flex items-center justify-end gap-2 p-5 border-t border-slate-200">
-          <button
-            (click)="cancelled.emit()"
-            [disabled]="busy()"
-            class="px-3 py-2 text-sm rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-60"
-          >
+        <footer class="fl-dialog__footer">
+          <button flButton="ghost" type="button" [disabled]="busy()" (click)="cancelled.emit()">
             Cancel
           </button>
           <button
-            (click)="submit()"
+            flButton="primary"
+            type="button"
             [disabled]="busy() || !canSubmit()"
-            class="inline-flex items-center gap-2 px-3 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60"
+            (click)="submit()"
           >
             @if (busy()) {
-              <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
-              <span>Saving…</span>
+              <fl-spinner label="Saving" />
+              Saving…
             } @else {
-              <ng-icon
-                [name]="
-                  mode() === 'rotate'
-                    ? 'lucideRefreshCw'
-                    : mode() === 'update-expiry'
-                      ? 'lucideCalendar'
-                      : 'lucideKey'
-                "
-                class="h-4 w-4"
-              />
-              <span>{{ submitLabel() }}</span>
+              {{ submitLabel() }}
             }
           </button>
-        </div>
+        </footer>
       </div>
     </div>
   `,
@@ -173,22 +139,18 @@ export class GhcrPatModalComponent implements OnInit {
   readonly patCreateUrl = GHCR_PAT_CREATE_URL;
   readonly minDate = TODAY_PLUS_DAYS(1);
 
-  token = '';
-  expiresAt = '';
+  readonly token = signal('');
+  readonly expiresAt = signal('');
 
-  busy = signal(false);
-  errorMsg = signal<string | null>(null);
+  readonly busy = signal(false);
+  readonly errorMsg = signal<string | null>(null);
 
   ngOnInit(): void {
     const initialExpiresAt = this.initialExpiresAt();
-    if (initialExpiresAt) {
-      this.expiresAt = initialExpiresAt.slice(0, 10);
-    } else {
-      this.expiresAt = TODAY_PLUS_DAYS(30);
-    }
+    this.expiresAt.set(initialExpiresAt ? initialExpiresAt.slice(0, 10) : TODAY_PLUS_DAYS(30));
   }
 
-  title = computed(() => {
+  readonly title = computed(() => {
     switch (this.mode()) {
       case 'rotate':
         return 'Rotate GHCR token';
@@ -199,7 +161,7 @@ export class GhcrPatModalComponent implements OnInit {
     }
   });
 
-  submitLabel = computed(() => {
+  readonly submitLabel = computed(() => {
     switch (this.mode()) {
       case 'rotate':
         return 'Rotate token';
@@ -210,13 +172,13 @@ export class GhcrPatModalComponent implements OnInit {
     }
   });
 
-  canSubmit(): boolean {
-    if (!this.expiresAt) return false;
+  readonly canSubmit = computed(() => {
+    if (!this.expiresAt()) return false;
     if (this.mode() === 'update-expiry') return true;
-    return this.token.trim().length > 0;
-  }
+    return this.token().trim().length > 0;
+  });
 
-  onBackdrop(_event: MouseEvent): void {
+  onBackdrop(): void {
     if (this.busy()) return;
     this.cancelled.emit();
   }
@@ -225,22 +187,24 @@ export class GhcrPatModalComponent implements OnInit {
     if (!this.canSubmit()) return;
     this.busy.set(true);
     this.errorMsg.set(null);
-    const expiresIso = new Date(this.expiresAt).toISOString();
+    const expiresIso = new Date(this.expiresAt()).toISOString();
+    const token = this.token().trim();
     try {
       const mode = this.mode();
       if (mode === 'create') {
-        await this.oauthApi.savePackagesPat(this.token.trim(), expiresIso);
+        await this.oauthApi.savePackagesPat(token, expiresIso);
       } else if (mode === 'rotate') {
-        await this.oauthApi.rotatePackagesPat(this.token.trim(), expiresIso);
+        await this.oauthApi.rotatePackagesPat(token, expiresIso);
       } else {
         await this.oauthApi.updatePackagesPatExpiry(expiresIso);
       }
       this.saved.emit();
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const e = err as { error?: { message?: string }; message?: string } | null;
       this.errorMsg.set(
-        err?.error?.message ||
-          err?.message ||
-          'Could not save the token. Make sure it has read:packages and delete:packages scopes and the expiration is in the future.',
+        e?.error?.message ||
+          e?.message ||
+          'Make sure it has the read:packages and delete:packages scopes and the expiration is in the future.',
       );
       this.busy.set(false);
     }

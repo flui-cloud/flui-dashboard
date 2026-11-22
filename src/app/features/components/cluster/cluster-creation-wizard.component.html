@@ -1,0 +1,202 @@
+<div class="fl-page">
+  <fl-page-header title="Create cluster" [breadcrumb]="breadcrumb">
+    <span headerMeta>Pick a provider and a size, set up access and network, then create.</span>
+  </fl-page-header>
+
+  <div class="fl-wizard">
+    <nav aria-label="Steps">
+      <fl-wizard-steps
+        [steps]="stepList()"
+        [current]="currentStepIndex()"
+        (stepSelect)="goToStep($event)"
+      />
+    </nav>
+
+    <fl-panel [title]="wizardSteps()[currentStepIndex()].title" [flush]="true">
+      <div class="fl-stack p-4">
+        @if (createError(); as message) {
+          <fl-alert
+            tone="error"
+            title="The cluster was not created"
+            data-testid="create-cluster-error"
+          >
+            {{ message }}
+          </fl-alert>
+        }
+
+        @switch (currentStepIndex()) {
+          @case (0) {
+            <app-cluster-create-step-infrastructure
+              [name]="nameControl"
+              [generating]="generatingName()"
+              [provider]="selectedProvider()"
+              [region]="selectedRegion()"
+              [serverTypeId]="selectedServerTypeId()"
+              [lockedProvider]="lockedProvider()"
+              [refusal]="providerRefusal()"
+              (generate)="generateUniqueClusterName()"
+              (providerSelected)="onProviderSelected($event)"
+              (regionSelected)="onRegionSelected($event)"
+              (serverTypeSelected)="onServerTypeSelected($event)"
+            />
+          }
+          @case (1) {
+            <app-cluster-create-step-resources
+              [provider]="selectedProvider()"
+              [region]="selectedRegion()"
+              [serverTypeId]="selectedServerTypeId()"
+              [needsDisk]="needsDiskConfig()"
+              [diskSizeGb]="diskSizeGb()"
+              [storagePricePerGbMonthly]="
+                selectedServerType()?.blockStoragePricePerGbMonthly ?? null
+              "
+              [costPerNodeHour]="totalCostPerNodePerHour()"
+              [sharedStorage]="sharedStorageEnabled()"
+              [sharedStorageSizeGb]="sharedStorageVolumeSizeGb()"
+              [draft]="availabilityDraft()"
+              [highlyAvailable]="highlyAvailable()"
+              [nodes]="fixedNodes()"
+              (regionSelected)="onRegionSelected($event)"
+              (serverTypeSelected)="onServerTypeSelected($event)"
+              (diskSizeChange)="setDiskSizeGb($event)"
+              (sharedStorageChange)="setSharedStorageEnabled($event)"
+              (sharedStorageSizeChange)="setSharedStorageVolumeSizeGb($event)"
+              (draftChange)="availabilityDraft.set($event)"
+              (availabilityChange)="availability.set($event)"
+              (nodesChange)="setFixedNodes($event)"
+            />
+          }
+          @case (2) {
+            <app-ssh-key-selector
+              [selectedKeyId]="selectedSshKeyId()"
+              (keySelected)="onSshKeySelected($event)"
+            />
+          }
+          @case (3) {
+            <app-cluster-create-step-network
+              [environmentNetwork]="environmentNetwork()"
+              [canBuildNetwork]="canBuildNetwork()"
+              [fluiBuilds]="fluiBuildsNetwork()"
+              [cidr]="fluiNetworkCidr()"
+              [showHelp]="showNetworkHelp()"
+              [provider]="selectedProvider()"
+              [region]="selectedRegion()"
+              [vnetRequired]="vnetRequired()"
+              [vnet]="selectedVNetId() ? selectedVNetData() : null"
+              [subnets]="orderedSubnets()"
+              [selectedSubnetId]="selectedSubnetId()"
+              [showAddForm]="showAddSubnetForm()"
+              [adding]="addingSubnet()"
+              [addError]="addSubnetError()"
+              [zones]="addSubnetZones()"
+              [zone]="addSubnetZone"
+              [ipRange]="addSubnetIpRange"
+              [cidrValid]="isValidAddSubnetCidr()"
+              [addValid]="isAddSubnetValid()"
+              (fluiBuildsChange)="fluiBuildsNetwork.set($event)"
+              (cidrChange)="fluiNetworkCidr.set($event)"
+              (helpToggle)="showNetworkHelp.set(!showNetworkHelp())"
+              (vnetSelected)="onVNetSelected($event)"
+              (subnetSelect)="selectSubnet($event)"
+              (openAdd)="openAddSubnetForm()"
+              (closeAdd)="closeAddSubnetForm()"
+              (submitAdd)="submitAddSubnet()"
+              (zoneChange)="addSubnetZone = $event"
+              (ipRangeChange)="addSubnetIpRange = $event"
+            />
+          }
+          @case (4) {
+            <app-cluster-create-step-endpoint
+              [mode]="endpointHostnameMode()"
+              [zonesLoading]="dnsZonesService.loading()"
+              [zones]="dnsZones()"
+              [selectedZoneId]="selectedDnsZoneId()"
+              [selectedZoneName]="selectedZone()?.zoneName ?? null"
+              [clusterName]="getClusterName()"
+              (modeChange)="endpointHostnameMode.set($event)"
+              (zoneSelect)="selectedDnsZoneId.set($event)"
+            />
+          }
+          @case (5) {
+            <app-cluster-create-step-firewall
+              [form]="firewallConfigForm"
+              [detecting]="ipDetectionService.isDetecting()"
+              [userIp]="ipDetectionService.userPublicIP()"
+              [throughTunnel]="isCrossProviderWorkload() && overlayEnabled()"
+              [controlProvider]="controlClusterProvider()"
+              [managedRules]="managedFirewallRules()"
+              (detectIp)="detectAndSetIP($event)"
+              (resetIps)="resetRuleIPs($event)"
+              (addRule)="addCustomRule()"
+              (removeRule)="removeRule($event)"
+              (directionChange)="onCustomRuleDirectionChange($event)"
+            />
+          }
+          @case (6) {
+            <app-cluster-create-step-review
+              [editable]="editableSteps"
+              [name]="getClusterName()"
+              [providerName]="getSelectedProviderName()"
+              [regionName]="getSelectedRegionName()"
+              [serverType]="getSelectedServerType()"
+              [serverMonthly]="
+                selectedServerType()
+                  ? pricingService.calculateMonthlyPriceRounded(selectedServerType()!.pricePerHour)
+                  : null
+              "
+              [nodes]="costedNodes()"
+              [highlyAvailable]="highlyAvailable()"
+              [availabilityZones]="availabilityZones()"
+              [sshKey]="selectedSshKeyId() ? (getSshKeyById(selectedSshKeyId()!) ?? null) : null"
+              [environmentNetwork]="environmentNetwork()"
+              [vnet]="reviewVnet()"
+              [endpointMode]="endpointHostnameMode()"
+              [zoneName]="selectedZone()?.zoneName ?? null"
+              [firewallEnabled]="!!firewallConfigForm.get('enabled')?.value"
+              [ruleCount]="getFirewallRulesArray().length"
+              [sourceCidrs]="getTotalCustomCIDRs()"
+              [monthlyCost]="getEstimatedMonthlyCost()"
+              (edit)="editStep($event)"
+            />
+          }
+        }
+      </div>
+
+      <div class="fl-wizard__footer border-t border-fl-border px-4 py-3">
+        <button flButton="ghost" type="button" (click)="navigateBack()">Cancel</button>
+        <button
+          flButton
+          type="button"
+          [disabled]="currentStepIndex() === 0"
+          (click)="previousStep()"
+        >
+          Previous
+        </button>
+        @if (currentStepIndex() < wizardSteps().length - 1) {
+          <button
+            flButton="primary"
+            type="button"
+            [disabled]="!wizardSteps()[currentStepIndex()].isValid"
+            (click)="nextStep()"
+          >
+            Next
+          </button>
+        } @else {
+          <button
+            flButton="primary"
+            type="button"
+            [disabled]="!canComplete() || isCreating()"
+            (click)="createCluster()"
+          >
+            @if (isCreating()) {
+              <fl-spinner label="Creating" />
+              Creating…
+            } @else {
+              Create cluster
+            }
+          </button>
+        }
+      </div>
+    </fl-panel>
+  </div>
+</div>

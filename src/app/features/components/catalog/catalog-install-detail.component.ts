@@ -1,45 +1,32 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnDestroy,
-  OnInit,
-  computed,
-  effect,
-  inject,
-  signal,
-} from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map, firstValueFrom } from 'rxjs';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideArrowLeft,
-  lucideCircleAlert,
-  lucideExternalLink,
-  lucideGlobe,
-  lucideLoader,
-  lucideRocket,
-} from '@ng-icons/lucide';
 import { CatalogService } from '../../service/catalog.service';
 import { AppEndpointsService } from '../../service/app-endpoints.service';
 import { ApplicationsService } from '../../../core/api/api/applications.service';
 import { DbConsoleService } from '../../service/db-console.service';
 import { MaskModeService } from '../../../core/services/mask-mode.service';
+import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
 import { evaluateEndpointReadiness } from '../../model/endpoint-readiness';
 import { buildOpenAppUrl } from '../../model/open-app-url';
 import { DbConnectionInfo } from '../../model/db-console.models';
 import { databaseEngineOf } from '../../model/db-engine';
 import { CatalogInstallResponseDto, ApplicationResponseDto } from '../../../core/api/model/models';
+import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { Crumb } from '../../../ui/patterns/breadcrumb';
+import { FlCopyId } from '../../../ui/patterns/copy-id';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
+import { FlPageHeader } from '../../../ui/patterns/page-header';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlLoadingState } from '../../../ui/patterns/states';
+import { FlUsageBar } from '../../../ui/patterns/usage-bar';
+import { FlButton } from '../../../ui/primitives/button';
 import { CatalogInstallStatusBadgeComponent } from './catalog-install-status-badge.component';
+import { CatalogInstallEndpoint } from './catalog-install-endpoint';
+import { CatalogInstallResources } from './catalog-install-resources';
 import { AppDbConnectCardComponent } from '../application/app-db-connect-card.component';
-import { AppComponentsListComponent } from '../application/app-components-list.component';
-
-const TERMINAL_STATES: Set<CatalogInstallResponseDto.StatusEnum> = new Set([
-  CatalogInstallResponseDto.StatusEnum.Running,
-  CatalogInstallResponseDto.StatusEnum.Failed,
-  CatalogInstallResponseDto.StatusEnum.Uninstalled,
-]);
-import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
 import {
   CatalogInstallSurfaceInput,
   CatalogInstallSurfaceRevision,
@@ -47,166 +34,148 @@ import {
   presentedContent as catalogInstallPresentedContent,
 } from './catalog-install-surface';
 
+const TERMINAL_STATES: Set<CatalogInstallResponseDto.StatusEnum> = new Set([
+  CatalogInstallResponseDto.StatusEnum.Running,
+  CatalogInstallResponseDto.StatusEnum.Failed,
+  CatalogInstallResponseDto.StatusEnum.Uninstalled,
+]);
+
 @Component({
   selector: 'app-catalog-install-detail',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     RouterLink,
-    NgIcon,
+    MaskIdPipe,
+    FlAlert,
+    FlCopyId,
+    FlKeyValue,
+    FlKvItem,
+    FlPageHeader,
+    FlPanel,
+    FlLoadingState,
+    FlUsageBar,
+    FlButton,
     CatalogInstallStatusBadgeComponent,
+    CatalogInstallEndpoint,
+    CatalogInstallResources,
     AppDbConnectCardComponent,
-    AppComponentsListComponent,
-  ],
-  providers: [
-    provideIcons({
-      lucideArrowLeft,
-      lucideCircleAlert,
-      lucideExternalLink,
-      lucideGlobe,
-      lucideLoader,
-      lucideRocket,
-    }),
   ],
   template: `
-    <div class="mx-auto max-w-3xl space-y-6 p-6">
-      <a
-        [routerLink]="backLink()"
-        class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ng-icon name="lucideArrowLeft" class="h-4 w-4" />
-        {{ backLabel() }}
-      </a>
+    @let inst = install();
+    <div class="fl-page">
+      <fl-page-header [title]="inst?.displayName ?? 'Install'" [breadcrumb]="breadcrumb()">
+        @if (inst) {
+          <app-catalog-install-status-badge headerStatus [status]="inst.status" />
+        }
+        @if (inst) {
+          <fl-copy-id
+            headerMeta
+            [value]="inst.id"
+            [display]="inst.id | maskId"
+            label="install ID"
+          />
+        }
+        @if (inst) {
+          <span headerMeta>Created {{ formatDate(inst.createdAt) }}</span>
+        }
+      </fl-page-header>
 
-      @let inst = install();
       @if (loading()) {
-        <div class="flex items-center gap-2 text-sm text-muted-foreground">
-          <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
-          Loading install…
-        </div>
+        <fl-panel><fl-loading-state [rows]="4" /></fl-panel>
       } @else if (errorMessage()) {
-        <div
-          class="flex flex-col items-center gap-3 rounded-fl-lg border border-destructive/40 bg-destructive/5 p-8 text-center"
-        >
-          <ng-icon name="lucideCircleAlert" class="h-8 w-8 text-destructive" />
-          <p class="text-sm text-destructive">{{ errorMessage() }}</p>
-        </div>
+        <fl-alert tone="error" title="Could not load the install">{{ errorMessage() }}</fl-alert>
       } @else if (inst) {
-        <section class="rounded-fl-lg border border-border bg-card p-6">
-          <div class="flex flex-wrap items-start justify-between gap-4">
-            <div class="min-w-0">
-              <h1 class="text-xl font-bold text-foreground">{{ inst.displayName }}</h1>
-              <p class="text-xs text-muted-foreground">
-                {{ inst.slug }} · Created {{ formatDate(inst.createdAt) }}
-              </p>
-            </div>
-            <app-catalog-install-status-badge [status]="inst.status" />
-          </div>
+        @if (inst.status === 'FAILED' && inst.errorMessage) {
+          <fl-alert tone="error" title="Install failed">{{ inst.errorMessage }}</fl-alert>
+        }
 
-          @if (inst.status === 'INSTALLING' || inst.status === 'PENDING') {
-            <div class="mt-6 space-y-3">
-              <div class="flex items-center justify-between text-sm">
-                <span class="font-medium">{{ currentStepLabel() }}</span>
-                <span class="text-muted-foreground">{{ progressPct() }}%</span>
-              </div>
-              <div class="h-2 w-full overflow-hidden rounded-full bg-muted">
-                <div
-                  class="h-full bg-primary transition-all duration-500"
-                  [style.width.%]="progressPct()"
-                ></div>
-              </div>
-            </div>
-          }
+        @if (inst.status === 'INSTALLING' || inst.status === 'PENDING') {
+          <fl-panel title="Progress">
+            <fl-usage-bar
+              label="Install progress"
+              [percent]="progressPct()"
+              [aside]="currentStepLabel()"
+              [warnAt]="101"
+              [criticalAt]="101"
+            />
+          </fl-panel>
+        }
 
-          @if (inst.status === 'RUNNING') {
-            @if (dbApps().length) {
-              @for (db of dbApps(); track db.id) {
-                <app-db-connect-card [app]="db" [connInfo]="connInfoFor(db.id)" />
-              }
-            } @else if (inst.resolvedFqdn) {
-              @let r = readiness();
-              <div
-                class="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-muted/30 p-4"
-              >
-                <div class="min-w-0 flex-1">
-                  <p class="text-xs uppercase tracking-wide text-muted-foreground">Endpoint</p>
-                  <p class="mt-0.5 truncate text-sm font-mono">{{ inst.resolvedFqdn }}</p>
-                  @if (!r.isReady) {
-                    <p class="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-                      @if (r.state === 'failed') {
-                        <ng-icon name="lucideCircleAlert" class="h-3.5 w-3.5 text-destructive" />
-                        <span class="font-medium text-destructive">{{ r.label }}</span>
-                      } @else {
-                        <ng-icon
-                          name="lucideLoader"
-                          class="h-3.5 w-3.5 animate-spin text-primary"
-                        />
-                        <span>{{ r.label }}</span>
-                      }
-                    </p>
-                    @if (r.detail) {
-                      <p class="mt-0.5 text-xs text-muted-foreground">{{ r.detail }}</p>
-                    }
-                  }
-                </div>
-                @if (r.isReady) {
-                  <a
-                    [href]="openAppUrl()"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium
-                           text-primary-foreground hover:bg-primary/90"
-                  >
-                    <ng-icon name="lucideRocket" class="h-4 w-4" />
-                    Open app
-                    <ng-icon name="lucideExternalLink" class="h-3.5 w-3.5" />
-                  </a>
-                } @else if (dnsAppId()) {
-                  <a
-                    [routerLink]="['/apps/applications', dnsAppId(), 'dns']"
-                    class="inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 text-sm font-medium hover:bg-muted"
-                  >
-                    <ng-icon name="lucideGlobe" class="h-4 w-4" />
-                    DNS tab
-                  </a>
-                }
-              </div>
-            } @else if (dnsAppId()) {
-              <div
-                class="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4"
-              >
-                <div class="min-w-0">
-                  <p class="text-sm font-medium text-amber-800">No endpoint configured</p>
-                  <p class="mt-0.5 text-xs text-amber-700">
-                    @if (inst.skipEndpoint) {
-                      Endpoint provisioning was skipped at install time.
-                    } @else {
-                      The cluster had no DNS zone or wildcard issuer at install time.
-                    }
-                    Add a domain from the app's DNS tab to make it reachable.
-                  </p>
-                </div>
-                <a
-                  [routerLink]="['/apps/applications', dnsAppId(), 'dns']"
-                  class="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium
-                         text-primary-foreground hover:bg-primary/90"
-                >
-                  <ng-icon name="lucideGlobe" class="h-4 w-4" />
-                  Configure domain
-                </a>
-              </div>
+        @if (inst.status === 'RUNNING') {
+          @if (dbApps().length) {
+            @for (db of dbApps(); track db.id) {
+              <fl-panel [title]="dbApps().length > 1 ? 'Connect to ' + db.name : 'Connect'">
+                <app-db-connect-card [app]="db" [connInfo]="connInfoFor(db.id)" variant="block" />
+              </fl-panel>
             }
+          } @else if (inst.resolvedFqdn) {
+            <app-catalog-install-endpoint
+              [fqdn]="inst.resolvedFqdn"
+              [readiness]="readiness()"
+              [openUrl]="openAppUrl()"
+              [dnsAppId]="dnsAppId()"
+            />
+          } @else if (dnsAppId()) {
+            <fl-alert tone="warning" title="No endpoint configured">
+              @if (inst.skipEndpoint) {
+                Endpoint provisioning was skipped at install time.
+              } @else {
+                The cluster had no DNS zone or wildcard issuer at install time.
+              }
+              Add a domain from the app's DNS settings to make it reachable.
+              <a
+                alertActions
+                flButton
+                size="sm"
+                [routerLink]="['/apps/applications', dnsAppId(), 'dns']"
+                >Configure domain</a
+              >
+            </fl-alert>
           }
+        }
 
-          @if (inst.status === 'FAILED' && inst.errorMessage) {
-            <div class="mt-6 rounded-lg border border-destructive/40 bg-destructive/5 p-4">
-              <p class="text-sm font-medium text-destructive">Install failed</p>
-              <p class="mt-1 text-xs text-destructive/90">{{ inst.errorMessage }}</p>
-            </div>
-          }
-        </section>
+        <fl-panel title="Details">
+          <fl-key-value>
+            <fl-kv-item key="Catalog app">
+              <a class="fl-link fl-mono" [routerLink]="['/apps/catalog', inst.slug]">{{
+                inst.slug
+              }}</a>
+            </fl-kv-item>
+            <fl-kv-item key="Application">
+              @if (dnsAppId(); as appId) {
+                <a class="fl-link" [routerLink]="['/apps/applications', appId]">Open application</a>
+              } @else {
+                <span class="text-fl-ink-muted">Not created yet</span>
+              }
+            </fl-kv-item>
+            <fl-kv-item key="Cluster" [mono]="true">
+              <a class="fl-link" [routerLink]="['/cluster', inst.clusterId]">{{
+                inst.clusterId | maskId
+              }}</a>
+            </fl-kv-item>
+            @if (inst.requestedDomain) {
+              <fl-kv-item key="Requested domain" [mono]="true">{{
+                inst.requestedDomain
+              }}</fl-kv-item>
+            }
+            @if (inst.connectedInstallId) {
+              <fl-kv-item key="Connected to">
+                <a
+                  class="fl-link fl-mono"
+                  [routerLink]="['/apps/catalog/installs', inst.connectedInstallId]"
+                  >{{ inst.connectedSlug ?? (inst.connectedInstallId | maskId) }}</a
+                >
+              </fl-kv-item>
+            }
+            <fl-kv-item key="Updated">{{ formatDate(inst.updatedAt) }}</fl-kv-item>
+          </fl-key-value>
+        </fl-panel>
 
-        <app-components-list [components]="components()" [primaryComponentId]="primaryId()" />
+        @if (components().length > 0) {
+          <app-catalog-install-resources
+            [components]="components()"
+            [primaryComponentId]="primaryId()"
+          />
+        }
       }
     </div>
   `,
@@ -219,11 +188,9 @@ export class CatalogInstallDetailComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly maskMode = inject(MaskModeService);
 
-  // Per-component connection coordinates (no password), keyed by application id.
   protected readonly connInfo = signal<Record<string, DbConnectionInfo>>({});
   private readonly connRequested = new Set<string>();
 
-  // Every component that is a database/cache (composed apps may bundle several, e.g. postgres + valkey).
   protected readonly dbApps = computed(() => this.components().filter((c) => databaseEngineOf(c)));
 
   protected connInfoFor(appId: string): DbConnectionInfo | null {
@@ -245,8 +212,13 @@ export class CatalogInstallDetailComponent implements OnInit, OnDestroy {
     this.from() === 'applications' ? '/apps/applications' : '/apps/catalog',
   );
   protected readonly backLabel = computed(() =>
-    this.from() === 'applications' ? 'Back to applications' : 'Back to catalog',
+    this.from() === 'applications' ? 'Applications' : 'App catalog',
   );
+
+  protected readonly breadcrumb = computed<Crumb[]>(() => [
+    { label: this.backLabel(), link: this.backLink() },
+    { label: this.install()?.displayName ?? 'Install' },
+  ]);
 
   protected readonly install = this.catalog.currentInstall;
   protected readonly progress = this.catalog.installProgress;
@@ -265,7 +237,6 @@ export class CatalogInstallDetailComponent implements OnInit, OnDestroy {
   });
   protected readonly readiness = computed(() => evaluateEndpointReadiness(this.matchedEndpoint()));
 
-  /** entrypointPath of the catalog app this install belongs to, looked up via `catalogAppDefinitionId`. */
   private readonly entrypointPath = signal<string | undefined>(undefined);
   protected readonly openAppUrl = computed(() =>
     buildOpenAppUrl(this.install()?.resolvedFqdn, this.entrypointPath()),
@@ -276,8 +247,6 @@ export class CatalogInstallDetailComponent implements OnInit, OnDestroy {
   private pollingAbort = false;
 
   constructor() {
-    // Publish this page's snapshot whenever it changes; ngOnDestroy clears it so it never
-    // outlives the page it describes.
     effect(() => {
       this.currentSurface.set(this.surface());
     });
@@ -306,7 +275,6 @@ export class CatalogInstallDetailComponent implements OnInit, OnDestroy {
       void this.loadComponents(inst.clusterId, inst.id);
     });
 
-    // Load connection coordinates (no password) for each bundled database/cache.
     effect(() => {
       for (const db of this.dbApps()) {
         if (this.connRequested.has(db.id)) continue;
@@ -315,9 +283,6 @@ export class CatalogInstallDetailComponent implements OnInit, OnDestroy {
       }
     });
 
-    // `connRequested` fetches each app's connection info once, so a mask-mode
-    // toggle mid-visit would leave the connect card rendering the host string
-    // fetched under the previous state. Clear the cache and re-request.
     let first = true;
     effect(() => {
       this.maskMode.enabled();
@@ -339,7 +304,7 @@ export class CatalogInstallDetailComponent implements OnInit, OnDestroy {
       const info = await firstValueFrom(this.dbConsole.getConnectionInfo(appId));
       this.connInfo.update((m) => ({ ...m, [appId]: info }));
     } catch {
-      /* leave coordinates blank; the console link still works */
+      return;
     }
   }
 
@@ -376,8 +341,6 @@ export class CatalogInstallDetailComponent implements OnInit, OnDestroy {
   private readonly currentSurface = inject(CurrentSurfaceService);
   private readonly surfaceRevision = new CatalogInstallSurfaceRevision();
 
-  /** Reads the same signals the template renders. `connInfo()` and `resolvedFqdn` are
-   * deliberately not among them — see the redaction note in catalog-install-surface.ts. */
   private readonly surfaceInput = computed<CatalogInstallSurfaceInput>(() => {
     const inst = this.install();
     const readiness = this.readiness();
@@ -457,7 +420,7 @@ export class CatalogInstallDetailComponent implements OnInit, OnDestroy {
         if (this.pollingAbort) throw new Error('aborted');
       });
     } catch {
-      // aborted or timed out — either way, last known state stays in the signal
+      return;
     }
   }
 }

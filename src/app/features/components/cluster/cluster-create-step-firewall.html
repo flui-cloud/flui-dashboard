@@ -1,0 +1,242 @@
+<div class="flex flex-col gap-1">
+  <label class="fl-check">
+    <input type="checkbox" [formControl]="enabledControl()" />
+    Enable custom firewall rules
+  </label>
+  <span class="text-fl-body-sm text-fl-ink-muted">
+    Restrict which source addresses reach the cluster.
+  </span>
+</div>
+
+@if (throughTunnel()) {
+  <fl-alert
+    tone="info"
+    title="Reached through the Flui network"
+    data-testid="firewall-through-tunnel"
+  >
+    Your control cluster runs on a different provider ({{ controlProvider() }}) and reaches this
+    cluster through the Flui network, an encrypted tunnel: no port is opened for it on the public
+    network.
+  </fl-alert>
+}
+
+@if (managedRules().length > 0) {
+  <div class="flex flex-col gap-3">
+    <fl-alert tone="info" title="Required rules, managed by Flui">
+      Your control cluster runs on a different provider ({{ controlProvider() }}), so it reaches
+      this cluster over the public network. Flui opens these ports for your control cluster's
+      address and keeps them in sync. They cannot be edited or removed.
+    </fl-alert>
+    <div class="fl-table-wrap rounded-fl-lg border border-fl-border">
+      <table flTable density="dense">
+        <thead>
+          <tr>
+            <th scope="col">Rule</th>
+            <th scope="col">Protocol</th>
+            <th scope="col">Port</th>
+            <th scope="col">Direction</th>
+            <th scope="col">Source</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (rule of managedRules(); track rule.port) {
+            <tr>
+              <td class="font-medium">{{ rule.description }}</td>
+              <td class="fl-mono">{{ rule.protocol }}</td>
+              <td class="fl-mono">{{ rule.port }}</td>
+              <td class="fl-mono">{{ rule.direction }}</td>
+              <td>
+                {{ rule.source }}
+                <span class="text-fl-ink-muted">(public IP resolved by Flui)</span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+}
+
+@if (enabled()) {
+  <fl-alert tone="info" title="Workload cluster defaults">
+    Pre-configured with the default rules for K3s.
+    @if (userIp()) {
+      SSH on port 22 is open to your public IP.
+    } @else {
+      Your public IP could not be detected, so SSH on port 22 is open only to the control cluster.
+    }
+    Change any address or add rules as needed.
+  </fl-alert>
+
+  <div class="flex flex-col gap-3">
+    <h3 class="m-0 text-fl-body-sm font-semibold">Inbound and outbound rules</h3>
+
+    @for (row of rows(); track row.group) {
+      <fieldset
+        class="flex min-w-0 flex-col gap-3 rounded-fl-lg border border-fl-border p-4"
+        [attr.aria-label]="row.description"
+        [formGroup]="row.group"
+      >
+        @if (row.custom) {
+          <div class="flex items-start gap-3">
+            <div class="grid flex-1 grid-cols-1 gap-3 md:grid-cols-4">
+              <fl-field label="Description" [for]="'fw-description-' + row.index">
+                <div class="fl-input fl-input--lg">
+                  <input
+                    type="text"
+                    formControlName="description"
+                    placeholder="Custom rule"
+                    [id]="'fw-description-' + row.index"
+                  />
+                </div>
+              </fl-field>
+              <fl-field label="Protocol" [for]="'fw-protocol-' + row.index">
+                <span class="fl-select-wrap">
+                  <select
+                    class="fl-select"
+                    formControlName="protocol"
+                    [id]="'fw-protocol-' + row.index"
+                  >
+                    <option value="tcp">TCP</option>
+                    <option value="udp">UDP</option>
+                    <option value="icmp">ICMP</option>
+                  </select>
+                </span>
+              </fl-field>
+              <fl-field label="Port" [for]="'fw-port-' + row.index">
+                <div class="fl-input fl-input--lg">
+                  <input
+                    type="text"
+                    class="fl-mono"
+                    formControlName="port"
+                    placeholder="6443"
+                    [id]="'fw-port-' + row.index"
+                  />
+                </div>
+              </fl-field>
+              <fl-field label="Direction" [for]="'fw-direction-' + row.index">
+                <span class="fl-select-wrap">
+                  <select
+                    class="fl-select"
+                    formControlName="direction"
+                    [id]="'fw-direction-' + row.index"
+                    (change)="directionChange.emit(row.index)"
+                  >
+                    <option value="in">In</option>
+                    <option value="out">Out</option>
+                  </select>
+                </span>
+              </fl-field>
+            </div>
+            <button
+              flButton="ghost"
+              size="sm"
+              type="button"
+              class="mt-6"
+              [iconOnly]="true"
+              aria-label="Remove this rule"
+              title="Remove this rule"
+              (click)="removeRule.emit(row.index)"
+            >
+              <fl-icon name="lucideX" />
+            </button>
+          </div>
+        } @else {
+          <fl-key-value class="fl-kv--compact">
+            <fl-kv-item key="Description">{{ row.description }}</fl-kv-item>
+            <fl-kv-item key="Protocol" [mono]="true">{{ row.protocol }}</fl-kv-item>
+            <fl-kv-item key="Port" [mono]="true">{{ row.port }}</fl-kv-item>
+            <fl-kv-item key="Direction" [mono]="true">{{ row.direction }}</fl-kv-item>
+          </fl-key-value>
+        }
+
+        <fl-field
+          [label]="
+            row.outbound
+              ? 'Destination CIDRs'
+              : row.ssh
+                ? 'Source CIDRs (optional)'
+                : 'Source CIDRs'
+          "
+          [for]="'fw-ips-' + row.index"
+          [error]="row.error"
+          [hint]="
+            row.outbound
+              ? 'Where this cluster may send traffic. 0.0.0.0/0 allows every destination.'
+              : 'Who may reach this cluster. Comma-separated CIDR ranges, such as 192.168.1.0/24, 10.0.0.5/32.'
+          "
+        >
+          @if (row.outbound) {
+            <textarea
+              class="fl-textarea fl-mono"
+              rows="2"
+              formControlName="destinationIps"
+              placeholder="0.0.0.0/0"
+              [id]="'fw-ips-' + row.index"
+            ></textarea>
+          } @else {
+            <textarea
+              class="fl-textarea fl-mono"
+              rows="2"
+              formControlName="sourceIps"
+              placeholder="203.0.113.0/24, 198.51.100.42/32"
+              [id]="'fw-ips-' + row.index"
+            ></textarea>
+          }
+        </fl-field>
+
+        <div class="fl-row">
+          <button flButton="ghost" size="sm" type="button" (click)="resetIps.emit(row.index)">
+            Reset to defaults
+          </button>
+          @if (!row.outbound) {
+            <button
+              flButton="ghost"
+              size="sm"
+              type="button"
+              [disabled]="detecting()"
+              (click)="detectIp.emit(row.index)"
+            >
+              @if (detecting()) {
+                <fl-spinner label="Detecting" />
+              } @else {
+                <fl-icon name="lucideRefreshCw" />
+              }
+              Detect my IP
+            </button>
+            @if (userIp(); as ip) {
+              <span class="text-fl-body-sm text-fl-ink-muted">
+                Your detected IP: <span class="fl-mono">{{ ip }}</span>
+              </span>
+            }
+          }
+        </div>
+
+        @if (row.ssh) {
+          <p class="m-0 text-fl-body-sm text-fl-ink-muted">
+            Flui adds your control cluster's own address here: it manages this cluster over SSH, and
+            removing it would stall the install. Everything else is up to you.
+          </p>
+          @if (row.empty) {
+            <fl-alert tone="warning" title="Only the control cluster reaches these nodes over SSH">
+              Add your address to use flui ssh from this machine.
+            </fl-alert>
+          }
+        }
+      </fieldset>
+    }
+
+    <div>
+      <button flButton size="sm" type="button" (click)="addRule.emit()">
+        <fl-icon name="lucidePlus" />
+        Add custom rule
+      </button>
+    </div>
+  </div>
+} @else {
+  <fl-empty-state
+    [compact]="true"
+    title="Custom firewall rules are off"
+    body="Flui applies the default rules for this cluster type."
+  />
+}

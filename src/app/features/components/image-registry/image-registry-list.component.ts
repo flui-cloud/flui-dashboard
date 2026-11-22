@@ -1,31 +1,25 @@
-import {
-  Component,
-  OnDestroy,
-  OnInit,
-  inject,
-  signal,
-  computed,
-  effect,
-  ChangeDetectionStrategy,
-} from '@angular/core';
-
+import { Component, OnDestroy, OnInit, inject, signal, computed, effect } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideRefreshCw,
-  lucideLoader,
-  lucideSearch,
-  lucideRocket,
-  lucideTrash,
-  lucideCircleCheck,
-  lucideTriangleAlert,
-  lucideImage,
-  lucideInfo,
-} from '@ng-icons/lucide';
+import { RouterLink } from '@angular/router';
+import { provideIcons } from '@ng-icons/core';
+import { lucideImage, lucideRefreshCw, lucideSearch, lucideTag, lucideX } from '@ng-icons/lucide';
 import { ImageRegistryFeatureService } from '../../service/image-registry.service';
+import { ApplicationService } from '../../service/application.service';
 import { ImageResponseDto } from '../../../core/api/model/imageResponseDto';
 import { FluiTagManagerComponent } from './flui-tag-manager.component';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import { FlPageHeader } from '../../../ui/patterns/page-header';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlActionsMenu, MenuAction } from '../../../ui/overlays/actions-menu';
+import { ConfirmService } from '../../../ui/overlays/confirm';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlStatus } from '../../../ui/primitives/status';
+import { FlTag } from '../../../ui/primitives/tag';
+import { formatBytes } from '../../../shared/utils/metric-format';
 import {
   ImageRegistrySurfaceInput,
   ImageRegistrySurfaceRevision,
@@ -33,232 +27,50 @@ import {
   presentedContent as imageRegistryPresentedContent,
 } from './image-registry-surface';
 
+const VISIBLE_TAGS = 3;
+
+interface PendingAction {
+  kind: 'deploy' | 'delete';
+  imageId: string;
+  imageLabel: string;
+  title: string;
+  message: string;
+  typeToConfirm?: string;
+  action: () => Promise<void>;
+}
+
 @Component({
   selector: 'app-image-registry-list',
-  standalone: true,
-  imports: [FormsModule, NgIcon, FluiTagManagerComponent],
-  providers: [
-    provideIcons({
-      lucideRefreshCw,
-      lucideLoader,
-      lucideSearch,
-      lucideRocket,
-      lucideTrash,
-      lucideCircleCheck,
-      lucideTriangleAlert,
-      lucideImage,
-      lucideInfo,
-    }),
+  imports: [
+    FormsModule,
+    RouterLink,
+    FluiTagManagerComponent,
+    FlPageHeader,
+    FlPanel,
+    FlAlert,
+    FlTable,
+    FlEmptyState,
+    FlLoadingState,
+    FlActionsMenu,
+    FlButton,
+    FlIcon,
+    FlStatus,
+    FlTag,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
-  template: `
-    <div class="space-y-6 p-6">
-      <!-- Header -->
-      <div class="flex items-center justify-between">
-        <div>
-          <h1 class="text-2xl font-bold">Image Registry</h1>
-          <p class="text-sm text-muted-foreground mt-1">Manage container images built by Flui</p>
-        </div>
-        <button
-          (click)="refresh()"
-          [disabled]="service.loading()"
-          class="inline-flex items-center gap-2 px-4 py-2 border border-border rounded-md text-sm hover:bg-accent transition-colors disabled:opacity-50"
-        >
-          <ng-icon
-            name="lucideRefreshCw"
-            class="h-4 w-4"
-            [class.animate-spin]="service.loading()"
-          />
-          Refresh
-        </button>
-      </div>
-
-      <!-- Filters -->
-      <div class="flex gap-3">
-        <div class="relative flex-1 max-w-sm">
-          <ng-icon
-            name="lucideSearch"
-            class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
-          />
-          <input
-            type="text"
-            [(ngModel)]="searchQuery"
-            placeholder="Filter by image ref or branch..."
-            class="w-full pl-10 pr-3 py-2 border border-input rounded-md bg-background text-sm"
-          />
-        </div>
-        <input
-          type="text"
-          [(ngModel)]="tagFilter"
-          placeholder="Filter by tag..."
-          class="w-40 px-3 py-2 border border-input rounded-md bg-background text-sm"
-        />
-      </div>
-
-      <!-- Loading -->
-      @if (service.loading()) {
-        <div class="flex items-center justify-center py-12">
-          <ng-icon name="lucideLoader" class="h-6 w-6 animate-spin text-primary" />
-          <span class="ml-2 text-sm text-muted-foreground">Loading images...</span>
-        </div>
-      }
-
-      <!-- Table -->
-      @if (!service.loading()) {
-        @if (filteredImages().length === 0) {
-          <div class="text-center py-12">
-            <ng-icon name="lucideImage" class="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-            <h3 class="font-medium mb-1">No images found</h3>
-            <p class="text-sm text-muted-foreground">
-              Images will appear here after your first build.
-            </p>
-          </div>
-        } @else {
-          <div class="border border-border rounded-lg overflow-hidden">
-            <table class="w-full text-sm">
-              <thead class="bg-muted/50 text-left">
-                <tr>
-                  <th class="px-4 py-3 font-medium">Image</th>
-                  <th class="px-4 py-3 font-medium">Commit</th>
-                  <th class="px-4 py-3 font-medium">Branch</th>
-                  <th class="px-4 py-3 font-medium">Tags</th>
-                  <th class="px-4 py-3 font-medium">Date</th>
-                  <th class="px-4 py-3 font-medium text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-border">
-                @for (img of filteredImages(); track img.id) {
-                  <tr [class]="img.isCurrentlyDeployed ? 'bg-green-50/50' : ''">
-                    <td class="px-4 py-3">
-                      <div class="flex items-center gap-2">
-                        @if (img.isCurrentlyDeployed) {
-                          <span
-                            class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800"
-                          >
-                            <ng-icon name="lucideCircleCheck" class="h-3 w-3" /> Live
-                          </span>
-                        }
-                        <span
-                          class="font-mono text-xs truncate max-w-[200px]"
-                          [title]="img.imageRef"
-                        >
-                          {{ truncateRef(img.imageRef) }}
-                        </span>
-                      </div>
-                    </td>
-                    <td class="px-4 py-3 font-mono text-xs text-muted-foreground">
-                      {{ img.commitSha.slice(0, 7) }}
-                    </td>
-                    <td class="px-4 py-3 text-xs">{{ img.branch }}</td>
-                    <td class="px-4 py-3">
-                      <app-flui-tag-manager
-                        [tags]="img.fluiTags"
-                        (addTag)="onAddTag(img.id, $event)"
-                        (removeTag)="onRemoveTag(img.id, $event)"
-                      />
-                    </td>
-                    <td class="px-4 py-3 text-xs text-muted-foreground">
-                      {{ formatDate(img.createdAt) }}
-                    </td>
-                    <td class="px-4 py-3 text-right">
-                      <div class="flex items-center justify-end gap-1">
-                        <button
-                          (click)="onDeploy(img)"
-                          [disabled]="actionBusy()"
-                          class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs border border-border hover:bg-accent transition-colors disabled:opacity-50"
-                          title="Deploy this image"
-                        >
-                          <ng-icon name="lucideRocket" class="h-3 w-3" /> Deploy
-                        </button>
-                        <button
-                          (click)="onDelete(img)"
-                          [disabled]="actionBusy() || img.isCurrentlyDeployed"
-                          class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs border border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-colors disabled:opacity-50"
-                          [title]="
-                            img.isCurrentlyDeployed
-                              ? 'Cannot delete deployed image'
-                              : 'Delete image'
-                          "
-                        >
-                          <ng-icon name="lucideTrash" class="h-3 w-3" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        }
-      }
-
-      <!-- A refusal, said in the fence's own words and not painted as a fault -->
-      @if (service.refused()) {
-        <div
-          data-testid="image-registry-refused"
-          class="flex items-start gap-2 p-3 rounded-md border border-border bg-muted/40 text-sm text-muted-foreground"
-        >
-          <ng-icon name="lucideInfo" class="h-4 w-4 mt-0.5 flex-shrink-0" />
-          <span>{{ service.refusalMessage() ?? 'This is not part of the trial.' }}</span>
-        </div>
-      }
-
-      <!-- Error -->
-      @if (service.errorMessage()) {
-        <div
-          data-testid="image-registry-error"
-          class="p-3 rounded-md border border-destructive/20 bg-destructive/5 text-sm text-destructive"
-        >
-          {{ service.errorMessage() }}
-        </div>
-      }
-
-      <!-- Confirm Dialog -->
-      @if (confirmAction()) {
-        <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div class="bg-card border border-border rounded-lg p-6 max-w-sm w-full mx-4 space-y-4">
-            <h3 class="font-semibold">{{ confirmAction()!.title }}</h3>
-            <p class="text-sm text-muted-foreground">{{ confirmAction()!.message }}</p>
-            <div class="flex justify-end gap-2">
-              <button
-                (click)="confirmAction.set(null)"
-                class="px-3 py-1.5 text-sm border border-border rounded-md hover:bg-accent"
-              >
-                Cancel
-              </button>
-              <button
-                (click)="executeConfirmed()"
-                [disabled]="actionBusy()"
-                class="px-3 py-1.5 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-              >
-                @if (actionBusy()) {
-                  <ng-icon name="lucideLoader" class="h-3 w-3 animate-spin inline mr-1" />
-                }
-                Confirm
-              </button>
-            </div>
-          </div>
-        </div>
-      }
-    </div>
-  `,
+  providers: [provideIcons({ lucideRefreshCw, lucideSearch, lucideImage, lucideTag, lucideX })],
+  templateUrl: './image-registry-list.component.html',
 })
 export class ImageRegistryListComponent implements OnInit, OnDestroy {
   service = inject(ImageRegistryFeatureService);
+  private readonly applications = inject(ApplicationService);
+  private readonly confirmService = inject(ConfirmService);
 
   searchQuery = signal('');
   tagFilter = signal('');
   actionBusy = signal(false);
-  /** The dialog is always about ONE image; it now says which, so the page's own state
-   * answers "what is this dialog about" instead of that living only in the message string. */
-  confirmAction = signal<{
-    kind: 'deploy' | 'delete';
-    imageId: string;
-    imageLabel: string;
-    title: string;
-    message: string;
-    action: () => Promise<void>;
-  } | null>(null);
+  protected readonly actionError = signal<string | null>(null);
+  protected readonly tagImageId = signal<string | null>(null);
+  confirmAction = signal<PendingAction | null>(null);
 
   filteredImages = computed(() => {
     let images = this.service.images();
@@ -279,11 +91,24 @@ export class ImageRegistryListComponent implements OnInit, OnDestroy {
     return images;
   });
 
+  protected readonly hasFilters = computed(
+    () => this.searchQuery().trim() !== '' || this.tagFilter().trim() !== '',
+  );
+
+  protected readonly tagImage = computed(() => {
+    const id = this.tagImageId();
+    return id ? (this.service.images().find((i) => i.id === id) ?? null) : null;
+  });
+
+  private readonly appNames = computed(
+    () => new Map(this.applications.applications().map((a) => [a.id, a.name])),
+  );
+
+  protected readonly visibleTags = VISIBLE_TAGS;
+
   private readonly currentSurface = inject(CurrentSurfaceService);
   private readonly surfaceRevision = new ImageRegistrySurfaceRevision();
 
-  /** Reads `filteredImages()` — the rows on the screen — and the same truncation the table
-   * prints, never the full registry reference (playbook §5 and §6 point 4). */
   private readonly surfaceInput = computed<ImageRegistrySurfaceInput>(() => {
     const confirm = this.confirmAction();
     return {
@@ -318,8 +143,6 @@ export class ImageRegistryListComponent implements OnInit, OnDestroy {
   });
 
   constructor() {
-    // Publish this page's snapshot whenever it changes; ngOnDestroy clears it so it never
-    // outlives the page it describes.
     effect(() => {
       this.currentSurface.set(this.surface());
     });
@@ -339,7 +162,7 @@ export class ImageRegistryListComponent implements OnInit, OnDestroy {
     try {
       await this.service.loadImages();
     } catch {
-      /* error in service signal */
+      return;
     }
   }
 
@@ -358,11 +181,39 @@ export class ImageRegistryListComponent implements OnInit, OnDestroy {
     });
   }
 
+  protected formatSize(bytes: number | undefined): string {
+    return formatBytes(bytes);
+  }
+
+  protected appName(appId: string): string {
+    return this.appNames().get(appId) ?? appId.slice(0, 8);
+  }
+
+  protected rowActions(img: ImageResponseDto): MenuAction[] {
+    return [
+      { id: 'deploy', label: 'Deploy this image', disabled: this.actionBusy() },
+      { id: 'tags', label: 'Manage tags' },
+      {
+        id: 'delete',
+        label: img.isCurrentlyDeployed ? 'Cannot delete a deployed image' : 'Delete image',
+        danger: true,
+        separatorBefore: true,
+        disabled: this.actionBusy() || img.isCurrentlyDeployed,
+      },
+    ];
+  }
+
+  protected onRowAction(img: ImageResponseDto, id: string): void {
+    if (id === 'deploy') this.onDeploy(img);
+    else if (id === 'tags') this.tagImageId.set(img.id);
+    else if (id === 'delete') this.onDelete(img);
+  }
+
   async onAddTag(imageId: string, tag: string): Promise<void> {
     try {
       await this.service.addTag(imageId, tag);
     } catch {
-      /* ignore */
+      return;
     }
   }
 
@@ -370,48 +221,74 @@ export class ImageRegistryListComponent implements OnInit, OnDestroy {
     try {
       await this.service.removeTag(imageId, tag);
     } catch {
-      /* ignore */
+      return;
     }
   }
 
   onDeploy(img: ImageResponseDto): void {
-    this.confirmAction.set({
-      kind: 'deploy',
-      imageId: img.id,
-      imageLabel: this.truncateRef(img.imageRef),
-      title: 'Deploy Image',
-      message: `Deploy ${this.truncateRef(img.imageRef)} (${img.commitSha?.slice(0, 7)})? This will replace the currently running version.`,
-      action: async () => {
-        await this.service.deployImage(img.id);
-        await this.refresh();
+    void this.ask(
+      {
+        kind: 'deploy',
+        imageId: img.id,
+        imageLabel: this.truncateRef(img.imageRef),
+        title: 'Deploy image',
+        message: `Deploy ${this.truncateRef(img.imageRef)} (${img.commitSha?.slice(0, 7)})? This replaces the version running now.`,
+        action: async () => {
+          await this.service.deployImage(img.id);
+          await this.refresh();
+        },
       },
-    });
+      'Deploy',
+      false,
+    );
   }
 
   onDelete(img: ImageResponseDto): void {
     if (img.isCurrentlyDeployed) return;
-    this.confirmAction.set({
-      kind: 'delete',
-      imageId: img.id,
-      imageLabel: this.truncateRef(img.imageRef),
-      title: 'Delete Image',
-      message: `Permanently delete ${this.truncateRef(img.imageRef)}? This cannot be undone.`,
-      action: async () => {
-        await this.service.deleteImage(img.id);
+    void this.ask(
+      {
+        kind: 'delete',
+        imageId: img.id,
+        imageLabel: this.truncateRef(img.imageRef),
+        title: 'Delete image',
+        message: `Permanently delete ${this.truncateRef(img.imageRef)}? This cannot be undone.`,
+        typeToConfirm: img.imageRef.split('/').at(-1),
+        action: async () => {
+          await this.service.deleteImage(img.id);
+        },
       },
+      'Delete image',
+      true,
+    );
+  }
+
+  private async ask(pending: PendingAction, confirmLabel: string, destructive: boolean) {
+    this.confirmAction.set(pending);
+    const ok = await this.confirmService.confirm({
+      title: pending.title,
+      body: pending.message,
+      confirmLabel,
+      destructive,
+      typeToConfirm: pending.typeToConfirm,
     });
+    if (ok) await this.executeConfirmed();
+    else this.confirmAction.set(null);
   }
 
   async executeConfirmed(): Promise<void> {
     const action = this.confirmAction();
     if (!action) return;
     this.actionBusy.set(true);
+    this.actionError.set(null);
     try {
       await action.action();
-      this.confirmAction.set(null);
-    } catch {
-      /* error in service */
+    } catch (e: unknown) {
+      const server = (e as { error?: { message?: string } })?.error?.message;
+      this.actionError.set(
+        server ?? (action.kind === 'deploy' ? 'Deploy failed.' : 'Delete failed.'),
+      );
     } finally {
+      this.confirmAction.set(null);
       this.actionBusy.set(false);
     }
   }

@@ -1,61 +1,93 @@
-import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideFileText } from '@ng-icons/lucide';
+import { Component, computed, input, signal } from '@angular/core';
+import { FlTag } from '../../../ui/primitives/tag';
 import { EvidenceDto } from '../../../core/api/model/evidenceDto';
+import { evidenceHref } from './repo-map-view';
 
-/**
- * Renders the file:line a fact came from, and — one click away — the exact
- * excerpt that was read. `evidence` is the ground truth (file/line/excerpt);
- * `fallback` is used only for the DTOs that carry a citation as a plain
- * sentence instead (`DetectedNumberDto`/`DetectedStringDto`.source).
- */
 @Component({
   selector: 'app-citation-chip',
-  standalone: true,
-  imports: [NgIconComponent],
-  providers: [provideIcons({ lucideFileText })],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FlTag],
+  host: { class: 'inline-flex flex-col gap-1 whitespace-normal' },
   template: `
     @if (evidence().length > 0) {
-      <button
-        type="button"
-        (click)="expanded.set(!expanded())"
-        class="inline-flex items-center gap-1 font-mono text-[11px] text-slate-500 hover:text-slate-800 hover:underline"
-      >
-        <ng-icon name="lucideFileText" class="h-3 w-3" />
-        {{ citeText() }}
-      </button>
-      @if (expanded()) {
-        <div class="mt-1 space-y-1">
-          @for (e of evidence(); track $index) {
-            <div class="rounded bg-slate-100 px-2 py-1 font-mono text-[11px] text-slate-700">
-              {{ e.file }}{{ e.line ? ':' + e.line : '' }}
-              @if (e.excerpt) {
-                <span class="text-slate-500"> — {{ e.excerpt }}</span>
-              }
-            </div>
+      <span class="inline-flex flex-wrap items-center gap-1">
+        @if (baseUrl(); as base) {
+          <a
+            class="fl-tag font-mono hover:text-fl-ink"
+            [href]="href(base, evidence()[0])"
+            target="_blank"
+            rel="noopener"
+            [attr.title]="evidence()[0].excerpt || null"
+            >{{ headText() }}</a
+          >
+          @if (evidence().length > 1) {
+            <button
+              type="button"
+              class="fl-tag font-mono cursor-pointer hover:text-fl-ink"
+              [attr.aria-expanded]="expanded()"
+              [attr.aria-label]="'Show ' + (evidence().length - 1) + ' more citations'"
+              (click)="expanded.set(!expanded())"
+            >
+              +{{ evidence().length - 1 }}
+            </button>
           }
-        </div>
+        } @else {
+          <button
+            type="button"
+            class="fl-tag font-mono cursor-pointer hover:text-fl-ink"
+            [attr.aria-expanded]="expanded()"
+            (click)="expanded.set(!expanded())"
+          >
+            {{ citeText() }}
+          </button>
+        }
+      </span>
+      @if (expanded()) {
+        <ul class="flex flex-col gap-1">
+          @for (e of evidence(); track $index) {
+            <li class="fl-mono text-fl-caption text-fl-ink-secondary">
+              @if (baseUrl(); as base) {
+                <a class="fl-link" [href]="href(base, e)" target="_blank" rel="noopener">{{
+                  locate(e)
+                }}</a>
+              } @else {
+                {{ locate(e) }}
+              }
+              @if (e.excerpt) {
+                <span class="text-fl-ink-muted">{{ e.excerpt }}</span>
+              }
+            </li>
+          }
+        </ul>
       }
     } @else if (fallback()) {
-      <span class="inline-flex items-center gap-1 font-mono text-[11px] text-slate-500">
-        <ng-icon name="lucideFileText" class="h-3 w-3" />
-        {{ fallback() }}
-      </span>
+      <fl-tag class="font-mono">{{ fallback() }}</fl-tag>
     }
   `,
 })
 export class CitationChipComponent {
   readonly evidence = input<EvidenceDto[]>([]);
   readonly fallback = input<string | undefined>(undefined);
+  readonly baseUrl = input<string | null>(null);
 
   readonly expanded = signal(false);
+
+  readonly headText = computed(() => {
+    const first = this.evidence()[0];
+    return first ? this.locate(first) : '';
+  });
 
   readonly citeText = computed(() => {
     const list = this.evidence();
     if (list.length === 0) return '';
-    const first = list[0];
-    const head = first.line ? `${first.file}:${first.line}` : first.file;
+    const head = this.locate(list[0]);
     return list.length > 1 ? `${head} +${list.length - 1}` : head;
   });
+
+  protected locate(e: EvidenceDto): string {
+    return e.line ? `${e.file}:${e.line}` : e.file;
+  }
+
+  protected href(base: string, e: EvidenceDto): string {
+    return evidenceHref(base, e);
+  }
 }

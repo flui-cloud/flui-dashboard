@@ -1,20 +1,12 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  effect,
-  inject,
-  input,
-  model,
-  output,
-  signal,
-} from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideLoader, lucideShieldCheck } from '@ng-icons/lucide';
+import { Component, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { HaPlanResponseDto } from '../../../core/api/model/haPlanResponseDto';
 import { HaPlanServerDto } from '../../../core/api/model/haPlanServerDto';
 import { ClusterService } from '../../service/cluster.service';
 import { PricingService } from '../../../shared/services/pricing.service';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlStatus } from '../../../ui/primitives/status';
 import {
   ProviderWizardService,
   ServerTypeOption,
@@ -65,158 +57,160 @@ interface PlanAnswer {
 
 @Component({
   selector: 'cluster-availability-choice',
-  standalone: true,
-  imports: [NgIcon],
-  providers: [provideIcons({ lucideLoader, lucideShieldCheck })],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FlAlert, FlButton, FlStatus, FlTable],
   template: `
     @if (visible()) {
-      <div class="border-t pt-6" data-testid="availability-choice">
-        <h3 class="font-medium mb-4 flex items-center">
-          <ng-icon name="lucideShieldCheck" class="h-5 w-5 mr-2" />
-          Availability
-        </h3>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-3xl">
-          <button
-            type="button"
-            (click)="choose('standard')"
-            [class]="cardClass(!highlyAvailable())"
-            data-testid="availability-standard"
-          >
-            <span class="font-medium">Standard</span>
-            <span class="mt-1 text-xs text-muted-foreground">Servers in one location</span>
-          </button>
-          <button
-            type="button"
-            (click)="choose('three-locations')"
-            [class]="cardClass(highlyAvailable())"
-            data-testid="availability-three-locations"
-          >
-            <span class="font-medium">High availability · three locations</span>
-            <span class="mt-1 text-xs text-muted-foreground"
-              >Keeps running if a location goes down</span
-            >
-          </button>
+      <fieldset
+        class="fl-fieldset border-t border-fl-border pt-4"
+        data-testid="availability-choice"
+      >
+        <legend>Availability</legend>
+        <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <label class="fl-radiocard" data-testid="availability-standard">
+            <input
+              type="radio"
+              name="cluster-availability"
+              [checked]="!highlyAvailable()"
+              (change)="choose('standard')"
+            />
+            <span class="fl-radiocard__text">
+              <span class="fl-radiocard__title">Standard</span>
+              <span class="fl-radiocard__desc">Servers in one location</span>
+            </span>
+          </label>
+          <label class="fl-radiocard" data-testid="availability-three-locations">
+            <input
+              type="radio"
+              name="cluster-availability"
+              [checked]="highlyAvailable()"
+              (change)="choose('three-locations')"
+            />
+            <span class="fl-radiocard__text">
+              <span class="fl-radiocard__title">High availability, three locations</span>
+              <span class="fl-radiocard__desc">Keeps running if a location goes down</span>
+            </span>
+          </label>
         </div>
 
         @if (highlyAvailable()) {
-          <div class="mt-4 space-y-4 max-w-3xl">
+          <div class="flex flex-col gap-4">
             @if (fallbackCandidates().length > 0) {
-              <div>
-                <p class="text-sm font-medium">
+              <div class="flex flex-col gap-2">
+                <span class="text-fl-body-sm font-medium">
                   Other sizes to try, in order
-                  <span class="text-muted-foreground font-normal">(optional)</span>
-                </p>
-                <div class="flex flex-wrap gap-2 mt-2" data-testid="ha-fallbacks">
+                  <span class="font-normal text-fl-ink-muted">(optional)</span>
+                </span>
+                <div class="fl-row gap-4" data-testid="ha-fallbacks">
                   @for (size of fallbackCandidates(); track size.id) {
-                    <button
-                      type="button"
-                      (click)="toggleFallback(size.id)"
-                      [class]="chipClass(fallbackOrder(size.id) > 0)"
-                      [attr.data-testid]="'ha-fallback-' + size.id"
-                    >
+                    <label class="fl-check">
+                      <input
+                        type="checkbox"
+                        [checked]="fallbackOrder(size.id) > 0"
+                        [attr.data-testid]="'ha-fallback-' + size.id"
+                        (change)="toggleFallback(size.id)"
+                      />
+                      <span class="fl-mono">{{ size.name }}</span>
                       @if (fallbackOrder(size.id) > 0) {
-                        <span class="font-semibold">{{ fallbackOrder(size.id) }}</span>
+                        <span class="fl-num text-fl-ink-muted">{{ fallbackOrder(size.id) }}</span>
                       }
-                      {{ size.name }}
-                    </button>
+                    </label>
                   }
                 </div>
               </div>
             }
 
             @if (loading()) {
-              <div class="flex items-center gap-2 text-sm text-muted-foreground">
-                <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
-                Checking the three locations…
-              </div>
+              <fl-status tone="progress" label="Checking the three locations" />
             } @else if (plan(); as p) {
               @if (p.possible) {
-                <ul
-                  class="rounded-lg border border-border divide-y divide-border text-sm"
-                  data-testid="ha-plan"
-                >
-                  @for (server of p.servers; track server.zone) {
-                    <li
-                      class="grid grid-cols-3 items-center gap-3 px-3 py-2"
-                      data-testid="ha-plan-server"
-                    >
-                      <span class="flex items-center gap-2">
-                        <span class="font-mono">{{ server.zone }}</span>
-                        @if (server.first) {
-                          <span
-                            class="text-[11px] px-1.5 py-0.5 rounded bg-primary/10 text-primary"
-                            data-testid="ha-plan-first"
-                            >first</span
-                          >
-                        }
-                      </span>
-                      <span class="text-muted-foreground">{{
-                        server.role === 'data' ? 'copies of data' : 'votes'
-                      }}</span>
-                      <span class="font-mono text-right">{{ server.shape }}</span>
-                    </li>
-                  }
-                  @for (zone of p.later; track zone) {
-                    <li
-                      class="grid grid-cols-3 items-center gap-3 px-3 py-2"
-                      data-testid="ha-plan-later"
-                    >
-                      <span class="font-mono">{{ zone }}</span>
-                      <span class="col-span-2 text-amber-600">added later</span>
-                    </li>
-                  }
-                </ul>
+                <div class="fl-table-wrap rounded-fl-lg border border-fl-border">
+                  <table flTable density="dense" data-testid="ha-plan">
+                    <thead>
+                      <tr>
+                        <th scope="col">Location</th>
+                        <th scope="col">Role</th>
+                        <th scope="col">Size</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (server of p.servers; track server.zone) {
+                        <tr data-testid="ha-plan-server">
+                          <td>
+                            <span class="fl-mono">{{ server.zone }}</span>
+                            @if (server.first) {
+                              <span class="ml-2 text-fl-ink-muted" data-testid="ha-plan-first"
+                                >Joins first</span
+                              >
+                            }
+                          </td>
+                          <td>
+                            {{ server.role === 'data' ? 'Holds copies of data' : 'Only votes' }}
+                          </td>
+                          <td class="fl-mono">{{ server.shape }}</td>
+                        </tr>
+                      }
+                      @for (zone of p.later; track zone) {
+                        <tr data-testid="ha-plan-later">
+                          <td class="fl-mono">{{ zone }}</td>
+                          <td colspan="2"><fl-status tone="warning" label="Added later" /></td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
                 @if (p.measured === false) {
-                  <p class="text-xs text-muted-foreground" data-testid="ha-plan-unmeasured">
+                  <p class="m-0 text-fl-body-sm text-fl-ink-muted" data-testid="ha-plan-unmeasured">
                     The provider declares these as close zones of one region; Flui has not measured
                     them yet.
                   </p>
                 }
                 @if (monthlyCost(); as cost) {
-                  <p class="text-xs text-muted-foreground" data-testid="ha-plan-cost">
+                  <p
+                    class="m-0 fl-num text-fl-body-sm text-fl-ink-muted"
+                    data-testid="ha-plan-cost"
+                  >
                     ~€{{ cost }}/month for {{ p.servers.length }} servers
                   </p>
                 }
               } @else {
-                <p class="text-sm text-red-600" role="alert" data-testid="ha-refusal">
-                  {{ p.refusal }}
-                </p>
+                <fl-alert tone="error" title="Three locations are not possible with these sizes">
+                  <span data-testid="ha-refusal">{{ p.refusal }}</span>
+                </fl-alert>
               }
               @if (p.completeLaterHelps || completeLater()) {
-                <label class="flex items-center gap-2 text-sm cursor-pointer select-none">
+                <label class="fl-check">
                   <input
                     type="checkbox"
+                    data-testid="ha-complete-later"
                     [checked]="completeLater()"
                     (change)="setCompleteLater($any($event.target).checked)"
-                    class="h-4 w-4 rounded border-input"
-                    data-testid="ha-complete-later"
                   />
                   Create in the locations that have it and add the rest later
                 </label>
               }
             }
 
-            <div>
+            <div class="flex flex-col items-start gap-1">
               <button
+                flButton="ghost"
+                size="sm"
                 type="button"
+                [attr.aria-expanded]="showWhy()"
                 (click)="showWhy.set(!showWhy())"
-                class="text-xs text-blue-600 hover:underline"
               >
                 {{ showWhy() ? 'Hide details' : 'Why three locations?' }}
               </button>
               @if (showWhy()) {
-                <p class="mt-1 text-xs text-muted-foreground leading-relaxed">
-                  One server in each location, joined one at a time. Each location marked copies of
-                  data keeps one copy of your data, any other only votes, so the cluster keeps
+                <p class="m-0 text-fl-body-sm text-fl-ink-muted">
+                  One server in each location, joined one at a time. A location that holds copies of
+                  data keeps one copy of your data, the others only vote, so the cluster keeps
                   working when one location is lost. Add more servers once it is ready.
                 </p>
               }
             </div>
           </div>
         }
-      </div>
+      </fieldset>
     }
   `,
 })
@@ -371,20 +365,6 @@ export class ClusterAvailabilityChoiceComponent {
 
   setCompleteLater(completeLater: boolean): void {
     this.draft.update((d) => ({ ...d, completeLater }));
-  }
-
-  cardClass(active: boolean): string {
-    const base =
-      'flex flex-col items-start rounded-lg border p-4 text-left transition w-full hover:bg-accent/40';
-    return active ? `${base} border-primary bg-primary/5` : `${base} border-border`;
-  }
-
-  chipClass(active: boolean): string {
-    const base =
-      'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-mono transition-colors';
-    return active
-      ? `${base} border-primary bg-primary/10 text-foreground`
-      : `${base} border-border text-muted-foreground hover:text-foreground hover:border-foreground/30`;
   }
 
   private sizeFor(zone: string, shape: string): ServerTypeOption | undefined {

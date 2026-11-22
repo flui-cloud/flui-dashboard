@@ -1,0 +1,194 @@
+<fieldset class="fl-fieldset">
+  <legend>Region</legend>
+  <p class="m-0 text-fl-body-sm text-fl-ink-muted">
+    Prices vary by region. Pick the cheapest one that has the size you need.
+  </p>
+
+  @if (wizardService.isRegionLoading()) {
+    <fl-loading-state [rows]="2" />
+  }
+
+  @if (wizardService.serverTypeError() && !wizardService.isServerTypeLoading()) {
+    <fl-alert tone="error" title="Could not load node sizes">
+      {{ wizardService.serverTypeError() }}
+    </fl-alert>
+  }
+
+  <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    @for (region of regions(); track region.id) {
+      <label
+        class="fl-radiocard"
+        [class.cursor-not-allowed]="!isRegionSelectable(region)"
+        [class.text-fl-ink-muted]="!isRegionSelectable(region)"
+      >
+        <input
+          type="radio"
+          name="cluster-region"
+          [checked]="selectedRegion() === region.id"
+          [disabled]="!isRegionSelectable(region)"
+          (change)="selectRegion(region)"
+        />
+        <span class="fl-radiocard__text">
+          <span class="fl-radiocard__title">{{ region.name }}</span>
+          @if (cheapestByRegion()[region.id] !== undefined) {
+            <span class="fl-radiocard__desc fl-num">
+              from €{{ pricingService.formatMonthlyPrice(cheapestByRegion()[region.id]) }}/mo
+            </span>
+          } @else {
+            <span class="fl-radiocard__desc">Unavailable</span>
+          }
+        </span>
+      </label>
+    }
+  </div>
+</fieldset>
+
+<fieldset class="fl-fieldset">
+  <legend>
+    Node size
+    @if (selectedRegionName()) {
+      <span class="font-normal text-fl-ink-muted">in {{ selectedRegionName() }}</span>
+    }
+  </legend>
+
+  <div class="fl-row justify-between">
+    <fieldset class="fl-segmented">
+      <legend class="fl-sr">CPU type</legend>
+      <button
+        type="button"
+        [attr.aria-pressed]="cpuTypeFilter() === 'all'"
+        (click)="setCpuTypeFilter('all')"
+      >
+        All
+      </button>
+      <button
+        type="button"
+        [attr.aria-pressed]="cpuTypeFilter() === 'shared'"
+        (click)="setCpuTypeFilter('shared')"
+      >
+        Shared
+      </button>
+      <button
+        type="button"
+        [attr.aria-pressed]="cpuTypeFilter() === 'dedicated'"
+        (click)="setCpuTypeFilter('dedicated')"
+      >
+        Dedicated
+      </button>
+    </fieldset>
+    <span class="fl-num text-fl-body-sm text-fl-ink-muted">
+      {{ filteredServerTypes().length }} sizes
+    </span>
+  </div>
+
+  @if (!selectedRegion()) {
+    <fl-empty-state
+      [compact]="true"
+      title="No region selected"
+      body="Select a region above to see its node sizes."
+    />
+  } @else if (wizardService.isServerTypeLoading()) {
+    <fl-loading-state [rows]="4" />
+  } @else if (filteredServerTypes().length === 0) {
+    <fl-empty-state
+      [compact]="true"
+      [title]="'No node sizes match this filter in ' + selectedRegionName()"
+    />
+  } @else {
+    <div class="fl-table-wrap rounded-fl-lg border border-fl-border">
+      <table flTable density="dense">
+        <thead>
+          <tr>
+            <th scope="col">Size</th>
+            <th scope="col">CPU</th>
+            <th scope="col" class="is-num">vCPU</th>
+            <th scope="col" class="is-num">RAM</th>
+            <th scope="col" class="is-num">Disk</th>
+            <th scope="col" class="is-num">Monthly</th>
+            <th scope="col" class="is-num">Hourly</th>
+            <th scope="col">Also in</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (serverType of displayedServerTypes(); track serverType.id) {
+            <tr
+              [class.is-selected]="selectedServerTypeId() === serverType.id"
+              [class.cursor-pointer]="isSelectable(serverType)"
+              [class.text-fl-ink-muted]="!isSelectable(serverType)"
+              (click)="selectServerType(serverType)"
+              (keydown.enter)="$event.preventDefault(); selectServerType(serverType)"
+            >
+              <td>
+                <button
+                  type="button"
+                  class="fl-row cursor-pointer border-0 bg-transparent p-0 text-left disabled:cursor-not-allowed"
+                  [disabled]="!isSelectable(serverType)"
+                  [attr.title]="cardTitle(serverType)"
+                  [attr.aria-pressed]="selectedServerTypeId() === serverType.id"
+                  [attr.data-testid]="'server-type-' + serverType.id"
+                >
+                  <span
+                    class="fl-mono"
+                    [class.fl-link]="isSelectable(serverType)"
+                    [class.font-semibold]="selectedServerTypeId() === serverType.id"
+                    >{{ serverType.name }}</span
+                  >
+                  @if (architectureLabel(serverType.architecture); as arch) {
+                    <span
+                      class="text-fl-body-sm text-fl-ink-muted"
+                      data-testid="architecture-badge"
+                      [attr.title]="'CPU architecture: ' + arch"
+                      >{{ arch }}</span
+                    >
+                  }
+                  @if (!serverType.managedFirewall) {
+                    <span class="text-fl-body-sm text-fl-ink-muted">No managed firewall</span>
+                  }
+                </button>
+              </td>
+              <td>{{ serverType.cpuType === 'dedicated' ? 'Dedicated' : 'Shared' }}</td>
+              <td class="is-num">{{ serverType.vcpu }}</td>
+              <td class="is-num">{{ serverType.ram }} GB</td>
+              <td class="is-num">
+                {{ serverType.storageType === 'local' ? serverType.disk + ' GB' : 'Network' }}
+              </td>
+              <td class="is-num fl-mono">
+                ~€{{ pricingService.formatMonthlyPrice(serverType.pricePerHour) }}
+              </td>
+              <td class="is-num fl-mono text-fl-ink-muted">
+                €{{ serverType.pricePerHour.toFixed(4) }}
+              </td>
+              <td class="text-fl-ink-muted">
+                <span class="fl-cell-clip" [attr.title]="otherRegionNames(serverType).join(', ')">{{
+                  otherRegionNames(serverType).join(', ')
+                }}</span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (selectedArchitectureWarning(); as warning) {
+      <fl-alert tone="warning" title="Arm server">
+        <span data-testid="architecture-warning">{{ warning }}</span>
+      </fl-alert>
+    }
+
+    @if (hiddenServerTypeCount() > 0) {
+      <div>
+        @if (!isShowingAll()) {
+          <button flButton="ghost" size="sm" type="button" (click)="showAllSizes.set(true)">
+            Show all {{ filteredServerTypes().length }} sizes
+            <fl-icon name="lucideChevronDown" />
+          </button>
+        } @else if (showAllSizes()) {
+          <button flButton="ghost" size="sm" type="button" (click)="showAllSizes.set(false)">
+            Show fewer sizes
+            <fl-icon name="lucideChevronUp" />
+          </button>
+        }
+      </div>
+    }
+  }
+</fieldset>

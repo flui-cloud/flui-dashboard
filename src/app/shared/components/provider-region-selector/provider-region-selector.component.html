@@ -1,0 +1,200 @@
+@if (currentStep() === 1) {
+  @if (wizardService.isProviderLoading()) {
+    <fl-loading-state [rows]="3" />
+  } @else if (wizardService.providerError()) {
+    <fl-alert tone="error" title="Could not load providers">
+      {{ wizardService.providerError() }}
+    </fl-alert>
+  } @else {
+    @if (lockedProvider()) {
+      <fl-alert tone="info" title="Provider set by the control cluster">
+        Workloads must run on the same provider as the control cluster.
+      </fl-alert>
+    }
+    @if (!hasConfiguredProvider()) {
+      <fl-alert tone="warning" title="No provider connected" data-testid="no-provider-configured">
+        Connect one to create a cluster.
+        <a alertActions flButton size="sm" routerLink="/management/providers">Providers</a>
+      </fl-alert>
+    }
+    <div
+      class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3"
+      role="radiogroup"
+      aria-label="Cloud provider"
+    >
+      @for (provider of wizardService.providersData(); track provider.id) {
+        <label
+          class="fl-radiocard"
+          [class.cursor-not-allowed]="isProviderDisabled(provider)"
+          [class.text-fl-ink-muted]="isProviderDisabled(provider)"
+        >
+          <input
+            type="radio"
+            name="wizard-provider"
+            [checked]="selectedProvider() === provider.id"
+            [disabled]="isProviderDisabled(provider)"
+            (change)="selectProvider(provider.id)"
+          />
+          <span class="fl-radiocard__text">
+            <span class="fl-radiocard__title">{{ provider.name }}</span>
+            <span class="fl-radiocard__desc fl-num">{{ provider.regions }} regions</span>
+            @if (provider.comingSoon) {
+              <span class="fl-radiocard__desc">Coming soon</span>
+            } @else if (!provider.configured) {
+              <span class="fl-radiocard__desc">
+                Not connected.
+                <a
+                  class="fl-link"
+                  [routerLink]="['/management/providers']"
+                  [queryParams]="{ configure: provider.id }"
+                  [attr.data-testid]="'connect-provider-' + provider.id"
+                  >Connect {{ provider.name }}</a
+                >
+              </span>
+            }
+          </span>
+        </label>
+      }
+    </div>
+  }
+}
+
+@if (currentStep() === 2) {
+  @if (wizardService.isRegionLoading()) {
+    <fl-loading-state [rows]="3" />
+  } @else if (wizardService.regionError()) {
+    <fl-alert tone="error" title="Could not load regions">
+      {{ wizardService.regionError() }}
+    </fl-alert>
+  } @else {
+    <div
+      class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3"
+      role="radiogroup"
+      aria-label="Region"
+    >
+      @for (region of regions(); track region.id) {
+        <label
+          class="fl-radiocard"
+          [class.cursor-not-allowed]="!region.available"
+          [class.text-fl-ink-muted]="!region.available"
+        >
+          <input
+            type="radio"
+            name="wizard-region"
+            [checked]="selectedRegion() === region.id"
+            [disabled]="!region.available"
+            (change)="selectRegion(region.id)"
+          />
+          <span class="fl-radiocard__text">
+            <span class="fl-radiocard__title">{{ region.name }}</span>
+            <span class="fl-radiocard__desc">{{ region.country }}</span>
+          </span>
+        </label>
+      }
+    </div>
+  }
+}
+
+@if (currentStep() === 3) {
+  <div class="fl-row justify-between">
+    <fieldset class="fl-segmented">
+      <legend class="fl-sr">CPU type</legend>
+      <button
+        type="button"
+        [attr.aria-pressed]="cpuTypeFilter() === 'all'"
+        (click)="setCpuTypeFilter('all')"
+      >
+        All
+      </button>
+      <button
+        type="button"
+        [attr.aria-pressed]="cpuTypeFilter() === 'shared'"
+        (click)="setCpuTypeFilter('shared')"
+      >
+        Shared
+      </button>
+      <button
+        type="button"
+        [attr.aria-pressed]="cpuTypeFilter() === 'dedicated'"
+        (click)="setCpuTypeFilter('dedicated')"
+      >
+        Dedicated
+      </button>
+    </fieldset>
+    <span class="fl-num text-fl-body-sm text-fl-ink-muted"
+      >{{ filteredServerTypes().length }} sizes</span
+    >
+  </div>
+
+  @if (wizardService.isServerTypeLoading()) {
+    <fl-loading-state [rows]="4" />
+  } @else if (wizardService.serverTypeError()) {
+    <fl-alert tone="error" title="Could not load server types">
+      {{ wizardService.serverTypeError() }}
+    </fl-alert>
+  } @else if (filteredServerTypes().length === 0) {
+    <fl-empty-state [compact]="true" title="No server types match this filter" />
+  } @else {
+    <div class="fl-table-wrap max-h-72 overflow-y-auto rounded-fl-lg border border-fl-border">
+      <table flTable density="dense">
+        <thead>
+          <tr>
+            <th scope="col">Size</th>
+            <th scope="col">Architecture</th>
+            <th scope="col">CPU</th>
+            <th scope="col" class="is-num">vCPU</th>
+            <th scope="col" class="is-num">RAM</th>
+            <th scope="col" class="is-num">Disk</th>
+            <th scope="col">Firewall</th>
+            <th scope="col" class="is-num">Monthly</th>
+            <th scope="col" class="is-num">Hourly</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (serverType of filteredServerTypes(); track serverType.id) {
+            <tr
+              [class.is-selected]="selectedServerTypeId() === serverType.id"
+              [class.cursor-pointer]="isSelectable(serverType)"
+              [class.text-fl-ink-muted]="!isSelectable(serverType)"
+              [attr.title]="architectureWarning(serverType.architecture)"
+              (click)="isSelectable(serverType) && selectServerType(serverType.id)"
+              (keydown.enter)="
+                $event.preventDefault(); isSelectable(serverType) && selectServerType(serverType.id)
+              "
+            >
+              <td>
+                <button
+                  type="button"
+                  class="fl-link fl-mono cursor-pointer border-0 bg-transparent p-0 text-left disabled:cursor-not-allowed disabled:text-fl-ink-muted"
+                  [disabled]="!isSelectable(serverType)"
+                  [attr.aria-pressed]="selectedServerTypeId() === serverType.id"
+                >
+                  {{ serverType.name }}
+                </button>
+              </td>
+              <td>{{ architectureLabel(serverType.architecture) }}</td>
+              <td>{{ serverType.cpuType === 'dedicated' ? 'Dedicated' : 'Shared' }}</td>
+              <td class="is-num">{{ serverType.vcpu }}</td>
+              <td class="is-num">{{ serverType.ram }} GB</td>
+              <td class="is-num">
+                {{ serverType.storageType === 'local' ? serverType.disk + ' GB' : 'Network' }}
+              </td>
+              <td>{{ serverType.managedFirewall ? 'Managed' : 'None' }}</td>
+              <td class="is-num fl-mono">
+                ~€{{ pricingService.formatMonthlyPrice(serverType.pricePerHour) }}
+              </td>
+              <td class="is-num fl-mono text-fl-ink-muted">
+                €{{ serverType.pricePerHour.toFixed(4) }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+  @if (selectedArchitectureWarning(); as warning) {
+    <fl-alert tone="warning" title="Arm server">
+      <span data-testid="architecture-warning">{{ warning }}</span>
+    </fl-alert>
+  }
+}

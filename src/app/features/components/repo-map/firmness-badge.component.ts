@@ -1,20 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
 
 export type FirmnessLevel = 'declared' | 'derived' | 'circumstantial';
 
 @Component({
   selector: 'app-firmness-badge',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <span
-      class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-medium leading-none"
-      [class]="classes()"
-      [attr.title]="hint()"
-    >
-      {{ label() }}
-    </span>
-  `,
+  imports: [FlStatus],
+  host: { class: 'inline-flex', '[attr.title]': 'hint()' },
+  template: `<fl-status [tone]="tone()" [label]="label()" />`,
 })
 export class FirmnessBadgeComponent {
   readonly level = input.required<FirmnessLevel>();
@@ -22,33 +15,24 @@ export class FirmnessBadgeComponent {
   readonly label = computed(() => {
     switch (this.level()) {
       case 'declared':
-        return 'declared';
+        return 'Declared';
       case 'derived':
-        return 'derived';
+        return 'Derived';
       default:
-        return 'circumstantial';
+        return 'Circumstantial';
     }
   });
 
   readonly hint = computed(() => {
     switch (this.level()) {
       case 'declared':
-        return 'The repository states this directly (a Dockerfile line, a config key, a lockfile entry).';
+        return 'The repository states this directly: a Dockerfile line, a config key, a lockfile entry.';
       case 'derived':
         return 'Computed from other declared facts, not read directly.';
       default:
-        return 'A weak signal — a library import, a filename pattern. Worth checking before you trust it.';
+        return 'A weak signal, such as a library import or a filename pattern. Check it before you trust it.';
     }
   });
 
-  readonly classes = computed(() => {
-    switch (this.level()) {
-      case 'declared':
-        return 'bg-emerald-100 text-emerald-800';
-      case 'derived':
-        return 'bg-sky-100 text-sky-800';
-      default:
-        return 'bg-amber-50 text-amber-800 border border-dashed border-amber-400';
-    }
-  });
+  readonly tone = computed<StatusTone>(() => (this.level() === 'declared' ? 'success' : 'warning'));
 }

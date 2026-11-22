@@ -1,31 +1,18 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnDestroy,
-  computed,
-  effect,
-  inject,
-  signal,
-} from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { Component, OnDestroy, computed, effect, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { FormsModule } from '@angular/forms';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideSearch,
-  lucideStore,
-  lucideSparkles,
-  lucideX,
-  lucideRefreshCw,
-  lucideCircleAlert,
-  lucideChevronDown,
-  lucideChevronUp,
-  lucideArrowLeft,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideRefreshCw, lucideStore } from '@ng-icons/lucide';
 import { CatalogService } from '../../service/catalog.service';
 import { SandboxService } from '../../../core/services/sandbox.service';
+import { InstallPromptService } from '../../../core/services/install-prompt.service';
 import { CatalogResponseDto } from '../../../core/api/model/models';
-import { CatalogCardComponent } from './catalog-card.component';
+import { FlPageHeader } from '../../../ui/patterns/page-header';
+import { Crumb } from '../../../ui/patterns/breadcrumb';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlEmptyState, FlErrorState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
 import {
   CatalogScope,
   CatalogSection,
@@ -43,6 +30,9 @@ import {
   buildCatalogListSurface,
   presentedContent as catalogListPresentedContent,
 } from './catalog-list-surface';
+import { CatalogListToolbar } from './catalog-list-toolbar';
+import { CatalogListTable, CatalogRow, CatalogRowGroup } from './catalog-list-table';
+import { installQueryParams } from './catalog-view';
 
 const SHOW_SYSTEM_APPS_KEY = 'sidebar:showSystemApps';
 
@@ -54,266 +44,84 @@ interface CatalogSectionGroup {
 
 @Component({
   selector: 'app-catalog-list',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, NgIcon, CatalogCardComponent, RouterLink],
-  providers: [
-    provideIcons({
-      lucideSearch,
-      lucideStore,
-      lucideSparkles,
-      lucideX,
-      lucideRefreshCw,
-      lucideCircleAlert,
-      lucideChevronDown,
-      lucideChevronUp,
-      lucideArrowLeft,
-    }),
+  imports: [
+    FlPageHeader,
+    FlPanel,
+    FlEmptyState,
+    FlErrorState,
+    FlLoadingState,
+    FlButton,
+    FlIcon,
+    CatalogListToolbar,
+    CatalogListTable,
   ],
+  providers: [provideIcons({ lucideRefreshCw, lucideStore })],
   template: `
-    <div class="mx-auto max-w-7xl space-y-8 p-6">
-      <!-- Hero banner -->
-      <section
-        class="relative overflow-hidden rounded-fl-lg border border-border bg-fl-surface p-8"
+    <div class="fl-page">
+      <fl-page-header
+        [title]="heroTitle() + ' (' + availableCount() + ')'"
+        [breadcrumb]="breadcrumb()"
       >
-        <div class="relative flex flex-col gap-2">
-          @if (backLink(); as link) {
-            <a
-              [routerLink]="link"
-              class="inline-flex w-fit items-center gap-1 text-xs font-medium text-primary hover:text-primary/80"
-            >
-              <ng-icon name="lucideArrowLeft" class="h-3.5 w-3.5" />
-              <span>Back</span>
-            </a>
-          }
-          <div class="flex items-center gap-2 text-primary">
-            <span class="text-xs font-semibold uppercase tracking-wider">App Marketplace</span>
-          </div>
-          <h1 class="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-            {{ heroTitle() }}
-          </h1>
-          <p class="max-w-2xl text-sm text-muted-foreground md:text-base">
-            {{ heroSubtitle() }}
-          </p>
-        </div>
+        <span headerMeta>{{ heroSubtitle() }}</span>
+        <ng-container headerActions>
+          <button
+            flButton
+            type="button"
+            [iconOnly]="true"
+            aria-label="Refresh"
+            [disabled]="catalog.listLoading()"
+            (click)="reload()"
+          >
+            <fl-icon name="lucideRefreshCw" />
+          </button>
+        </ng-container>
+      </fl-page-header>
 
-        <div
-          class="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-primary/10 blur-3xl"
-          aria-hidden="true"
-        ></div>
-        <div
-          class="pointer-events-none absolute -bottom-20 right-12 h-48 w-48 rounded-full bg-indigo-500/10 blur-3xl"
-          aria-hidden="true"
-        ></div>
-      </section>
-
-      <!-- Search + filters -->
-      <section class="space-y-4">
-        <div class="relative">
-          <ng-icon
-            name="lucideSearch"
-            class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-          />
-          <input
-            type="search"
-            placeholder='Search apps — try "password manager" or "analytics"...'
-            [(ngModel)]="searchQuery"
-            class="w-full rounded-lg border border-border bg-background py-3 pl-10 pr-10 text-sm
-                   text-foreground placeholder:text-muted-foreground
-                   focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-          />
-          @if (searchQuery()) {
-            <button
-              type="button"
-              (click)="clearSearch()"
-              class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              aria-label="Clear search"
-            >
-              <ng-icon name="lucideX" class="h-4 w-4" />
-            </button>
-          }
-        </div>
-
-        @if (categories().length > 0) {
-          <div class="space-y-2">
-            <div class="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Categories
-            </div>
-            <div class="flex flex-wrap gap-2">
-              <button
-                type="button"
-                (click)="setCategory(null)"
-                [class]="chipClass(activeCategory() === null)"
-              >
-                All
-              </button>
-              @for (cat of categories(); track cat) {
-                <button
-                  type="button"
-                  (click)="setCategory(cat)"
-                  [class]="chipClass(activeCategory() === cat)"
-                >
-                  <span class="capitalize">{{ cat }}</span>
-                </button>
-              }
-            </div>
-          </div>
-        }
-
-        @if (tags().length > 0) {
-          <div class="space-y-2">
-            <button
-              type="button"
-              (click)="toggleTagsExpanded()"
-              [attr.aria-expanded]="tagsExpanded()"
-              class="group inline-flex items-center gap-2 rounded-md py-1 text-xs font-medium uppercase tracking-wide text-muted-foreground hover:text-foreground"
-            >
-              <ng-icon
-                [name]="tagsExpanded() ? 'lucideChevronUp' : 'lucideChevronDown'"
-                class="h-3.5 w-3.5"
-              />
-              <span>Tags</span>
-              @if (activeTags().length > 0) {
-                <span
-                  class="rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-primary"
-                >
-                  {{ activeTags().length }} selected
-                </span>
-              }
-              <span
-                class="text-[11px] normal-case tracking-normal text-muted-foreground/70 group-hover:text-foreground/70"
-              >
-                {{ tagsExpanded() ? '— hide' : '— show all ' + tags().length }}
-              </span>
-            </button>
-            @if (tagsExpanded()) {
-              <div class="flex flex-wrap gap-2">
-                @for (tag of tags(); track tag) {
-                  <button
-                    type="button"
-                    (click)="toggleTag(tag)"
-                    [class]="chipClass(activeTags().includes(tag))"
-                  >
-                    {{ tag }}
-                  </button>
-                }
-                @if (activeTags().length > 0) {
-                  <button
-                    type="button"
-                    (click)="clearTags()"
-                    class="inline-flex items-center gap-1 rounded-full border border-dashed border-border
-                           px-3 py-1 text-xs text-muted-foreground hover:text-foreground"
-                  >
-                    <ng-icon name="lucideX" class="h-3 w-3" />
-                    Clear tags
-                  </button>
-                }
-              </div>
-            } @else if (activeTags().length > 0) {
-              <div class="flex flex-wrap gap-2">
-                @for (tag of activeTags(); track tag) {
-                  <button type="button" (click)="toggleTag(tag)" [class]="chipClass(true)">
-                    {{ tag }}
-                  </button>
-                }
-                <button
-                  type="button"
-                  (click)="clearTags()"
-                  class="inline-flex items-center gap-1 rounded-full border border-dashed border-border
-                         px-3 py-1 text-xs text-muted-foreground hover:text-foreground"
-                >
-                  <ng-icon name="lucideX" class="h-3 w-3" />
-                  Clear tags
-                </button>
-              </div>
-            }
-          </div>
-        }
-      </section>
-
-      <!-- Results -->
-      <section>
+      <fl-panel [flush]="true">
+        <app-catalog-list-toolbar
+          panelToolbar
+          [search]="searchQuery()"
+          [category]="activeCategory()"
+          [categories]="categories()"
+          [tags]="tags()"
+          [activeTags]="activeTags()"
+          [resultCount]="filteredApps().length"
+          [systemToggle]="!scope()"
+          [showSystemApps]="showSystemApps()"
+          (searchChange)="searchQuery.set($event)"
+          (categoryChange)="setCategory($event)"
+          (tagToggle)="toggleTag($event)"
+          (tagsClear)="clearTags()"
+          (systemToggled)="toggleShowSystemApps()"
+        />
         @if (catalog.listLoading()) {
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            @for (_ of skeletonSlots; track $index) {
-              <div class="h-56 rounded-fl-lg border border-border bg-muted/30"></div>
-            }
-          </div>
+          <fl-loading-state [rows]="6" />
         } @else if (catalog.listError()) {
-          <div
-            class="flex flex-col items-center gap-3 rounded-fl-lg border border-destructive/40 bg-destructive/5 p-8 text-center"
-          >
-            <ng-icon name="lucideCircleAlert" class="h-8 w-8 text-destructive" />
-            <p class="text-sm text-destructive">{{ catalog.listError() }}</p>
-            <button
-              type="button"
-              (click)="reload()"
-              class="inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5
-                     text-sm font-medium hover:bg-muted"
-            >
-              <ng-icon name="lucideRefreshCw" class="h-4 w-4" />
-              Retry
-            </button>
-          </div>
+          <fl-error-state
+            title="Could not load the catalog"
+            [reason]="catalog.listError()"
+            (retry)="reload()"
+          />
         } @else if (filteredApps().length === 0) {
-          <div
-            class="flex flex-col items-center gap-3 rounded-fl-lg border border-dashed border-border p-10 text-center"
+          <fl-empty-state
+            icon="lucideStore"
+            title="No apps match your filters"
+            body="Try a broader search or clear a tag."
           >
-            <ng-icon name="lucideStore" class="h-10 w-10 text-muted-foreground" />
-            <div class="space-y-1">
-              <p class="text-sm font-medium text-foreground">No apps match your filters</p>
-              <p class="text-xs text-muted-foreground">
-                Try broadening the search or clearing a tag.
-              </p>
-            </div>
             @if (hasActiveFilters()) {
-              <button
-                type="button"
-                (click)="resetFilters()"
-                class="rounded-md border border-border bg-background px-3 py-1.5 text-sm font-medium hover:bg-muted"
-              >
+              <button flButton size="sm" type="button" (click)="resetFilters()">
                 Reset filters
               </button>
             }
-          </div>
+          </fl-empty-state>
         } @else {
-          <div class="mb-3 flex items-center justify-between text-xs text-muted-foreground">
-            <span>{{ filteredApps().length }} app{{ filteredApps().length === 1 ? '' : 's' }}</span>
-            @if (!scope()) {
-              <button
-                type="button"
-                (click)="toggleShowSystemApps()"
-                class="text-xs text-muted-foreground hover:text-foreground"
-              >
-                {{ showSystemApps() ? 'Hide' : 'Show' }} system apps
-              </button>
-            }
-          </div>
-          @if (flatGrid()) {
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              @for (app of filteredApps(); track app.id) {
-                <app-catalog-card [app]="app" />
-              }
-            </div>
-          } @else {
-            @for (group of kindGroups(); track group.kind) {
-              <div class="mb-8">
-                <h3 class="mb-3 text-sm font-semibold text-foreground">
-                  {{ group.label }}
-                  <span class="ml-1 text-xs font-normal text-muted-foreground"
-                    >({{ group.apps.length }})</span
-                  >
-                </h3>
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  @for (app of group.apps; track app.id) {
-                    <app-catalog-card [app]="app" />
-                  }
-                </div>
-              </div>
-            }
-          }
+          <app-catalog-list-table
+            [groups]="tableGroups()"
+            [grouped]="!flatGrid()"
+            (install)="goToInstall($event)"
+          />
         }
-      </section>
+      </fl-panel>
     </div>
   `,
 })
@@ -321,6 +129,8 @@ export class CatalogListComponent implements OnDestroy {
   protected readonly catalog = inject(CatalogService);
   private readonly sandbox = inject(SandboxService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly installPrompt = inject(InstallPromptService);
 
   readonly appKind = toSignal(this.route.queryParamMap, {
     initialValue: this.route.snapshot.queryParamMap,
@@ -328,25 +138,27 @@ export class CatalogListComponent implements OnDestroy {
 
   readonly scope = computed<CatalogScope | null>(() => catalogScopeOf(this.appKind()));
 
-  readonly heroTitle = computed(
-    () => scopeCopy(this.scope())?.title ?? 'Deploy open-source apps in one click',
-  );
+  readonly heroTitle = computed(() => scopeCopy(this.scope())?.title ?? 'App catalog');
 
-  readonly heroSubtitle = computed(() => {
-    return (
+  readonly heroSubtitle = computed(
+    () =>
       scopeCopy(this.scope())?.subtitle ??
-      'Curated, EU-friendly alternatives to the tools you already use. Pick an app, choose a cluster, and Flui handles the rest — secrets, DNS, TLS and all.'
-    );
-  });
+      'Curated open-source apps. Pick one, choose a cluster, and Flui handles secrets, DNS and TLS.',
+  );
 
   readonly flatGrid = computed(() => this.scope() === 'data' || this.scope() === 'system');
 
   readonly backLink = computed<string | null>(() => scopeCopy(this.scope())?.back ?? null);
 
+  protected readonly breadcrumb = computed<Crumb[]>(() => {
+    const copy = scopeCopy(this.scope());
+    if (!copy) return [];
+    return [{ label: copy.backLabel, link: copy.back }, { label: copy.title }];
+  });
+
   readonly searchQuery = signal('');
   readonly activeCategory = signal<string | null>(null);
   readonly activeTags = signal<string[]>([]);
-  readonly tagsExpanded = signal(false);
   readonly showSystemApps = signal<boolean>(this.readShowSystemApps());
 
   private readShowSystemApps(): boolean {
@@ -362,8 +174,6 @@ export class CatalogListComponent implements OnDestroy {
     }
   }
 
-  readonly skeletonSlots = new Array(8).fill(0);
-
   readonly categories = this.catalog.categories;
   readonly tags = this.catalog.tags;
 
@@ -373,6 +183,14 @@ export class CatalogListComponent implements OnDestroy {
       this.activeCategory() !== null ||
       this.activeTags().length > 0,
   );
+
+  protected readonly availableCount = computed(() => {
+    const scope = this.scope();
+    const excluded = this.sandbox.catalogExcluded();
+    return this.catalog
+      .catalog()
+      .filter((app) => !excluded.has(app.slug) && (!scope || inCatalogScope(app, scope))).length;
+  });
 
   readonly filteredApps = computed<CatalogResponseDto[]>(() => {
     const all = this.catalog.catalog();
@@ -423,37 +241,58 @@ export class CatalogListComponent implements OnDestroy {
     }));
   });
 
+  private rowOf(app: CatalogResponseDto): CatalogRow {
+    return {
+      app,
+      installedCount: this.catalog.getInstalledFor(app.slug).length,
+      updateAvailable: this.catalog.hasUpdateAvailable(app.slug, app.version),
+    };
+  }
+
+  protected readonly tableGroups = computed<CatalogRowGroup[]>(() => {
+    const scoped = this.scope();
+    if (scoped && this.flatGrid()) {
+      return [
+        {
+          kind: scoped,
+          label: SECTION_LABEL[scoped],
+          rows: this.filteredApps().map((a) => this.rowOf(a)),
+        },
+      ];
+    }
+    return this.kindGroups().map((g) => ({
+      kind: g.kind,
+      label: g.label,
+      rows: g.apps.map((a) => this.rowOf(a)),
+    }));
+  });
+
   private readonly currentSurface = inject(CurrentSurfaceService);
   private readonly surfaceRevision = new CatalogListSurfaceRevision();
 
-  /** The rows are `kindGroups()`/`filteredApps()` — what the grid draws after the filters —
-   * and the badges come from the same service calls the card itself makes (playbook §5). */
-  private readonly surfaceInput = computed<CatalogListSurfaceInput>(() => {
-    const scoped = this.scope();
-    const row = (app: CatalogResponseDto) => ({
-      slug: app.slug,
-      name: app.name,
-      category: app.category,
-      installedCount: this.catalog.getInstalledFor(app.slug).length,
-      updateAvailable: this.catalog.hasUpdateAvailable(app.slug, app.version),
-    });
-    return {
-      heroTitle: this.heroTitle(),
-      scopedKind: scoped,
-      hasQuery: this.searchQuery().trim() !== '',
-      activeCategory: this.activeCategory(),
-      activeTagCount: this.activeTags().length,
-      showSystemApps: this.showSystemApps(),
-      totalCount: this.catalog.catalog().length,
-      shownCount: this.filteredApps().length,
-      groups:
-        scoped && this.flatGrid()
-          ? [{ kind: scoped, label: SECTION_LABEL[scoped], rows: this.filteredApps().map(row) }]
-          : this.kindGroups().map((g) => ({ kind: g.kind, label: g.label, rows: g.apps.map(row) })),
-      isLoading: this.catalog.listLoading(),
-      hasListError: Boolean(this.catalog.listError()),
-    };
-  });
+  private readonly surfaceInput = computed<CatalogListSurfaceInput>(() => ({
+    heroTitle: this.heroTitle(),
+    scopedKind: this.scope(),
+    hasQuery: this.searchQuery().trim() !== '',
+    activeCategory: this.activeCategory(),
+    activeTagCount: this.activeTags().length,
+    showSystemApps: this.showSystemApps(),
+    totalCount: this.catalog.catalog().length,
+    shownCount: this.filteredApps().length,
+    groups: this.tableGroups().map((g) => ({
+      kind: g.kind,
+      label: g.label,
+      rows: g.rows.map((r) => ({
+        slug: r.app.slug,
+        name: r.app.name,
+        category: r.app.category,
+        installedCount: r.installedCount,
+        updateAvailable: r.updateAvailable,
+      })),
+    })),
+    isLoading: this.catalog.listLoading(),
+    hasListError: Boolean(this.catalog.listError()),
+  }));
 
   readonly surface = computed(() => {
     const input = this.surfaceInput();
@@ -468,8 +307,6 @@ export class CatalogListComponent implements OnDestroy {
   }
 
   constructor() {
-    // Publish this page's snapshot whenever it changes; ngOnDestroy clears it so it never
-    // outlives the page it describes.
     effect(() => {
       this.currentSurface.set(this.surface());
     });
@@ -499,10 +336,6 @@ export class CatalogListComponent implements OnDestroy {
     this.activeTags.set([]);
   }
 
-  toggleTagsExpanded(): void {
-    this.tagsExpanded.update((v) => !v);
-  }
-
   clearSearch(): void {
     this.searchQuery.set('');
   }
@@ -513,10 +346,12 @@ export class CatalogListComponent implements OnDestroy {
     this.activeTags.set([]);
   }
 
-  chipClass(active: boolean): string {
-    const base = 'rounded-full px-3 py-1 text-xs font-medium transition border';
-    return active
-      ? `${base} bg-primary text-primary-foreground border-primary`
-      : `${base} bg-background text-foreground border-border hover:border-primary/50 hover:text-primary`;
+  goToInstall(slug: string): void {
+    const autoConnectTo = this.route.snapshot.queryParamMap.get('autoConnectTo');
+    const install = this.router.createUrlTree(['/apps/deploy/new'], {
+      queryParams: installQueryParams(slug, autoConnectTo),
+    });
+    if (this.installPrompt.requireInstall()) return;
+    void this.router.navigateByUrl(install);
   }
 }

@@ -1,29 +1,20 @@
-import { Component, input, ChangeDetectionStrategy } from '@angular/core';
-import { PROJECT_FALLBACK_COLOR, Project } from '../../model/project.model';
+import { Component, input } from '@angular/core';
+import { Project } from '../../model/project.model';
+import { FlTag } from '../../../ui/primitives/tag';
 
 @Component({
   selector: 'app-project-badge',
-  standalone: true,
-  imports: [],
+  imports: [FlTag],
   host: { class: 'inline-flex' },
-  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @let p = project();
     @if (p) {
-      <span
-        class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium"
-        [style.borderColor]="p.color || fallback"
-        [style.color]="p.color || 'inherit'"
-      >
-        <span class="h-2 w-2 rounded-full" [style.background]="p.color || 'currentColor'"></span>
-        {{ p.name }}
-      </span>
+      <fl-tag [attr.title]="'Project ' + p.name">{{ p.name }}</fl-tag>
     } @else {
-      <span class="text-xs text-muted-foreground">Not in a project</span>
+      <span class="text-fl-caption text-fl-ink-muted">Not in a project</span>
     }
   `,
 })
 export class ProjectBadgeComponent {
   readonly project = input<Project | null>(null);
-  protected readonly fallback = PROJECT_FALLBACK_COLOR;
 }

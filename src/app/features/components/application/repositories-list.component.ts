@@ -1,1021 +1,220 @@
-import {
-  Component,
-  OnInit,
-  OnDestroy,
-  inject,
-  signal,
-  computed,
-  effect,
-  viewChild,
-  ChangeDetectionStrategy,
-} from '@angular/core';
-
-import { Router, ActivatedRoute, RouterLink } from '@angular/router';
-import { FormsModule } from '@angular/forms';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { take } from 'rxjs/operators';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideGitBranch,
-  lucideGithub,
-  lucideGitlab,
-  lucideRefreshCw,
-  lucideLoader,
-  lucideCircleCheck,
-  lucideCircleX,
-  lucideCircleAlert,
-  lucidePlus,
-  lucideExternalLink,
-  lucideStar,
-  lucideGitFork,
-  lucideCode,
-  lucidePackage,
-  lucideRocket,
-  lucideSettings,
-  lucideTrash,
-  lucideDownload,
-  lucideX,
-  lucideSearch,
-  lucideShieldAlert,
-  lucideTriangleAlert,
-  lucideArrowRight,
-  lucideKey,
-  lucideLayers,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideDownload, lucideGitBranch, lucideRefreshCw } from '@ng-icons/lucide';
 
 import { RepositoryService, ConnectedRepository } from '../../service/repository.service';
 import { GitProvider } from '../../model/application.models';
-import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog.component';
-import { GithubConnectComponent } from './github-connect.component';
-import { GhcrPatModalComponent, GhcrPatModalMode } from './ghcr-pat-modal.component';
-import {
-  GithubAppOAuthService,
-  PackagesPatStatus,
-} from '../../../core/services/github-app-oauth.service';
-import { ApplicationService } from '../../service/application.service';
-import { ApplicationResponseDto } from '../../../core/api/model/applicationResponseDto';
+import { GhcrPatModalComponent } from './ghcr-pat-modal.component';
 import { RepoDeployChoiceModalComponent } from './repo-deploy-choice-modal.component';
 import { PermissionService } from '../../../core/services/permission.service';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
+import { FlPageHeader } from '../../../ui/patterns/page-header';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
 import {
   RepositoriesListSurfaceInput,
   RepositoriesListSurfaceRevision,
+  RepositoriesPageState,
   buildRepositoriesListSurface,
   presentedContent,
 } from './repositories-list-surface';
+import { githubAppConfigUrl } from './repositories-format';
+import { RepoToasts, RepositoriesToastStack } from './repositories-toasts';
+import { RepositoriesConfirmDialog } from './repositories-confirm-dialog';
+import { RepositoriesConnection } from './repositories-connection';
+import { RepositoriesGhcrPanel } from './repositories-ghcr-panel';
+import { RepositoriesTable } from './repositories-table';
+import { RepositoriesImportDialog } from './repositories-import-dialog';
+import { RepositoriesImportStore } from './repositories-import-store';
+import { RepositoriesPatStore } from './repositories-pat-store';
+import { RepositoriesDeployStore } from './repositories-deploy-store';
 
 @Component({
   selector: 'app-repositories-list',
-  standalone: true,
   imports: [
-    FormsModule,
-    RouterLink,
-    NgIconComponent,
-    ConfirmationDialogComponent,
-    GithubConnectComponent,
+    FlPageHeader,
+    FlPanel,
+    FlAlert,
+    FlEmptyState,
+    FlLoadingState,
+    FlButton,
+    FlIcon,
     GhcrPatModalComponent,
     RepoDeployChoiceModalComponent,
+    RepositoriesToastStack,
+    RepositoriesConfirmDialog,
+    RepositoriesConnection,
+    RepositoriesGhcrPanel,
+    RepositoriesTable,
+    RepositoriesImportDialog,
   ],
   providers: [
-    provideIcons({
-      lucideGitBranch,
-      lucideGithub,
-      lucideGitlab,
-      lucideRefreshCw,
-      lucideLoader,
-      lucideCircleCheck,
-      lucideCircleX,
-      lucideCircleAlert,
-      lucidePlus,
-      lucideExternalLink,
-      lucideStar,
-      lucideGitFork,
-      lucideCode,
-      lucidePackage,
-      lucideRocket,
-      lucideSettings,
-      lucideTrash,
-      lucideDownload,
-      lucideX,
-      lucideSearch,
-      lucideShieldAlert,
-      lucideTriangleAlert,
-      lucideArrowRight,
-      lucideKey,
-      lucideLayers,
-    }),
+    RepoToasts,
+    RepositoriesImportStore,
+    RepositoriesPatStore,
+    RepositoriesDeployStore,
+    provideIcons({ lucideDownload, lucideGitBranch, lucideRefreshCw }),
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <!-- Success Toast -->
-    @if (showSuccessToast()) {
-      <div
-        class="fixed top-4 right-4 z-50 bg-card border border-border rounded-lg p-4 animate-slide-in-right max-w-md"
-      >
-        <div class="flex items-start gap-3">
-          <div class="flex-shrink-0">
-            <ng-icon name="lucideCircleCheck" class="h-5 w-5 text-[hsl(var(--ok))]" />
-          </div>
-          <div class="flex-1">
-            <h3 class="text-sm font-medium">
-              {{ successToastTitle() }}
-            </h3>
-            @if (successToastMessage()) {
-              <p class="text-sm text-muted-foreground mt-1">
-                {{ successToastMessage() }}
-              </p>
-            }
-          </div>
-          <button
-            (click)="showSuccessToast.set(false)"
-            class="flex-shrink-0 text-muted-foreground hover:text-foreground"
-          >
-            <ng-icon name="lucideX" class="h-5 w-5" />
-          </button>
-        </div>
-      </div>
-    }
+    <app-repositories-toasts [toasts]="toasts" />
 
-    <!-- Error Toast -->
-    @if (showErrorToast()) {
-      <div
-        class="fixed top-4 right-4 z-50 bg-card border border-destructive/40 rounded-lg p-4 animate-slide-in-right max-w-md"
-      >
-        <div class="flex items-start gap-3">
-          <div class="flex-shrink-0">
-            <ng-icon name="lucideCircleX" class="h-5 w-5 text-destructive" />
-          </div>
-          <div class="flex-1">
-            <h3 class="text-sm font-medium">
-              {{ errorToastTitle() }}
-            </h3>
-            @if (errorToastMessage()) {
-              <p class="text-sm text-muted-foreground mt-1">
-                {{ errorToastMessage() }}
-              </p>
-            }
-          </div>
+    <div class="fl-page">
+      <fl-page-header [title]="pageTitle()">
+        <span headerMeta>{{ summary() }}</span>
+        <ng-container headerActions>
           <button
-            (click)="showErrorToast.set(false)"
-            class="flex-shrink-0 text-muted-foreground hover:text-foreground"
-          >
-            <ng-icon name="lucideX" class="h-5 w-5" />
-          </button>
-        </div>
-      </div>
-    }
-
-    <!-- Warning Toast -->
-    @if (showWarningToast()) {
-      <div
-        class="fixed top-4 right-4 z-50 bg-card border border-border rounded-lg p-4 animate-slide-in-right max-w-md"
-      >
-        <div class="flex items-start gap-3">
-          <div class="flex-shrink-0">
-            <ng-icon name="lucideCircleAlert" class="h-5 w-5 text-[hsl(var(--warn))]" />
-          </div>
-          <div class="flex-1">
-            <h3 class="text-sm font-medium">Connection cancelled</h3>
-            <p class="text-sm text-muted-foreground mt-1">
-              {{ warningToastMessage() }}
-            </p>
-          </div>
-          <button
-            (click)="showWarningToast.set(false)"
-            class="flex-shrink-0 text-muted-foreground hover:text-foreground"
-          >
-            <ng-icon name="lucideX" class="h-5 w-5" />
-          </button>
-        </div>
-      </div>
-    }
-
-    <div class="space-y-6 p-6">
-      <!-- Header -->
-      <div class="flex items-center justify-between">
-        <div>
-          <h1 class="text-3xl font-bold text-gray-900">Git Repositories</h1>
-          <p class="mt-2 text-sm text-gray-600">Connect and manage your Git repositories</p>
-        </div>
-        <div class="flex gap-3">
-          @if (isGitHubConnected()) {
-            <button
-              (click)="showImportModal()"
-              class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <ng-icon name="lucideDownload" class="h-4 w-4" />
-              <span class="text-sm font-medium">Import Repositories</span>
-            </button>
-          }
-          <button
-            (click)="refreshRepos()"
+            flButton
+            type="button"
+            [iconOnly]="true"
+            aria-label="Refresh"
             [disabled]="isLoading()"
-            class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+            (click)="refreshRepos()"
           >
-            <ng-icon name="lucideRefreshCw" class="h-4 w-4" [class.animate-spin]="isLoading()" />
-            <span class="text-sm font-medium">Refresh</span>
+            <fl-icon name="lucideRefreshCw" />
           </button>
-        </div>
-      </div>
-
-      <!-- GitHub Integration Funnel -->
-      @switch (pageState()) {
-        @case ('initializing') {
-          <div class="flex items-center justify-center py-16">
-            <ng-icon name="lucideLoader" class="h-8 w-8 animate-spin text-blue-600" />
-          </div>
-        }
-
-        @case ('refused') {
-          <div class="bg-white border border-slate-200 rounded-fl-lg p-12 text-center">
-            <div
-              class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4"
-            >
-              <ng-icon name="lucideGithub" class="h-8 w-8 text-slate-500" />
-            </div>
-            <h3 class="text-lg font-semibold text-slate-900 mb-2">Not part of the trial</h3>
-            <p class="text-sm text-slate-600 max-w-md mx-auto">
-              Connecting a source repository belongs to the instance, not to a tenancy. Deploy from
-              a container image here — your own applications are real and yours to change.
-            </p>
-          </div>
-        }
-
-        @case ('not-configured-admin') {
-          <div
-            class="bg-white border-2 border-dashed border-slate-300 rounded-fl-lg p-12 text-center"
-          >
-            <div
-              class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4"
-            >
-              <ng-icon name="lucideGithub" class="h-8 w-8 text-blue-600" />
-            </div>
-            <h3 class="text-lg font-semibold text-slate-900 mb-2">
-              GitHub Integration Not Configured
-            </h3>
-            <p class="text-sm text-slate-600 mb-6 max-w-sm mx-auto">
-              As an admin, you need to set up the GitHub integration before users can connect their
-              accounts.
-            </p>
-            <button
-              (click)="navigateToSetup()"
-              class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-            >
-              <ng-icon name="lucideGithub" class="h-4 w-4" />
-              Setup GitHub Integration
-              <ng-icon name="lucideArrowRight" class="h-4 w-4" />
+          @if (isGitHubConnected()) {
+            <button flButton="primary" type="button" (click)="importer.open()">
+              <fl-icon name="lucideDownload" />
+              Import repositories
             </button>
-          </div>
-        }
-
-        @case ('not-configured-user') {
-          <div class="bg-white border border-slate-200 rounded-fl-lg p-12 text-center">
-            <div
-              class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4"
-            >
-              <ng-icon name="lucideShieldAlert" class="h-8 w-8 text-slate-500" />
-            </div>
-            <h3 class="text-lg font-semibold text-slate-900 mb-2">GitHub Not Yet Configured</h3>
-            <p class="text-sm text-slate-600 max-w-sm mx-auto">
-              GitHub integration hasn't been set up yet. Please contact your administrator to
-              configure it.
-            </p>
-          </div>
-        }
-
-        @case ('misconfigured-admin') {
-          <div
-            class="bg-white border-2 border-dashed border-amber-300 rounded-fl-lg p-12 text-center"
-          >
-            <div
-              class="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4"
-            >
-              <ng-icon name="lucideTriangleAlert" class="h-8 w-8 text-amber-600" />
-            </div>
-            <h3 class="text-lg font-semibold text-slate-900 mb-2">
-              GitHub Integration Misconfigured
-            </h3>
-            <p class="text-sm text-slate-600 mb-2 max-w-md mx-auto">
-              Flui has stored GitHub App credentials but a live check against GitHub failed — the
-              App may have been deleted or its private key revoked.
-            </p>
-            <p class="text-xs text-slate-500 mb-6 font-mono">
-              {{ setupHealthError() }}
-            </p>
-            <button
-              (click)="navigateToSetup()"
-              class="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-sm font-medium"
-            >
-              <ng-icon name="lucideGithub" class="h-4 w-4" />
-              Reconfigure GitHub Integration
-              <ng-icon name="lucideArrowRight" class="h-4 w-4" />
-            </button>
-          </div>
-        }
-
-        @case ('misconfigured-user') {
-          <div class="bg-white border border-amber-200 rounded-fl-lg p-12 text-center">
-            <div
-              class="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4"
-            >
-              <ng-icon name="lucideTriangleAlert" class="h-8 w-8 text-amber-600" />
-            </div>
-            <h3 class="text-lg font-semibold text-slate-900 mb-2">GitHub Integration Broken</h3>
-            <p class="text-sm text-slate-600 max-w-sm mx-auto">
-              Connecting to GitHub is currently failing. Please contact your administrator to
-              reconfigure the integration.
-            </p>
-          </div>
-        }
-
-        @case ('not-connected') {
-          <div class="bg-white border border-slate-200 rounded-fl-lg overflow-hidden">
-            <app-github-connect
-              [authMethod]="setupStatus()!.authMethod!"
-              [appSlug]="$safeNavigationMigration(setupStatus()?.appSlug)"
-              (connected)="onGithubConnected($event)"
-            />
-          </div>
-        }
-
-        @case ('connected') {
-          <!-- Connected: show GitHub status bar + existing repos UI -->
-          <div
-            class="flex items-center justify-between bg-card border border-border rounded-lg px-4 py-3"
-          >
-            <div class="flex items-center gap-3">
-              <ng-icon name="lucideCircleCheck" class="h-4 w-4 text-[hsl(var(--ok))]" />
-              <div>
-                @if (setupStatus()?.authMethod === 'github_app') {
-                  <span class="text-sm font-medium">GitHub App connected</span>
-                } @else {
-                  <span class="text-sm font-medium">GitHub connected</span>
-                  @if (gitHubUsername()) {
-                    <span class="text-sm text-muted-foreground ml-2"
-                      >as {{ '@' + gitHubUsername() }}</span
-                    >
-                  }
-                }
-              </div>
-            </div>
-            @if (setupStatus()?.authMethod === 'github_app') {
-              <a
-                [href]="githubAppConfigUrl()"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
-              >
-                Manage permissions
-                <ng-icon name="lucideExternalLink" class="h-3 w-3" />
-              </a>
-            } @else {
-              <button
-                (click)="disconnectOAuth('github')"
-                class="text-xs text-red-600 hover:underline"
-              >
-                Disconnect
-              </button>
-            }
-          </div>
-
-          @if (
-            setupStatus()?.authMethod === 'github_app' && setupStatus()?.imageRegistry !== 'flui'
-          ) {
-            <div
-              class="bg-white border border-slate-200 rounded-lg px-4 py-3 flex items-center justify-between gap-4 flex-wrap"
-            >
-              <div class="flex items-center gap-3 min-w-0">
-                <ng-icon name="lucideKey" class="h-5 w-5 text-slate-500" />
-                <div class="min-w-0">
-                  <div class="text-sm font-medium text-slate-900">
-                    GHCR Container Registry token
-                  </div>
-                  <div class="text-xs text-slate-500 mt-0.5 flex items-center gap-2 flex-wrap">
-                    @if (patStatus(); as p) {
-                      @if (!p.configured) {
-                        <span>Not configured — required to pull container images.</span>
-                      } @else {
-                        <span [class]="patStatusColor()">{{ patStatusLabel() }}</span>
-                        @if (p.expiresAt) {
-                          <span>· expires {{ formatDate(p.expiresAt) }}</span>
-                        }
-                        @if (p.daysUntilExpiry != null && p.daysUntilExpiry >= 0) {
-                          <span class="text-slate-400">({{ p.daysUntilExpiry }}d)</span>
-                        }
-                      }
-                    } @else {
-                      <span>Loading…</span>
-                    }
-                  </div>
-                </div>
-              </div>
-              <div class="flex items-center gap-2">
-                @if (patStatus()?.configured) {
-                  <button
-                    (click)="openPatModal('update-expiry')"
-                    class="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50"
-                  >
-                    Update expiry
-                  </button>
-                  <button
-                    (click)="openPatModal('rotate')"
-                    class="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-md bg-blue-600 text-white hover:bg-blue-700"
-                  >
-                    <ng-icon name="lucideRefreshCw" class="h-3 w-3" />
-                    Rotate
-                  </button>
-                  <button
-                    (click)="confirmRemovePat()"
-                    class="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-md border border-red-300 text-red-600 hover:bg-red-50"
-                  >
-                    Remove
-                  </button>
-                } @else {
-                  <button
-                    (click)="openPatModal('create')"
-                    class="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-md bg-blue-600 text-white hover:bg-blue-700"
-                  >
-                    <ng-icon name="lucideKey" class="h-3 w-3" />
-                    Add token
-                  </button>
-                }
-              </div>
-            </div>
           }
-        }
-      }
+        </ng-container>
+      </fl-page-header>
 
-      <!-- Stats + Repos: only shown when GitHub is connected -->
       @if (pageState() === 'connected') {
-        <!-- Stats -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div class="bg-card border border-border rounded-lg p-4">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm text-muted-foreground">Total repositories</p>
-                <p class="text-2xl font-semibold tabular-nums">{{ allRepos().length }}</p>
-              </div>
-              <ng-icon name="lucideGitBranch" class="h-5 w-5 text-muted-foreground" />
-            </div>
-          </div>
-          <div class="bg-card border border-border rounded-lg p-4">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm text-muted-foreground">Connected</p>
-                <p class="text-2xl font-semibold tabular-nums">{{ connectedCount() }}</p>
-              </div>
-              <ng-icon name="lucideCircleCheck" class="h-5 w-5 text-muted-foreground" />
-            </div>
-          </div>
-          <div class="bg-card border border-border rounded-lg p-4">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm text-muted-foreground">Auto-deploy enabled</p>
-                <p class="text-2xl font-semibold tabular-nums">{{ autoDeployCount() }}</p>
-              </div>
-              <ng-icon name="lucideRocket" class="h-5 w-5 text-muted-foreground" />
-            </div>
-          </div>
-        </div>
-
-        <!-- Loading State -->
-        @if (isLoading()) {
-          <div class="flex items-center justify-center py-12">
-            <ng-icon name="lucideLoader" class="h-8 w-8 animate-spin text-blue-600" />
-          </div>
-        }
-
-        <!-- Error State -->
         @if (errorMessage() && !isLoading()) {
-          <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-            <div class="flex items-center gap-3">
-              <ng-icon name="lucideCircleAlert" class="h-5 w-5 text-red-600" />
-              <p class="text-sm text-red-900">{{ errorMessage() }}</p>
-            </div>
-          </div>
+          <fl-alert tone="error" title="Could not load the repositories">{{
+            errorMessage()
+          }}</fl-alert>
         }
 
-        <!-- Repositories List -->
-        @if (!isLoading()) {
-          <div class="space-y-4">
-            <div class="flex items-center justify-between">
-              <h2 class="text-xl font-semibold text-gray-900">Imported Repositories</h2>
-            </div>
-
-            @if (allRepos().length === 0) {
-              <div
-                class="bg-white border-2 border-dashed border-gray-300 rounded-lg p-12 text-center"
-              >
-                <ng-icon name="lucideGitBranch" class="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <h3 class="text-lg font-semibold text-gray-900 mb-2">
-                  No repositories imported yet
-                </h3>
-                <p class="text-sm text-gray-600 mb-6">
-                  @if (isGitHubConnected()) {
-                    Import repositories from GitHub to get started
-                  } @else {
-                    Connect your GitHub account to import repositories
-                  }
-                </p>
-                @if (isGitHubConnected()) {
-                  <button
-                    (click)="showImportModal()"
-                    class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    <ng-icon name="lucideDownload" class="h-4 w-4" />
-                    Import Repositories
-                  </button>
-                }
-              </div>
-            }
-
-            <div class="grid grid-cols-1 gap-4">
-              @for (repo of allRepos(); track repo.id) {
-                <div class="bg-white border border-gray-200 rounded-lg p-6 transition-shadow">
-                  <div class="flex items-start justify-between">
-                    <div class="flex-1">
-                      <!-- Header -->
-                      <div class="flex items-center gap-3 mb-3">
-                        <ng-icon
-                          [name]="repo.provider === 'github' ? 'lucideGithub' : 'lucideGitlab'"
-                          class="h-5 w-5"
-                          [class]="repo.provider === 'github' ? 'text-gray-900' : 'text-orange-600'"
-                        />
-                        <div class="flex-1">
-                          <div class="flex items-center gap-2">
-                            <h3 class="text-lg font-semibold text-gray-900">
-                              {{ repo.fullName }}
-                            </h3>
-                            @if (repo.private) {
-                              <span
-                                class="text-xs px-2 py-0.5 rounded bg-yellow-100 text-yellow-800"
-                              >
-                                Private
-                              </span>
-                            }
-                          </div>
-                          @if (repo.description) {
-                            <p class="text-sm text-gray-600 mt-1">
-                              {{ repo.description }}
-                            </p>
-                          }
-                        </div>
-                      </div>
-
-                      <!-- Metadata -->
-                      <div class="flex items-center gap-4 text-sm text-gray-600 mb-4">
-                        @if (repo.language) {
-                          <span class="flex items-center gap-1">
-                            <ng-icon name="lucideCode" class="h-4 w-4" />
-                            {{ repo.language }}
-                          </span>
-                        }
-                        <span class="flex items-center gap-1">
-                          <ng-icon name="lucideGitBranch" class="h-4 w-4" />
-                          {{ repo.branch }}
-                        </span>
-                        @if (repo.detectedFramework) {
-                          <span class="flex items-center gap-1">
-                            <ng-icon name="lucidePackage" class="h-4 w-4" />
-                            {{ getFrameworkLabel(repo.detectedFramework) }}
-                          </span>
-                        }
-                      </div>
-
-                      <!-- Status Badges -->
-                      <div class="flex items-center gap-2 mb-4">
-                        @if (repo.connected) {
-                          <span class="text-xs px-2 py-1 rounded bg-muted text-muted-foreground">
-                            Imported
-                          </span>
-                        }
-                        @if (repo.webhookEnabled) {
-                          <span class="text-xs px-2 py-1 rounded bg-blue-100 text-blue-800">
-                            Webhook Active
-                          </span>
-                        }
-                        @if (repo.autoDeployEnabled) {
-                          <span class="text-xs px-2 py-1 rounded bg-purple-100 text-purple-800">
-                            Auto-deploy
-                          </span>
-                        }
-                      </div>
-
-                      <!-- Last imported -->
-                      @if (repo.connectedAt) {
-                        <div class="flex items-center gap-1 text-xs text-gray-500">
-                          Imported {{ formatDate(repo.connectedAt) }}
-                        </div>
-                      }
-                    </div>
-
-                    <!-- Actions -->
-                    <div class="flex flex-col gap-2 ml-4">
-                      <a
-                        [href]="repo.url"
-                        target="_blank"
-                        class="inline-flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                      >
-                        <ng-icon name="lucideExternalLink" class="h-4 w-4" />
-                        View
-                      </a>
-                      <button
-                        (click)="deployFromRepo(repo)"
-                        [disabled]="isCheckingApps()"
-                        class="inline-flex items-center gap-2 px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-60"
-                      >
-                        @if (isCheckingApps()) {
-                          <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
-                        } @else {
-                          <ng-icon name="lucideRocket" class="h-4 w-4" />
-                        }
-                        Deploy
-                      </button>
-                      <a
-                        [routerLink]="['/apps/repositories', repo.id, 'map']"
-                        class="inline-flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                      >
-                        <ng-icon name="lucideLayers" class="h-4 w-4" />
-                        Readiness map
-                      </a>
-                      <button
-                        (click)="confirmDelete(repo)"
-                        class="inline-flex items-center gap-2 px-3 py-2 text-sm border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
-                      >
-                        <ng-icon name="lucideTrash" class="h-4 w-4" />
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              }
-            </div>
-          </div>
-        }
+        <fl-panel
+          title="Imported repositories"
+          [count]="isLoading() ? null : allRepos().length"
+          [flush]="true"
+        >
+          @if (isLoading()) {
+            <fl-loading-state [rows]="4" />
+          } @else if (allRepos().length === 0) {
+            <fl-empty-state
+              icon="lucideGitBranch"
+              title="No repositories imported yet"
+              body="Import repositories from GitHub to build and deploy them."
+            >
+              <button flButton size="sm" type="button" (click)="importer.open()">
+                Import repositories
+              </button>
+            </fl-empty-state>
+          } @else {
+            <app-repositories-table
+              [repos]="allRepos()"
+              [checking]="deployer.checking()"
+              (deploy)="deployer.deploy($event)"
+              (openMap)="openReadinessMap($event)"
+              (remove)="confirmDelete($event)"
+            />
+          }
+        </fl-panel>
       }
-      <!-- end @if (pageState() === 'connected') -->
+
+      <div class="fl-grid-2">
+        <app-repositories-connection
+          [state]="pageState()"
+          [authMethod]="setupStatus()?.authMethod ?? null"
+          [appSlug]="setupStatus()?.appSlug"
+          [username]="gitHubUsername()"
+          [configUrl]="githubAppConfigUrl()"
+          [healthError]="setupHealthError()"
+          (setup)="navigateToSetup()"
+          (disconnect)="disconnectOAuth('github')"
+          (connected)="onGithubConnected($event)"
+        />
+        @if (showGhcrPanel()) {
+          <app-repositories-ghcr-panel
+            [pat]="pat.status()"
+            (edit)="pat.modalMode.set($event)"
+            (remove)="pat.confirmingRemove.set(true)"
+          />
+        }
+      </div>
     </div>
 
-    <!-- Import Repositories Modal -->
-    @if (showImportModalFlag()) {
-      <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-lg max-w-3xl w-full max-h-[80vh] overflow-hidden">
-          <!-- Modal Header -->
-          <div class="flex items-center justify-between p-6 border-b border-gray-200">
-            <h3 class="text-xl font-semibold text-gray-900">Import Repositories from GitHub</h3>
-            <button (click)="closeImportModal()" class="text-gray-400 hover:text-gray-600">
-              <ng-icon name="lucideX" class="h-5 w-5" />
-            </button>
-          </div>
-
-          <!-- Search Bar -->
-          <div class="px-6 pt-4">
-            <div class="relative">
-              <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <ng-icon name="lucideSearch" class="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                type="text"
-                [(ngModel)]="searchQuery"
-                placeholder="Search repositories by name, description, or language..."
-                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              @if (searchQuery()) {
-                <button
-                  (click)="searchQuery.set('')"
-                  class="absolute inset-y-0 right-0 flex items-center pr-3"
-                >
-                  <ng-icon name="lucideX" class="h-4 w-4 text-gray-400 hover:text-gray-600" />
-                </button>
-              }
-            </div>
-          </div>
-
-          <!-- Modal Body -->
-          <div class="p-6 overflow-y-auto max-h-[50vh]">
-            @if (isLoadingAvailable()) {
-              <div class="flex items-center justify-center py-12">
-                <ng-icon name="lucideLoader" class="h-8 w-8 animate-spin text-blue-600" />
-                <span class="ml-3 text-sm text-gray-600">Loading repositories...</span>
-              </div>
-            } @else if (availableRepos().length === 0) {
-              <div class="text-center py-12 space-y-3">
-                <ng-icon name="lucideGitBranch" class="h-12 w-12 text-gray-400 mx-auto" />
-                <p class="text-sm font-medium text-gray-700">No repositories found</p>
-                @if (!hideRepoHint()) {
-                  @if (setupStatus()?.authMethod === 'github_app') {
-                    <div
-                      class="relative inline-flex flex-col items-start gap-1.5 text-left bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mx-auto max-w-sm"
-                    >
-                      <button
-                        (click)="hideRepoHint.set(true)"
-                        class="absolute top-2 right-2 text-blue-400 hover:text-blue-600"
-                        aria-label="Dismiss"
-                      >
-                        <ng-icon name="lucideX" class="h-3.5 w-3.5" />
-                      </button>
-                      <div class="flex items-center gap-1.5 text-xs font-medium text-blue-800 pr-4">
-                        <ng-icon name="lucideGithub" class="h-3.5 w-3.5" />
-                        Manage repository access
-                      </div>
-                      <p class="text-xs text-blue-700">
-                        The Flui GitHub App can only see repositories you've granted access to
-                        during installation. To add more repositories, update the app's permissions
-                        on GitHub.
-                      </p>
-                      <div class="flex items-center gap-3 mt-0.5">
-                        <a
-                          [href]="githubAppConfigUrl()"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          class="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
-                        >
-                          Configure repository access
-                          <ng-icon name="lucideExternalLink" class="h-3 w-3" />
-                        </a>
-                        <span class="text-blue-300">·</span>
-                        <button
-                          (click)="refreshAvailableRepos()"
-                          [disabled]="isLoadingAvailable()"
-                          class="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline disabled:opacity-50"
-                        >
-                          <ng-icon
-                            [name]="isLoadingAvailable() ? 'lucideLoader' : 'lucideRefreshCw'"
-                            class="h-3 w-3"
-                            [class.animate-spin]="isLoadingAvailable()"
-                          />
-                          Retry
-                        </button>
-                      </div>
-                    </div>
-                  } @else if (setupStatus()?.authMethod === 'pat') {
-                    <div
-                      class="relative inline-flex flex-col items-start gap-1.5 text-left bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mx-auto max-w-sm"
-                    >
-                      <button
-                        (click)="hideRepoHint.set(true)"
-                        class="absolute top-2 right-2 text-amber-500 hover:text-amber-700"
-                        aria-label="Dismiss"
-                      >
-                        <ng-icon name="lucideX" class="h-3.5 w-3.5" />
-                      </button>
-                      <div
-                        class="flex items-center gap-1.5 text-xs font-medium text-amber-800 pr-4"
-                      >
-                        <ng-icon name="lucideKey" class="h-3.5 w-3.5" />
-                        Check your token permissions
-                      </div>
-                      <p class="text-xs text-amber-700">
-                        Make sure your Personal Access Token has the
-                        <code class="font-mono bg-amber-100 px-1 rounded">repo</code>
-                        scope to access your repositories.
-                      </p>
-                      <div class="flex items-center gap-3 mt-0.5">
-                        <a
-                          href="https://github.com/settings/tokens"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          class="inline-flex items-center gap-1 text-xs text-amber-700 hover:underline"
-                        >
-                          Manage tokens on GitHub
-                          <ng-icon name="lucideExternalLink" class="h-3 w-3" />
-                        </a>
-                        <span class="text-amber-300">·</span>
-                        <button
-                          (click)="refreshAvailableRepos()"
-                          [disabled]="isLoadingAvailable()"
-                          class="inline-flex items-center gap-1 text-xs text-amber-700 hover:underline disabled:opacity-50"
-                        >
-                          <ng-icon
-                            [name]="isLoadingAvailable() ? 'lucideLoader' : 'lucideRefreshCw'"
-                            class="h-3 w-3"
-                            [class.animate-spin]="isLoadingAvailable()"
-                          />
-                          Retry
-                        </button>
-                      </div>
-                    </div>
-                  } @else {
-                    <div
-                      class="relative inline-flex flex-col items-start gap-1.5 text-left bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 mx-auto max-w-sm"
-                    >
-                      <button
-                        (click)="hideRepoHint.set(true)"
-                        class="absolute top-2 right-2 text-slate-400 hover:text-slate-600"
-                        aria-label="Dismiss"
-                      >
-                        <ng-icon name="lucideX" class="h-3.5 w-3.5" />
-                      </button>
-                      <p class="text-xs text-gray-500 pr-4">
-                        No repositories accessible via your connected GitHub account. Try
-                        disconnecting and reconnecting, or check that your OAuth App has the correct
-                        permissions.
-                      </p>
-                    </div>
-                  }
-                }
-              </div>
-            } @else if (filteredAvailableRepos().length === 0) {
-              <div class="text-center py-12 space-y-3">
-                <ng-icon name="lucideSearch" class="h-12 w-12 text-gray-400 mx-auto" />
-                <p class="text-sm text-gray-600">No repositories match your search</p>
-                <button
-                  (click)="searchQuery.set('')"
-                  class="text-sm text-blue-600 hover:text-blue-700"
-                >
-                  Clear search
-                </button>
-                @if (setupStatus()?.authMethod === 'github_app') {
-                  <p class="text-xs text-gray-500 pt-2">
-                    Can't find a repository?
-                    <a
-                      [href]="githubAppConfigUrl()"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="inline-flex items-center gap-0.5 text-blue-600 hover:underline"
-                    >
-                      Update repository access on GitHub
-                      <ng-icon name="lucideExternalLink" class="h-3 w-3" />
-                    </a>
-                  </p>
-                }
-              </div>
-            } @else {
-              <div class="space-y-3">
-                @for (repo of filteredAvailableRepos(); track repo.id) {
-                  <div
-                    class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
-                  >
-                    <div class="flex items-start justify-between">
-                      <div class="flex items-start gap-3 flex-1">
-                        <input
-                          type="checkbox"
-                          [checked]="selectedReposForImport().includes(repo.fullName)"
-                          (change)="toggleRepoSelection(repo.fullName)"
-                          [disabled]="repo.isImported"
-                          class="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 disabled:opacity-50"
-                        />
-                        <div class="flex-1">
-                          <div class="flex items-center gap-2">
-                            <h4 class="font-medium text-gray-900">
-                              {{ repo.fullName }}
-                            </h4>
-                            @if (repo.private) {
-                              <span
-                                class="text-xs px-2 py-0.5 rounded bg-yellow-100 text-yellow-800"
-                              >
-                                Private
-                              </span>
-                            }
-                            @if (repo.isImported) {
-                              <span
-                                class="text-xs px-2 py-0.5 rounded bg-muted text-muted-foreground"
-                              >
-                                Already imported
-                              </span>
-                            }
-                          </div>
-                          @if (repo.description) {
-                            <p class="text-sm text-gray-600 mt-1">
-                              {{ repo.description }}
-                            </p>
-                          }
-                          <div class="flex items-center gap-3 mt-2 text-xs text-gray-500">
-                            @if (repo.language) {
-                              <span>{{ repo.language }}</span>
-                            }
-                            <span>{{ repo.defaultBranch }}</span>
-                            <span>Updated {{ formatDate(repo.updatedAt) }}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                }
-              </div>
-            }
-          </div>
-
-          <!-- Modal Footer - Fixed at bottom, always visible -->
-          <div class="flex items-center justify-between p-6 border-t border-gray-200 bg-gray-50">
-            <div class="text-sm text-gray-600">
-              {{ selectedReposForImport().length }} repository(ies) selected
-              @if (searchQuery()) {
-                <span class="ml-2 text-gray-500">
-                  ({{ filteredAvailableRepos().length }} of {{ availableRepos().length }} shown)
-                </span>
-              }
-            </div>
-            <div class="flex gap-3">
-              <button
-                (click)="closeImportModal()"
-                class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
-              >
-                Cancel
-              </button>
-              <button
-                (click)="importSelected()"
-                [disabled]="selectedReposForImport().length === 0 || isImporting()"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:hover:bg-blue-600 transition-colors text-sm font-medium disabled:opacity-70 disabled:cursor-not-allowed"
-              >
-                @if (isImporting()) {
-                  <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
-                  Importing...
-                } @else {
-                  <ng-icon name="lucideDownload" class="h-4 w-4" />
-                  Import Selected
-                }
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    }
-
-    <!-- Delete Confirmation Modal -->
-    @if (showDeleteModalFlag()) {
-      <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-lg max-w-md w-full p-6">
-          <div class="flex items-start gap-4">
-            <div class="flex-shrink-0">
-              <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-                <ng-icon name="lucideCircleAlert" class="h-5 w-5 text-destructive" />
-              </div>
-            </div>
-            <div class="flex-1">
-              <h3 class="text-lg font-semibold text-gray-900 mb-2">Remove Repository</h3>
-              <p class="text-sm text-gray-600 mb-4">
-                Are you sure you want to remove <strong>{{ repoToDelete()?.fullName }}</strong>?
-                This will disconnect the repository from Flui.cloud but won't delete it from GitHub.
-              </p>
-              <div class="flex items-center gap-3">
-                <button
-                  (click)="cancelDelete()"
-                  [disabled]="isDeleting()"
-                  class="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 text-sm font-medium"
-                >
-                  Cancel
-                </button>
-                <button
-                  (click)="executeDelete()"
-                  [disabled]="isDeleting()"
-                  class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 text-sm font-medium"
-                >
-                  @if (isDeleting()) {
-                    <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
-                    Removing...
-                  } @else {
-                    <ng-icon name="lucideTrash" class="h-4 w-4" />
-                    Remove
-                  }
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    }
-
-    <!-- Disconnect OAuth Confirmation Dialog -->
-    <app-confirmation-dialog
-      #disconnectDialog
-      [title]="'Disconnect ' + (providerToDisconnect() === 'github' ? 'GitHub' : 'GitLab')"
-      [message]="
-        'Are you sure you want to disconnect ' +
-        (providerToDisconnect() === 'github' ? 'GitHub' : 'GitLab') +
-        '? This will remove all imported repositories from this provider.'
-      "
-      confirmText="Disconnect"
-      variant="danger"
-      (confirmed)="executeDisconnect()"
-      (cancelled)="cancelDisconnect()"
-    />
-
-    <!-- Remove PAT Confirmation -->
-    <app-confirmation-dialog
-      #removePatDialog
-      title="Remove GHCR token"
-      message="Removing this token will prevent Flui from pulling private container images from GHCR. You can add a new token at any time."
-      confirmText="Remove"
-      variant="danger"
-      (confirmed)="executeRemovePat()"
-    />
-
-    @if (patModalMode()) {
-      <app-ghcr-pat-modal
-        [mode]="patModalMode()!"
-        [initialExpiresAt]="$safeNavigationMigration(patStatus()?.expiresAt)"
-        (cancelled)="patModalMode.set(null)"
-        (saved)="onPatSaved()"
+    @if (importer.isOpen()) {
+      <app-repositories-import-dialog
+        [repos]="importer.available()"
+        [loading]="importer.loadingAvailable()"
+        [importing]="importer.importing()"
+        [selected]="importer.selected()"
+        [authMethod]="setupStatus()?.authMethod"
+        [configUrl]="githubAppConfigUrl()"
+        (closed)="importer.close()"
+        (toggled)="importer.toggle($event)"
+        (importSelected)="importer.importSelected()"
+        (retry)="importer.refresh()"
       />
     }
 
-    @if (deployChoiceRepo(); as choiceRepo) {
+    @if (showDeleteModalFlag()) {
+      <app-repositories-confirm-dialog
+        title="Remove repository"
+        [body]="
+          'Remove ' +
+          (repoToDelete()?.fullName ?? 'this repository') +
+          ' from Flui? The repository stays on GitHub.'
+        "
+        confirmLabel="Remove"
+        busyLabel="Removing…"
+        [busy]="isDeleting()"
+        (cancelled)="cancelDelete()"
+        (confirmed)="executeDelete()"
+      />
+    }
+
+    @if (providerToDisconnect()) {
+      <app-repositories-confirm-dialog
+        [title]="'Disconnect ' + providerLabel()"
+        [body]="'Disconnect ' + providerLabel() + '? Every repository imported from it is removed.'"
+        confirmLabel="Disconnect"
+        busyLabel="Disconnecting…"
+        [busy]="isDisconnecting()"
+        (cancelled)="cancelDisconnect()"
+        (confirmed)="executeDisconnect()"
+      />
+    }
+
+    @if (pat.confirmingRemove()) {
+      <app-repositories-confirm-dialog
+        title="Remove GHCR token"
+        body="Without this token Flui cannot pull private container images from GHCR. You can add a new token at any time."
+        confirmLabel="Remove"
+        busyLabel="Removing…"
+        [busy]="pat.removing()"
+        (cancelled)="pat.confirmingRemove.set(false)"
+        (confirmed)="pat.remove()"
+      />
+    }
+
+    @if (pat.modalMode(); as mode) {
+      <app-ghcr-pat-modal
+        [mode]="mode"
+        [initialExpiresAt]="pat.status()?.expiresAt"
+        (cancelled)="pat.modalMode.set(null)"
+        (saved)="pat.onSaved()"
+      />
+    }
+
+    @if (deployer.choiceRepo(); as choiceRepo) {
       <app-repo-deploy-choice-modal
         [repo]="{ id: choiceRepo.id, fullName: choiceRepo.fullName }"
-        [matchedApps]="deployChoiceApps()"
-        (closed)="closeDeployChoice()"
-        (triggerBuild)="onTriggerBuildForApp($event)"
-        (createNewApp)="onCreateNewAppFromChoice()"
+        [matchedApps]="deployer.choiceApps()"
+        (closed)="deployer.closeChoice()"
+        (triggerBuild)="deployer.triggerBuild($event)"
+        (createNewApp)="deployer.createNewApp()"
       />
     }
   `,
@@ -1025,46 +224,27 @@ export class RepositoriesListComponent implements OnInit, OnDestroy {
   private readonly permissions = inject(PermissionService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-  private readonly appService = inject(ApplicationService);
   private readonly currentSurface = inject(CurrentSurfaceService);
 
-  readonly disconnectDialog = viewChild.required<ConfirmationDialogComponent>('disconnectDialog');
-  readonly removePatDialog = viewChild.required<ConfirmationDialogComponent>('removePatDialog');
-  private readonly oauthApi = inject(GithubAppOAuthService);
+  readonly toasts = inject(RepoToasts);
+  readonly importer = inject(RepositoriesImportStore);
+  readonly pat = inject(RepositoriesPatStore);
+  readonly deployer = inject(RepositoriesDeployStore);
 
-  // Deploy choice modal state (when a repo already has an app)
-  readonly deployChoiceRepo = signal<ConnectedRepository | null>(null);
-  readonly deployChoiceApps = signal<ApplicationResponseDto[]>([]);
-  readonly isCheckingApps = signal(false);
-
-  // Data from service
   allRepos = this.repoService.repositories;
-  availableRepos = this.repoService.availableRepositories;
   isLoading = this.repoService.loading;
   errorMessage = this.repoService.errorMessage;
   isGitHubConnected = this.repoService.isGitHubConnected;
-  isGitLabConnected = this.repoService.isGitLabConnected;
   connectedCount = this.repoService.connectedCount;
   setupStatus = this.repoService.setupStatus;
   setupRefused = this.repoService.setupRefused;
+  readonly setupHealth = this.repoService.setupHealth;
 
   private readonly isAdmin = computed(() => this.permissions.isAdmin());
 
-  // Funnel page state
   readonly isInitializing = signal(true);
 
-  readonly setupHealth = this.repoService.setupHealth;
-
-  readonly pageState = computed<
-    | 'initializing'
-    | 'refused'
-    | 'not-configured-admin'
-    | 'not-configured-user'
-    | 'misconfigured-admin'
-    | 'misconfigured-user'
-    | 'not-connected'
-    | 'connected'
-  >(() => {
+  readonly pageState = computed<RepositoriesPageState>(() => {
     if (this.isInitializing()) return 'initializing';
     if (this.setupRefused()) return 'refused';
     const setup = this.setupStatus();
@@ -1082,104 +262,39 @@ export class RepositoriesListComponent implements OnInit, OnDestroy {
     return details?.message ?? details?.error ?? 'unreachable';
   });
 
-  // Computed
   autoDeployCount = computed(() => this.allRepos().filter((r) => r.autoDeployEnabled).length);
 
-  gitHubUsername = computed(() => {
-    const status = this.repoService.oauth().get(GitProvider.GitHub);
-    return status?.username;
+  gitHubUsername = computed(() => this.repoService.oauth().get(GitProvider.GitHub)?.username);
+
+  githubAppConfigUrl = computed(() => githubAppConfigUrl(this.setupStatus()?.appSlug));
+
+  readonly pageTitle = computed(() =>
+    this.pageState() === 'connected' && !this.isLoading()
+      ? `Repositories (${this.allRepos().length})`
+      : 'Repositories',
+  );
+
+  readonly summary = computed(() => {
+    if (this.pageState() !== 'connected') return 'Connect GitHub to import and deploy repositories';
+    return `${this.connectedCount()} imported, ${this.autoDeployCount()} with auto-deploy`;
   });
 
-  githubAppConfigUrl = computed(() => {
-    const raw = this.setupStatus()?.appSlug || '';
-    const marker = '/apps/';
-    const markerIdx = raw.lastIndexOf(marker);
-    const afterApps = markerIdx >= 0 ? raw.slice(markerIdx + marker.length) : raw;
-    const slashIdx = afterApps.indexOf('/');
-    const slug = (slashIdx >= 0 ? afterApps.slice(0, slashIdx) : afterApps) || 'flui-cloud';
-    return `https://github.com/apps/${slug}/installations/new`;
-  });
-
-  // Filtered repositories based on search query
-  filteredAvailableRepos = computed(() => {
-    const query = this.searchQuery().toLowerCase().trim();
-    if (!query) return this.availableRepos();
-
-    return this.availableRepos().filter((repo) => {
-      const fullNameMatch = repo.fullName.toLowerCase().includes(query);
-      const descriptionMatch = repo.description?.toLowerCase().includes(query) || false;
-      const languageMatch = repo.language?.toLowerCase().includes(query) || false;
-      return fullNameMatch || descriptionMatch || languageMatch;
-    });
-  });
-
-  // Local state
-  showImportModalFlag = signal(false);
-  isLoadingAvailable = signal(false);
-  selectedReposForImport = signal<string[]>([]); // Store repository fullNames (owner/repo format)
-  isImporting = signal(false);
-  searchQuery = signal('');
-  hideRepoHint = signal(false);
+  readonly showGhcrPanel = computed(
+    () =>
+      this.pageState() === 'connected' &&
+      this.setupStatus()?.authMethod === 'github_app' &&
+      this.setupStatus()?.imageRegistry !== 'flui',
+  );
 
   showDeleteModalFlag = signal(false);
   repoToDelete = signal<ConnectedRepository | null>(null);
   isDeleting = signal(false);
 
-  // OAuth disconnect dialog state
   providerToDisconnect = signal<'github' | 'gitlab' | null>(null);
-
-  // OAuth connect loading state
-  isConnecting = signal(false);
-
-  // Toast notifications
-  showSuccessToast = signal(false);
-  successToastTitle = signal('Success');
-  successToastMessage = signal('');
-  showErrorToast = signal(false);
-  errorToastTitle = signal('Error');
-  errorToastMessage = signal('');
-  showWarningToast = signal(false);
-  warningToastMessage = signal('');
-
-  // GHCR PAT state
-  patStatus = signal<PackagesPatStatus | null>(null);
-  patModalMode = signal<GhcrPatModalMode | null>(null);
-
-  patStatusLabel = computed(() => {
-    const s = this.patStatus()?.status;
-    switch (s) {
-      case 'VALID':
-        return 'Valid';
-      case 'EXPIRING_SOON':
-        return 'Expiring soon';
-      case 'EXPIRED':
-        return 'Expired';
-      case 'INVALID':
-        return 'Invalid';
-      case 'UNKNOWN_EXPIRY':
-        return 'Expiration unknown';
-      case 'MISSING':
-        return 'Not configured';
-      default:
-        return this.patStatus()?.configured ? 'Configured' : 'Not configured';
-    }
-  });
-
-  patStatusColor = computed(() => {
-    const s = this.patStatus()?.status;
-    switch (s) {
-      case 'VALID':
-        return 'text-[hsl(var(--ok))] font-medium';
-      case 'EXPIRING_SOON':
-      case 'UNKNOWN_EXPIRY':
-        return 'text-amber-600 font-medium';
-      case 'EXPIRED':
-      case 'INVALID':
-        return 'text-red-600 font-medium';
-      default:
-        return 'text-slate-500';
-    }
-  });
+  readonly isDisconnecting = signal(false);
+  readonly providerLabel = computed(() =>
+    this.providerToDisconnect() === 'gitlab' ? 'GitLab' : 'GitHub',
+  );
 
   private readonly surfaceRevision = new RepositoriesListSurfaceRevision();
 
@@ -1193,8 +308,8 @@ export class RepositoriesListComponent implements OnInit, OnDestroy {
       allRepos: this.allRepos(),
       connectedCount: this.connectedCount(),
       autoDeployCount: this.autoDeployCount(),
-      importModalOpen: this.showImportModalFlag(),
-      importSelectedCount: this.selectedReposForImport().length,
+      importModalOpen: this.importer.isOpen(),
+      importSelectedCount: this.importer.selected().length,
       deleteModalOpen: this.showDeleteModalFlag(),
       repoToDelete: this.repoToDelete(),
     };
@@ -1205,9 +320,6 @@ export class RepositoriesListComponent implements OnInit, OnDestroy {
   });
 
   constructor() {
-    // Publish this page's own Semantic Surface snapshot into the shared registry whenever
-    // it changes — same pattern as ApplicationDetailComponent. ngOnDestroy clears it so the
-    // snapshot never outlives this page.
     effect(() => {
       this.currentSurface.set(this.surface());
     });
@@ -1219,7 +331,6 @@ export class RepositoriesListComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     void (async () => {
-      // Check for OAuth callback
       this.route.queryParams.pipe(take(1)).subscribe(async (params) => {
         if (params['connected'] === 'true') {
           await this.handleOAuthSuccess();
@@ -1240,68 +351,25 @@ export class RepositoriesListComponent implements OnInit, OnDestroy {
       }
 
       if (setup?.authMethod === 'github_app' && this.isGitHubConnected()) {
-        this.loadPatStatus();
+        void this.pat.load();
       }
 
       this.isInitializing.set(false);
     })();
   }
 
-  async loadPatStatus(): Promise<void> {
-    try {
-      this.patStatus.set(await this.oauthApi.getPackagesPatStatus());
-    } catch {
-      this.patStatus.set({ configured: false, status: 'MISSING' });
-    }
-  }
-
-  openPatModal(mode: GhcrPatModalMode): void {
-    this.patModalMode.set(mode);
-  }
-
-  async onPatSaved(): Promise<void> {
-    this.patModalMode.set(null);
-    await this.loadPatStatus();
-    this.successToastTitle.set('GHCR token updated');
-    this.successToastMessage.set('Your container registry token has been saved.');
-    this.showSuccessToast.set(true);
-    setTimeout(() => this.showSuccessToast.set(false), 4000);
-  }
-
-  confirmRemovePat(): void {
-    this.removePatDialog().open();
-  }
-
-  async executeRemovePat(): Promise<void> {
-    this.removePatDialog().setProcessing(true);
-    try {
-      await this.oauthApi.deletePackagesPat();
-      await this.loadPatStatus();
-      this.removePatDialog().close();
-      this.successToastTitle.set('GHCR token removed');
-      this.successToastMessage.set('');
-      this.showSuccessToast.set(true);
-      setTimeout(() => this.showSuccessToast.set(false), 4000);
-    } catch (err: any) {
-      this.removePatDialog().setProcessing(false);
-      this.errorToastTitle.set('Could not remove token');
-      this.errorToastMessage.set(err?.error?.message || err?.message || '');
-      this.showErrorToast.set(true);
-      setTimeout(() => this.showErrorToast.set(false), 5000);
-    }
-  }
-
   navigateToSetup(): void {
     this.router.navigate(['/apps/repositories/github-setup']);
+  }
+
+  openReadinessMap(repo: ConnectedRepository): void {
+    this.router.navigate(['/apps/repositories', repo.id, 'map']);
   }
 
   async onGithubConnected(event: { username: string }): Promise<void> {
     await this.repoService.checkOAuthStatus();
     await this.loadRepos();
-    this.successToastTitle.set('GitHub connected');
-    this.successToastMessage.set(`Connected as @${event.username}`);
-    this.showSuccessToast.set(true);
-    setTimeout(() => this.showSuccessToast.set(false), 5000);
+    this.toasts.show('success', 'GitHub connected', `Connected as @${event.username}`, 5000);
   }
 
   async loadRepos() {
@@ -1316,219 +384,65 @@ export class RepositoriesListComponent implements OnInit, OnDestroy {
     await this.loadRepos();
   }
 
-  /**
-   * Handle successful OAuth callback
-   */
   private async handleOAuthSuccess() {
-    // Show success notification
-    this.successToastTitle.set('GitHub connected');
-    this.successToastMessage.set(
-      'Your GitHub account is now connected. You can import repositories below.',
+    this.toasts.show(
+      'success',
+      'GitHub connected',
+      'Your GitHub account is connected. You can import repositories now.',
+      5000,
     );
-    this.showSuccessToast.set(true);
-
-    // Refresh OAuth status
     await this.repoService.checkOAuthStatus();
-
-    // Reload repositories
     await this.loadRepos();
-
-    // Clean URL (remove query params)
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: {},
-      replaceUrl: true,
-    });
-
-    // Auto-hide toast after 5 seconds
-    setTimeout(() => this.showSuccessToast.set(false), 5000);
+    this.clearQueryParams();
   }
 
-  /**
-   * Handle OAuth error callback
-   */
   private handleOAuthError(error: string) {
-    console.error('❌ OAuth error:', error);
-
-    // Check if user cancelled/denied access
+    console.error('OAuth error:', error);
     if (error === 'access_denied') {
-      // Show warning notification for access denied
-      this.warningToastMessage.set(
-        'You cancelled the GitHub connection. To connect your account, please try again and authorize the application.',
+      this.toasts.show(
+        'warning',
+        'Connection cancelled',
+        'You cancelled the GitHub connection. Try again and authorize the application to connect your account.',
+        8000,
       );
-      this.showWarningToast.set(true);
-
-      // Auto-hide toast after 8 seconds
-      setTimeout(() => this.showWarningToast.set(false), 8000);
     } else {
-      // Show error notification for other errors
-      this.errorToastTitle.set('GitHub Connection Failed');
-      this.errorToastMessage.set(error || 'Failed to connect GitHub account');
-      this.showErrorToast.set(true);
-
-      // Auto-hide toast after 10 seconds
-      setTimeout(() => this.showErrorToast.set(false), 10000);
+      this.toasts.show(
+        'error',
+        'GitHub connection failed',
+        error || 'Failed to connect GitHub account',
+        10000,
+      );
     }
+    this.clearQueryParams();
+  }
 
-    // Clean URL (remove query params)
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: {},
-      replaceUrl: true,
-    });
+  private clearQueryParams(): void {
+    this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
   }
 
   disconnectOAuth(provider: 'github' | 'gitlab') {
     this.providerToDisconnect.set(provider);
-    this.disconnectDialog().open();
   }
 
   async executeDisconnect() {
     const provider = this.providerToDisconnect();
     if (!provider) return;
 
-    this.disconnectDialog().setProcessing(true);
-
+    this.isDisconnecting.set(true);
     try {
       const gitProvider = provider === 'github' ? GitProvider.GitHub : GitProvider.GitLab;
       await this.repoService.disconnectOAuth(gitProvider);
       await this.loadRepos();
-
-      this.disconnectDialog().close();
       this.providerToDisconnect.set(null);
     } catch (error) {
       console.error('Failed to disconnect OAuth:', error);
-      this.disconnectDialog().setProcessing(false);
+    } finally {
+      this.isDisconnecting.set(false);
     }
   }
 
   cancelDisconnect() {
     this.providerToDisconnect.set(null);
-  }
-
-  async showImportModal() {
-    this.showImportModalFlag.set(true);
-    this.selectedReposForImport.set([]);
-    this.hideRepoHint.set(false);
-
-    // Load available repositories
-    this.isLoadingAvailable.set(true);
-    try {
-      await this.repoService.loadAvailableRepositories();
-    } catch (error) {
-      console.error('Failed to load available repositories:', error);
-    } finally {
-      this.isLoadingAvailable.set(false);
-    }
-  }
-
-  closeImportModal() {
-    this.showImportModalFlag.set(false);
-    this.selectedReposForImport.set([]);
-    this.searchQuery.set('');
-  }
-
-  async refreshAvailableRepos(): Promise<void> {
-    this.isLoadingAvailable.set(true);
-    try {
-      await this.repoService.loadAvailableRepositories();
-    } catch {
-      // error already handled in service
-    } finally {
-      this.isLoadingAvailable.set(false);
-    }
-  }
-
-  toggleRepoSelection(repoFullName: string) {
-    this.selectedReposForImport.update((selected) => {
-      if (selected.includes(repoFullName)) {
-        return selected.filter((r) => r !== repoFullName);
-      } else {
-        return [...selected, repoFullName];
-      }
-    });
-  }
-
-  async importSelected() {
-    const selected = this.selectedReposForImport();
-    if (selected.length === 0) return;
-
-    this.isImporting.set(true);
-    try {
-      const response = await this.repoService.importRepositories(selected, false);
-      const { imported, failed, errors } = response;
-      const total = selected.length;
-
-      if (imported === total && failed === 0) {
-        await this.handleAllImported(imported);
-      } else if (imported === 0 && failed === total) {
-        this.handleAllFailed(failed, errors);
-      } else if (imported > 0 && failed > 0) {
-        await this.handlePartialImport(imported, failed, errors);
-      }
-    } catch (error: any) {
-      console.error('Failed to import repositories:', error);
-
-      // Network/API error: keep modal open and show error toast
-      const errorMessage =
-        error?.error?.message ||
-        error?.message ||
-        'An unexpected error occurred while importing repositories.';
-      this.errorToastTitle.set('Import Failed');
-      this.errorToastMessage.set(errorMessage);
-      this.showErrorToast.set(true);
-
-      // Auto-hide toast after 10 seconds
-      setTimeout(() => this.showErrorToast.set(false), 10000);
-    } finally {
-      this.isImporting.set(false);
-    }
-  }
-
-  // Case 1: All repositories imported successfully
-  private async handleAllImported(imported: number): Promise<void> {
-    this.closeImportModal();
-    await this.loadRepos();
-
-    this.successToastTitle.set('Repositories imported');
-    this.successToastMessage.set(
-      `${imported} ${imported === 1 ? 'repository' : 'repositories'} imported.`,
-    );
-    this.showSuccessToast.set(true);
-    setTimeout(() => this.showSuccessToast.set(false), 5000);
-  }
-
-  // Case 2: All repositories failed to import — keep modal open, show error
-  private handleAllFailed(failed: number, errors: string[] | undefined): void {
-    const errorList =
-      errors && errors.length > 0 ? errors.join('\n• ') : 'All repositories failed to import.';
-
-    this.errorToastTitle.set('Import Failed');
-    this.errorToastMessage.set(
-      `All ${failed} ${failed === 1 ? 'repository' : 'repositories'} failed to import:\n• ${errorList}`,
-    );
-    this.showErrorToast.set(true);
-    setTimeout(() => this.showErrorToast.set(false), 15000);
-  }
-
-  // Case 3: Partial success — some imported, some failed. Close modal and reload to show imported ones.
-  private async handlePartialImport(
-    imported: number,
-    failed: number,
-    errors: string[] | undefined,
-  ): Promise<void> {
-    this.closeImportModal();
-    await this.loadRepos();
-
-    const errorList = errors && errors.length > 0 ? '\n\nErrors:\n• ' + errors.join('\n• ') : '';
-
-    this.warningToastMessage.set(
-      `Partial import completed:\n` +
-        `✓ ${imported} ${imported === 1 ? 'repository' : 'repositories'} imported successfully\n` +
-        `✗ ${failed} ${failed === 1 ? 'repository' : 'repositories'} failed${errorList}`,
-    );
-    this.showWarningToast.set(true);
-    setTimeout(() => this.showWarningToast.set(false), 15000);
   }
 
   confirmDelete(repo: ConnectedRepository) {
@@ -1556,85 +470,5 @@ export class RepositoriesListComponent implements OnInit, OnDestroy {
     } finally {
       this.isDeleting.set(false);
     }
-  }
-
-  async deployFromRepo(repo: ConnectedRepository) {
-    if (this.isCheckingApps()) return;
-    this.isCheckingApps.set(true);
-    try {
-      if (this.appService.applications().length === 0) {
-        await this.appService.loadApplications();
-      }
-      const matched = this.appService
-        .applications()
-        .filter(
-          (app) =>
-            app.sourceType === ApplicationResponseDto.SourceTypeEnum.GitBuild &&
-            (app.sourceConfig as { repositoryId?: string } | undefined)?.repositoryId === repo.id,
-        );
-
-      if (matched.length === 0) {
-        this.navigateToDeployWizard(repo);
-        return;
-      }
-
-      this.deployChoiceApps.set(matched);
-      this.deployChoiceRepo.set(repo);
-    } finally {
-      this.isCheckingApps.set(false);
-    }
-  }
-
-  private navigateToDeployWizard(repo: ConnectedRepository) {
-    this.router.navigate(['/apps/deploy/new'], {
-      queryParams: { repoId: repo.id },
-    });
-  }
-
-  closeDeployChoice() {
-    this.deployChoiceRepo.set(null);
-    this.deployChoiceApps.set([]);
-  }
-
-  onTriggerBuildForApp(appId: string) {
-    this.closeDeployChoice();
-    this.router.navigate(['/apps/applications', appId, 'builds']);
-  }
-
-  onCreateNewAppFromChoice() {
-    const repo = this.deployChoiceRepo();
-    this.closeDeployChoice();
-    if (repo) this.navigateToDeployWizard(repo);
-  }
-
-  getFrameworkLabel(framework: string): string {
-    const labels: Record<string, string> = {
-      nextjs: 'Next.js',
-      angular: 'Angular',
-      react: 'React',
-      vue: 'Vue.js',
-      nestjs: 'NestJS',
-      nuxt: 'Nuxt',
-    };
-    return labels[framework] || framework;
-  }
-
-  formatDate(date: string): string {
-    // Normalize to UTC: if the string has no timezone indicator, append 'Z'
-    const normalized = /Z$|[+-]\d{2}:\d{2}$/.test(date) ? date : date + 'Z';
-    const then = new Date(normalized);
-    const diffMs = Date.now() - then.getTime();
-
-    if (diffMs < 60_000) return 'just now';
-
-    const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
-    const diffMins = Math.floor(diffMs / 60_000);
-    const diffHours = Math.floor(diffMs / 3_600_000);
-    const diffDays = Math.floor(diffMs / 86_400_000);
-
-    if (diffMins < 60) return rtf.format(-diffMins, 'minute');
-    if (diffHours < 24) return rtf.format(-diffHours, 'hour');
-    if (diffDays < 7) return rtf.format(-diffDays, 'day');
-    return then.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
   }
 }

@@ -15,36 +15,12 @@ import { HttpClient } from '@angular/common/http';
 import { AppConfigService } from '../../../core/services/app-config.service';
 import {
   FormBuilder,
+  FormControl,
   FormGroup,
   FormArray,
-  FormsModule,
-  ReactiveFormsModule,
   Validators,
   AsyncValidatorFn,
-  AbstractControl,
-  ValidationErrors,
 } from '@angular/forms';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideArrowLeft,
-  lucideSettings,
-  lucideMapPin,
-  lucideServer,
-  lucideKey,
-  lucideCheck,
-  lucideZap,
-  lucideEuro,
-  lucidePlay,
-  lucideLoader,
-  lucideShield,
-  lucideRefreshCw,
-  lucideInfo,
-  lucideWand,
-  lucideNetwork,
-  lucideHardDrive,
-  lucidePlus,
-  lucideX,
-} from '@ng-icons/lucide';
 import {
   WizardStep,
   NodeSizeOption,
@@ -57,1524 +33,85 @@ import { ClusterAutoscaleService } from '../../service/cluster-autoscale.service
 import { ClusterNameAvailabilityService } from '../../service/cluster-name-availability.service';
 import { AutoscaleDefaults } from '../../model/autoscale.models';
 import { AccessManagementService } from '../../../core/api/api/accessManagement.service';
-import {
-  VNetInfo,
-  SubnetInfo,
-  AddSubnetConfiguration,
-  subnetServesRegion,
-} from '../../model/vnet.models';
+import { VNetInfo, SubnetInfo, AddSubnetConfiguration } from '../../model/vnet.models';
 import { VNetService } from '../../service/vnet.service';
 import { DnsZonesService } from '../../service/dns-zones.service';
 import { ClusterDnsZoneService } from '../../service/cluster-dns-zone.service';
 import { DnsZoneResponseDto } from '../../../core/api/model/dnsZoneResponseDto';
 import { firstValueFrom } from 'rxjs';
 
-import { WizardShellComponent } from '../../../shared/components/wizard-shell/wizard-shell.component';
-import { ProviderRegionSelectorComponent } from '../../../shared/components/provider-region-selector/provider-region-selector.component';
-import { RegionServerSelectorComponent } from '../../../shared/components/region-server-selector/region-server-selector.component';
-import {
-  ArchitectureBadgeComponent,
-  architectureWarning,
-} from '../../../shared/components/architecture-badge.component';
 import { SshKeySelectorComponent } from '../../../shared/components/ssh-key-selector/ssh-key-selector.component';
-import { VNetSelectorComponent } from '../../../shared/components/vnet-selector/vnet-selector.component';
 import {
   AvailabilityChoice,
-  ClusterAvailabilityChoiceComponent,
   STANDARD_AVAILABILITY,
   STANDARD_DRAFT,
 } from './cluster-availability-choice.component';
 import { ProviderWizardService } from '../../../shared/services/provider-wizard.service';
 import { PricingService } from '../../../shared/services/pricing.service';
-
-// Import firewall components and utilities
 import { IpDetectionService } from '../../../shared/services/ip-detection.service';
-import { cidrListValidator } from '../../../shared/utils/cidr-validator';
+import { ClusterType, getDefaultRulesForClusterType } from '../../model/firewall-v2.models';
+import { Crumb } from '../../../ui/patterns/breadcrumb';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlPageHeader } from '../../../ui/patterns/page-header';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlWizardSteps, WizardStep as FlWizardStep } from '../../../ui/patterns/wizard-steps';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlSpinner } from '../../../ui/primitives/spinner';
 import {
-  ClusterType,
-  getDefaultRulesForClusterType,
-  isValidCidr,
-} from '../../model/firewall-v2.models';
+  FirewallRuleDto,
+  applyRuleDirection,
+  countSourceCidrs,
+  customRuleGroup,
+  defaultRuleGroup,
+  toFirewallRuleDtos,
+} from './cluster-create-firewall-form';
+import {
+  deriveSubnetCidr,
+  isSubnetUsable,
+  isValidSubnetCidr,
+  orderSubnets,
+} from './cluster-create-network-model';
+import {
+  clusterNameValidator,
+  createClusterErrorMessage,
+  suggestClusterName,
+  tagsWithClusterId,
+} from './cluster-create-helpers';
+import { ClusterCreateStepInfrastructure } from './cluster-create-step-infrastructure';
+import { ClusterCreateStepResources } from './cluster-create-step-resources';
+import { ClusterCreateStepNetwork } from './cluster-create-step-network';
+import { ClusterCreateStepEndpoint } from './cluster-create-step-endpoint';
+import { ClusterCreateStepFirewall } from './cluster-create-step-firewall';
+import { ClusterCreateStepReview, ReviewVnet } from './cluster-create-step-review';
 
-/**
- * Cluster Creation Wizard - Refactored
- *
- * Now uses shared components:
- * - WizardShellComponent for wizard UI wrapper
- * - ProviderRegionSelectorComponent for provider/region/server selection
- * - SshKeySelectorComponent for SSH key management
- * - ProviderWizardService for API calls and state
- *
- * Reduced from ~1500 lines to ~450 lines (-70%)
- */
-interface FirewallRuleDto {
-  description: string;
-  direction: 'in' | 'out';
-  protocol: 'tcp' | 'udp' | 'icmp';
-  port?: string;
-  sourceIps?: string[];
-  destinationIps?: string[];
-}
+const EDITABLE_STEPS = [
+  'infrastructure',
+  'resources',
+  'ssh-keys',
+  'network',
+  'endpoint',
+  'firewall',
+];
 
 @Component({
   selector: 'cluster-creation-wizard',
-  standalone: true,
   imports: [
-    ReactiveFormsModule,
-    FormsModule,
-    NgIcon,
-    WizardShellComponent,
-    ProviderRegionSelectorComponent,
-    RegionServerSelectorComponent,
-    ArchitectureBadgeComponent,
     SshKeySelectorComponent,
-    VNetSelectorComponent,
-    ClusterAvailabilityChoiceComponent,
+    FlAlert,
+    FlPageHeader,
+    FlPanel,
+    FlWizardSteps,
+    FlButton,
+    FlSpinner,
+    ClusterCreateStepInfrastructure,
+    ClusterCreateStepResources,
+    ClusterCreateStepNetwork,
+    ClusterCreateStepEndpoint,
+    ClusterCreateStepFirewall,
+    ClusterCreateStepReview,
   ],
-  providers: [
-    provideIcons({
-      lucideArrowLeft,
-      lucideSettings,
-      lucideMapPin,
-      lucideServer,
-      lucideKey,
-      lucideCheck,
-      lucideZap,
-      lucideEuro,
-      lucidePlay,
-      lucideLoader,
-      lucideShield,
-      lucideRefreshCw,
-      lucideInfo,
-      lucideWand,
-      lucideNetwork,
-      lucideHardDrive,
-      lucidePlus,
-      lucideX,
-    }),
-  ],
-  template: `
-    <!-- Back Button -->
-    <div class="mb-6">
-      <button
-        (click)="navigateBack()"
-        class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <ng-icon name="lucideArrowLeft" class="h-4 w-4 mr-2" />
-        Back to Overview
-      </button>
-    </div>
-
-    <!-- Wizard Shell -->
-    <app-wizard-shell
-      [wizardTitle]="'Create Your Cluster'"
-      [wizardDescription]="'Set up your cloud cluster in a few simple steps'"
-      [steps]="wizardSteps()"
-      [currentStepIndex]="currentStepIndex()"
-      [createButtonText]="isCreating() ? 'Creating...' : 'Create Cluster'"
-      (next)="nextStep()"
-      (previous)="previousStep()"
-      (cancelled)="navigateBack()"
-      (create)="createCluster()"
-    >
-      @if (createError(); as message) {
-        <div
-          class="flex items-start gap-2 mb-6 p-3 rounded-lg border border-red-200 bg-red-50 text-sm"
-          role="alert"
-          data-testid="create-cluster-error"
-        >
-          <ng-icon name="lucideX" class="h-4 w-4 mt-0.5 text-red-600" />
-          <div class="flex-1">
-            <p class="font-medium text-red-700">The cluster was not created</p>
-            <p class="text-xs text-red-700 mt-0.5">{{ message }}</p>
-          </div>
-        </div>
-      }
-      <!-- Selection Summary Bar -->
-      @if (selectedProvider() || selectedRegion() || selectedServerTypeId()) {
-        <div
-          class="flex items-center gap-2 flex-wrap mb-6 px-1 py-2 rounded-lg bg-muted/40 border border-border/50 text-xs text-muted-foreground"
-        >
-          <span class="font-medium text-foreground/60 mr-1">Selected:</span>
-          @if (selectedProvider()) {
-            <span
-              class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-background border border-border font-medium text-foreground"
-            >
-              <ng-icon name="lucideSettings" class="h-3 w-3 opacity-60" />
-              {{ getSelectedProviderName() }}
-            </span>
-          }
-          @if (selectedRegion()) {
-            <span class="text-muted-foreground/40">›</span>
-            <span
-              class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-background border border-border font-medium text-foreground"
-            >
-              <ng-icon name="lucideMapPin" class="h-3 w-3 opacity-60" />
-              {{ getSelectedRegionName() }}
-            </span>
-          }
-          @if (selectedServerType()) {
-            <span class="text-muted-foreground/40">›</span>
-            <span
-              class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-background border border-border font-medium text-foreground"
-            >
-              <ng-icon name="lucideServer" class="h-3 w-3 opacity-60" />
-              {{ selectedServerType()!.name }}
-            </span>
-            <span class="ml-auto text-muted-foreground"
-              >€{{ selectedServerType()!.pricePerHour }}/h</span
-            >
-          }
-        </div>
-      }
-
-      <!-- Step Content -->
-      @switch (currentStepIndex()) {
-        <!-- Step 0: Infrastructure (Name + Provider + Region) -->
-        @case (0) {
-          <div class="space-y-8">
-            <!-- Cluster Name (compact inline with auto-generate button) -->
-            <form [formGroup]="basicConfigForm">
-              <div class="flex items-center gap-4">
-                <label class="text-sm font-bold w-40 flex-shrink-0">
-                  Cluster Name <span class="text-red-500">*</span>
-                </label>
-                <div class="flex-1 max-w-md">
-                  <div class="flex items-center gap-2">
-                    <input
-                      type="text"
-                      formControlName="name"
-                      placeholder="workload-cluster-1"
-                      class="flex h-10 flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    />
-                    <button
-                      type="button"
-                      (click)="generateUniqueClusterName()"
-                      [disabled]="generatingName()"
-                      class="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-muted px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted/80 hover:text-foreground transition-colors whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed"
-                      title="Auto-generate unique name"
-                    >
-                      @if (generatingName()) {
-                        <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
-                        Generating…
-                      } @else {
-                        <ng-icon name="lucideWand" class="h-4 w-4" />
-                        Generate
-                      }
-                    </button>
-                  </div>
-                  @if (
-                    basicConfigForm.get('name')?.errors && basicConfigForm.get('name')?.touched
-                  ) {
-                    @if (basicConfigForm.get('name')?.errors?.['required']) {
-                      <p class="text-sm text-red-500 mt-1">Cluster name is required</p>
-                    }
-                    @if (basicConfigForm.get('name')?.errors?.['minlength']) {
-                      <p class="text-sm text-red-500 mt-1">
-                        Cluster name must be at least 3 characters
-                      </p>
-                    }
-                    @if (basicConfigForm.get('name')?.errors?.['nameExists']) {
-                      <p class="text-sm text-red-500 mt-1">
-                        A cluster with this name already exists. Please choose a different name.
-                      </p>
-                    }
-                    @if (basicConfigForm.get('name')?.errors?.['providerCollision']) {
-                      <p class="text-sm text-red-500 mt-1">
-                        {{ basicConfigForm.get('name')?.errors?.['providerCollision'] }}
-                      </p>
-                    }
-                  }
-                  @if (basicConfigForm.get('name')?.pending) {
-                    <p class="text-sm text-muted-foreground mt-1">Checking availability…</p>
-                  }
-                  @if (basicConfigForm.get('name')?.valid && basicConfigForm.get('name')?.value) {
-                    <p class="text-sm text-green-600 mt-1">✓ Name available</p>
-                  }
-                </div>
-              </div>
-            </form>
-
-            <!-- Cloud Provider -->
-            <div>
-              <label class="text-sm font-bold mb-4 block">
-                Cloud Provider <span class="text-red-500">*</span>
-              </label>
-              <div class="max-w-4xl">
-                <app-provider-region-selector
-                  [currentStep]="1"
-                  [selectedProvider]="selectedProvider()"
-                  [selectedRegion]="selectedRegion()"
-                  [selectedServerTypeId]="selectedServerTypeId()"
-                  [lockedProvider]="lockedProvider()"
-                  (providerSelected)="onProviderSelected($event)"
-                  (regionSelected)="onRegionSelected($event)"
-                  (serverTypeSelected)="onServerTypeSelected($event)"
-                />
-              </div>
-              <p class="mt-3 text-xs text-muted-foreground max-w-4xl">
-                You'll choose the region and node size together in the next step, where prices and
-                availability are shown per region.
-              </p>
-              @if (providerRefusal(); as refusal) {
-                <div
-                  class="mt-3 max-w-4xl flex items-start gap-2 p-3 rounded-lg border border-red-200 bg-red-50 text-sm"
-                  role="alert"
-                  data-testid="provider-refused"
-                >
-                  <ng-icon name="lucideX" class="h-4 w-4 mt-0.5 text-red-600" />
-                  <div class="flex-1">
-                    <p class="font-medium text-red-700">
-                      This provider cannot host a workload cluster here yet
-                    </p>
-                    <p class="text-xs text-red-700 mt-0.5">{{ refusal }}</p>
-                  </div>
-                </div>
-              }
-            </div>
-          </div>
-        }
-
-        <!-- Step 1: Resources (Server Type + Auto-scaling) -->
-        @case (1) {
-          <div class="space-y-6">
-            <app-region-server-selector
-              [selectedProvider]="selectedProvider()"
-              [selectedRegion]="selectedRegion()"
-              [selectedServerTypeId]="selectedServerTypeId()"
-              (regionSelected)="onRegionSelected($event)"
-              (serverTypeSelected)="onServerTypeSelected($event)"
-            />
-
-            <!-- Disk Size (only for network storage types) -->
-            @if (needsDiskConfig()) {
-              <div class="border-t pt-6">
-                <h3 class="font-medium mb-1 flex items-center">
-                  <ng-icon name="lucideServer" class="h-5 w-5 mr-2" />
-                  Boot Disk Size
-                </h3>
-                <p class="text-sm text-muted-foreground mb-4">
-                  This node type uses network block storage (SBS). Choose the root disk size for
-                  each node.
-                </p>
-                <div class="flex items-center gap-6">
-                  <div class="flex items-center gap-3">
-                    <input
-                      type="range"
-                      [min]="5"
-                      [max]="500"
-                      [step]="5"
-                      [value]="diskSizeGb()"
-                      (input)="setDiskSizeGb(+$any($event.target).value)"
-                      class="w-48 accent-primary"
-                    />
-                    <div class="flex items-center gap-1 w-28">
-                      <input
-                        type="number"
-                        [min]="5"
-                        [max]="500"
-                        [value]="diskSizeGb()"
-                        (change)="setDiskSizeGb(+$any($event.target).value)"
-                        class="flex h-9 w-20 rounded-md border border-input bg-background px-3 py-1 text-sm text-right"
-                      />
-                      <span class="text-sm text-muted-foreground">GB</span>
-                    </div>
-                  </div>
-                  <div class="text-sm space-y-0.5">
-                    <div class="text-muted-foreground">
-                      Storage:
-                      <span class="font-medium text-foreground"
-                        >€{{
-                          (
-                            selectedServerType()!.blockStoragePricePerGbMonthly! * diskSizeGb()
-                          ).toFixed(2)
-                        }}/mo per node</span
-                      >
-                    </div>
-                    <div class="text-muted-foreground">
-                      Total per node:
-                      <span class="font-semibold text-foreground"
-                        >€{{ totalCostPerNodePerHour().toFixed(4) }}/h</span
-                      >
-                      <span class="text-xs ml-1"
-                        >(~€{{ (totalCostPerNodePerHour() * 730).toFixed(2) }}/mo)</span
-                      >
-                    </div>
-                  </div>
-                </div>
-                <p class="text-xs text-muted-foreground mt-2">Minimum 5 GB · Maximum 500 GB</p>
-              </div>
-            }
-
-            <!-- Flui shared storage (NFS+fscache) -->
-            <div class="border-t pt-6">
-              <h3 class="font-medium mb-1 flex items-center">
-                <ng-icon name="lucideHardDrive" class="h-5 w-5 mr-2" />
-                Flui shared storage
-              </h3>
-              <p class="text-sm text-muted-foreground mb-4">
-                Pods can move between nodes without losing data. Required for scale-down without
-                data loss. Adds a cloud Volume to the master, exported via NFS to the workers with
-                fscache. When disabled, PVCs fall back to <span class="font-mono">flui-local</span>
-                (per-node bundled disk, not portable).
-              </p>
-              <div class="flex items-center space-x-2 mb-4">
-                <input
-                  type="checkbox"
-                  id="sharedStorageEnabled"
-                  [checked]="sharedStorageEnabled()"
-                  (change)="setSharedStorageEnabled($any($event.target).checked)"
-                  class="h-4 w-4 rounded border-input"
-                />
-                <label
-                  for="sharedStorageEnabled"
-                  class="text-sm font-medium select-none cursor-pointer"
-                >
-                  Enable flui-shared storage class (recommended)
-                </label>
-              </div>
-              @if (sharedStorageEnabled()) {
-                <div class="flex items-center gap-6 ml-6">
-                  <div class="flex items-center gap-3">
-                    <input
-                      type="range"
-                      [min]="10"
-                      [max]="1000"
-                      [step]="10"
-                      [value]="sharedStorageVolumeSizeGb()"
-                      (input)="setSharedStorageVolumeSizeGb(+$any($event.target).value)"
-                      class="w-48 accent-primary"
-                    />
-                    <div class="flex items-center gap-1 w-28">
-                      <input
-                        type="number"
-                        [min]="10"
-                        [max]="1000"
-                        [value]="sharedStorageVolumeSizeGb()"
-                        (change)="setSharedStorageVolumeSizeGb(+$any($event.target).value)"
-                        class="flex h-9 w-20 rounded-md border border-input bg-background px-3 py-1 text-sm text-right"
-                      />
-                      <span class="text-sm text-muted-foreground">GB</span>
-                    </div>
-                  </div>
-                  <p class="text-xs text-muted-foreground">
-                    Master volume size. Holds all flui-shared PVCs and snapshots.
-                  </p>
-                </div>
-              }
-            </div>
-
-            <cluster-availability-choice
-              [provider]="selectedProvider()"
-              [region]="selectedRegion()"
-              [serverTypeId]="selectedServerTypeId()"
-              [(draft)]="availabilityDraft"
-              (changed)="availability.set($event)"
-            />
-
-            <!-- Nodes -->
-            <div class="border-t pt-6">
-              <h3 class="font-medium mb-4 flex items-center">
-                <ng-icon name="lucideZap" class="h-5 w-5 mr-2" />
-                Nodes
-              </h3>
-
-              @if (highlyAvailable()) {
-                <div data-testid="ha-nodes-fixed">
-                  <p class="text-sm font-medium">3 servers, one in each location</p>
-                  <p class="text-xs text-muted-foreground mt-1">
-                    Add more once the cluster is ready.
-                  </p>
-                </div>
-              } @else {
-                <div class="space-y-4">
-                  <div class="w-32">
-                    <label for="clusterNodes" class="text-sm font-medium block mb-2">Nodes</label>
-                    <select
-                      id="clusterNodes"
-                      [value]="fixedNodes()"
-                      (change)="setFixedNodes(+$any($event.target).value)"
-                      class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    >
-                      @for (num of [1, 2, 3, 5]; track num) {
-                        <option [value]="num">{{ num }}</option>
-                      }
-                    </select>
-                  </div>
-
-                  <p class="text-xs text-muted-foreground max-w-prose">
-                    Counted across every node, master included. How far this cluster may grow later,
-                    and whether Flui may grow it on its own, are set in its Scaling section once it
-                    exists.
-                  </p>
-                </div>
-              }
-            </div>
-          </div>
-        }
-
-        <!-- Step 2: SSH Keys -->
-        @case (2) {
-          <app-ssh-key-selector
-            [selectedKeyId]="selectedSshKeyId()"
-            (keySelected)="onSshKeySelected($event)"
-          />
-        }
-
-        <!-- Step 3: Network Configuration (VNet & Subnet) -->
-        @case (3) {
-          <div class="space-y-6">
-            @if (environmentNetwork(); as env) {
-              <div
-                class="p-4 border border-blue-200 bg-blue-50 rounded-lg"
-                data-testid="joins-environment-network"
-              >
-                <div class="font-medium text-slate-900">Joins the environment network</div>
-                <p class="m-0 mt-1 text-sm text-slate-600">
-                  On the control cluster's provider, every cluster shares its private network:
-                  <span class="font-mono">{{ env.name }}</span> ({{ env.ipRange }}). Nothing to
-                  choose here.
-                </p>
-              </div>
-            } @else {
-              <!-- Only where the provider has no private network of its own. -->
-              @if (canBuildNetwork()) {
-                <div class="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    (click)="fluiBuildsNetwork.set(false)"
-                    [class]="
-                      !fluiBuildsNetwork()
-                        ? 'p-4 border-2 border-blue-500 bg-blue-50 rounded-lg text-left'
-                        : 'p-4 border-2 border-slate-200 rounded-lg text-left hover:border-slate-300'
-                    "
-                  >
-                    <div class="font-medium text-slate-900">Use an existing network</div>
-                    <div class="text-xs text-slate-500 mt-1">The machines already share one</div>
-                  </button>
-                  <button
-                    type="button"
-                    (click)="fluiBuildsNetwork.set(true)"
-                    [class]="
-                      fluiBuildsNetwork()
-                        ? 'p-4 border-2 border-blue-500 bg-blue-50 rounded-lg text-left'
-                        : 'p-4 border-2 border-slate-200 rounded-lg text-left hover:border-slate-300'
-                    "
-                  >
-                    <div class="font-medium text-slate-900">Let Flui build one</div>
-                    <div class="text-xs text-slate-500 mt-1">The machines share nothing</div>
-                  </button>
-                </div>
-
-                @if (fluiBuildsNetwork()) {
-                  <div class="space-y-3">
-                    <button
-                      type="button"
-                      (click)="showNetworkHelp.set(!showNetworkHelp())"
-                      class="text-xs text-blue-600 hover:underline"
-                    >
-                      {{ showNetworkHelp() ? 'Hide details' : 'What does this do?' }}
-                    </button>
-                    @if (showNetworkHelp()) {
-                      <p class="text-xs text-slate-600 leading-relaxed">
-                        Every node gets an address on an encrypted network Flui builds between them,
-                        and Kubernetes binds to it. Without one, traffic between your applications
-                        crosses the public internet unencrypted.
-                      </p>
-                    }
-                    <div>
-                      <label class="block text-sm font-medium text-slate-700 mb-1">
-                        Address range <span class="text-slate-400 font-normal">(optional)</span>
-                      </label>
-                      <input
-                        type="text"
-                        [value]="fluiNetworkCidr()"
-                        (input)="fluiNetworkCidr.set($any($event.target).value)"
-                        placeholder="10.201.0.0/24"
-                        class="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-sm"
-                      />
-                    </div>
-                  </div>
-                }
-              }
-
-              @if (!fluiBuildsNetwork()) {
-                <!-- VNet Selection -->
-                <div>
-                  <app-vnet-selector
-                    [provider]="selectedProvider()"
-                    [region]="selectedRegion()"
-                    [required]="vnetRequired()"
-                    [description]="
-                      vnetRequired()
-                        ? 'This provider requires all cluster nodes to share a private network. Select a VNet and subnet to continue.'
-                        : 'Select a VNet and subnet to attach all cluster nodes to a private network. This is optional but recommended for production clusters.'
-                    "
-                    (vnetSelected)="onVNetSelected($event)"
-                  />
-                </div>
-
-                <!-- Subnet Selection (shown when VNet is selected) -->
-                @if (selectedVNetId() && selectedVNetData()) {
-                  <div class="border-t pt-6">
-                    <div class="mb-4">
-                      <label class="block text-sm font-medium text-slate-700 mb-2">
-                        Select Subnet <span class="text-red-500">*</span>
-                      </label>
-                      <p class="text-sm text-slate-500">
-                        Choose which subnet to attach all cluster nodes to.
-                      </p>
-                    </div>
-
-                    @if (selectedVNetData()!.subnets.length === 0) {
-                      <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <div class="flex items-start gap-2">
-                          <ng-icon
-                            name="lucideInfo"
-                            size="18"
-                            class="text-yellow-600 flex-shrink-0 mt-0.5"
-                          ></ng-icon>
-                          <div class="text-sm text-yellow-800">
-                            <strong>Warning:</strong> This VNet has no subnets. Add one below before
-                            proceeding, or select a different VNet.
-                          </div>
-                        </div>
-                      </div>
-                      @if (!showAddSubnetForm()) {
-                        <button
-                          type="button"
-                          (click)="openAddSubnetForm()"
-                          class="mt-3 inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                        >
-                          <ng-icon name="lucidePlus" size="16"></ng-icon>
-                          Add Subnet
-                        </button>
-                      }
-                    } @else {
-                      <div class="space-y-2">
-                        @for (subnet of orderedSubnets(); track subnet.id) {
-                          <div
-                            (click)="selectSubnet(subnet.id)"
-                            [class]="getSubnetCardClass(subnet.id)"
-                            class="p-4 border-2 rounded-lg transition-all"
-                            [class.cursor-pointer]="isSubnetUsable(subnet)"
-                            [class.hover:shadow-md]="isSubnetUsable(subnet)"
-                            [class.opacity-50]="!isSubnetUsable(subnet)"
-                            [attr.aria-disabled]="!isSubnetUsable(subnet)"
-                          >
-                            <div class="flex items-center justify-between">
-                              <div class="flex items-center gap-3 flex-1">
-                                <div class="p-2 bg-slate-100 rounded-lg">
-                                  <ng-icon
-                                    name="lucideNetwork"
-                                    size="20"
-                                    class="text-slate-600"
-                                  ></ng-icon>
-                                </div>
-                                <div class="flex-1">
-                                  <div class="flex items-center gap-2 mb-1">
-                                    <span class="font-mono font-semibold text-slate-900">
-                                      {{ subnet.ipRange }}
-                                    </span>
-                                    @if (!isIpv4Subnet(subnet.ipRange)) {
-                                      <span class="text-xs text-muted-foreground"
-                                        >IPv6 only — nodes need an IPv4 subnet</span
-                                      >
-                                    } @else if (!servesSelectedRegion(subnet)) {
-                                      <span class="text-xs text-muted-foreground"
-                                        >Not reachable from {{ selectedRegion() }}</span
-                                      >
-                                    }
-                                  </div>
-                                  <div class="flex items-center gap-3 text-xs text-slate-500">
-                                    <span>{{ subnet.networkZone }}</span>
-                                    @if (subnet.gateway) {
-                                      <span>Gateway: {{ subnet.gateway }}</span>
-                                    }
-                                    <span
-                                      >{{ subnet.attachedServerIds.length }} server(s)
-                                      attached</span
-                                    >
-                                  </div>
-                                </div>
-                              </div>
-                              @if (selectedSubnetId() === subnet.id) {
-                                <ng-icon
-                                  name="lucideCheck"
-                                  size="24"
-                                  class="text-blue-600 ml-2"
-                                ></ng-icon>
-                              }
-                            </div>
-                          </div>
-                        }
-                      </div>
-                      @if (!showAddSubnetForm()) {
-                        <button
-                          type="button"
-                          (click)="openAddSubnetForm()"
-                          class="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700"
-                        >
-                          <ng-icon name="lucidePlus" size="14"></ng-icon>
-                          Add another subnet
-                        </button>
-                      }
-                    }
-
-                    @if (showAddSubnetForm()) {
-                      <div
-                        class="mt-3 border-2 border-blue-200 rounded-lg p-4 bg-blue-50/40 space-y-4"
-                      >
-                        <div class="flex items-center justify-between">
-                          <div class="flex items-center gap-2">
-                            <ng-icon name="lucideNetwork" size="18" class="text-blue-600"></ng-icon>
-                            <h4 class="font-semibold text-slate-900">
-                              Add subnet to {{ selectedVNetData()?.name }}
-                            </h4>
-                          </div>
-                          <button
-                            type="button"
-                            (click)="closeAddSubnetForm()"
-                            class="p-1 text-slate-400 hover:text-slate-600"
-                          >
-                            <ng-icon name="lucideX" size="18"></ng-icon>
-                          </button>
-                        </div>
-
-                        @if (addSubnetError()) {
-                          <div
-                            class="flex items-start gap-2 p-3 bg-red-50 text-red-700 rounded-lg text-sm"
-                          >
-                            <ng-icon
-                              name="lucideInfo"
-                              size="18"
-                              class="flex-shrink-0 mt-0.5"
-                            ></ng-icon>
-                            <span>{{ addSubnetError() }}</span>
-                          </div>
-                        }
-
-                        @if (addSubnetZones().length > 0) {
-                          <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">
-                              Network Zone <span class="text-red-500">*</span>
-                            </label>
-                            <select
-                              [(ngModel)]="addSubnetZone"
-                              class="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            >
-                              @for (zone of addSubnetZones(); track zone.id) {
-                                <option [value]="zone.id">{{ zone.displayName }}</option>
-                              }
-                            </select>
-                          </div>
-                        }
-
-                        <div>
-                          <label class="block text-sm font-medium text-slate-700 mb-1">
-                            Subnet IP Range (CIDR) <span class="text-red-500">*</span>
-                          </label>
-                          <input
-                            type="text"
-                            [(ngModel)]="addSubnetIpRange"
-                            placeholder="e.g., 10.0.0.0/24"
-                            class="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            [class.border-red-500]="addSubnetIpRange && !isValidAddSubnetCidr()"
-                          />
-                          <p class="text-xs text-slate-500 mt-1">
-                            Must fall within the VNet range {{ selectedVNetData()?.ipRange }}.
-                          </p>
-                        </div>
-
-                        <div class="flex gap-2">
-                          <button
-                            type="button"
-                            (click)="submitAddSubnet()"
-                            [disabled]="addingSubnet() || !isAddSubnetValid()"
-                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                          >
-                            {{ addingSubnet() ? 'Adding…' : 'Add & select' }}
-                          </button>
-                          <button
-                            type="button"
-                            (click)="closeAddSubnetForm()"
-                            [disabled]="addingSubnet()"
-                            class="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 transition-colors"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    }
-
-                    @if (selectedSubnetId()) {
-                      <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                        <div class="flex items-start gap-2">
-                          <ng-icon
-                            name="lucideInfo"
-                            size="18"
-                            class="text-blue-600 flex-shrink-0 mt-0.5"
-                          ></ng-icon>
-                          <div class="text-sm text-blue-800">
-                            <strong>Note:</strong> All cluster nodes will be automatically attached
-                            to this subnet during cluster creation.
-                          </div>
-                        </div>
-                      </div>
-                    }
-                  </div>
-                }
-              }
-            }
-          </div>
-        }
-
-        <!-- Step 4: Endpoint hostname source -->
-        @case (4) {
-          <div class="space-y-6">
-            <div>
-              <h3 class="text-lg font-semibold">How will your apps be reached?</h3>
-              <p class="text-sm text-muted-foreground">
-                Pick the default for this cluster. You can always change it per app later.
-              </p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl">
-              <button
-                type="button"
-                (click)="endpointHostnameMode.set('ip')"
-                [class]="endpointModeCardClass(endpointHostnameMode() === 'ip')"
-              >
-                <div class="flex items-center gap-2">
-                  <ng-icon name="lucideZap" class="h-5 w-5 text-primary" />
-                  <span class="font-medium">Test addresses</span>
-                </div>
-                <p class="mt-2 text-xs text-muted-foreground">
-                  Each app gets an instant address derived from your cluster IP. Great for testing
-                  or demos — no DNS setup needed.
-                </p>
-                <p class="mt-2 text-[11px] text-muted-foreground">
-                  Includes a free Let's Encrypt certificate.
-                </p>
-              </button>
-
-              <button
-                type="button"
-                (click)="endpointHostnameMode.set('domain')"
-                [class]="endpointModeCardClass(endpointHostnameMode() === 'domain')"
-              >
-                <div class="flex items-center gap-2">
-                  <ng-icon name="lucideNetwork" class="h-5 w-5 text-primary" />
-                  <span class="font-medium">Custom domains</span>
-                </div>
-                <p class="mt-2 text-xs text-muted-foreground">
-                  Use a DNS zone you've registered in Flui (e.g.
-                  <code class="font-mono">example.com</code>).
-                </p>
-                <p class="mt-2 text-[11px] text-muted-foreground">
-                  Wildcard certificate covering all subdomains.
-                </p>
-              </button>
-            </div>
-
-            @if (endpointHostnameMode() === 'domain') {
-              <div class="space-y-3 max-w-3xl">
-                @if (dnsZonesService.loading()) {
-                  <div class="flex items-center gap-2 text-sm text-muted-foreground">
-                    <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
-                    Loading your DNS zones…
-                  </div>
-                } @else if (dnsZones().length === 0) {
-                  <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                    <div class="flex items-start gap-2">
-                      <ng-icon
-                        name="lucideInfo"
-                        class="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5"
-                      />
-                      <p class="text-xs text-amber-800">
-                        No DNS zones registered yet. Register one under
-                        <strong>Infrastructure → Domains</strong>, then create this cluster — or
-                        pick <strong>Test addresses</strong> to get started now and attach a domain
-                        later.
-                      </p>
-                    </div>
-                  </div>
-                } @else {
-                  <div>
-                    <label class="text-sm font-medium">Which zone?</label>
-                    <p class="text-xs text-muted-foreground">
-                      Apps you deploy to this cluster get their addresses under this zone.
-                    </p>
-                  </div>
-
-                  <div class="space-y-2">
-                    @for (zone of dnsZones(); track zone.id) {
-                      <button
-                        type="button"
-                        (click)="selectedDnsZoneId.set(zone.id)"
-                        [class]="zoneCardClass(selectedDnsZoneId() === zone.id)"
-                      >
-                        <div class="flex items-center gap-2">
-                          <ng-icon name="lucideNetwork" class="h-4 w-4 text-primary" />
-                          <span class="font-mono text-sm font-medium">{{ zone.zoneName }}</span>
-                          <span
-                            class="px-2 py-0.5 rounded text-[11px] bg-muted text-muted-foreground"
-                          >
-                            {{ zone.dnsProvider }}
-                          </span>
-                        </div>
-                        @if (selectedDnsZoneId() === zone.id) {
-                          <ng-icon name="lucideCheck" class="h-4 w-4 text-primary" />
-                        }
-                      </button>
-                    }
-                  </div>
-
-                  @if (selectedZone(); as zone) {
-                    <div class="p-3 bg-muted/40 border border-border rounded-lg">
-                      <p class="text-xs text-muted-foreground mb-2">Apps will be reachable at:</p>
-                      <ul class="space-y-1">
-                        @for (host of endpointPreview(); track host) {
-                          <li class="font-mono text-xs">{{ host }}</li>
-                        }
-                      </ul>
-                      <p class="text-[11px] text-muted-foreground mt-2">
-                        Flui creates each record in
-                        <span class="font-mono">{{ zone.zoneName }}</span>
-                        when you deploy the app.
-                      </p>
-                    </div>
-                  }
-                }
-              </div>
-            }
-          </div>
-        }
-
-        <!-- Step 5: Firewall Configuration -->
-        @case (5) {
-          <div class="space-y-6">
-            <!-- Header with toggle -->
-            <div class="flex items-center justify-between">
-              <div>
-                <h3 class="text-lg font-semibold">Firewall Configuration</h3>
-                <p class="text-sm text-muted-foreground">
-                  Configure source IP restrictions for inbound traffic
-                </p>
-              </div>
-              <label class="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  [formControl]="$any(firewallConfigForm.get('enabled'))"
-                  class="w-4 h-4 rounded border-gray-300"
-                />
-                <span class="text-sm font-medium">Enable custom firewall rules</span>
-              </label>
-            </div>
-
-            @if (isCrossProviderWorkload() && overlayEnabled()) {
-              <div
-                class="p-4 rounded-lg border border-border bg-muted/40 flex items-start gap-2"
-                data-testid="firewall-through-tunnel"
-              >
-                <ng-icon
-                  name="lucideShield"
-                  class="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0"
-                />
-                <p class="text-xs text-muted-foreground">
-                  Your control cluster runs on a different provider ({{ controlClusterProvider() }})
-                  and reaches this cluster through the Flui network, an encrypted tunnel: no port is
-                  opened for it on the public network.
-                </p>
-              </div>
-            }
-            @if (managedFirewallRules().length > 0) {
-              <div class="p-4 rounded-lg border border-amber-500/30 bg-amber-500/5">
-                <div class="flex items-start gap-2 mb-3">
-                  <ng-icon
-                    name="lucideShield"
-                    class="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0"
-                  />
-                  <div>
-                    <h5 class="font-medium text-sm">Required rules — managed by Flui</h5>
-                    <p class="text-xs text-muted-foreground mt-0.5">
-                      Your control cluster runs on a different provider ({{
-                        controlClusterProvider()
-                      }}), so it reaches this cluster over the public network. Flui opens these
-                      ports for your control cluster's address automatically and keeps them in sync
-                      — they can't be edited or removed.
-                    </p>
-                  </div>
-                </div>
-
-                <div class="space-y-2">
-                  @for (rule of managedFirewallRules(); track rule.port) {
-                    <div class="p-3 rounded-lg border bg-muted/40 opacity-90">
-                      <div class="grid grid-cols-5 gap-3 text-sm items-center">
-                        <div class="col-span-2 flex items-center gap-2">
-                          <ng-icon
-                            name="lucideShield"
-                            class="w-3.5 h-3.5 text-muted-foreground flex-shrink-0"
-                          />
-                          <span class="font-medium">{{ rule.description }}</span>
-                        </div>
-                        <div>
-                          <span class="text-muted-foreground">Proto/Port:</span>
-                          <span class="ml-1 font-medium">{{ rule.protocol }} {{ rule.port }}</span>
-                        </div>
-                        <div>
-                          <span class="text-muted-foreground">Dir:</span>
-                          <span class="ml-1 font-medium">{{ rule.direction }}</span>
-                        </div>
-                        <div class="text-right">
-                          <span class="inline-flex items-center gap-1 text-xs text-amber-700">
-                            Locked
-                          </span>
-                        </div>
-                      </div>
-                      <p class="text-xs text-muted-foreground mt-1.5">
-                        Source: {{ rule.source }} (public IP resolved by Flui)
-                      </p>
-                    </div>
-                  }
-                </div>
-              </div>
-            }
-
-            @if (firewallConfigForm.get('enabled')?.value) {
-              <!-- Firewall Rules Configuration -->
-              <div class="p-4 rounded-lg border bg-card">
-                <!-- Info Alert -->
-                <div
-                  class="flex items-start gap-2 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 mb-4"
-                >
-                  <ng-icon name="lucideInfo" class="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                  <p class="text-xs text-blue-700">
-                    <strong>Workload Cluster:</strong> Pre-configured with default firewall rules
-                    for K3s.
-                    @if (ipDetectionService.userPublicIP()) {
-                      SSH port 22 has been pre-populated with your public IP for security.
-                    } @else {
-                      Your public IP could not be detected, so SSH port 22 is open only to the
-                      control cluster.
-                    }
-                    You can modify any IP addresses or add additional rules as needed.
-                  </p>
-                </div>
-
-                <!-- Firewall Rules -->
-                <div class="space-y-3">
-                  <h5 class="font-medium text-sm">Inbound &amp; Outbound Rules</h5>
-
-                  @for (
-                    ruleControl of getFirewallRulesArray().controls;
-                    track ruleControl;
-                    let i = $index
-                  ) {
-                    <div
-                      [formGroup]="$any(ruleControl)"
-                      class="p-4 rounded-lg border bg-muted/30 space-y-3"
-                    >
-                      <!-- Rule Header -->
-                      @if (ruleControl.get('isCustom')?.value) {
-                        <div class="flex items-start gap-3">
-                          <div class="grid grid-cols-4 gap-3 text-sm flex-1">
-                            <div>
-                              <label class="text-xs text-muted-foreground">Description</label>
-                              <input
-                                formControlName="description"
-                                type="text"
-                                placeholder="Custom rule"
-                                class="mt-1 w-full rounded-md border px-2 py-1 text-sm"
-                              />
-                            </div>
-                            <div>
-                              <label class="text-xs text-muted-foreground">Protocol</label>
-                              <select
-                                formControlName="protocol"
-                                class="mt-1 w-full rounded-md border px-2 py-1 text-sm bg-background"
-                              >
-                                <option value="tcp">TCP</option>
-                                <option value="udp">UDP</option>
-                                <option value="icmp">ICMP</option>
-                              </select>
-                            </div>
-                            <div>
-                              <label class="text-xs text-muted-foreground">Port</label>
-                              <input
-                                formControlName="port"
-                                type="text"
-                                placeholder="6443"
-                                class="mt-1 w-full rounded-md border px-2 py-1 text-sm"
-                              />
-                            </div>
-                            <div>
-                              <label class="text-xs text-muted-foreground">Direction</label>
-                              <select
-                                formControlName="direction"
-                                (change)="onCustomRuleDirectionChange(i)"
-                                class="mt-1 w-full rounded-md border px-2 py-1 text-sm bg-background"
-                              >
-                                <option value="in">IN</option>
-                                <option value="out">OUT</option>
-                              </select>
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            (click)="removeRule(i)"
-                            class="mt-5 inline-flex items-center justify-center w-7 h-7 rounded-md border text-muted-foreground hover:text-destructive hover:border-destructive transition-colors flex-shrink-0"
-                            title="Remove this rule"
-                          >
-                            <ng-icon name="lucideX" class="w-4 h-4" />
-                          </button>
-                        </div>
-                      } @else {
-                        <div class="grid grid-cols-4 gap-4 text-sm">
-                          <div>
-                            <span class="text-muted-foreground">Description:</span>
-                            <span class="ml-2 font-medium">{{
-                              ruleControl.get('description')?.value
-                            }}</span>
-                          </div>
-                          <div>
-                            <span class="text-muted-foreground">Protocol:</span>
-                            <span class="ml-2 font-medium uppercase">{{
-                              ruleControl.get('protocol')?.value
-                            }}</span>
-                          </div>
-                          <div>
-                            <span class="text-muted-foreground">Port:</span>
-                            <span class="ml-2 font-medium">{{
-                              ruleControl.get('port')?.value
-                            }}</span>
-                          </div>
-                          <div>
-                            <span class="text-muted-foreground">Direction:</span>
-                            <span class="ml-2 font-medium uppercase">{{
-                              ruleControl.get('direction')?.value
-                            }}</span>
-                          </div>
-                        </div>
-                      }
-                      @if (ruleControl.get('direction')?.value === 'out') {
-                        <div>
-                          <div class="flex items-center justify-between mb-2">
-                            <label class="text-sm font-medium">
-                              Destination CIDRs <span class="text-red-500">*</span>
-                            </label>
-                            <button
-                              type="button"
-                              class="text-xs text-blue-600 hover:underline"
-                              (click)="resetRuleIPs(i)"
-                            >
-                              Reset to defaults
-                            </button>
-                          </div>
-                          <textarea
-                            formControlName="destinationIps"
-                            rows="2"
-                            placeholder="0.0.0.0/0"
-                            class="w-full rounded-md border px-3 py-2 text-sm font-mono resize-none"
-                            [class.border-destructive]="
-                              ruleControl.get('destinationIps')?.invalid &&
-                              ruleControl.get('destinationIps')?.touched
-                            "
-                          ></textarea>
-                          <p class="text-xs text-muted-foreground mt-1">
-                            Where this cluster may send traffic. Use 0.0.0.0/0 to allow all
-                            destinations.
-                          </p>
-                          @if (
-                            ruleControl.get('destinationIps')?.errors?.['required'] &&
-                            ruleControl.get('destinationIps')?.touched
-                          ) {
-                            <p class="text-xs text-destructive mt-1">
-                              Destination CIDRs are required
-                            </p>
-                          }
-                          @if (ruleControl.get('destinationIps')?.errors?.['invalidCidrs']) {
-                            <p class="text-xs text-destructive mt-1">
-                              Invalid CIDR format:
-                              {{
-                                ruleControl
-                                  .get('destinationIps')
-                                  ?.errors?.['invalidCidrs'].join(', ')
-                              }}
-                              (must include /32 for single IP or /24 for subnet)
-                            </p>
-                          }
-                        </div>
-                      } @else {
-                        <div>
-                          <div class="flex items-center justify-between mb-2">
-                            <label class="text-sm font-medium">
-                              Source CIDRs
-                              @if (!isSshRule(ruleControl)) {
-                                <span class="text-red-500">*</span>
-                              }
-                            </label>
-                            <div class="flex items-center gap-2">
-                              <button
-                                type="button"
-                                class="text-xs text-blue-600 hover:underline"
-                                (click)="resetRuleIPs(i)"
-                              >
-                                Reset to defaults
-                              </button>
-                              <button
-                                type="button"
-                                (click)="detectAndSetIP(i)"
-                                [disabled]="ipDetectionService.isDetecting()"
-                                class="inline-flex items-center gap-2 text-xs text-blue-600 hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
-                              >
-                                <ng-icon
-                                  name="lucideRefreshCw"
-                                  [class]="
-                                    ipDetectionService.isDetecting()
-                                      ? 'w-3 h-3 animate-spin'
-                                      : 'w-3 h-3'
-                                  "
-                                />
-                                Detect My IP
-                              </button>
-                            </div>
-                          </div>
-                          <textarea
-                            formControlName="sourceIps"
-                            rows="2"
-                            placeholder="203.0.113.0/24, 198.51.100.42/32"
-                            class="w-full rounded-md border px-3 py-2 text-sm font-mono resize-none"
-                            [class.border-destructive]="
-                              ruleControl.get('sourceIps')?.invalid &&
-                              ruleControl.get('sourceIps')?.touched
-                            "
-                          ></textarea>
-                          <p class="text-xs text-muted-foreground mt-1">
-                            Who may reach this cluster. Comma-separated CIDR ranges (e.g.,
-                            192.168.1.0/24, 10.0.0.5/32).
-                          </p>
-                          @if (
-                            ruleControl.get('sourceIps')?.errors?.['required'] &&
-                            ruleControl.get('sourceIps')?.touched
-                          ) {
-                            <p class="text-xs text-destructive mt-1">Source CIDRs are required</p>
-                          }
-                          @if (ruleControl.get('sourceIps')?.errors?.['invalidCidrs']) {
-                            <p class="text-xs text-destructive mt-1">
-                              Invalid CIDR format:
-                              {{
-                                ruleControl.get('sourceIps')?.errors?.['invalidCidrs'].join(', ')
-                              }}
-                              (must include /32 for single IP or /24 for subnet)
-                            </p>
-                          }
-                          @if (
-                            ruleControl.get('port')?.value === '22' &&
-                            ruleControl.get('direction')?.value === 'in'
-                          ) {
-                            <p class="text-xs text-muted-foreground mt-1">
-                              Flui adds your control cluster's own address here automatically — it
-                              manages this cluster over SSH, and removing it would stall the
-                              install. Everything else is up to you.
-                            </p>
-                            @if (!ruleControl.get('sourceIps')?.value) {
-                              <p class="text-xs text-amber-600 mt-1">
-                                Only the control cluster will reach these nodes over SSH. Add your
-                                address to use flui ssh from this machine.
-                              </p>
-                            }
-                            @if (ipDetectionService.userPublicIP()) {
-                              <p class="text-xs text-blue-600 mt-1">
-                                Your detected IP: {{ ipDetectionService.userPublicIP() }}
-                              </p>
-                            }
-                          } @else if (ipDetectionService.userPublicIP()) {
-                            <p class="text-xs text-blue-600 mt-1">
-                              Your detected IP: {{ ipDetectionService.userPublicIP() }}
-                            </p>
-                          }
-                        </div>
-                      }
-                    </div>
-                  }
-
-                  <button
-                    type="button"
-                    (click)="addCustomRule()"
-                    class="inline-flex items-center gap-2 text-sm px-3 py-2 rounded-md border border-dashed hover:border-solid hover:bg-muted/40 transition-colors"
-                  >
-                    <ng-icon name="lucidePlus" class="w-4 h-4" />
-                    Add custom rule
-                  </button>
-                </div>
-              </div>
-            } @else {
-              <div class="p-6 rounded-lg border bg-muted/30 text-center">
-                <p class="text-sm text-muted-foreground">
-                  Custom firewall rules disabled. Default system templates will be applied based on
-                  cluster type.
-                </p>
-              </div>
-            }
-          </div>
-        }
-
-        <!-- Step 6: Review & Create -->
-        @case (6) {
-          <div class="space-y-6">
-            <h3 class="font-medium mb-4">Review Configuration</h3>
-
-            <div class="space-y-4">
-              <!-- Basic Info -->
-              <div class="border border-border rounded-lg p-4">
-                <h4 class="font-medium mb-3">Basic Configuration</h4>
-                <div class="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span class="text-muted-foreground">Cluster Name:</span>
-                    <div class="font-medium">{{ getClusterName() }}</div>
-                  </div>
-                  <div>
-                    <span class="text-muted-foreground">Provider:</span>
-                    <div class="font-medium">{{ getSelectedProviderName() }}</div>
-                  </div>
-                  <div>
-                    <span class="text-muted-foreground">Region:</span>
-                    <div class="font-medium">{{ getSelectedRegionName() }}</div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Node Configuration -->
-              <div class="border border-border rounded-lg p-4">
-                <h4 class="font-medium mb-3">Node Configuration</h4>
-                @if (getSelectedServerType(); as serverType) {
-                  <div class="space-y-3">
-                    <div class="flex items-start justify-between">
-                      <div class="flex-1">
-                        <div class="font-medium mb-1">{{ serverType.name }}</div>
-                        <div class="text-sm text-muted-foreground space-y-1">
-                          <div>
-                            {{ serverType.vcpu }} vCPU • {{ serverType.ram }}GB RAM •
-                            {{ serverType.disk }}GB Storage
-                          </div>
-                        </div>
-                        <div class="flex items-center gap-2 mt-2">
-                          <span
-                            [class]="
-                              serverType.cpuType === 'dedicated'
-                                ? 'text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded'
-                                : 'text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded'
-                            "
-                          >
-                            {{
-                              serverType.cpuType === 'dedicated' ? 'Dedicated CPU' : 'Shared CPU'
-                            }}
-                          </span>
-                          <app-architecture-badge [architecture]="serverType.architecture" />
-                        </div>
-                        @if (architectureWarning(serverType.architecture); as warning) {
-                          <p class="text-xs text-amber-600 mt-1" data-testid="architecture-warning">
-                            {{ warning }}
-                          </p>
-                        }
-                      </div>
-                      <div class="text-right ml-4">
-                        <div class="text-sm font-medium">€{{ serverType.pricePerHour }}/hour</div>
-                        <div class="text-xs text-muted-foreground">
-                          ~€{{
-                            pricingService.calculateMonthlyPriceRounded(serverType.pricePerHour)
-                          }}/month
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                }
-              </div>
-
-              <!-- Scaling Configuration -->
-              <div class="border border-border rounded-lg p-4">
-                <h4 class="font-medium mb-3">Nodes</h4>
-                <div class="space-y-3 text-sm">
-                  <div class="flex items-center justify-between">
-                    <span class="text-muted-foreground">Nodes:</span>
-                    <span class="font-medium">{{ costedNodes() }}</span>
-                  </div>
-                  @if (highlyAvailable()) {
-                    <div
-                      class="flex items-center justify-between"
-                      data-testid="review-availability"
-                    >
-                      <span class="text-muted-foreground">Availability:</span>
-                      <span class="font-medium">
-                        Three locations ·
-                        <span class="font-mono text-xs">{{ availabilityZones() }}</span>
-                      </span>
-                    </div>
-                  }
-                </div>
-              </div>
-
-              <!-- SSH Keys Configuration -->
-              <div class="border border-border rounded-lg p-4">
-                <h4 class="font-medium mb-3 flex items-center">
-                  <ng-icon name="lucideKey" class="h-4 w-4 mr-2" />
-                  SSH Keys
-                </h4>
-                @if (selectedSshKeyId()) {
-                  @if (getSshKeyById(selectedSshKeyId()!); as key) {
-                    <div class="text-sm flex items-center">
-                      <ng-icon name="lucideKey" class="h-4 w-4 mr-2 text-muted-foreground" />
-                      <div class="flex-1">
-                        <span class="font-medium">{{ key.name }}</span>
-                        <span class="text-xs text-muted-foreground ml-2">({{ key.type }})</span>
-                      </div>
-                    </div>
-                  }
-                } @else {
-                  <p class="text-sm text-muted-foreground">No SSH key selected</p>
-                }
-              </div>
-
-              <!-- VNet Configuration Summary -->
-              @if (environmentNetwork(); as env) {
-                <div class="border border-border rounded-lg p-4">
-                  <h4 class="font-medium mb-3 flex items-center">
-                    <ng-icon name="lucideNetwork" class="h-4 w-4 mr-2" />
-                    Network Configuration
-                  </h4>
-                  <div class="text-sm flex items-center justify-between">
-                    <span class="text-muted-foreground">Environment network:</span>
-                    <span class="font-mono text-sm font-medium"
-                      >{{ env.name }} · {{ env.ipRange }}</span
-                    >
-                  </div>
-                </div>
-              } @else if (selectedVNetId() && selectedSubnetId()) {
-                <div class="border border-border rounded-lg p-4">
-                  <h4 class="font-medium mb-3 flex items-center">
-                    <ng-icon name="lucideNetwork" class="h-4 w-4 mr-2" />
-                    Network Configuration
-                  </h4>
-                  <div class="text-sm space-y-2">
-                    <div class="flex items-center justify-between">
-                      <span class="text-muted-foreground">VNet:</span>
-                      <span class="font-medium">{{ selectedVNetData()?.name || 'N/A' }}</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                      <span class="text-muted-foreground">VNet IP Range:</span>
-                      <span class="font-mono text-sm font-medium">{{
-                        selectedVNetData()?.ipRange || 'N/A'
-                      }}</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                      <span class="text-muted-foreground">Subnet:</span>
-                      <span class="font-mono text-sm font-medium">{{
-                        getSelectedSubnet()?.ipRange || 'N/A'
-                      }}</span>
-                    </div>
-                  </div>
-                </div>
-              }
-
-              <!-- Endpoint Hostname Source Summary -->
-              <div class="border border-border rounded-lg p-4">
-                <h4 class="font-medium mb-3 flex items-center">
-                  <ng-icon name="lucideZap" class="h-4 w-4 mr-2" />
-                  Public addresses
-                </h4>
-                <div class="text-sm flex items-center justify-between">
-                  <span class="text-muted-foreground">Default for this cluster:</span>
-                  <span class="font-medium">
-                    @if (endpointHostnameMode() === 'ip') {
-                      Test addresses
-                    } @else {
-                      Custom domains
-                    }
-                  </span>
-                </div>
-                @if (endpointHostnameMode() === 'domain') {
-                  @if (selectedZone(); as zone) {
-                    <div class="text-sm flex items-center justify-between mt-2">
-                      <span class="text-muted-foreground">DNS zone:</span>
-                      <span class="font-mono text-xs font-medium">{{ zone.zoneName }}</span>
-                    </div>
-                  } @else {
-                    <p class="text-xs text-muted-foreground mt-2">
-                      No zone selected — attach one to the cluster after creation.
-                    </p>
-                  }
-                }
-              </div>
-
-              <!-- Firewall Configuration Summary -->
-              <div class="border border-border rounded-lg p-4">
-                <h4 class="font-medium mb-3 flex items-center">
-                  <ng-icon name="lucideShield" class="h-4 w-4 mr-2" />
-                  Firewall Configuration
-                </h4>
-                @if (firewallConfigForm.get('enabled')?.value) {
-                  <div class="text-sm space-y-2">
-                    <div class="flex items-center justify-between">
-                      <span class="text-muted-foreground">Cluster Type:</span>
-                      <span class="font-medium">Workload (K3s)</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                      <span class="text-muted-foreground">Total rules:</span>
-                      <span class="font-medium">{{ getFirewallRulesArray().length }}</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                      <span class="text-muted-foreground">Custom Source CIDRs:</span>
-                      <span class="font-medium">{{ getTotalCustomCIDRs() }} configured</span>
-                    </div>
-                  </div>
-                } @else {
-                  <p class="text-sm text-muted-foreground">
-                    Firewall disabled - cluster will be created without firewall protection
-                  </p>
-                }
-              </div>
-
-              <!-- Cost Estimation -->
-              <div class="border border-border rounded-lg p-4 bg-green-50">
-                <h4 class="font-medium mb-3 flex items-center">
-                  <ng-icon name="lucideEuro" class="h-4 w-4 mr-2 text-green-600" />
-                  Cost Estimation
-                </h4>
-                <div class="space-y-3 text-sm">
-                  <div class="flex items-center justify-between">
-                    <span class="text-muted-foreground"
-                      >Monthly cost ({{ costedNodes() }} node{{
-                        costedNodes() > 1 ? 's' : ''
-                      }}):</span
-                    >
-                    <span class="font-medium text-green-700"
-                      >€{{ getEstimatedMonthlyCost() }}/month</span
-                    >
-                  </div>
-                </div>
-                <p class="text-xs text-green-600 mt-3 pt-3 border-t border-green-200">
-                  * Estimates based on 24/7 usage. Actual costs may vary.
-                </p>
-              </div>
-            </div>
-          </div>
-        }
-      }
-    </app-wizard-shell>
-  `,
+  templateUrl: './cluster-creation-wizard.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  styles: [
-    `
-      /* Hide duplicate labels from provider-region-selector component */
-      app-provider-region-selector ::ng-deep .mb-4 label {
-        display: none;
-      }
-      app-provider-region-selector ::ng-deep .mb-4 p {
-        display: none;
-      }
-    `,
-  ],
 })
 export class ClusterCreationWizardComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
@@ -1595,7 +132,12 @@ export class ClusterCreationWizardComponent implements OnInit {
   completeOutput = output<{ success: boolean; cluster?: any; error?: string }>();
   cancelled = output<void>();
 
-  // Form state
+  protected readonly breadcrumb: readonly Crumb[] = [
+    { label: 'Clusters', link: '/cluster' },
+    { label: 'Create cluster' },
+  ];
+  protected readonly editableSteps = EDITABLE_STEPS;
+
   basicConfigForm!: FormGroup;
   firewallConfigForm!: FormGroup;
   formValid = signal<boolean>(false);
@@ -1608,7 +150,6 @@ export class ClusterCreationWizardComponent implements OnInit {
   /** The Flui network is on: a workload on another provider is reached through the tunnel. */
   readonly overlayEnabled = signal(false);
 
-  // Selected values
   selectedProvider = signal<string>('');
   generatingName = signal(false);
   selectedRegion = signal<string>('');
@@ -1637,17 +178,13 @@ export class ClusterCreationWizardComponent implements OnInit {
     this.highlyAvailable() ? this.availability().servers.length : this.fixedNodes(),
   );
 
-  // Advanced autoscale thresholds (optional overrides — fall back to defaults server-side)
   autoscaleDefaults = signal<AutoscaleDefaults | null>(null);
 
-  // Disk size (only for network storage types)
   diskSizeGb = signal<number>(20);
 
-  // Flui shared storage (NFS+fscache, see VOLUME_MANAGEMENT_FRONTEND_GUIDE.md)
   sharedStorageEnabled = signal<boolean>(true);
   sharedStorageVolumeSizeGb = signal<number>(20);
 
-  // Endpoint hostname source (cluster default for app endpoints + system services)
   endpointHostnameMode = signal<'ip' | 'domain'>('ip');
   selectedDnsZoneId = signal<string | null>(null);
 
@@ -1658,46 +195,20 @@ export class ClusterCreationWizardComponent implements OnInit {
     return id ? (this.dnsZones().find((z) => z.id === id) ?? null) : null;
   });
 
-  endpointModeCardClass(active: boolean): string {
-    const base =
-      'flex flex-col items-start rounded-lg border p-4 text-left transition w-full hover:bg-accent/40';
-    return active ? `${base} border-primary bg-primary/5` : `${base} border-border`;
-  }
-
-  zoneCardClass(active: boolean): string {
-    const base =
-      'flex items-center justify-between rounded-lg border p-3 text-left transition w-full hover:bg-accent/40';
-    return active ? `${base} border-primary bg-primary/5` : `${base} border-border`;
-  }
-
-  // Mirrors the backend default FQDN: {slug}.{clusterName}.{zoneName}
-  endpointPreview(): string[] {
-    const zone = this.selectedZone();
-    if (!zone) return [];
-    const cluster = this.getClusterName() || '<cluster-name>';
-    return ['myapp', 'docs'].map((slug) => `${slug}.${cluster}.${zone.zoneName}`);
-  }
-
-  // Computed: selected server type object
   readonly selectedServerType = computed(() => {
     const cacheKey = `${this.selectedProvider()}:${this.selectedRegion()}`;
     const serverTypes = this.wizardService.serverTypesData()[cacheKey] || [];
     return serverTypes.find((st) => st.id === this.selectedServerTypeId()) ?? null;
   });
 
-  // Computed: whether current node type needs network storage config
-  protected readonly architectureWarning = architectureWarning;
-
   readonly needsDiskConfig = computed(() => this.selectedServerType()?.storageType === 'network');
 
-  // Computed: storage cost per hour (€/GB/month ÷ 730 hours × diskSizeGb)
   readonly storageCostPerHour = computed(() => {
     const serverType = this.selectedServerType();
     if (!serverType?.blockStoragePricePerGbMonthly) return 0;
     return (serverType.blockStoragePricePerGbMonthly * this.diskSizeGb()) / 730;
   });
 
-  // Computed: total cost per node per hour (compute + storage)
   readonly totalCostPerNodePerHour = computed(() => {
     const serverType = this.selectedServerType();
     if (!serverType) return 0;
@@ -1763,7 +274,7 @@ export class ClusterCreationWizardComponent implements OnInit {
     if (!this.isCrossProviderWorkload() || this.overlayEnabled()) return [];
     return [
       {
-        description: 'Kubernetes API — control-plane access',
+        description: 'Kubernetes API, control-plane access',
         protocol: 'TCP',
         port: '6443',
         direction: 'IN',
@@ -1771,6 +282,32 @@ export class ClusterCreationWizardComponent implements OnInit {
       },
     ];
   });
+
+  protected readonly stepList = computed<FlWizardStep[]>(() => {
+    const summaries: Record<string, string> = {
+      infrastructure: [this.getClusterName(), this.getSelectedProviderName()]
+        .filter(Boolean)
+        .join(' · '),
+      resources: [this.getSelectedRegionName(), this.selectedServerType()?.name]
+        .filter(Boolean)
+        .join(' · '),
+    };
+    return this.wizardSteps().map((step) => ({ name: step.title, summary: summaries[step.id] }));
+  });
+
+  protected readonly reviewVnet = computed<ReviewVnet | null>(() => {
+    const vnet = this.selectedVNetData();
+    if (!this.selectedVNetId() || !this.selectedSubnetId()) return null;
+    return {
+      name: vnet?.name ?? '',
+      ipRange: vnet?.ipRange ?? '',
+      subnet: this.getSelectedSubnet()?.ipRange ?? '',
+    };
+  });
+
+  protected get nameControl(): FormControl<string> {
+    return this.basicConfigForm.get('name') as FormControl<string>;
+  }
 
   constructor() {
     effect(() => {
@@ -1781,7 +318,6 @@ export class ClusterCreationWizardComponent implements OnInit {
     });
   }
 
-  // Wizard steps - Consolidated (6 steps total)
   private isNetworkStepValid(): boolean {
     if (this.environmentNetwork()) return true;
     if (this.vnetRequired()) return !!this.selectedVNetId() && this.hasUsableSubnetSelected();
@@ -1817,10 +353,10 @@ export class ClusterCreationWizardComponent implements OnInit {
       },
       {
         id: 'ssh-keys',
-        title: 'SSH Keys',
+        title: 'SSH key',
         description: 'Configure secure access',
         icon: 'lucideKey',
-        isValid: true, // Optional step
+        isValid: true,
         isCompleted: currentIndex > 2,
       },
       {
@@ -1846,12 +382,12 @@ export class ClusterCreationWizardComponent implements OnInit {
         title: 'Firewall',
         description: 'Configure firewall rules and source IPs',
         icon: 'lucideShield',
-        isValid: this.firewallConfigForm?.valid ?? true, // Optional step with validation
+        isValid: this.firewallConfigForm?.valid ?? true,
         isCompleted: currentIndex > 5,
       },
       {
         id: 'review',
-        title: 'Review & Create',
+        title: 'Review',
         description: 'Review and create cluster',
         icon: 'lucideCheck',
         isValid: this.canComplete(),
@@ -1865,14 +401,13 @@ export class ClusterCreationWizardComponent implements OnInit {
       this.initializeForm();
       await this.initializeFirewall();
 
-      // Load autoscale defaults (used as placeholders + min/max defaults)
       try {
         const defs = await this.autoscaleService.loadDefaults();
         this.autoscaleDefaults.set(defs);
         if (defs.defaultMinNodes) this.minNodes.set(defs.defaultMinNodes);
         if (defs.defaultMaxNodes) this.maxNodes.set(defs.defaultMaxNodes);
       } catch {
-        // autoscale defaults unavailable — form uses manual inputs
+        this.autoscaleDefaults.set(null);
       }
 
       await Promise.all([
@@ -1886,12 +421,10 @@ export class ClusterCreationWizardComponent implements OnInit {
         this.selectedDnsZoneId.set(zones[0].id);
       }
 
-      // Track form validity changes with signal
       this.basicConfigForm.statusChanges.subscribe(() => {
         this.formValid.set(this.basicConfigForm.valid);
       });
 
-      // Set initial value
       this.formValid.set(this.basicConfigForm.valid);
     })();
   }
@@ -1905,149 +438,50 @@ export class ClusterCreationWizardComponent implements OnInit {
       ],
     });
 
-    // Initialize firewall form
     this.firewallConfigForm = this.fb.group({
       enabled: [true],
       rules: this.fb.array([]),
     });
   }
 
-  /**
-   * Generate a unique cluster name by checking against existing clusters.
-   * Pattern: workload-cluster-1, workload-cluster-2, workload-cluster-3, etc.
-   * Called when user clicks the "Auto-generate Name" button.
-   *
-   * A name free in our own (non-deleted) records isn't proof it's free at the
-   * provider too — a soft-deleted cluster whose server survived a force
-   * delete leaves exactly that gap. Each candidate is re-checked against the
-   * provider before being offered, so the suggestion never walks the user
-   * into a collision ~8 minutes into provisioning. Bounded at 50 attempts so
-   * a provider outage degrades to "keep the client-side guess" instead of
-   * hanging the button.
-   */
   async generateUniqueClusterName(): Promise<void> {
     this.generatingName.set(true);
     try {
-      const existingClusters = this.clusterService.clusters();
-      const existingNames = new Set(existingClusters.map((c) => c.name?.toLowerCase() || ''));
-      const provider = this.selectedProvider();
-
-      let counter = 1;
-      let suggestedName = `workload-cluster-${counter}`;
-
-      for (let attempt = 0; attempt < 50; attempt++) {
-        while (existingNames.has(suggestedName.toLowerCase())) {
-          counter++;
-          suggestedName = `workload-cluster-${counter}`;
-        }
-
-        if (!provider) break;
-        try {
-          const availability = await this.nameAvailabilityService.check(suggestedName, provider);
-          if (availability.available) break;
-        } catch {
-          break; // Can't verify — offer the client-side guess rather than block the button.
-        }
-
-        counter++;
-        suggestedName = `workload-cluster-${counter}`;
-      }
-
+      const suggestedName = await suggestClusterName(
+        this.clusterService.clusters(),
+        this.selectedProvider(),
+        this.checkName,
+      );
       this.basicConfigForm.patchValue({ name: suggestedName });
     } finally {
       this.generatingName.set(false);
     }
   }
 
-  /**
-   * Async validator to ensure cluster name is unique — both in our own
-   * records and at the cloud provider (see generateUniqueClusterName for
-   * why the provider check matters).
-   */
+  private readonly checkName = (name: string, provider: string) =>
+    this.nameAvailabilityService.check(name, provider);
+
   private clusterNameAsyncValidator(): AsyncValidatorFn {
-    return (control: AbstractControl): Promise<ValidationErrors | null> => {
-      return (async () => {
-        if (!control.value) return null;
-
-        const existingClusters = this.clusterService.clusters();
-        const existingNames = existingClusters.map((c) => c.name?.toLowerCase() || '');
-        const inputName = control.value.toLowerCase();
-
-        if (existingNames.includes(inputName)) {
-          return { nameExists: true };
-        }
-
-        const provider = this.selectedProvider();
-        if (!provider) return null;
-
-        try {
-          const availability = await this.nameAvailabilityService.check(control.value, provider);
-          return availability.available ? null : { providerCollision: availability.reason };
-        } catch {
-          return null; // Can't verify — the deep provisioning-time check is still the backstop.
-        }
-      })();
-    };
+    return clusterNameValidator(
+      () => this.clusterService.clusters(),
+      () => this.selectedProvider(),
+      this.checkName,
+    );
   }
 
   private async initializeFirewall(): Promise<void> {
     try {
-      // Get default rules for WORKLOAD cluster type
       const defaultRules = getDefaultRulesForClusterType(ClusterType.WORKLOAD);
-
-      // Detect user's public IP for SSH rule
       const userIP = await this.ipDetectionService.detectPublicIP();
-
       const rulesArray = this.getFirewallRulesArray();
-
-      // Populate FormArray with default rules
       for (const rule of defaultRules) {
-        // SSH is restricted to the operator. The control plane's own address is
-        // added server-side — the browser can't know it, and it moves with the
-        // control cluster — so it deliberately isn't listed here.
-        const isSSH = rule.port === '22' && rule.direction === 'in';
-        const sourceIps =
-          isSSH && userIP
-            ? [`${userIP}/32`] // Add /32 CIDR suffix to detected IP
-            : rule.sourceIps || [];
-
-        // For outbound rules, ensure destinationIps has default value
-        let destinationIps: string[];
-        if (rule.destinationIps && rule.destinationIps.length > 0)
-          destinationIps = rule.destinationIps;
-        else if (rule.direction === 'out') destinationIps = ['0.0.0.0/0'];
-        else destinationIps = [];
-
-        const ruleFormGroup = this.fb.group({
-          description: [rule.description, Validators.required],
-          direction: [rule.direction, Validators.required],
-          protocol: [rule.protocol, Validators.required],
-          port: [rule.port || ''],
-          sourceIps: [
-            sourceIps.join(', '),
-            rule.direction !== 'in'
-              ? []
-              : isSSH
-                ? [cidrListValidator()]
-                : [Validators.required, cidrListValidator()],
-          ],
-          destinationIps: [
-            destinationIps.join(', '),
-            rule.direction === 'out' ? [Validators.required, cidrListValidator()] : [],
-          ],
-          originalSourceIps: [sourceIps.join(', ')],
-          originalDestinationIps: [destinationIps.join(', ')],
-        });
-
-        rulesArray.push(ruleFormGroup);
+        rulesArray.push(defaultRuleGroup(this.fb, rule, userIP));
       }
     } catch (error) {
       console.error('Failed to initialize firewall rules:', error);
-      // Non-blocking: user can still create cluster without custom firewall
     }
   }
 
-  // Event handlers
   onProviderSelected(providerId: string): void {
     this.selectedProvider.set(providerId);
     this.selectedRegion.set('');
@@ -2062,8 +496,6 @@ export class ClusterCreationWizardComponent implements OnInit {
     }
   }
 
-  // An unanswered question leaves the decision to creation, which runs the
-  // same check: refusing here on a network error would block a valid provider.
   private async checkWorkloadProvider(providerId: string): Promise<void> {
     try {
       const verdict = await firstValueFrom(
@@ -2121,26 +553,10 @@ export class ClusterCreationWizardComponent implements OnInit {
   }
 
   isSubnetUsable(subnet: SubnetInfo): boolean {
-    return this.isIpv4Subnet(subnet.ipRange) && this.servesSelectedRegion(subnet);
+    return isSubnetUsable(subnet, this.selectedRegion());
   }
 
-  servesSelectedRegion(subnet: SubnetInfo): boolean {
-    return subnetServesRegion(subnet, this.selectedRegion());
-  }
-
-  /** Nodes get their private address from an IPv4 subnet; an IPv6-only one cannot carry them. */
-  isIpv4Subnet(ipRange: string | null | undefined): boolean {
-    return !!ipRange && !ipRange.includes(':');
-  }
-
-  /** IPv4 first, then by range: the same order on every visit. */
-  readonly orderedSubnets = computed(() =>
-    [...(this.selectedVNetData()?.subnets ?? [])].sort(
-      (a, b) =>
-        Number(this.isIpv4Subnet(b.ipRange)) - Number(this.isIpv4Subnet(a.ipRange)) ||
-        a.ipRange.localeCompare(b.ipRange),
-    ),
-  );
+  readonly orderedSubnets = computed(() => orderSubnets(this.selectedVNetData()?.subnets ?? []));
 
   private readonly providerVnetTopology = computed(
     () =>
@@ -2152,35 +568,17 @@ export class ClusterCreationWizardComponent implements OnInit {
     () => this.providerVnetTopology()?.subnetIpRange ?? null,
   );
 
-  /** Derive a concrete subnet CIDR from the VNet range (provider drops empty ones). */
   private deriveSubnetCidr(vnetIpRange: string): string | undefined {
-    const m = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})\/(\d{1,2})$/.exec(vnetIpRange);
-    if (!m) return undefined;
-    const vnetPrefix = Number.parseInt(m[5], 10);
-    const c = this.addSubnetConstraints();
-    let prefix = Math.max(24, vnetPrefix);
-    if (c) prefix = Math.min(Math.max(prefix, c.minPrefix), c.maxPrefix);
-    // Step the third octet by existing subnet count to avoid overlap on "add another".
-    const idx = prefix >= 24 ? (this.selectedVNetData()?.subnets.length ?? 0) : 0;
-    return `${m[1]}.${m[2]}.${idx}.0/${prefix}`;
-  }
-
-  private isValidCidr(
-    value: string,
-    constraints: { minPrefix: number; maxPrefix: number } | null,
-  ): boolean {
-    const cidrRegex = /^(\d{1,3}\.){3}\d{1,3}\/(\d{1,2})$/;
-    if (!cidrRegex.test(value)) return false;
-    const prefix = Number.parseInt(value.split('/')[1], 10);
-    if (prefix < 0 || prefix > 32) return false;
-    if (constraints && (prefix < constraints.minPrefix || prefix > constraints.maxPrefix))
-      return false;
-    return true;
+    return deriveSubnetCidr(
+      vnetIpRange,
+      this.addSubnetConstraints(),
+      this.selectedVNetData()?.subnets.length ?? 0,
+    );
   }
 
   isValidAddSubnetCidr(): boolean {
-    if (!this.addSubnetIpRange) return true; // falls back to derived default
-    return this.isValidCidr(this.addSubnetIpRange, this.addSubnetConstraints());
+    if (!this.addSubnetIpRange) return true;
+    return isValidSubnetCidr(this.addSubnetIpRange, this.addSubnetConstraints());
   }
 
   isAddSubnetValid(): boolean {
@@ -2229,11 +627,6 @@ export class ClusterCreationWizardComponent implements OnInit {
     }
   }
 
-  getSubnetCardClass(subnetId: string): string {
-    const isSelected = this.selectedSubnetId() === subnetId;
-    return isSelected ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-blue-300';
-  }
-
   getSelectedSubnet() {
     const vnetData = this.selectedVNetData();
     const subnetId = this.selectedSubnetId();
@@ -2241,7 +634,6 @@ export class ClusterCreationWizardComponent implements OnInit {
     return vnetData.subnets.find((s) => s.id === subnetId);
   }
 
-  // Navigation
   nextStep(): void {
     if (this.canProceedFromCurrentStep()) {
       this.currentStepIndex.update((index) => Math.min(index + 1, this.wizardSteps().length - 1));
@@ -2252,11 +644,18 @@ export class ClusterCreationWizardComponent implements OnInit {
     this.currentStepIndex.update((index) => Math.max(index - 1, 0));
   }
 
+  goToStep(index: number): void {
+    if (index >= 0 && index < this.currentStepIndex()) this.currentStepIndex.set(index);
+  }
+
+  editStep(stepId: string): void {
+    this.goToStep(this.wizardSteps().findIndex((step) => step.id === stepId));
+  }
+
   navigateBack(): void {
     this.router.navigate(['/cluster']);
   }
 
-  // Validation
   canProceedFromCurrentStep(): boolean {
     const step = this.wizardSteps()[this.currentStepIndex()];
     return step?.isValid || false;
@@ -2273,8 +672,6 @@ export class ClusterCreationWizardComponent implements OnInit {
       vnetOk
     );
   }
-
-  // Scaling configuration
 
   setMinNodes(count: number): void {
     this.minNodes.set(count);
@@ -2300,9 +697,8 @@ export class ClusterCreationWizardComponent implements OnInit {
     this.sharedStorageVolumeSizeGb.set(Math.min(1000, Math.max(10, value || 10)));
   }
 
-  // Helper methods
   getClusterName(): string {
-    return this.basicConfigForm.get('name')?.value || '';
+    return this.basicConfigForm?.get('name')?.value || '';
   }
 
   getSelectedProviderName(): string {
@@ -2339,13 +735,12 @@ export class ClusterCreationWizardComponent implements OnInit {
     return this.wizardService.sshKeysData().find((key) => key.id === keyId);
   }
 
-  // Firewall helper methods
   getFirewallRulesArray(): FormArray {
     return this.firewallConfigForm.get('rules') as FormArray;
   }
 
   async detectAndSetIP(ruleIndex: number): Promise<void> {
-    const ip = await this.ipDetectionService.detectPublicIP(true); // Force refresh
+    const ip = await this.ipDetectionService.detectPublicIP(true);
     if (ip) {
       const ruleControl = this.getFirewallRulesArray().at(ruleIndex);
       const currentValue = ruleControl.get('sourceIps')?.value || '';
@@ -2377,18 +772,7 @@ export class ClusterCreationWizardComponent implements OnInit {
    *  specific IP). Defaults to an inbound TCP rule; buildFirewallRules() picks it
    *  up like any other. */
   addCustomRule(): void {
-    const ruleFormGroup = this.fb.group({
-      description: ['Custom rule', Validators.required],
-      direction: ['in', Validators.required],
-      protocol: ['tcp', Validators.required],
-      port: [''],
-      sourceIps: ['', [Validators.required, cidrListValidator()]],
-      destinationIps: [''],
-      originalSourceIps: [''],
-      originalDestinationIps: [''],
-      isCustom: [true],
-    });
-    this.getFirewallRulesArray().push(ruleFormGroup);
+    this.getFirewallRulesArray().push(customRuleGroup(this.fb));
   }
 
   /** Only user-added custom rules can be removed; the default template rules are
@@ -2402,44 +786,14 @@ export class ClusterCreationWizardComponent implements OnInit {
   /** Swap the required-CIDR validator between source/destination when a custom
    *  rule flips direction, so the field the template hides never blocks submit. */
   onCustomRuleDirectionChange(ruleIndex: number): void {
-    const ruleControl = this.getFirewallRulesArray().at(ruleIndex);
-    const sourceIps = ruleControl.get('sourceIps');
-    const destinationIps = ruleControl.get('destinationIps');
-    if (ruleControl.get('direction')?.value === 'out') {
-      sourceIps?.clearValidators();
-      sourceIps?.setValue('');
-      destinationIps?.setValidators([Validators.required, cidrListValidator()]);
-      if (!destinationIps?.value) destinationIps?.setValue('0.0.0.0/0');
-    } else {
-      destinationIps?.clearValidators();
-      destinationIps?.setValue('');
-      sourceIps?.setValidators([Validators.required, cidrListValidator()]);
-    }
-    sourceIps?.updateValueAndValidity();
-    destinationIps?.updateValueAndValidity();
+    applyRuleDirection(this.getFirewallRulesArray().at(ruleIndex));
   }
 
   getTotalCustomCIDRs(): number {
     if (!this.firewallConfigForm.get('enabled')?.value) {
       return 0;
     }
-
-    const rules = this.getFirewallRulesArray();
-    const allCidrs: string[] = [];
-
-    rules.controls.forEach((ruleControl) => {
-      const ips = ruleControl.get('sourceIps')?.value;
-      if (ips) {
-        const cidrs = ips
-          .split(',')
-          .map((c: string) => c.trim())
-          .filter(Boolean);
-        allCidrs.push(...cidrs);
-      }
-    });
-
-    // Return unique count
-    return new Set(allCidrs).size;
+    return countSourceCidrs(this.getFirewallRulesArray());
   }
 
   /**
@@ -2448,72 +802,11 @@ export class ClusterCreationWizardComponent implements OnInit {
    */
   buildFirewallRules(): Array<FirewallRuleDto> | undefined {
     if (!this.firewallConfigForm.get('enabled')?.value) {
-      return undefined; // Backend will create deny-all firewall
+      return undefined;
     }
-
-    const rulesArray = this.getFirewallRulesArray();
-    const rules: Array<FirewallRuleDto> = [];
-
-    let hasInboundRule = false;
-
-    for (const ruleControl of rulesArray.controls) {
-      const description = ruleControl.get('description')?.value;
-      const direction = ruleControl.get('direction')?.value as 'in' | 'out';
-      const protocol = ruleControl.get('protocol')?.value as 'tcp' | 'udp' | 'icmp';
-      const port = ruleControl.get('port')?.value;
-      const sourceIpsStr = ruleControl.get('sourceIps')?.value || '';
-      const destinationIpsStr = ruleControl.get('destinationIps')?.value || '';
-
-      // Track inbound rules
-      if (direction === 'in') {
-        hasInboundRule = true;
-      }
-
-      // Parse and validate CIDRs
-      const sourceIps = sourceIpsStr
-        .split(',')
-        .map((c: string) => c.trim())
-        .filter((c: string) => c && isValidCidr(c));
-
-      const destinationIps = destinationIpsStr
-        .split(',')
-        .map((c: string) => c.trim())
-        .filter((c: string) => c && isValidCidr(c));
-
-      // Build rule object based on direction
-      const rule: FirewallRuleDto = {
-        description,
-        direction,
-        protocol,
-        port: port || undefined,
-      };
-
-      if (direction === 'in') {
-        if (sourceIps.length === 0 && this.isSshRule(ruleControl)) continue;
-        rule.sourceIps = sourceIps;
-      }
-
-      // For outbound rules, use validated destinationIps
-      if (direction === 'out') {
-        rule.destinationIps = destinationIps;
-      }
-
-      rules.push(rule);
-    }
-
-    // Validation: at least one inbound rule required
-    if (!hasInboundRule) {
-      throw new Error('At least one inbound firewall rule is required (e.g., SSH)');
-    }
-
-    return rules;
+    return toFirewallRuleDtos(this.getFirewallRulesArray());
   }
 
-  isSshRule(ruleControl: AbstractControl): boolean {
-    return ruleControl.get('port')?.value === '22' && ruleControl.get('direction')?.value === 'in';
-  }
-
-  // Main action
   async createCluster(): Promise<void> {
     if (!this.canComplete()) return;
 
@@ -2527,7 +820,6 @@ export class ClusterCreationWizardComponent implements OnInit {
       const configuration = this.buildClusterConfiguration(serverType);
       const result = await this.clusterService.createCluster(configuration);
 
-      // Update SSH key tags if needed
       if (this.selectedSshKeyId()) {
         await this.updateSshKeyTagsWithClusterId(result.clusterId, this.selectedSshKeyId()!);
       }
@@ -2580,17 +872,21 @@ export class ClusterCreationWizardComponent implements OnInit {
               autoAssignIp: true,
             }
           : undefined,
-      fluiManagedNetwork: this.fluiBuildsNetwork()
-        ? this.fluiNetworkCidr().trim()
-          ? { ipRange: this.fluiNetworkCidr().trim() }
-          : {}
-        : undefined,
+      fluiManagedNetwork: this.buildFluiManagedNetwork(),
       endpointHostnameMode: this.endpointHostnameMode(),
       sharedStorageEnabled: this.sharedStorageEnabled(),
       sharedStorageVolumeSizeGb: this.sharedStorageEnabled()
         ? this.sharedStorageVolumeSizeGb()
         : undefined,
     };
+  }
+
+  private buildFluiManagedNetwork(): ClusterConfiguration['fluiManagedNetwork'] {
+    if (!this.fluiBuildsNetwork()) {
+      return undefined;
+    }
+    const ipRange = this.fluiNetworkCidr().trim();
+    return ipRange ? { ipRange } : {};
   }
 
   private navigateAfterCreate(result: { operationId?: string; clusterId?: string }): void {
@@ -2603,8 +899,6 @@ export class ClusterCreationWizardComponent implements OnInit {
     }
   }
 
-  // The cluster is already created at this point, so a failure here must not fail the
-  // whole flow — the zone stays attachable from the cluster's DNS tab.
   private async attachSelectedDnsZone(clusterId: string): Promise<void> {
     if (this.endpointHostnameMode() !== 'domain') return;
     const zoneId = this.selectedDnsZoneId();
@@ -2620,45 +914,18 @@ export class ClusterCreationWizardComponent implements OnInit {
   }
 
   private mapCreateClusterError(error: any): string {
-    const body = error?.error;
-    switch (body?.code) {
-      case 'CROSS_PROVIDER_NOT_ALLOWED':
-        // The API's own message names what is missing: a control cluster with
-        // a reachable address, and the overlay switched on.
-        return (
-          body.message ??
-          'No private path is available between this provider and the control cluster.'
-        );
-      case 'VNET_REQUIRED':
-        return body.message ?? 'This provider requires a VNet/Subnet selection.';
-      default:
-        return body?.message ?? error?.message ?? 'Failed to create cluster';
-    }
+    return createClusterErrorMessage(error);
   }
 
-  /**
-   * Update SSH key tags with cluster ID
-   */
   private async updateSshKeyTagsWithClusterId(clusterId: string, keyId: string): Promise<void> {
     try {
       const existingKey = this.getSshKeyById(keyId);
       if (!existingKey) return;
 
-      const existingTags = (existingKey.tags ?? {}) as Record<string, any>;
-      let existingClusterIds: any[];
-      if (Array.isArray(existingTags['cluster-id']))
-        existingClusterIds = existingTags['cluster-id'];
-      else if (existingTags['cluster-id']) existingClusterIds = [existingTags['cluster-id']];
-      else existingClusterIds = [];
-
-      const updatedClusterIds = existingClusterIds.includes(clusterId)
-        ? existingClusterIds
-        : [...existingClusterIds, clusterId];
-
-      const updatedTags = {
-        ...existingTags,
-        'cluster-id': updatedClusterIds,
-      };
+      const updatedTags = tagsWithClusterId(
+        existingKey.tags as Record<string, unknown> | undefined,
+        clusterId,
+      );
 
       await firstValueFrom(
         this.accessManagementService.accessControllerUpdateSSHKey(keyId, {
@@ -2666,7 +933,7 @@ export class ClusterCreationWizardComponent implements OnInit {
         }),
       );
     } catch {
-      // Non-critical: cluster is created, only tag update failed
+      return;
     }
   }
 }

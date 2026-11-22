@@ -1,0 +1,112 @@
+<div class="fl-page">
+  <fl-page-header title="Build queue" [breadcrumb]="breadcrumb()">
+    <fl-status headerStatus [tone]="builder().tone" [label]="builder().label" />
+    @if (resources(); as res) {
+      <fl-copy-id headerMeta label="namespace" [value]="res.namespace" />
+    } @else {
+      <span headerMeta>Build tasks and workers running on a cluster</span>
+    }
+    <ng-container headerActions>
+      @if (!isLoadingClusters()) {
+        <label class="fl-sr" for="build-namespace-cluster">Cluster</label>
+        <span class="fl-select-wrap">
+          <select
+            id="build-namespace-cluster"
+            class="fl-select fl-select--sm"
+            data-testid="build-namespace-cluster"
+            [ngModel]="selectedClusterId()"
+            (ngModelChange)="onClusterChange($event)"
+          >
+            <option [value]="null" disabled>Select a cluster</option>
+            @for (c of clusters(); track c.id) {
+              <option [value]="c.id">{{ c.name }}</option>
+            }
+          </select>
+        </span>
+      }
+      @if (selectedClusterId()) {
+        <button
+          flButton
+          type="button"
+          [iconOnly]="true"
+          aria-label="Refresh"
+          title="Refresh"
+          [disabled]="isLoadingResources()"
+          (click)="loadResources()"
+        >
+          <fl-icon name="lucideRefreshCw" />
+        </button>
+        @if (!showCleanupPanel()) {
+          <button flButton type="button" (click)="showCleanupPanel.set(true)">
+            <fl-icon name="lucideTrash2" />
+            Clean up
+          </button>
+        }
+      }
+    </ng-container>
+  </fl-page-header>
+
+  @if (refusal()) {
+    <fl-alert data-testid="build-namespace-refused" tone="info" title="Not available">
+      {{ refusal() }}
+    </fl-alert>
+  }
+
+  @if (error()) {
+    <fl-alert data-testid="build-namespace-error" tone="error" title="Request failed">
+      {{ error() }}
+    </fl-alert>
+  }
+
+  @if (isLoadingClusters()) {
+    <fl-panel><fl-loading-state [rows]="3" /></fl-panel>
+  } @else if (!selectedClusterId()) {
+    <fl-panel>
+      <fl-empty-state
+        icon="lucideServer"
+        title="No cluster selected"
+        body="Select a cluster to see its build queue."
+      />
+    </fl-panel>
+  } @else {
+    <div class="fl-stack">
+      @if (resources(); as res) {
+        <fl-panel title="Summary">
+          <fl-key-value>
+            <fl-kv-item key="Cluster">{{ selectedCluster()?.name ?? '—' }}</fl-kv-item>
+            <fl-kv-item key="Namespace" [mono]="true">{{ res.namespace }}</fl-kv-item>
+            <fl-kv-item key="Queued">{{ res.queuedBuilds.length }}</fl-kv-item>
+            <fl-kv-item key="Build tasks">{{ res.jobs.length }}</fl-kv-item>
+            <fl-kv-item key="Workers">{{ res.pods.length }}</fl-kv-item>
+            <fl-kv-item key="CPU requested" [mono]="true"
+              >{{ res.totalCpuRequestMillicores }}m</fl-kv-item
+            >
+            <fl-kv-item key="Memory requested" [mono]="true"
+              >{{ res.totalMemoryRequestMiB }} MiB</fl-kv-item
+            >
+          </fl-key-value>
+        </fl-panel>
+      } @else if (isLoadingResources()) {
+        <fl-panel title="Summary"><fl-loading-state [rows]="3" /></fl-panel>
+      }
+
+      @if (showCleanupPanel()) {
+        <app-build-namespace-cleanup
+          [olderThanMinutes]="olderThanMinutes()"
+          (olderThanMinutesChange)="olderThanMinutes.set($event)"
+          [running]="isRunningCleanup()"
+          [preview]="cleanupPreview()"
+          (previewRequested)="previewCleanup()"
+          (confirmed)="confirmCleanup()"
+          (cancelled)="cancelCleanup()"
+        />
+      }
+
+      @if (resources(); as res) {
+        <app-build-namespace-tables [resources]="res" />
+      }
+
+      <app-build-cache-panel [clusterId]="selectedClusterId()!" />
+    </div>
+  }
+</div>

@@ -1,23 +1,19 @@
-import { Component, input, output, signal, inject, ChangeDetectionStrategy } from '@angular/core';
-
+import { Component, input, output, signal, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideGithub,
-  lucideKey,
-  lucideLoader,
-  lucideAlertCircle,
-  lucideExternalLink,
-  lucideArrowRight,
-  lucideCheck,
-  lucideX,
-  lucideTriangleAlert,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideArrowRight, lucideExternalLink, lucideGithub } from '@ng-icons/lucide';
 import { GitHubOAuthService } from '../../../core/api/api/gitHubOAuth.service';
 import { GitHubSetupStatusResponseDto } from '../../../core/api/model/gitHubSetupStatusResponseDto';
 import { GithubAppOAuthService } from '../../../core/services/github-app-oauth.service';
 import { SandboxService } from '../../../core/services/sandbox.service';
 import { InstallPromptService } from '../../../core/services/install-prompt.service';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlField } from '../../../ui/patterns/field';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+import { FlStatus } from '../../../ui/primitives/status';
+import { FlTag } from '../../../ui/primitives/tag';
 import { firstValueFrom } from 'rxjs';
 
 const REQUIRED_SCOPES = ['repo', 'write:packages', 'user:email', 'admin:repo_hook', 'workflow'];
@@ -30,199 +26,132 @@ interface ScopeCheckResult {
 
 @Component({
   selector: 'app-github-connect',
-  standalone: true,
-  imports: [FormsModule, NgIconComponent],
-  providers: [
-    provideIcons({
-      lucideGithub,
-      lucideKey,
-      lucideLoader,
-      lucideAlertCircle,
-      lucideExternalLink,
-      lucideArrowRight,
-      lucideCheck,
-      lucideX,
-      lucideTriangleAlert,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FormsModule, FlAlert, FlField, FlButton, FlIcon, FlSpinner, FlStatus, FlTag],
+  providers: [provideIcons({ lucideArrowRight, lucideExternalLink, lucideGithub })],
+  host: { class: 'flex max-w-lg flex-col gap-4' },
   template: `
-    <div class="flex flex-col items-center py-10 px-4 text-center">
-      <!-- GitHub logo -->
-      <div class="w-16 h-16 rounded-full bg-slate-900 flex items-center justify-center mb-6">
-        <ng-icon name="lucideGithub" size="32" class="text-white" />
-      </div>
-
-      @if (authMethod() === 'github_app') {
-        <h2 class="text-lg font-semibold text-slate-900 mb-1">Install Flui on GitHub</h2>
-        <p class="text-sm text-slate-500 max-w-sm mb-8">
-          Install the Flui GitHub App to automate builds and deployments directly from your
-          repositories.
-        </p>
-      } @else {
-        <h2 class="text-lg font-semibold text-slate-900 mb-1">Connect your GitHub account</h2>
-        <p class="text-sm text-slate-500 max-w-sm mb-8">
-          Paste a Personal Access Token to give Flui access to your GitHub repositories.
-        </p>
-      }
-
-      @if (authMethod() === 'github_app') {
-        <!-- GitHub App install + authorize button -->
+    @if (authMethod() === 'github_app') {
+      <p class="text-fl-ink-secondary">
+        Install the Flui GitHub App to build and deploy straight from your repositories. You install
+        and authorize it in one step; your repositories and packages are available when you come
+        back.
+      </p>
+      <div>
         <button
-          (click)="installGithubApp()"
+          flButton="primary"
+          type="button"
           [disabled]="isLoading()"
-          class="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+          (click)="installGithubApp()"
         >
           @if (isLoading()) {
-            <ng-icon name="lucideLoader" size="16" class="animate-spin" />
-            <span>Redirecting to GitHub…</span>
+            <fl-spinner label="Redirecting" />
+            Redirecting to GitHub…
           } @else {
-            <ng-icon name="lucideGithub" size="16" />
-            <span>Install & Authorize Flui App</span>
+            <fl-icon name="lucideGithub" />
+            Install and authorize Flui
           }
         </button>
-        <p class="text-xs text-slate-400 mt-4 max-w-sm">
-          You'll install the app and authorize access in one step. After you return, your
-          repositories and packages will be available automatically.
-        </p>
-        @if (error()) {
-          <div
-            class="mt-4 flex items-start gap-2 p-3 bg-red-50 rounded-lg border border-red-200 max-w-sm w-full text-left"
-          >
-            <ng-icon name="lucideAlertCircle" size="16" class="text-red-600 flex-shrink-0 mt-0.5" />
-            <p class="text-xs text-red-700">{{ error() }}</p>
-          </div>
-        }
-      } @else {
-        <!-- PAT form -->
-        <div class="w-full max-w-sm space-y-4 text-left">
-          <!-- Scope check result (shown after connect) -->
-          @if (scopeCheck()) {
-            @let check = scopeCheck()!;
-            @if (check.missingScopes.length === 0) {
-              <div
-                class="flex items-start gap-2 p-3 bg-green-50 rounded-lg border border-green-200"
-              >
-                <ng-icon name="lucideCheck" size="16" class="text-green-600 flex-shrink-0 mt-0.5" />
-                <p class="text-xs text-green-700 font-medium">
-                  All required scopes are present. You're good to go!
-                </p>
-              </div>
-            } @else {
-              <div class="p-3 bg-amber-50 rounded-lg border border-amber-200 space-y-2">
-                <div class="flex items-center gap-1.5 text-xs font-medium text-amber-800">
-                  <ng-icon name="lucideTriangleAlert" size="14" class="flex-shrink-0" />
-                  Missing scopes — some features may not work
-                </div>
-                <div class="flex flex-wrap gap-1.5">
-                  @for (scope of requiredScopes; track scope) {
-                    <span [class]="getScopeBadgeClass(scope, check.grantedScopes)">
-                      <ng-icon
-                        [name]="check.grantedScopes.includes(scope) ? 'lucideCheck' : 'lucideX'"
-                        size="10"
-                        class="flex-shrink-0"
-                      />
-                      {{ scope }}
-                    </span>
-                  }
-                </div>
-                @if (check.missingScopes.includes('workflow')) {
-                  <p class="text-xs text-amber-700">
-                    The <span class="font-mono">workflow</span> scope is required to commit GitHub
-                    Actions workflows to your repository.
-                  </p>
-                }
-                <a
-                  [href]="patCreateUrl"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
-                >
-                  Regenerate token with all scopes
-                  <ng-icon name="lucideExternalLink" size="11" />
-                </a>
-                <button
-                  type="button"
-                  (click)="confirmConnected()"
-                  class="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border border-amber-300 text-amber-800 hover:bg-amber-100 transition-colors"
-                >
-                  Continue anyway
-                  <ng-icon name="lucideArrowRight" size="14" />
-                </button>
-              </div>
-            }
-          }
-
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1">
-              Personal Access Token
-            </label>
-            <input
-              type="password"
-              [(ngModel)]="patToken"
-              placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-              class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div class="p-3 bg-slate-50 rounded-lg space-y-2">
-            <p class="text-xs text-slate-500 font-medium">Required scopes (classic token):</p>
-            <div class="flex flex-wrap gap-1">
-              @for (scope of requiredScopes; track scope) {
-                <span class="px-2 py-0.5 text-xs font-mono bg-slate-200 text-slate-700 rounded">
-                  {{ scope }}
-                </span>
-              }
-            </div>
-            <!-- GHA hint -->
-            <div class="flex items-start gap-1.5 pt-1 text-xs text-slate-500">
-              <ng-icon name="lucideGithub" size="12" class="flex-shrink-0 mt-0.5" />
-              <span
-                >The <span class="font-mono">workflow</span> scope is needed to commit GitHub
-                Actions workflow files to your repository.</span
-              >
-            </div>
-            <a
-              [href]="patCreateUrl"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
-            >
-              Create classic token with all scopes
-              <ng-icon name="lucideExternalLink" size="12" />
-            </a>
-            @if (sandbox.inSandbox() && sandbox.whyFor('repositories'); as trialNote) {
-              <p class="text-xs text-slate-500">{{ trialNote }}</p>
-            }
-          </div>
-
-          @if (error()) {
-            <div class="flex items-start gap-2 p-3 bg-red-50 rounded-lg border border-red-200">
-              <ng-icon
-                name="lucideAlertCircle"
-                size="16"
-                class="text-red-600 flex-shrink-0 mt-0.5"
-              />
-              <p class="text-xs text-red-700">{{ error() }}</p>
-            </div>
-          }
-
-          <button
-            (click)="connectPat()"
-            [disabled]="isLoading() || !patToken.trim()"
-            class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-          >
-            @if (isLoading()) {
-              <ng-icon name="lucideLoader" size="16" class="animate-spin" />
-              <span>Connecting...</span>
-            } @else {
-              <ng-icon name="lucideKey" size="16" />
-              <span>Connect with Token</span>
-            }
-          </button>
-        </div>
+      </div>
+      @if (error()) {
+        <fl-alert tone="error" title="Could not start the installation">{{ error() }}</fl-alert>
       }
-    </div>
+    } @else {
+      <p class="text-fl-ink-secondary">
+        Paste a personal access token to give Flui access to your GitHub repositories.
+      </p>
+
+      @if (scopeCheck(); as check) {
+        @if (check.missingScopes.length === 0) {
+          <fl-status tone="success" label="All required scopes are present" />
+        } @else {
+          <fl-alert tone="warning" title="Missing scopes">
+            Some features may not work with this token.
+            <span class="fl-row mt-2">
+              @for (scope of requiredScopes; track scope) {
+                <fl-status
+                  [tone]="check.grantedScopes.includes(scope) ? 'success' : 'error'"
+                  [label]="scope"
+                />
+              }
+            </span>
+            @if (check.missingScopes.includes('workflow')) {
+              <span class="mt-2 block">
+                The <span class="fl-mono">workflow</span> scope is needed to commit GitHub Actions
+                workflows to your repository.
+              </span>
+            }
+            <ng-container alertActions>
+              <a flButton size="sm" [href]="patCreateUrl" target="_blank" rel="noopener noreferrer">
+                Regenerate token with all scopes
+                <fl-icon name="lucideExternalLink" [size]="14" />
+              </a>
+              <button flButton size="sm" type="button" (click)="confirmConnected()">
+                Continue anyway
+                <fl-icon name="lucideArrowRight" [size]="14" />
+              </button>
+            </ng-container>
+          </fl-alert>
+        }
+      }
+
+      <fl-field label="Personal access token" for="github-connect-pat">
+        <div class="fl-input fl-input--lg">
+          <input
+            id="github-connect-pat"
+            type="password"
+            autocomplete="off"
+            placeholder="ghp_…"
+            [ngModel]="patToken()"
+            (ngModelChange)="patToken.set($event)"
+          />
+        </div>
+      </fl-field>
+
+      <div class="flex flex-col gap-2">
+        <span class="text-fl-caption text-fl-ink-muted">Required scopes (classic token)</span>
+        <div class="fl-row">
+          @for (scope of requiredScopes; track scope) {
+            <fl-tag class="fl-mono">{{ scope }}</fl-tag>
+          }
+        </div>
+        <p class="text-fl-caption text-fl-ink-muted">
+          The <span class="fl-mono">workflow</span> scope is needed to commit GitHub Actions
+          workflow files to your repository.
+        </p>
+        <a
+          class="fl-link inline-flex items-center gap-1"
+          [href]="patCreateUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Create a classic token with all scopes
+          <fl-icon name="lucideExternalLink" [size]="14" />
+        </a>
+        @if (sandbox.inSandbox() && sandbox.whyFor('repositories'); as trialNote) {
+          <p class="text-fl-caption text-fl-ink-muted">{{ trialNote }}</p>
+        }
+      </div>
+
+      @if (error()) {
+        <fl-alert tone="error" title="Could not connect">{{ error() }}</fl-alert>
+      }
+
+      <div>
+        <button
+          flButton="primary"
+          type="button"
+          [disabled]="isLoading() || !patToken().trim()"
+          (click)="connectPat()"
+        >
+          @if (isLoading()) {
+            <fl-spinner label="Connecting" />
+            Connecting…
+          } @else {
+            Connect with token
+          }
+        </button>
+      </div>
+    }
   `,
 })
 export class GithubConnectComponent {
@@ -238,7 +167,7 @@ export class GithubConnectComponent {
   readonly isLoading = signal(false);
   readonly error = signal<string | null>(null);
   readonly scopeCheck = signal<ScopeCheckResult | null>(null);
-  patToken = '';
+  readonly patToken = signal('');
   private pendingUsername = '';
 
   readonly requiredScopes = REQUIRED_SCOPES;
@@ -261,16 +190,16 @@ export class GithubConnectComponent {
         return;
       }
       globalThis.window.location.href = response.installUrl;
-    } catch (err: any) {
+    } catch (err: unknown) {
       this.error.set(
-        err?.error?.message || 'Could not generate the GitHub install link. Please try again.',
+        apiMessage(err) || 'Could not generate the GitHub install link. Please try again.',
       );
       this.isLoading.set(false);
     }
   }
 
   async connectPat(): Promise<void> {
-    if (!this.patToken.trim()) return;
+    if (!this.patToken().trim()) return;
     if (this.installPrompt.requireInstall()) return;
 
     this.isLoading.set(true);
@@ -280,22 +209,19 @@ export class GithubConnectComponent {
     try {
       const response = await firstValueFrom(
         this.gitHubOAuthApi.gitHubOAuthControllerConnectPat({
-          personalAccessToken: this.patToken.trim(),
+          personalAccessToken: this.patToken().trim(),
         }),
       );
       this.pendingUsername = response.githubUsername || '';
 
-      // Check scopes — show result before emitting connected
       await this.checkScopes();
 
-      // If all scopes ok: auto-proceed after short delay so user sees the green banner
       const check = this.scopeCheck();
       if (!check || check.missingScopes.length === 0) {
         setTimeout(() => this.confirmConnected(), 1500);
       }
-      // If scopes missing: wait for user to click "Continue anyway"
-    } catch (err: any) {
-      this.error.set(err?.error?.message || 'Invalid token. Make sure it has the required scopes.');
+    } catch (err: unknown) {
+      this.error.set(apiMessage(err) || 'Invalid token. Make sure it has the required scopes.');
     } finally {
       this.isLoading.set(false);
     }
@@ -309,7 +235,6 @@ export class GithubConnectComponent {
     try {
       const status = await firstValueFrom(this.gitHubOAuthApi.gitHubOAuthControllerGetStatus());
       const rawScopes = status.scopes ?? '';
-      // GitHub returns scopes comma-separated; some backends store them space-separated
       const separator = rawScopes.includes(',') ? ',' : ' ';
       const grantedScopes = rawScopes
         .split(separator)
@@ -319,14 +244,11 @@ export class GithubConnectComponent {
       const missingScopes = REQUIRED_SCOPES.filter((s) => !grantedScopes.includes(s));
       this.scopeCheck.set({ grantedScopes, missingScopes });
     } catch {
-      // Scope check best-effort: if it fails, proceed normally
       this.connected.emit({ username: this.pendingUsername });
     }
   }
+}
 
-  getScopeBadgeClass(scope: string, grantedScopes: string[]): string {
-    const has = grantedScopes.includes(scope);
-    const base = 'inline-flex items-center gap-1 px-2 py-0.5 text-xs font-mono rounded';
-    return has ? `${base} bg-green-100 text-green-800` : `${base} bg-red-100 text-red-700`;
-  }
+function apiMessage(err: unknown): string | undefined {
+  return (err as { error?: { message?: string } } | null)?.error?.message;
 }

@@ -1,67 +1,82 @@
-import { Component, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
-
+import { Component, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideX, lucidePlus, lucideLoader } from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucidePlus, lucideX } from '@ng-icons/lucide';
+import { FlField } from '../../../ui/patterns/field';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlEmptyState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+
+let nextId = 0;
 
 @Component({
   selector: 'app-flui-tag-manager',
-  standalone: true,
-  imports: [FormsModule, NgIcon],
-  providers: [provideIcons({ lucideX, lucidePlus, lucideLoader })],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FormsModule, FlField, FlTable, FlEmptyState, FlButton, FlIcon, FlSpinner],
+  providers: [provideIcons({ lucideX, lucidePlus })],
+  host: { class: 'flex flex-col gap-4' },
   template: `
-    <div class="flex flex-wrap items-center gap-1.5">
-      @for (tag of tags(); track tag) {
-        <span
-          class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20"
-        >
-          {{ tag }}
-          <button
-            type="button"
-            (click)="onRemoveTag(tag)"
-            [disabled]="busy()"
-            class="hover:text-destructive transition-colors disabled:opacity-50"
-          >
-            <ng-icon name="lucideX" class="h-3 w-3" />
-          </button>
-        </span>
-      }
-
-      @if (showInput()) {
-        <div class="inline-flex items-center gap-1">
+    <form class="flex items-end gap-2" (ngSubmit)="onAddTag()">
+      <fl-field class="flex-1" label="New tag" [for]="inputId">
+        <div class="fl-input fl-input--lg">
           <input
             type="text"
+            name="newTag"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="stable"
+            [id]="inputId"
             [(ngModel)]="newTag"
-            (keydown.enter)="onAddTag()"
-            (keydown.escape)="showInput.set(false)"
-            placeholder="tag name"
-            class="h-6 w-24 px-2 text-xs border border-input rounded bg-background"
-            autofocus
+            (keydown.escape)="newTag.set('')"
           />
-          <button
-            type="button"
-            (click)="onAddTag()"
-            [disabled]="busy() || !newTag()"
-            class="text-primary hover:text-primary/80 disabled:opacity-50"
-          >
-            @if (busy()) {
-              <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
-            } @else {
-              <ng-icon name="lucidePlus" class="h-3.5 w-3.5" />
-            }
-          </button>
         </div>
-      } @else {
-        <button
-          type="button"
-          (click)="showInput.set(true)"
-          class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-xs text-muted-foreground border border-dashed border-border hover:border-primary hover:text-primary transition-colors"
-        >
-          <ng-icon name="lucidePlus" class="h-3 w-3" /> Add tag
-        </button>
-      }
-    </div>
+      </fl-field>
+      <button flButton type="submit" [disabled]="busy() || !newTag().trim()">
+        @if (busy()) {
+          <fl-spinner label="Adding" />
+        } @else {
+          <fl-icon name="lucidePlus" />
+        }
+        Add tag
+      </button>
+    </form>
+
+    @if (tags().length === 0) {
+      <fl-empty-state [compact]="true" title="No tags yet" />
+    } @else {
+      <div class="fl-table-wrap">
+        <table flTable density="dense">
+          <thead>
+            <tr>
+              <th scope="col">Tag</th>
+              <th scope="col" class="is-fit"><span class="fl-sr">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (tag of tags(); track tag) {
+              <tr>
+                <td class="fl-mono">{{ tag }}</td>
+                <td class="is-fit">
+                  <button
+                    flButton="ghost"
+                    size="sm"
+                    type="button"
+                    [iconOnly]="true"
+                    [attr.aria-label]="'Remove tag ' + tag"
+                    [title]="'Remove tag ' + tag"
+                    [disabled]="busy()"
+                    (click)="onRemoveTag(tag)"
+                  >
+                    <fl-icon name="lucideX" />
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
   `,
 })
 export class FluiTagManagerComponent {
@@ -72,6 +87,8 @@ export class FluiTagManagerComponent {
   showInput = signal(false);
   newTag = signal('');
   busy = signal(false);
+
+  protected readonly inputId = `flui-tag-input-${nextId++}`;
 
   onAddTag(): void {
     const tag = this.newTag().trim();

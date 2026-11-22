@@ -14,7 +14,7 @@ const SURFACE_APP_ID = 'flui-dashboard';
 
 const PAGE_ID = 'github-setup-wizard';
 
-const STEP_TITLES = ['Choose Method', 'Configure', 'Done'] as const;
+const STEP_TITLES = ['Choose a method', 'Configure', 'Done'] as const;
 const STEP_IDS = ['method', 'configure', 'done'] as const;
 
 /**
@@ -104,12 +104,12 @@ export interface PresentedContent {
 
 export function presentedContent(input: GithubSetupWizardSurfaceInput): PresentedContent {
   const stepId = STEP_IDS[input.currentStepIndex] ?? 'method';
-  const stepTitle = STEP_TITLES[input.currentStepIndex] ?? 'Choose Method';
+  const stepTitle = STEP_TITLES[input.currentStepIndex] ?? 'Choose a method';
 
   const pageScope: SemanticScopeSnapshot = {
     id: PAGE_ID,
     kind: 'page',
-    label: 'GitHub Integration Setup',
+    label: 'Set up GitHub',
     observations: pageObservations(input),
   };
 

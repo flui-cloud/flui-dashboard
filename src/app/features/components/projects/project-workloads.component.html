@@ -1,0 +1,265 @@
+<div class="fl-page">
+  @if (focusId()) {
+    @let project = focused();
+    <fl-page-header
+      [title]="project?.name ?? 'Project'"
+      [breadcrumb]="[
+        { label: 'Projects', link: '/apps/projects' },
+        { label: project?.name ?? 'Project' },
+      ]"
+    >
+      @if (project) {
+        <fl-copy-id headerMeta [value]="project.slug" label="slug" />
+      }
+      @if (isRefreshing()) {
+        <span headerMeta class="text-fl-ink-muted">Syncing…</span>
+      }
+      <ng-container headerActions>
+        <button
+          flButton
+          type="button"
+          [iconOnly]="true"
+          aria-label="Refresh"
+          title="Refresh"
+          [disabled]="isLoading()"
+          (click)="refresh()"
+        >
+          <fl-icon name="lucideRefreshCw" />
+        </button>
+        @if (project && canManage()) {
+          <button flButton type="button" (click)="startEdit(project)">Edit</button>
+          <fl-actions-menu
+            [items]="focusFacts()?.actions ?? []"
+            (action)="onProjectAction(project, $event)"
+          />
+        }
+      </ng-container>
+    </fl-page-header>
+
+    @if (project) {
+      <div class="fl-stack">
+        @if (focusFacts(); as facts) {
+          <fl-panel title="Details">
+            <fl-key-value>
+              <fl-kv-item key="Slug" [mono]="true">{{ project.slug }}</fl-kv-item>
+              <fl-kv-item key="Description">{{ project.description || '—' }}</fl-kv-item>
+              <fl-kv-item key="Workloads">{{ facts.summary }}</fl-kv-item>
+              <fl-kv-item key="Clusters">{{ facts.clusters }}</fl-kv-item>
+              <fl-kv-item key="Owner">{{ project.ownerUserId ? 'Personal' : 'Shared' }}</fl-kv-item>
+            </fl-key-value>
+          </fl-panel>
+        }
+        <fl-panel title="Workloads" [count]="resultCount()" [flush]="true">
+          <ng-container panelToolbar [ngTemplateOutlet]="toolbar" />
+          <ng-container [ngTemplateOutlet]="table" />
+        </fl-panel>
+      </div>
+    } @else if (focusMissing()) {
+      <fl-panel>
+        <fl-empty-state
+          title="Project not found"
+          body="It may have been deleted, or you may not have access to it."
+        >
+          <a flButton size="sm" routerLink="/apps/projects">All projects</a>
+        </fl-empty-state>
+      </fl-panel>
+    } @else {
+      <fl-panel><fl-loading-state [rows]="4" /></fl-panel>
+    }
+  } @else {
+    <fl-page-header [title]="'Projects (' + projects().length + ')'">
+      <span headerMeta>Every workload grouped by project, across kinds and clusters</span>
+      @if (isRefreshing()) {
+        <span headerMeta class="text-fl-ink-muted">Syncing…</span>
+      }
+      <ng-container headerActions>
+        <button
+          flButton
+          type="button"
+          [iconOnly]="true"
+          aria-label="Refresh"
+          title="Refresh"
+          [disabled]="isLoading()"
+          (click)="refresh()"
+        >
+          <fl-icon name="lucideRefreshCw" />
+        </button>
+        <a flButton="ghost" routerLink="/management/projects">Manage projects</a>
+        @if (canManage()) {
+          <button flButton="primary" type="button" (click)="toggleCreate()">
+            <fl-icon name="lucidePlus" />
+            New project
+          </button>
+        }
+      </ng-container>
+    </fl-page-header>
+
+    <fl-panel [flush]="true">
+      <ng-container panelToolbar [ngTemplateOutlet]="toolbar" />
+      @if (isInitialLoading()) {
+        <fl-loading-state [rows]="5" />
+      } @else if (sections().length === 0) {
+        <fl-empty-state
+          title="No projects yet"
+          body="Projects group workloads that belong together."
+        >
+          @if (canManage()) {
+            <button flButton="primary" size="sm" type="button" (click)="toggleCreate()">
+              Create your first project
+            </button>
+          }
+        </fl-empty-state>
+      } @else {
+        <ng-container [ngTemplateOutlet]="table" />
+      }
+    </fl-panel>
+  }
+</div>
+
+<ng-template #toolbar>
+  <div class="fl-toolbar" role="toolbar" aria-label="Filters">
+    <div class="fl-toolbar__group">
+      <label class="fl-input">
+        <fl-icon name="lucideSearch" [size]="14" />
+        <span class="fl-sr">Search</span>
+        <input
+          type="search"
+          placeholder="Search workloads"
+          aria-label="Search workloads"
+          [value]="search()"
+          (input)="search.set(inputValue($event))"
+        />
+      </label>
+      <label class="fl-sr" for="workloads-kind">Kind</label>
+      <span class="fl-select-wrap">
+        <select
+          id="workloads-kind"
+          class="fl-select fl-select--sm"
+          [value]="kindFilter()"
+          (change)="kindFilter.set(inputValue($event))"
+        >
+          <option value="">Kind: All</option>
+          @for (k of selectableKinds; track k) {
+            <option [value]="k">{{ kindLabel(k) }}</option>
+          }
+        </select>
+      </span>
+      <label class="fl-check">
+        <input
+          type="checkbox"
+          [checked]="includeSystem()"
+          (change)="includeSystem.set(checkedValue($event))"
+        />
+        <span>Include system</span>
+      </label>
+      @if (!focusId()) {
+        <label class="fl-check">
+          <input
+            type="checkbox"
+            [checked]="hideEmpty()"
+            (change)="hideEmpty.set(checkedValue($event))"
+          />
+          <span>Hide empty projects</span>
+        </label>
+      }
+    </div>
+    <div class="fl-toolbar__group">
+      <span class="fl-toolbar__info"
+        >{{ resultCount() }} {{ resultCount() === 1 ? 'workload' : 'workloads' }}</span
+      >
+    </div>
+  </div>
+</ng-template>
+
+<ng-template #table>
+  <div class="fl-table-wrap" data-testid="project-workloads-table">
+    <table flTable density="dense">
+      <thead>
+        <tr>
+          <th scope="col">Workload</th>
+          <th scope="col">Status</th>
+          <th scope="col">Kind</th>
+          <th scope="col">Cluster</th>
+          <th scope="col" class="is-num">Ready</th>
+          <th scope="col" class="is-num">Released</th>
+          <th scope="col" class="is-fit"><span class="fl-sr">Actions</span></th>
+        </tr>
+      </thead>
+      @for (section of tableSections(); track section.key) {
+        <tbody>
+          @if (!focusId()) {
+            <tr [attr.data-testid]="'project-section-' + section.key">
+              <th scope="rowgroup" colspan="6">
+                <div class="flex items-center gap-2">
+                  <button
+                    flButton="ghost"
+                    size="sm"
+                    type="button"
+                    [iconOnly]="true"
+                    [attr.aria-expanded]="!section.collapsed"
+                    [attr.aria-label]="
+                      (section.collapsed ? 'Expand ' : 'Collapse ') +
+                      (section.project?.name ?? 'Unassigned')
+                    "
+                    (click)="toggle(section.key)"
+                  >
+                    <fl-icon
+                      [name]="section.collapsed ? 'lucideChevronRight' : 'lucideChevronDown'"
+                    />
+                  </button>
+                  @if (section.project; as project) {
+                    <a
+                      class="fl-link"
+                      routerLink="/apps/projects"
+                      [queryParams]="{ project: project.id }"
+                      >{{ project.name }}</a
+                    >
+                    <span class="fl-mono font-normal text-fl-ink-muted">{{ project.slug }}</span>
+                  } @else {
+                    <span>Unassigned</span>
+                  }
+                  <span class="font-normal text-fl-ink-muted">{{ section.summary }}</span>
+                </div>
+              </th>
+              <th scope="rowgroup" class="is-fit">
+                @if (section.project && canManage()) {
+                  <fl-actions-menu
+                    [label]="'Actions for ' + section.project.name"
+                    [compact]="true"
+                    [items]="section.actions"
+                    (action)="onProjectAction(section.project, $event)"
+                  />
+                }
+              </th>
+            </tr>
+          }
+          @if (!section.collapsed || focusId()) {
+            @for (item of section.rows; track item.row.id) {
+              <tr
+                app-project-workload-row
+                [item]="item"
+                (open)="openRecap($event)"
+                (delete)="askDeleteApp($event)"
+              ></tr>
+            } @empty {
+              <tr>
+                <td colspan="7" class="text-fl-ink-muted">No workloads here.</td>
+              </tr>
+            }
+          }
+        </tbody>
+      }
+    </table>
+  </div>
+</ng-template>
+
+<ng-template #projectForm>
+  <app-project-form
+    [project]="form.editing()"
+    [withDescription]="true"
+    [busy]="form.busy()"
+    [submitLabel]="form.submitLabel()"
+    (saved)="form.save($event)"
+    (cancelled)="form.close()"
+  />
+</ng-template>

@@ -7,24 +7,28 @@ export interface CatalogScopeCopy {
   title: string;
   subtitle: string;
   back: string;
+  backLabel: string;
 }
 
 const SCOPE_COPY: Record<CatalogScope, CatalogScopeCopy> = {
   data: {
     title: 'Add a data store',
     subtitle:
-      'Databases, caches, queues, search and object stores — Flui provisions storage, secrets, backups and connection settings for you.',
+      'Databases, caches, queues, search and object stores. Flui sets up storage, secrets, backups and connection settings.',
     back: '/apps/data',
+    backLabel: 'Data stores',
   },
   applications: {
     title: 'Add an application',
     subtitle: 'Curated open-source applications and tools ready to deploy on your cluster.',
     back: '/apps/applications',
+    backLabel: 'Applications',
   },
   system: {
     title: 'Add a system app',
-    subtitle: 'Internal platform components — usually managed automatically.',
+    subtitle: 'Internal platform components, usually managed automatically.',
     back: '/apps/system',
+    backLabel: 'System',
   },
 };
 

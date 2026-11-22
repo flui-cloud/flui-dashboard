@@ -1,40 +1,55 @@
-import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
+import { Component, computed, input, signal } from '@angular/core';
 
-const PALETTE = [
-  'bg-rose-500',
-  'bg-amber-500',
-  'bg-emerald-500',
-  'bg-cyan-500',
-  'bg-sky-500',
-  'bg-indigo-500',
-  'bg-violet-500',
-  'bg-fuchsia-500',
-];
+type IconSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+
+const BOX: Record<IconSize, string> = {
+  xs: 'h-5 w-5 rounded-fl-sm',
+  sm: 'h-9 w-9 rounded-fl-md',
+  md: 'h-12 w-12 rounded-fl-md',
+  lg: 'h-16 w-16 rounded-fl-lg',
+  xl: 'h-24 w-24 rounded-fl-lg',
+};
+
+const PAD: Record<IconSize, string> = {
+  xs: 'p-0.5',
+  sm: 'p-1',
+  md: 'p-1.5',
+  lg: 'p-2',
+  xl: 'p-3',
+};
+
+const TEXT: Record<IconSize, string> = {
+  xs: 'text-fl-overline',
+  sm: 'text-fl-caption',
+  md: 'text-fl-body-sm',
+  lg: 'text-fl-section-title',
+  xl: 'text-fl-page-title',
+};
 
 @Component({
   selector: 'app-catalog-icon',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'inline-flex shrink-0' },
   template: `
     @if (iconUrl() && !imageFailed()) {
-      <div [class]="containerClass() + ' bg-white ring-1 ring-border'">
+      <span
+        class="flex items-center justify-center overflow-hidden border border-fl-border bg-fl-surface"
+        [class]="box()"
+      >
         <img
           [src]="iconUrl()"
           [alt]="name() + ' icon'"
-          class="h-full w-full object-contain p-2"
+          class="h-full w-full object-contain"
+          [class]="pad()"
           (error)="onImageError()"
         />
-      </div>
+      </span>
     } @else {
-      <div
-        [class]="
-          containerClass() +
-          ' bg-muted flex items-center justify-center text-white font-semibold ' +
-          paletteClass()
-        "
+      <span
+        class="flex items-center justify-center overflow-hidden border border-fl-border bg-fl-surface-subtle font-semibold text-fl-ink-secondary"
+        [class]="box() + ' ' + text()"
+        aria-hidden="true"
+        >{{ size() === 'xs' ? initials().charAt(0) : initials() }}</span
       >
-        <span [class]="textSizeClass()">{{ initials() }}</span>
-      </div>
     }
   `,
 })
@@ -42,7 +57,7 @@ export class CatalogIconComponent {
   readonly slug = input.required<string>();
   readonly name = input.required<string>();
   readonly iconUrl = input<string | undefined>(undefined);
-  readonly size = input<'sm' | 'md' | 'lg' | 'xl'>('md');
+  readonly size = input<IconSize>('md');
 
   private readonly _imageFailed = signal(false);
   readonly imageFailed = this._imageFailed.asReadonly();
@@ -55,48 +70,11 @@ export class CatalogIconComponent {
     return letters.toUpperCase();
   });
 
-  readonly paletteClass = computed(() => {
-    const hash = this.hashSlug(this.slug());
-    return PALETTE[hash % PALETTE.length];
-  });
-
-  readonly containerClass = computed(() => {
-    const base = 'rounded-fl-lg overflow-hidden shrink-0';
-    switch (this.size()) {
-      case 'sm':
-        return `${base} h-9 w-9`;
-      case 'lg':
-        return `${base} h-16 w-16`;
-      case 'xl':
-        return `${base} h-24 w-24`;
-      default:
-        return `${base} h-12 w-12`;
-    }
-  });
-
-  readonly textSizeClass = computed(() => {
-    switch (this.size()) {
-      case 'sm':
-        return 'text-xs';
-      case 'lg':
-        return 'text-xl';
-      case 'xl':
-        return 'text-3xl';
-      default:
-        return 'text-sm';
-    }
-  });
+  protected readonly box = computed(() => BOX[this.size()]);
+  protected readonly pad = computed(() => PAD[this.size()]);
+  protected readonly text = computed(() => TEXT[this.size()]);
 
   onImageError(): void {
     this._imageFailed.set(true);
-  }
-
-  private hashSlug(slug: string): number {
-    let hash = 0;
-    for (let i = 0; i < slug.length; i++) {
-      hash = (hash << 5) - hash + slug.codePointAt(i)!;
-      hash = Math.trunc(hash);
-    }
-    return Math.abs(hash);
   }
 }

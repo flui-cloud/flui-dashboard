@@ -1,6 +1,9 @@
-import { Component, computed, inject, input, output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { ProjectsService } from '../../service/projects.service';
 import { Project } from '../../model/project.model';
+import { FlField } from '../../../ui/patterns/field';
+
+let nextId = 0;
 
 /**
  * Where a new application will live. Hidden when there is nothing to choose:
@@ -12,25 +15,24 @@ export function selectableProjects(projects: Project[]): Project[] {
 
 @Component({
   selector: 'app-project-picker',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FlField],
   template: `
     @if (choices().length > 0) {
-      <label class="block space-y-1.5" data-testid="project-picker">
-        <span class="text-sm font-medium">Project</span>
-        <select
-          class="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          (change)="pick($event)"
-        >
-          <option value="" [selected]="!value()">Personal</option>
-          @for (p of choices(); track p.id) {
-            <option [value]="p.id" [selected]="value() === p.id">{{ p.name }}</option>
-          }
-        </select>
-        <span class="block text-xs text-muted-foreground">
-          The app runs with the other apps of its project and stays there.
+      <fl-field
+        label="Project"
+        [for]="uid"
+        hint="The app runs with the other apps of its project and stays there."
+        data-testid="project-picker"
+      >
+        <span class="fl-select-wrap">
+          <select class="fl-select" [id]="uid" (change)="pick($event)">
+            <option value="" [selected]="!value()">Personal</option>
+            @for (p of choices(); track p.id) {
+              <option [value]="p.id" [selected]="value() === p.id">{{ p.name }}</option>
+            }
+          </select>
         </span>
-      </label>
+      </fl-field>
     }
   `,
 })
@@ -40,6 +42,7 @@ export class ProjectPickerComponent {
   readonly value = input<string | null>(null);
   readonly valueChange = output<string | null>();
 
+  protected readonly uid = `project-picker-${nextId++}`;
   protected readonly choices = computed(() => selectableProjects(this.projects.projects()));
 
   constructor() {

@@ -1,26 +1,7 @@
-import {
-  Component,
-  OnInit,
-  OnDestroy,
-  signal,
-  computed,
-  inject,
-  ChangeDetectionStrategy,
-} from '@angular/core';
-
+import { Component, OnInit, OnDestroy, signal, computed, inject } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideGithub,
-  lucideLoader,
-  lucideCheck,
-  lucideX,
-  lucideExternalLink,
-  lucideRefreshCw,
-  lucideRocket,
-  lucideCircleCheck,
-  lucideTriangleAlert,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideExternalLink, lucideGithub, lucideRefreshCw } from '@ng-icons/lucide';
 import { firstValueFrom } from 'rxjs';
 import { ApplicationService, BuildExpectation } from '../../service/application.service';
 import {
@@ -39,246 +20,159 @@ import {
   LastBuildStatusEnum,
   LastBuildConclusionEnum,
 } from '../../model/application.models';
-
-type MonitorPhase =
-  'queued' | 'building' | 'build_done' | 'deploying' | 'live' | 'build_failed' | 'deploy_failed';
-
-interface TimelineStep {
-  label: string;
-  phase: MonitorPhase;
-  activePhases: MonitorPhase[];
-  donePhases: MonitorPhase[];
-}
-
-const TIMELINE_STEPS: TimelineStep[] = [
-  {
-    label: 'Waiting in GitHub Actions queue',
-    phase: 'queued',
-    activePhases: ['queued'],
-    donePhases: ['building', 'build_done', 'deploying', 'live'],
-  },
-  {
-    label: 'Build in progress',
-    phase: 'building',
-    activePhases: ['building'],
-    donePhases: ['build_done', 'deploying', 'live'],
-  },
-  {
-    label: 'Image ready — starting deploy',
-    phase: 'build_done',
-    activePhases: ['build_done', 'deploying'],
-    donePhases: ['live'],
-  },
-  {
-    label: 'Deploying to cluster',
-    phase: 'deploying',
-    activePhases: ['deploying'],
-    donePhases: ['live'],
-  },
-  {
-    label: 'App live',
-    phase: 'live',
-    activePhases: [],
-    donePhases: ['live'],
-  },
-];
-
-// Build timeout (backend hard cap). Shows a warning above this threshold.
-const BUILD_WARNING_MS = 25 * 60 * 1000;
+import { MaskIdPipe } from '../../../shared/pipes/mask-id.pipe';
+import { FlPageHeader } from '../../../ui/patterns/page-header';
+import { Crumb } from '../../../ui/patterns/breadcrumb';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
+import { FlCopyId } from '../../../ui/patterns/copy-id';
+import { FlLoadingState } from '../../../ui/patterns/states';
+import { FlStatus } from '../../../ui/primitives/status';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { GithubActionsMonitorSteps } from './github-actions-monitor-steps';
+import {
+  BUILD_WARNING_MS,
+  MonitorPhase,
+  elapsedSince,
+  formatElapsed,
+  isBuildPhase,
+  isFailedPhase,
+  phaseState,
+} from './github-actions-monitor-model';
 
 @Component({
   selector: 'app-github-actions-monitor',
-  standalone: true,
-  imports: [NgIcon],
-  providers: [
-    provideIcons({
-      lucideGithub,
-      lucideLoader,
-      lucideCheck,
-      lucideX,
-      lucideExternalLink,
-      lucideRefreshCw,
-      lucideRocket,
-      lucideCircleCheck,
-      lucideTriangleAlert,
-    }),
+  imports: [
+    MaskIdPipe,
+    FlPageHeader,
+    FlPanel,
+    FlAlert,
+    FlKeyValue,
+    FlKvItem,
+    FlCopyId,
+    FlLoadingState,
+    FlStatus,
+    FlButton,
+    FlIcon,
+    GithubActionsMonitorSteps,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  providers: [provideIcons({ lucideExternalLink, lucideGithub, lucideRefreshCw })],
   template: `
-    <div class="min-h-screen bg-background">
-      <div class="max-w-2xl mx-auto px-6 py-12 space-y-8">
-        <!-- Header -->
-        <div class="space-y-1">
-          <h1 class="text-xl font-semibold">
-            @switch (phase()) {
-              @case ('build_failed') {
-                Build Failed
-              }
-              @case ('deploy_failed') {
-                Deploy Failed
-              }
-              @case ('live') {
-                App is Live
-              }
-              @default {
-                Build in Progress
-              }
-            }
-          </h1>
-          <p class="text-sm text-muted-foreground">GitHub Actions · {{ applicationId() }}</p>
-        </div>
-
-        <!-- Build failed state -->
-        @if (phase() === 'build_failed') {
-          <div class="rounded-lg border border-destructive/30 bg-destructive/5 p-5 space-y-4">
-            <div class="flex items-start gap-2 text-destructive">
-              <ng-icon name="lucideX" class="h-5 w-5 shrink-0 mt-0.5" />
-              <div class="space-y-1">
-                <p class="text-sm font-medium">The GitHub Actions workflow failed.</p>
-                @if (buildError()) {
-                  <p class="text-xs text-muted-foreground">{{ buildError() }}</p>
-                }
-              </div>
-            </div>
-            <div class="flex items-center gap-3">
-              @if (githubRunUrl()) {
-                <a
-                  [href]="githubRunUrl()"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
-                >
-                  <ng-icon name="lucideExternalLink" class="h-3.5 w-3.5" />
-                  View logs on GitHub
-                </a>
-              }
-              <button
-                type="button"
-                (click)="retry()"
-                class="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border border-border hover:bg-accent transition-colors"
-              >
-                <ng-icon name="lucideRefreshCw" class="h-3.5 w-3.5" />
-                Retry
-              </button>
-            </div>
-          </div>
+    <div class="fl-page">
+      @let state = headerState();
+      <fl-page-header [title]="title()" [breadcrumb]="breadcrumb()">
+        <fl-status headerStatus [tone]="state.tone" [label]="state.label" />
+        <span headerMeta>GitHub Actions</span>
+        @if (buildPhase() && buildElapsedLabel(); as elapsed) {
+          <span headerMeta>
+            Elapsed <span class="fl-mono fl-num">{{ elapsed }}</span>
+          </span>
         }
-
-        <!-- Live state -->
-        @if (phase() === 'live') {
-          <div class="rounded-lg border border-green-200 bg-green-50 p-5">
-            <div class="flex items-center gap-2 text-green-700">
-              <ng-icon name="lucideCircleCheck" class="h-5 w-5" />
-              <span class="font-medium">Application deployed successfully</span>
-            </div>
-            <div class="mt-3 flex gap-3">
-              <button
-                type="button"
-                (click)="goToApp()"
-                class="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-              >
-                <ng-icon name="lucideRocket" class="h-3.5 w-3.5" />
-                View application
-              </button>
-            </div>
-          </div>
-        }
-
-        <!-- Timeline -->
-        @if (!['build_failed', 'deploy_failed'].includes(phase())) {
-          <div class="space-y-3">
-            @for (step of timelineSteps; track step.phase) {
-              <div class="flex items-center gap-3">
-                <div class="flex-shrink-0 w-6 h-6 flex items-center justify-center">
-                  @if (isStepDone(step)) {
-                    <ng-icon name="lucideCheck" class="h-4 w-4 text-green-500" />
-                  } @else if (isStepActive(step)) {
-                    <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin text-primary" />
-                  } @else {
-                    <span class="w-2 h-2 rounded-full bg-border block"></span>
-                  }
-                </div>
-                <span [class]="getStepLabelClass(step)">{{ step.label }}</span>
-              </div>
-            }
-          </div>
-        }
-
-        <!-- What a build here has actually cost, measured. Never a countdown:
-             we do not know when this one finishes, and a bar that pretends to
-             is the thing this screen exists not to do. -->
-        @if (buildExpectation(); as e) {
-          @if (!['live', 'build_failed', 'deploy_failed'].includes(phase())) {
-            <p class="text-xs text-muted-foreground">{{ e.note }}</p>
+        <ng-container headerActions>
+          @if (githubRunUrl() && phase() !== 'live' && phase() !== 'build_failed') {
+            <a flButton [href]="githubRunUrl()" target="_blank" rel="noopener noreferrer">
+              <fl-icon name="lucideGithub" />
+              View on GitHub Actions
+              <fl-icon name="lucideExternalLink" />
+            </a>
           }
-        }
+          @if (phase() === 'live') {
+            <button flButton="primary" type="button" (click)="goToApp()">View application</button>
+          }
+        </ng-container>
+      </fl-page-header>
 
-        <!-- Build elapsed time + timeout warning -->
-        @if ((phase() === 'queued' || phase() === 'building') && buildElapsedLabel(); as elapsed) {
-          <div
-            class="flex items-center gap-2 text-xs"
-            [class.text-muted-foreground]="!isBuildNearTimeout()"
-            [class.text-orange-600]="isBuildNearTimeout()"
-          >
-            @if (isBuildNearTimeout()) {
-              <ng-icon name="lucideTriangleAlert" class="h-3.5 w-3.5 shrink-0" />
-              <span>Build in progress · {{ elapsed }} — approaching 30 min timeout</span>
-            } @else {
-              <ng-icon name="lucideLoader" class="h-3.5 w-3.5 shrink-0 animate-spin" />
-              <span>Build in progress · {{ elapsed }}</span>
+      @if (phase() === 'build_failed') {
+        <fl-alert tone="error" title="The GitHub Actions workflow failed">
+          {{ buildError() || 'The build stopped before it finished.' }}
+          <ng-container alertActions>
+            <button flButton="primary" size="sm" type="button" (click)="retry()">
+              <fl-icon name="lucideRefreshCw" />
+              Retry
+            </button>
+            @if (githubRunUrl()) {
+              <a
+                flButton
+                size="sm"
+                [href]="githubRunUrl()"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <fl-icon name="lucideExternalLink" />
+                View logs on GitHub
+              </a>
             }
-          </div>
-        }
+          </ng-container>
+        </fl-alert>
+      }
 
-        <!-- Deploy progress — shown only when we have real progress data from
-             lastOperation. Before that (build_done, or deploying at 0%), the
-             timeline spinner already carries the "in progress" signal; an
-             indeterminate bar would just be visual noise. -->
-        @if (phase() === 'deploying' && deployProgress() > 0) {
-          <div class="space-y-1.5">
-            <div class="flex justify-between text-xs text-muted-foreground">
-              <span>{{ deployMessage() ?? 'Deploying...' }}</span>
-              <span>{{ deployProgress() }}%</span>
-            </div>
-            <div class="h-1.5 rounded-full bg-muted overflow-hidden">
-              <div
-                class="h-full bg-primary rounded-full transition-all duration-500"
-                [style.width.%]="deployProgress()"
-              ></div>
-            </div>
-          </div>
-        } @else if (phase() === 'deploying' && deployMessage()) {
-          <!-- Substep label without a bar: useful info from operation:progress
-               WS events before lastOperation.progress > 0. -->
-          <p class="text-xs text-muted-foreground">{{ deployMessage() }}</p>
-        }
-
-        <!-- GitHub run link -->
-        @if (githubRunUrl() && phase() !== 'live') {
-          <a
-            [href]="githubRunUrl()"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ng-icon name="lucideGithub" class="h-4 w-4" />
-            View on GitHub Actions
-            <ng-icon name="lucideExternalLink" class="h-3.5 w-3.5" />
-          </a>
-        }
-
-        <!-- Deploy failed -->
-        @if (phase() === 'deploy_failed') {
-          <div class="rounded-lg border border-destructive/30 bg-destructive/5 p-4 space-y-2">
-            <div class="flex items-start gap-2 text-destructive text-sm">
-              <ng-icon name="lucideX" class="h-4 w-4 shrink-0 mt-0.5" />
-              <span>{{ buildError() ?? 'Deploy failed. Check application logs.' }}</span>
-            </div>
-            <button type="button" (click)="goToApp()" class="text-sm text-primary hover:underline">
+      @if (phase() === 'deploy_failed') {
+        <fl-alert tone="error" title="Deploy failed">
+          {{ buildError() ?? 'Deploy failed. Check application logs.' }}
+          <ng-container alertActions>
+            <button flButton="primary" size="sm" type="button" (click)="goToApp()">
               View application
             </button>
+          </ng-container>
+        </fl-alert>
+      }
+
+      @if (buildPhase() && isBuildNearTimeout()) {
+        <fl-alert tone="warning" title="Approaching the 30 min timeout">
+          The build has been running for
+          <span class="fl-mono fl-num">{{ buildElapsedLabel() }}</span>.
+        </fl-alert>
+      }
+
+      <div class="grid grid-cols-1 items-start gap-5 lg:grid-cols-3">
+        @if (!failed()) {
+          <div class="fl-stack lg:col-span-2">
+            <app-github-actions-monitor-steps
+              [phase]="phase()"
+              [elapsed]="buildElapsedLabel()"
+              [deployProgress]="deployProgress()"
+              [deployMessage]="deployMessage()"
+              [note]="buildExpectation()?.note ?? null"
+            />
           </div>
         }
+
+        <div [class]="failed() ? 'lg:col-span-3' : ''">
+          <fl-panel title="Details">
+            @if (appSnapshot(); as app) {
+              <fl-key-value class="fl-kv--compact">
+                <fl-kv-item key="Application">{{ app.name }}</fl-kv-item>
+                <fl-kv-item key="Application ID">
+                  <fl-copy-id [value]="app.id" [display]="app.id | maskId" label="application ID" />
+                </fl-kv-item>
+                @if (app.workflowRunId) {
+                  <fl-kv-item key="Workflow run ID">
+                    <fl-copy-id [value]="app.workflowRunId" label="workflow run ID" />
+                  </fl-kv-item>
+                }
+                <fl-kv-item key="Cluster">
+                  <fl-copy-id
+                    [value]="app.clusterId"
+                    [display]="app.clusterId | maskId"
+                    label="cluster ID"
+                  />
+                </fl-kv-item>
+                <fl-kv-item key="Namespace" [mono]="true">{{ app.k8sNamespace }}</fl-kv-item>
+                @if (app.imageRef) {
+                  <fl-kv-item key="Image">
+                    <fl-copy-id [value]="app.imageRef" label="image" />
+                  </fl-kv-item>
+                }
+              </fl-key-value>
+            } @else if (failed()) {
+              <p class="m-0 text-fl-body-sm text-fl-ink-muted">No details available</p>
+            } @else {
+              <fl-loading-state [rows]="4" />
+            }
+          </fl-panel>
+        </div>
       </div>
     </div>
   `,
@@ -298,18 +192,19 @@ export class GithubActionsMonitorComponent implements OnInit, OnDestroy {
   buildError = signal<string | null>(null);
   buildExpectation = signal<BuildExpectation | null>(null);
 
-  /** Latest application snapshot — single source of truth for the UI. */
-  private readonly appSnapshot = signal<Application | null>(null);
-  /** 1s ticker that drives the elapsed-time display without needing a new poll. */
+  protected readonly appSnapshot = signal<Application | null>(null);
   private readonly nowTick = signal(Date.now());
 
-  readonly timelineSteps = TIMELINE_STEPS;
+  protected readonly headerState = computed(() => phaseState(this.phase()));
+  protected readonly buildPhase = computed(() => isBuildPhase(this.phase()));
+  protected readonly failed = computed(() => isFailedPhase(this.phase()));
+  protected readonly title = computed(() => this.appSnapshot()?.name ?? 'GitHub Actions build');
+  protected readonly breadcrumb = computed<Crumb[]>(() => [
+    { label: 'Applications', link: '/apps/applications' },
+    { label: 'Deploy', link: '/apps/deploy/new' },
+    { label: this.appSnapshot()?.name ?? 'Build' },
+  ]);
 
-  /**
-   * Transitional app states during which we poll GET /applications/:id every 5s.
-   * Stable states (running/stopped/failed/etc.) stop the loop — UI updates
-   * arrive via WebSocket or user navigation.
-   */
   private readonly TRANSITIONAL_STATES: ApplicationStatus[] = [
     ApplicationStatusEnum.Pending,
     ApplicationStatusEnum.AwaitingBuild,
@@ -331,28 +226,14 @@ export class GithubActionsMonitorComponent implements OnInit, OnDestroy {
     'CANCELLED',
   ];
 
-  /** Elapsed build time as "Xm Ys", recomputed on each 1s tick while active. */
   readonly buildElapsedLabel = computed(() => {
-    const app = this.appSnapshot();
-    const startIso = app?.buildStartedAt;
-    if (!startIso) return null;
-    const startMs = new Date(startIso).getTime();
-    if (Number.isNaN(startMs)) return null;
-    const elapsedMs = this.nowTick() - startMs;
-    if (elapsedMs < 0) return null;
-    const totalSec = Math.floor(elapsedMs / 1000);
-    const m = Math.floor(totalSec / 60);
-    const s = totalSec % 60;
-    return `${m}m ${s.toString().padStart(2, '0')}s`;
+    const elapsedMs = elapsedSince(this.appSnapshot()?.buildStartedAt, this.nowTick());
+    return elapsedMs === null ? null : formatElapsed(elapsedMs);
   });
 
   readonly isBuildNearTimeout = computed(() => {
-    const app = this.appSnapshot();
-    const startIso = app?.buildStartedAt;
-    if (!startIso) return false;
-    const startMs = new Date(startIso).getTime();
-    if (Number.isNaN(startMs)) return false;
-    return this.nowTick() - startMs > BUILD_WARNING_MS;
+    const elapsedMs = elapsedSince(this.appSnapshot()?.buildStartedAt, this.nowTick());
+    return elapsedMs !== null && elapsedMs > BUILD_WARNING_MS;
   });
 
   ngOnInit(): void {
@@ -360,8 +241,6 @@ export class GithubActionsMonitorComponent implements OnInit, OnDestroy {
       const appId = this.route.snapshot.paramMap.get('applicationId') ?? '';
       this.applicationId.set(appId);
 
-      // WS events: complementary real-time updates. Polling drives recovery/boot,
-      // WS delivers immediate transitions when the backend fires them.
       this.wsService.subscribeToBuildEvents(appId, {
         onCompleted: (e: BuildCompletedEvent) => this.onBuildCompleted(e),
         onFailed: (e: BuildFailedEvent) => this.onBuildFailed(e),
@@ -392,23 +271,17 @@ export class GithubActionsMonitorComponent implements OnInit, OnDestroy {
         .then((e) => this.buildExpectation.set(e))
         .catch(() => this.buildExpectation.set(null));
 
-      // 1s ticker to keep elapsed-time display smooth (independent of poll cadence)
       this.tickInterval = setInterval(() => this.nowTick.set(Date.now()), 1_000);
 
-      // Forces backend to re-poll GitHub Actions every 12s while the latest build
-      // is non-terminal. Backend may also flip the app from AWAITING_BUILD to deploy.
       this.buildRefreshInterval = setInterval(
         () => this.tickBuildRefresh(appId),
         this.BUILD_REFRESH_INTERVAL_MS,
       );
 
-      // Initial hydration — will also schedule polling if the app is transitional
       try {
         const app = await this.appService.getApplication(appId);
         if (app) this.hydrateFromApp(app);
       } catch {
-        // Recovery: start polling anyway — maybe the app exists but this request
-        // flaked. Subsequent polls will hydrate.
         this.scheduleNextPoll(appId);
       }
     })();
@@ -434,29 +307,17 @@ export class GithubActionsMonitorComponent implements OnInit, OnDestroy {
       if (!latest || GithubActionsMonitorComponent.TERMINAL_BUILD_STATES.includes(latest.status)) {
         return;
       }
-      // Fire-and-forget: response is the updated row but we let the existing
-      // app poll surface state changes to the UI.
       await firstValueFrom(this.buildsApi.appBuildsControllerRefreshBuild(latest.id));
     } catch {
-      // Best-effort; next tick retries. 404 (no builds yet) is also expected
-      // immediately after Force build before the row is created.
+      return;
     }
   }
 
-  /**
-   * Derive UI state from a fresh Application snapshot.
-   *
-   * Single source of truth: everything the UI needs (status, build metadata,
-   * deploy progress, GitHub URL, error message) is read from this one object.
-   * Polling schedule is also decided here — the next tick fires only when the
-   * app is in a transitional state.
-   */
   private hydrateFromApp(app: Application): void {
     const op = app.lastOperation;
 
     this.appSnapshot.set(app);
 
-    // GitHub run URL — prefer the cached one on the app entity
     if (app.workflowRunUrl) {
       this.githubRunUrl.set(app.workflowRunUrl);
     }
@@ -465,9 +326,6 @@ export class GithubActionsMonitorComponent implements OnInit, OnDestroy {
       case ApplicationStatusEnum.Failed:
         this.stopPolling();
         this.buildError.set(app.reconciliationError ?? op?.errorMessage ?? 'Operation failed');
-        // Distinguish build failure from deploy failure: if the last known
-        // build conclusion was a failure, it's a build failure; if we have a
-        // DEPLOY operation that failed, it's a deploy failure.
         if (
           app.lastBuildConclusion === LastBuildConclusionEnum.Failure ||
           app.lastBuildConclusion === LastBuildConclusionEnum.Cancelled
@@ -491,10 +349,6 @@ export class GithubActionsMonitorComponent implements OnInit, OnDestroy {
         return;
 
       case ApplicationStatusEnum.AwaitingBuild:
-        // Drive queued vs building from the cached workflow run status.
-        // lastBuildStatus === Completed is a brief race window where the
-        // backend watcher has seen GH success but hasn't flipped status to
-        // PROVISIONING yet — show "build_done" as optimistic hint.
         if (app.lastBuildStatus === LastBuildStatusEnum.Completed) {
           this.phase.set('build_done');
         } else if (app.lastBuildStatus === LastBuildStatusEnum.InProgress) {
@@ -512,9 +366,6 @@ export class GithubActionsMonitorComponent implements OnInit, OnDestroy {
 
       case ApplicationStatusEnum.Running:
       default:
-        // Running, and Stopped / Degraded / RollingBack / Deleting / Deleted —
-        // no polling, these states are stable and the monitor screen isn't
-        // really meant for them anyway.
         this.stopPolling();
         this.phase.set('live');
         return;
@@ -523,7 +374,7 @@ export class GithubActionsMonitorComponent implements OnInit, OnDestroy {
 
   private scheduleNextPoll(appId: string): void {
     if (!this.pollingActive) return;
-    if (this.pollingTimer) return; // already scheduled
+    if (this.pollingTimer) return;
     this.pollingTimer = setTimeout(() => {
       this.pollingTimer = null;
       this.pollApplication(appId);
@@ -550,7 +401,6 @@ export class GithubActionsMonitorComponent implements OnInit, OnDestroy {
         this.phase.set('build_failed');
         return;
       }
-      // Transient error — retry at next tick
       this.scheduleNextPoll(appId);
     }
   }
@@ -564,13 +414,10 @@ export class GithubActionsMonitorComponent implements OnInit, OnDestroy {
   }
 
   private onBuildCompleted(_e: BuildCompletedEvent): void {
-    // Backend auto-triggers deploy — move to build_done and let the polling
-    // loop / WS operation events drive the transition to deploying/live.
     this.phase.set('build_done');
   }
 
   private onBuildFailed(e: BuildFailedEvent): void {
-    // WS fast-path: stop polling immediately, no need to wait for next tick
     this.stopPolling();
     this.buildError.set(e.error ?? null);
     this.phase.set('build_failed');
@@ -580,7 +427,6 @@ export class GithubActionsMonitorComponent implements OnInit, OnDestroy {
     const appId = this.applicationId();
     if (!appId) return;
     try {
-      // Re-generate workflow with same params — app and workflow file already exist
       await this.appService.generateWorkflow(appId, { branch: 'main', framework: '' } as any);
       this.phase.set('queued');
       this.buildError.set(null);
@@ -593,19 +439,5 @@ export class GithubActionsMonitorComponent implements OnInit, OnDestroy {
 
   goToApp(): void {
     this.router.navigate(['/apps/applications', this.applicationId()]);
-  }
-
-  isStepDone(step: TimelineStep): boolean {
-    return step.donePhases.includes(this.phase());
-  }
-
-  isStepActive(step: TimelineStep): boolean {
-    return step.activePhases.includes(this.phase());
-  }
-
-  getStepLabelClass(step: TimelineStep): string {
-    if (this.isStepDone(step)) return 'text-sm text-muted-foreground line-through';
-    if (this.isStepActive(step)) return 'text-sm text-foreground font-medium';
-    return 'text-sm text-muted-foreground/50';
   }
 }
