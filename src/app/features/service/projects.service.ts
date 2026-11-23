@@ -3,6 +3,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { AppConfigService } from '../../core/services/app-config.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { Project } from '../model/project.model';
+import { AppAttributes } from '../model/iam.model';
 
 @Injectable({ providedIn: 'root' })
 export class ProjectsService {
@@ -17,10 +18,20 @@ export class ProjectsService {
   private readonly _projects = signal<Project[]>([]);
   readonly projects = this._projects.asReadonly();
 
+  private readonly _residents = signal<ReadonlyMap<string, number> | null>(null);
+  readonly residents = this._residents.asReadonly();
+
   loadProjects(): void {
     this.http.get<Project[]>(this.base()).subscribe({
       next: (p) => this._projects.set(p),
       error: () => this._projects.set([]),
+    });
+  }
+
+  loadResidents(): void {
+    this.http.get<AppAttributes[]>(`${this.appConfig.apiBaseUrl}/api/v1/iam/resources`).subscribe({
+      next: (apps) => this._residents.set(residentsByProject(apps)),
+      error: () => this._residents.set(null),
     });
   }
 
@@ -61,7 +72,19 @@ export class ProjectsService {
       next: () => {
         this._projects.update((list) => list.filter((p) => p.id !== id));
       },
-      error: (e) => this.fail('delete project', e),
+      error: (e) => {
+        if (isProjectNotEmpty(e)) {
+          this.notify.add({
+            title: "Couldn't delete project",
+            body: 'The project still holds applications, platform ones included.',
+            type: 'error',
+            source: 'manual',
+          });
+          this.loadResidents();
+          return;
+        }
+        this.fail('delete project', e);
+      },
     });
   }
 
@@ -74,4 +97,17 @@ export class ProjectsService {
       source: 'manual',
     });
   }
+}
+
+function residentsByProject(apps: readonly AppAttributes[]): ReadonlyMap<string, number> {
+  const counts = new Map<string, number>();
+  for (const app of apps) {
+    if (app.project) counts.set(app.project, (counts.get(app.project) ?? 0) + 1);
+  }
+  return counts;
+}
+
+function isProjectNotEmpty(err: unknown): boolean {
+  const e = err as { status?: number; error?: { code?: string } } | null;
+  return e?.status === 409 && e.error?.code === 'PROJECT_NOT_EMPTY';
 }

@@ -27,6 +27,8 @@ import { RepoMapFindings } from './repo-map-findings';
 import { RepoMapGaps } from './repo-map-gaps';
 import { RepoMapUnits } from './repo-map-units';
 import { RepoMapApply } from './repo-map-apply';
+import { repositoryReadProblem } from '../../../core/state/github-credential';
+import { GithubCredentialAlert } from '../../../shared/components/github-credential-alert.component';
 import {
   UNACTIONABLE_OUTCOMES,
   fileBaseUrl,
@@ -58,6 +60,7 @@ export { BAD_OUTCOMES } from './repo-map-view';
     RepoMapGaps,
     RepoMapUnits,
     RepoMapApply,
+    GithubCredentialAlert,
   ],
   template: `
     <div class="fl-page">
@@ -92,7 +95,9 @@ export { BAD_OUTCOMES } from './repo-map-view';
       }
 
       @if (result(); as r) {
-        @if (!r.read.ok) {
+        @if (readProblem(); as problem) {
+          <app-github-credential-alert [problem]="problem" />
+        } @else if (!r.read.ok) {
           <fl-alert tone="error" title="This repository could not be read">
             <span class="fl-mono">{{ r.read.reason || 'unknown' }}</span> on branch
             <span class="fl-mono">{{ r.branch }}</span>
@@ -139,6 +144,10 @@ export class RepoMapComponent implements OnInit, OnDestroy {
   readonly hasRun = signal(false);
 
   readonly result = this.repoMapService.map;
+  readonly readProblem = computed(() => {
+    const r = this.result();
+    return r ? repositoryReadProblem(r.read, r.verdict?.remedy) : null;
+  });
   readonly branches = this.repoMapService.branches;
   readonly branchesError = this.repoMapService.branchesError;
   readonly branchesProblem = this.repoMapService.branchesProblem;

@@ -34,10 +34,16 @@ describe('ProjectsComponent workload counts', () => {
   let fixture: ComponentFixture<ProjectsComponent>;
   let groups: ReturnType<typeof signal<AppGroupView[]>>;
   let projects: ReturnType<typeof signal<Project[]>>;
+  let residents: ReturnType<typeof signal<ReadonlyMap<string, number> | null>>;
 
-  const build = (initial: AppGroupView[], list: Project[] = [PROJECT]) => {
+  const build = (
+    initial: AppGroupView[],
+    list: Project[] = [PROJECT],
+    resident: ReadonlyMap<string, number> | null = null,
+  ) => {
     groups = signal(initial);
     projects = signal(list);
+    residents = signal(resident);
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
@@ -57,7 +63,12 @@ describe('ProjectsComponent workload counts', () => {
         },
         {
           provide: ProjectsService,
-          useValue: { projects, loadProjects: jasmine.createSpy('loadProjects') },
+          useValue: {
+            projects,
+            residents,
+            loadProjects: jasmine.createSpy('loadProjects'),
+            loadResidents: jasmine.createSpy('loadResidents'),
+          },
         },
         {
           provide: PermissionService,
@@ -113,5 +124,28 @@ describe('ProjectsComponent workload counts', () => {
     groups.set([group('api', 'APPLICATION'), group('site', 'APPLICATION', { projectId: 'p-2' })]);
     fixture.detectChanges();
     expect(workloads('p-2')).toBe('1');
+  });
+
+  const deleteAction = (id: string) =>
+    fixture.componentInstance['allRows']()
+      .find((r) => r.project.id === id)!
+      .actions.find((a) => a.id === 'delete')!;
+
+  it('offers Delete on a project that holds nothing', () => {
+    build([], [PROJECT], new Map());
+    expect(deleteAction('p-1').disabled).toBeFalsy();
+  });
+
+  it('blocks Delete on a project holding only platform applications', () => {
+    build([], [PROJECT], new Map([['billing', 2]]));
+    expect(workloads('p-1')).toBe('0');
+    expect(deleteAction('p-1').disabled).toBeTrue();
+    expect(deleteAction('p-1').hint).toBe('Holds platform applications');
+  });
+
+  it('blocks Delete on a project holding applications', () => {
+    build([group('api', 'APPLICATION')]);
+    expect(deleteAction('p-1').disabled).toBeTrue();
+    expect(deleteAction('p-1').hint).toBe('Holds applications');
   });
 });

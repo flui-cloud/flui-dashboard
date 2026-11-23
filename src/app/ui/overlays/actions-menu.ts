@@ -10,6 +10,7 @@ export interface MenuAction {
   readonly label: string;
   readonly danger?: boolean;
   readonly disabled?: boolean;
+  readonly hint?: string;
   readonly separatorBefore?: boolean;
 }
 
@@ -46,10 +47,14 @@ export interface MenuAction {
             class="fl-menu__item"
             cdkMenuItem
             [class.fl-menu__item--danger]="item.danger"
+            [class.fl-menu__item--hinted]="!!item.hint"
             [cdkMenuItemDisabled]="!!item.disabled"
             (cdkMenuItemTriggered)="action.emit(item.id)"
           >
             {{ item.label }}
+            @if (item.hint) {
+              <span class="fl-menu__hint">{{ item.hint }}</span>
+            }
           </button>
         }
       </div>

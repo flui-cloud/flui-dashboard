@@ -41,7 +41,7 @@ describe('RepoMapService branches', () => {
     expect(service.branchesError()).toBe('Reconnect the GitHub app.');
     expect(service.branchesProblem()).toEqual({
       credential: 'github-app',
-      title: 'Reconnect GitHub',
+      title: 'Reconnect the GitHub App',
       message: 'Reconnect the GitHub app.',
     });
   });

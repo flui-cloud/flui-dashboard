@@ -8,6 +8,7 @@ import { AppBuildsService } from '../../../../core/api/api/appBuilds.service';
 import { AppBuildResponseDto } from '../../../../core/api/model/appBuildResponseDto';
 import { ApplicationService } from '../../../service/application.service';
 import { AppDeployStateService } from '../../../service/app-deploy-state.service';
+import { BuildBranchService } from '../../../service/build-branch.service';
 import { ToastService } from '../../../../shared/services/toast.service';
 import { FlPanel } from '../../../../ui/patterns/panel';
 import { FlTable } from '../../../../ui/patterns/table';
@@ -115,6 +116,7 @@ export class AppBuildsListComponent implements OnInit, OnDestroy {
   private readonly appService = inject(ApplicationService);
   private readonly deployState = inject(AppDeployStateService);
   private readonly toast = inject(ToastService);
+  private readonly buildBranch = inject(BuildBranchService);
 
   builds = signal<AppBuildResponseDto[]>([]);
   isLoading = signal(false);
@@ -220,15 +222,13 @@ export class AppBuildsListComponent implements OnInit, OnDestroy {
 
   async forceGhaBuild(): Promise<void> {
     if (!this.appId) return;
-    const app = this.appService.selectedApplication() as any;
     this.isForcingBuild.set(true);
     this.error.set(null);
     try {
-      await this.appService.generateWorkflowV3(this.appId, {
-        branch: app?.sourceConfig?.branch ?? 'main',
-      });
+      const branch = await this.buildBranch.branchFor(this.appService.selectedApplication());
+      await this.appService.generateWorkflowV3(this.appId, { branch, force: true });
       this.toast.showSuccess({
-        message: 'Build triggered. The new run will appear in the list shortly.',
+        message: `Build triggered with a workflow commit on ${branch}. The new run will appear in the list shortly.`,
       });
       await this.loadBuilds();
       setTimeout(() => this.loadBuilds(), 4_000);

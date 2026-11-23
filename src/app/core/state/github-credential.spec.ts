@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { githubCredentialProblem } from './github-credential';
+import { githubCredentialProblem, repositoryReadProblem } from './github-credential';
 
 const failure = (status: number, body: unknown) =>
   new HttpErrorResponse({ status, error: body, statusText: 'x' });
@@ -26,12 +26,12 @@ describe('githubCredentialProblem', () => {
     );
   });
 
-  it('asks to reconnect for the app and the account credentials', () => {
+  it('tells the app and the account credentials apart', () => {
     expect(githubCredentialProblem(failure(424, invalid('github-app')))?.title).toBe(
-      'Reconnect GitHub',
+      'Reconnect the GitHub App',
     );
     expect(githubCredentialProblem(failure(424, invalid('github-account')))?.title).toBe(
-      'Reconnect GitHub',
+      'Reconnect your GitHub account',
     );
   });
 
@@ -64,5 +64,31 @@ describe('githubCredentialProblem', () => {
     expect(githubCredentialProblem('GITHUB_TOKEN_INVALID')).toBeNull();
     expect(githubCredentialProblem(new Error('boom'))).toBeNull();
     expect(githubCredentialProblem(failure(424, null))).toBeNull();
+  });
+});
+
+describe('repositoryReadProblem', () => {
+  const read = (reason?: string, credential?: string) => ({ ok: false, reason, credential });
+
+  it('ignores a read that succeeded or failed for another reason', () => {
+    expect(repositoryReadProblem({ ok: true })).toBeNull();
+    expect(repositoryReadProblem(read('not-found'))).toBeNull();
+  });
+
+  it('names the rejected credential and carries the remedy', () => {
+    expect(
+      repositoryReadProblem(read('credential-rejected', 'github-account'), 'Reconnect it.'),
+    ).toEqual({
+      credential: 'github-account',
+      title: 'Reconnect your GitHub account',
+      message: 'Reconnect it.',
+    });
+    expect(repositoryReadProblem(read('credential-rejected', 'repository-token'))?.title).toBe(
+      'The repository token is not valid',
+    );
+  });
+
+  it('asks to connect GitHub when there is no credential at all', () => {
+    expect(repositoryReadProblem(read('no-credential'))?.title).toBe('Connect GitHub');
   });
 });

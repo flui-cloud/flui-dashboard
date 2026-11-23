@@ -142,4 +142,34 @@ describe('an undetermined health path stays a question', () => {
     const declared = unit('.', { value: '/healthz', source: 'Dockerfile:HEALTHCHECK' });
     expect(build(responseWith([declared], [])).questions()).toEqual([]);
   });
+
+  it('shows the GitHub credential problem when the read was refused', () => {
+    const refused = {
+      ...responseWith([], []),
+      read: {
+        ok: false,
+        reason: 'credential-rejected',
+        credential: 'github-account',
+        repoFullName: 'acme/app',
+        ref: 'main',
+        limits: {},
+      },
+      map: null,
+      verdict: { ...responseWith([], []).verdict, remedy: 'Reconnect GitHub in Repositories.' },
+    } as unknown as RepositoryMapResponseDto;
+    expect(build(refused).readProblem()).toEqual({
+      credential: 'github-account',
+      title: 'Reconnect your GitHub account',
+      message: 'Reconnect GitHub in Repositories.',
+    });
+  });
+
+  it('keeps other read failures out of the credential alert', () => {
+    const missing = {
+      ...responseWith([], []),
+      read: { ok: false, reason: 'not-found', repoFullName: 'acme/app', ref: 'main', limits: {} },
+      map: null,
+    } as unknown as RepositoryMapResponseDto;
+    expect(build(missing).readProblem()).toBeNull();
+  });
 });

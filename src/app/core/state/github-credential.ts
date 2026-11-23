@@ -8,8 +8,8 @@ export interface GithubCredentialProblem {
 }
 
 const CREDENTIAL_TITLES: Record<GithubCredential, string> = {
-  'github-app': 'Reconnect GitHub',
-  'github-account': 'Reconnect GitHub',
+  'github-app': 'Reconnect the GitHub App',
+  'github-account': 'Reconnect your GitHub account',
   'repository-token': 'The repository token is not valid',
   'packages-token': 'The GitHub packages token is not valid',
 };
@@ -38,5 +38,27 @@ export function githubCredentialProblem(error: unknown): GithubCredentialProblem
     credential,
     title: CREDENTIAL_TITLES[credential],
     message: typeof message === 'string' && message.trim() ? message : FALLBACK_MESSAGE,
+  };
+}
+
+const NO_CREDENTIAL: GithubCredentialProblem = {
+  credential: 'github-account',
+  title: 'Connect GitHub',
+  message:
+    'Flui has no GitHub credential that can read this repository. Open repositories to connect one.',
+};
+
+export function repositoryReadProblem(
+  read: { readonly ok: boolean; readonly reason?: string; readonly credential?: unknown },
+  remedy?: string | null,
+): GithubCredentialProblem | null {
+  if (read.ok) return null;
+  if (read.reason === 'no-credential') return NO_CREDENTIAL;
+  if (read.reason !== 'credential-rejected') return null;
+  const credential = isCredential(read.credential) ? read.credential : 'github-account';
+  return {
+    credential,
+    title: CREDENTIAL_TITLES[credential],
+    message: remedy?.trim() ? remedy : FALLBACK_MESSAGE,
   };
 }

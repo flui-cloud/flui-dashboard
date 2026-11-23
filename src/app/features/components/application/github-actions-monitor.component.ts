@@ -4,6 +4,7 @@ import { provideIcons } from '@ng-icons/core';
 import { lucideExternalLink, lucideGithub, lucideRefreshCw } from '@ng-icons/lucide';
 import { firstValueFrom } from 'rxjs';
 import { ApplicationService, BuildExpectation } from '../../service/application.service';
+import { BuildBranchService } from '../../service/build-branch.service';
 import {
   AppRuntimeWebSocketService,
   BuildCompletedEvent,
@@ -183,6 +184,7 @@ export class GithubActionsMonitorComponent implements OnInit, OnDestroy {
   private readonly appService = inject(ApplicationService);
   private readonly wsService = inject(AppRuntimeWebSocketService);
   private readonly buildsApi = inject(AppBuildsService);
+  private readonly buildBranch = inject(BuildBranchService);
 
   applicationId = signal('');
   phase = signal<MonitorPhase>('queued');
@@ -427,13 +429,26 @@ export class GithubActionsMonitorComponent implements OnInit, OnDestroy {
     const appId = this.applicationId();
     if (!appId) return;
     try {
-      await this.appService.generateWorkflowV3(appId, { branch: 'main' });
+      const branch = await this.buildBranch.branchFor(
+        this.appSnapshot(),
+        await this.latestBuildBranch(appId),
+      );
+      await this.appService.generateWorkflowV3(appId, { branch });
       this.phase.set('queued');
       this.buildError.set(null);
       this.pollingActive = true;
       this.scheduleNextPoll(appId);
     } catch (e: any) {
       this.buildError.set(e?.message ?? 'Failed to retry');
+    }
+  }
+
+  private async latestBuildBranch(appId: string): Promise<string | null> {
+    try {
+      const latest = await firstValueFrom(this.buildsApi.appBuildsControllerGetLatestBuild(appId));
+      return latest?.branch ?? null;
+    } catch {
+      return null;
     }
   }
 

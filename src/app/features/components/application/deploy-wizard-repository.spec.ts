@@ -84,7 +84,7 @@ describe('DeployWizardRepository GitHub credential failures', () => {
     repoService.getFluiManifests.and.rejectWith(invalid('github-account'));
     await repository.triggerManifestCheck();
     expect(form.analysisBranch()).toBe('check-failed');
-    expect(form.manifestProblem()?.title).toBe('Reconnect GitHub');
+    expect(form.manifestProblem()?.title).toBe('Reconnect your GitHub account');
     expect(form.manifestFetchError()).toBe('Replace the repository token in Repositories.');
   });
 

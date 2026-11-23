@@ -45,7 +45,19 @@ const DELETE: MenuAction = {
   separatorBefore: true,
 };
 const EMPTY_ACTIONS: readonly MenuAction[] = [EDIT, DELETE];
-const BUSY_ACTIONS: readonly MenuAction[] = [EDIT, { ...DELETE, disabled: true }];
+const BUSY_ACTIONS: readonly MenuAction[] = [
+  EDIT,
+  { ...DELETE, disabled: true, hint: 'Holds applications' },
+];
+const PLATFORM_ACTIONS: readonly MenuAction[] = [
+  EDIT,
+  { ...DELETE, disabled: true, hint: 'Holds platform applications' },
+];
+
+function actionsFor(occupied: boolean, workloads: number): readonly MenuAction[] {
+  if (!occupied) return EMPTY_ACTIONS;
+  return workloads > 0 ? BUSY_ACTIONS : PLATFORM_ACTIONS;
+}
 
 interface ProjectRow {
   project: Project;
@@ -236,17 +248,18 @@ export class ProjectsComponent implements OnInit, OnDestroy {
       includeSystem: false,
     });
     const occupied = this.occupiedProjectIds();
+    const residents = this.projects.residents();
     return buildSections(groups, this.projects.projects(), false).flatMap(
       ({ project, groups: inProject }) => {
         if (!project) return [];
-        const busy = occupied.has(project.id);
+        const busy = occupied.has(project.id) || (residents?.get(project.slug) ?? 0) > 0;
         return [
           {
             project,
             workloads: inProject.length,
             empty: !busy,
             clusters: clusterNamesOf(inProject, this.clusterName).join(', '),
-            actions: busy ? BUSY_ACTIONS : EMPTY_ACTIONS,
+            actions: actionsFor(busy, inProject.length),
           },
         ];
       },
@@ -291,6 +304,7 @@ export class ProjectsComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.perms.load();
     this.projects.loadProjects();
+    this.projects.loadResidents();
     if (this.clusterService.clusters().length === 0) {
       this.clusterService.loadClusters().catch(() => undefined);
     }
@@ -299,6 +313,7 @@ export class ProjectsComponent implements OnInit, OnDestroy {
 
   protected refresh(): void {
     this.projects.loadProjects();
+    this.projects.loadResidents();
     void this.appService.loadApplications(true);
   }
 
