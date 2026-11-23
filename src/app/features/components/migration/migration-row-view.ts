@@ -55,7 +55,15 @@ export function durationOf(row: MigrationRow, now: number = Date.now()): string 
 export function formatWhen(iso: string | null | undefined): string {
   if (!iso) return '—';
   const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? iso : d.toLocaleString();
+  return Number.isNaN(d.getTime())
+    ? iso
+    : d.toLocaleString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
 }
 
 export function shortId(id: string | null | undefined): string {

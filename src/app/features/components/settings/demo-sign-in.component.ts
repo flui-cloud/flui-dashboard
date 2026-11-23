@@ -113,6 +113,9 @@ import { FlStatus, StatusTone } from '../../../ui/primitives/status';
                           flButton
                           size="sm"
                           type="button"
+                          [attr.aria-label]="
+                            (p.source === 'flui' ? 'Rotate ' : 'Connect ') + p.name
+                          "
                           (click)="edit(p)"
                           [disabled]="busy()"
                         >
@@ -123,6 +126,7 @@ import { FlStatus, StatusTone } from '../../../ui/primitives/status';
                             flButton="ghost"
                             size="sm"
                             type="button"
+                            [attr.aria-label]="'Disconnect ' + p.name"
                             (click)="confirmDisconnect(p)"
                             [disabled]="busy()"
                           >

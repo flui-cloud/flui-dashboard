@@ -1,3 +1,4 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import {
   Component,
   computed,
@@ -50,6 +51,7 @@ const STOP_ACTIONS: readonly MenuAction[] = [
 @Component({
   selector: 'tbody[app-cluster-protection-card]',
   imports: [
+    CdkTrapFocus,
     FormsModule,
     AssistantOperationProgressComponent,
     ReadOnlySectionDirective,
@@ -197,7 +199,10 @@ const STOP_ACTIONS: readonly MenuAction[] = [
     @if (choosing()) {
       <div
         class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+        cdkTrapFocus
+        [cdkTrapFocusAutoCapture]="true"
         (click)="choosing.set(false)"
+        (keydown.escape)="choosing.set(false)"
       >
         <div
           class="fl-dialog"

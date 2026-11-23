@@ -4,7 +4,7 @@ import { provideIcons } from '@ng-icons/core';
 import { lucidePause, lucidePlay } from '@ng-icons/lucide';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
 import { FlAlert } from '../../../ui/patterns/alert';
-import { FlMetric, FlMetricStrip } from '../../../ui/patterns/metric-strip';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
 import { FlPageHeader } from '../../../ui/patterns/page-header';
 import { FlPanel } from '../../../ui/patterns/panel';
 import { FlLoadingState } from '../../../ui/patterns/states';
@@ -20,6 +20,7 @@ import {
   buildInstallationNowSurface,
   presentedContent,
 } from './installation-now-surface';
+import { NowLevel } from './now-level';
 import { NowPlatformComponent } from './now-platform';
 import { NowTrafficComponent } from './now-traffic';
 
@@ -33,8 +34,9 @@ export const NOW_REFRESH_MS = 30_000;
     FlButton,
     FlIcon,
     FlLoadingState,
-    FlMetric,
-    FlMetricStrip,
+    FlKeyValue,
+    FlKvItem,
+    NowLevel,
     FlPageHeader,
     FlPanel,
     FlStatus,
@@ -98,27 +100,24 @@ export const NOW_REFRESH_MS = 30_000;
         @if (d.sandbox; as s) {
           <fl-panel title="Demo" data-testid="now-demo">
             <div class="flex flex-col gap-4">
-              <fl-metric-strip>
-                <fl-metric
-                  label="Spaces in use"
-                  [value]="s.live + ' / ' + s.ceiling"
-                  [tone]="spaceLevel(s.live, s.ceiling) === 'ok' ? 'default' : 'warning'"
-                  data-testid="now-demo-live"
-                />
-                <fl-metric label="Ready" [value]="s.warm" />
-                <fl-metric
-                  label="Waiting"
-                  [value]="s.waiting"
-                  [tone]="s.waiting > 0 ? 'warning' : 'default'"
-                  data-testid="now-demo-waiting"
-                />
-                <fl-metric
-                  label="Turned away"
-                  [value]="s.fullRefusals"
-                  [tone]="s.fullRefusals > 0 ? 'warning' : 'default'"
-                  data-testid="now-demo-turned-away"
-                />
-              </fl-metric-strip>
+              <fl-key-value class="fl-kv--compact">
+                <fl-kv-item key="Spaces in use" data-testid="now-demo-live">
+                  <app-now-level
+                    [level]="spaceLevel(s.live, s.ceiling)"
+                    [label]="s.live + ' / ' + s.ceiling"
+                  />
+                </fl-kv-item>
+                <fl-kv-item key="Ready">{{ s.warm }}</fl-kv-item>
+                <fl-kv-item key="Waiting" data-testid="now-demo-waiting">
+                  <app-now-level [level]="s.waiting > 0 ? 'warn' : 'ok'" [label]="'' + s.waiting" />
+                </fl-kv-item>
+                <fl-kv-item key="Turned away" data-testid="now-demo-turned-away">
+                  <app-now-level
+                    [level]="s.fullRefusals > 0 ? 'warn' : 'ok'"
+                    [label]="'' + s.fullRefusals"
+                  />
+                </fl-kv-item>
+              </fl-key-value>
               <fl-usage-bar
                 label="Demo spaces in use"
                 [percent]="percentOf(s.live, s.ceiling)"

@@ -1,3 +1,4 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
@@ -27,6 +28,7 @@ type Step = 'loading' | 'connect_primary' | 'choose' | 'running' | 'done' | 'err
 @Component({
   selector: 'app-enable-backups-modal',
   imports: [
+    CdkTrapFocus,
     FormsModule,
     RouterLink,
     BackupProgressModalComponent,
@@ -42,7 +44,12 @@ type Step = 'loading' | 'connect_primary' | 'choose' | 'running' | 'done' | 'err
   providers: [provideIcons({ lucideX })],
   template: `
     @if (open()) {
-      <div class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div
+        class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+        cdkTrapFocus
+        [cdkTrapFocusAutoCapture]="true"
+        (keydown.escape)="onClose()"
+      >
         <div
           class="fl-dialog"
           role="dialog"

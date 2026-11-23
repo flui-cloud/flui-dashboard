@@ -1,3 +1,4 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { Component, computed, inject, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { provideIcons } from '@ng-icons/core';
@@ -33,13 +34,25 @@ import {
  */
 @Component({
   selector: 'app-migration-launch-modal',
-  imports: [FormsModule, FlAlert, FlField, FlButton, FlIcon, FlSpinner, MigrationLaunchChoice],
+  imports: [
+    CdkTrapFocus,
+    FormsModule,
+    FlAlert,
+    FlField,
+    FlButton,
+    FlIcon,
+    FlSpinner,
+    MigrationLaunchChoice,
+  ],
   providers: [provideIcons({ lucideX })],
   template: `
     @if (open()) {
       <div
         class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+        cdkTrapFocus
+        [cdkTrapFocusAutoCapture]="true"
         (click)="close()"
+        (keydown.escape)="close()"
       >
         <div
           class="fl-dialog fl-dialog--wide"

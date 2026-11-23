@@ -1,3 +1,4 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { Component, computed, input, output, signal } from '@angular/core';
 import { provideIcons } from '@ng-icons/core';
 import { lucideX } from '@ng-icons/lucide';
@@ -10,12 +11,15 @@ import { FlSpinner } from '../../../ui/primitives/spinner';
 
 @Component({
   selector: 'app-agent-revoke-dialog',
-  imports: [FlAlert, FlLoadingState, FlButton, FlIcon, FlSpinner],
+  imports: [CdkTrapFocus, FlAlert, FlLoadingState, FlButton, FlIcon, FlSpinner],
   providers: [provideIcons({ lucideX })],
   template: `
     <div
       class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
       (click)="dismissed.emit()"
+      (keydown.escape)="dismissed.emit()"
     >
       <div
         class="fl-dialog"

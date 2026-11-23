@@ -56,7 +56,7 @@ const SENDER_TONE: Record<MailSenderSummary['status'], StatusTone> = {
           <a flButton size="sm" routerLink="/management/mail/setup">Set one up</a>
         </fl-empty-state>
       } @else {
-        <div class="fl-table-wrap">
+        <div class="fl-table-wrap" role="region" aria-label="Sending domains">
           <table flTable density="dense">
             <thead>
               <tr>
@@ -115,7 +115,7 @@ export class MailOverviewDomains {
       @if (!senders().length) {
         <fl-empty-state [compact]="true" title="Nothing has sent mail in this window" />
       } @else {
-        <div class="fl-table-wrap">
+        <div class="fl-table-wrap" role="region" aria-label="Senders">
           <table flTable density="dense">
             <thead>
               <tr>

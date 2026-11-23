@@ -50,25 +50,27 @@ import { stepLabel, stepStatus, stepTone } from './mail-readiness';
       </app-mail-section-nav>
 
       <fl-panel title="Check readiness">
-        <form class="flex flex-wrap items-end gap-3" (ngSubmit)="load()">
-          <div class="fl-field min-w-72 flex-1">
-            <label class="fl-field__label" for="mail-setup-domain">Domain (optional)</label>
-            <div class="fl-input fl-input--lg">
-              <input
-                id="mail-setup-domain"
-                name="domain"
-                type="text"
-                class="fl-mono"
-                placeholder="mail.example.com"
-                [(ngModel)]="domain"
-              />
+        <form class="flex flex-col gap-2" (ngSubmit)="load()">
+          <div class="flex flex-wrap items-end gap-3">
+            <div class="fl-field min-w-72 flex-1">
+              <label class="fl-field__label" for="mail-setup-domain">Domain (optional)</label>
+              <div class="fl-input fl-input--lg">
+                <input
+                  id="mail-setup-domain"
+                  name="domain"
+                  type="text"
+                  class="fl-mono"
+                  placeholder="mail.example.com"
+                  [(ngModel)]="domain"
+                />
+              </div>
             </div>
-            <span class="fl-field__hint">
-              With no domain, this answers only whether the connected key covers Transactional Email
-              at all, which is the first thing that goes wrong.
-            </span>
+            <button flButton="primary" type="submit" [disabled]="loading()">Check</button>
           </div>
-          <button flButton="primary" type="submit" [disabled]="loading()">Check</button>
+          <span class="fl-field__hint">
+            With no domain, this answers only whether the connected key covers Transactional Email
+            at all, which is the first thing that goes wrong.
+          </span>
         </form>
       </fl-panel>
 

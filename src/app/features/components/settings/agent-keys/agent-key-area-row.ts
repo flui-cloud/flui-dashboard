@@ -30,12 +30,13 @@ import { AgentKeyDepthChoice } from './agent-key-depth-choice';
       type="button"
       class="fl-link inline-flex items-center gap-1 self-start text-fl-caption"
       [attr.aria-expanded]="open()"
+      [attr.aria-label]="'Details for ' + label()"
       (click)="open.set(!open())"
     >
       <fl-icon [name]="open() ? 'lucideChevronDown' : 'lucideChevronRight'" [size]="13" />
       Details
     </button>
-    <div class="flex flex-col gap-3" [hidden]="!open()">
+    <div class="flex flex-col gap-3" [class.hidden]="!open()">
       @for (g of groups(); track g.key) {
         <div
           class="flex flex-col gap-1"

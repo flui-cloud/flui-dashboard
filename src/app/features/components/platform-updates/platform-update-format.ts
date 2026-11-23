@@ -101,7 +101,7 @@ export function operationSubline(operation: PlatformUpdateOperation): string {
     return 'Components already rolled out were left on their new versions.';
   }
   if (!isRunningOperation(operation) && operation.completedAt) {
-    return `Completed ${new Date(operation.completedAt).toLocaleString()}`;
+    return `Completed ${new Date(operation.completedAt).toLocaleString('en-GB')}`;
   }
   return operation.migrations > 0
     ? `${plural(operation.migrations, 'database migration')} run with this release.`
@@ -113,7 +113,7 @@ function plural(count: number, noun: string): string {
 }
 
 export function clockTime(iso: string | null | undefined): string {
-  return iso ? new Date(iso).toLocaleTimeString() : '—';
+  return iso ? new Date(iso).toLocaleTimeString('en-GB') : '—';
 }
 
 export function elapsed(from: string | null | undefined, to: string | null | undefined): string {
@@ -134,7 +134,9 @@ export function historyDetail(operation: PlatformUpdateOperation): string {
 
 export function historyWhen(operation: PlatformUpdateOperation): string {
   const at = operation.completedAt ?? operation.startedAt;
-  return at ? new Date(at).toLocaleDateString() : '—';
+  return at
+    ? new Date(at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+    : '—';
 }
 
 /** "Unchanged" is a comparison; without a release there was none to make. */

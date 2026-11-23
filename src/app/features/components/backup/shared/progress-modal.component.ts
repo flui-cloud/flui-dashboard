@@ -1,3 +1,4 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { Component, computed, effect, inject, input, output } from '@angular/core';
 
 import { FlAlert } from '../../../../ui/patterns/alert';
@@ -10,10 +11,15 @@ let nextId = 0;
 
 @Component({
   selector: 'app-backup-progress-modal',
-  imports: [FlAlert, FlButton, FlStatus],
+  imports: [CdkTrapFocus, FlAlert, FlButton, FlStatus],
   template: `
     @if (op(); as o) {
-      <div class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div
+        class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+        cdkTrapFocus
+        [cdkTrapFocusAutoCapture]="true"
+        (keydown.escape)="onClose()"
+      >
         <div class="fl-dialog" role="dialog" aria-modal="true" [attr.aria-labelledby]="titleId">
           <header class="fl-dialog__header">
             <h2 class="fl-dialog__title" [id]="titleId">{{ title() }}</h2>

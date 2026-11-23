@@ -1,3 +1,4 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -65,6 +66,7 @@ interface WizardDestination {
 @Component({
   selector: 'app-policy-wizard',
   imports: [
+    CdkTrapFocus,
     FormsModule,
     RouterLink,
     PolicyAppPickerComponent,

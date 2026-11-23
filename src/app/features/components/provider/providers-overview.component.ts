@@ -21,6 +21,7 @@ export type ProviderItem =
 
 @Component({
   selector: 'providers-overview',
+  host: { class: 'fl-stack' },
   imports: [
     ProviderCardComponent,
     ProvidersConnectMenu,

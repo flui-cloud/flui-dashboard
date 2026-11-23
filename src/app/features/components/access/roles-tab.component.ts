@@ -54,7 +54,7 @@ import { RoleDef } from '../../model/iam.model';
               <tr>
                 <th scope="col">Permission</th>
                 @for (r of iam.roles(); track r.key) {
-                  <th scope="col" class="text-center">{{ r.name }}</th>
+                  <th scope="col">{{ r.name }}</th>
                 }
               </tr>
             </thead>
@@ -63,7 +63,7 @@ import { RoleDef } from '../../model/iam.model';
                 <tr>
                   <td class="fl-mono">{{ p }}</td>
                   @for (r of iam.roles(); track r.key) {
-                    <td class="text-center">
+                    <td>
                       <label class="fl-check">
                         <input type="checkbox" disabled [checked]="holds(r, p)" />
                         <span class="fl-sr">{{ p }} in {{ r.name }}</span>

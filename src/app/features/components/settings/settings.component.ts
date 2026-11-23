@@ -83,7 +83,9 @@ interface SectionDef {
               [id]="'settings-tab-' + s.id"
               aria-controls="settings-section"
               [attr.aria-selected]="activeSection() === s.id"
+              [attr.tabindex]="activeSection() === s.id ? 0 : -1"
               (click)="select(s.id)"
+              (keydown)="onTabKeydown($event, s.id)"
             >
               {{ s.label }}
             </button>
@@ -278,6 +280,21 @@ export class SettingsComponent implements OnInit, OnDestroy {
       fragment: id,
       replaceUrl: true,
     });
+  }
+
+  protected onTabKeydown(event: KeyboardEvent, id: SectionId): void {
+    const ids = this.visibleSections().map((s) => s.id);
+    const index = ids.indexOf(id);
+    let next = -1;
+    if (event.key === 'ArrowRight') next = (index + 1) % ids.length;
+    else if (event.key === 'ArrowLeft') next = (index - 1 + ids.length) % ids.length;
+    else if (event.key === 'Home') next = 0;
+    else if (event.key === 'End') next = ids.length - 1;
+    if (next < 0) return;
+    event.preventDefault();
+    this.select(ids[next]);
+    const tabs = (event.currentTarget as HTMLElement).parentElement?.querySelectorAll('[role=tab]');
+    (tabs?.[next] as HTMLElement | undefined)?.focus();
   }
 
   private isVisibleSection(value: string): value is SectionId {

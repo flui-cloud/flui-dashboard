@@ -1,3 +1,4 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { provideIcons } from '@ng-icons/core';
@@ -41,6 +42,7 @@ type ContextTab = 'attention' | 'holding' | 'archive';
 @Component({
   selector: 'app-operating-context',
   imports: [
+    CdkTrapFocus,
     FormsModule,
     ContextNoteCardComponent,
     ContextNoteFormComponent,

@@ -137,13 +137,15 @@
       }
     </fl-panel>
 
-    <app-needs-decision-list
-      [items]="decisionItems()"
-      [destinationId]="fallbackDestinationId()"
-      [clusterDestinations]="clusterDestinations()"
-      [clusterNames]="clusterNames()"
-      (decided)="onDecided()"
-    />
+    @if (decisionItems().length) {
+      <app-needs-decision-list
+        [items]="decisionItems()"
+        [destinationId]="fallbackDestinationId()"
+        [clusterDestinations]="clusterDestinations()"
+        [clusterNames]="clusterNames()"
+        (decided)="onDecided()"
+      />
+    }
 
     <app-platform-backup-card />
   }

@@ -1,7 +1,7 @@
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SandboxSignInService, VisitorStats } from '../../service/sandbox-sign-in.service';
-import { FlMetric, FlMetricStrip } from '../../../ui/patterns/metric-strip';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
 import { FlPanel } from '../../../ui/patterns/panel';
 import { FlStatus } from '../../../ui/primitives/status';
 
@@ -24,7 +24,7 @@ export function refusalLabel(reason: string): string {
 @Component({
   selector: 'app-demo-visitors',
   host: { class: 'fl-stack' },
-  imports: [FlMetric, FlMetricStrip, FlPanel, FlStatus],
+  imports: [FlKeyValue, FlKvItem, FlPanel, FlStatus],
   template: `
     @if (stats(); as s) {
       <fl-panel title="Visitors" data-testid="demo-visitors">
@@ -35,11 +35,11 @@ export function refusalLabel(reason: string): string {
           [label]="s.entranceOpen ? 'Entrance open' : 'Entrance closed'"
         />
         <div class="flex flex-col gap-3">
-          <fl-metric-strip>
+          <fl-key-value class="fl-kv--compact">
             @for (t of tiles(); track t.label) {
-              <fl-metric [attr.data-tile]="t.label" [label]="t.label" [value]="t.value" />
+              <fl-kv-item [attr.data-tile]="t.label" [key]="t.label">{{ t.value }}</fl-kv-item>
             }
-          </fl-metric-strip>
+          </fl-key-value>
           @if (reasons().length) {
             <p class="m-0 text-fl-body-sm text-fl-ink-muted" data-testid="refused-reasons">
               Refused:

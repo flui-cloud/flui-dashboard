@@ -1,3 +1,4 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { Component, input, output } from '@angular/core';
 import { provideIcons } from '@ng-icons/core';
 import { lucideX } from '@ng-icons/lucide';
@@ -8,13 +9,16 @@ let nextId = 0;
 
 @Component({
   selector: 'app-registry-confirm-dialog',
-  imports: [FlButton, FlIcon],
+  imports: [CdkTrapFocus, FlButton, FlIcon],
   providers: [provideIcons({ lucideX })],
   template: `
     <div
       class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
       [attr.data-testid]="testId()"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
       (click)="cancelled.emit()"
+      (keydown.escape)="cancelled.emit()"
     >
       <div
         class="fl-dialog"

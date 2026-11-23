@@ -37,8 +37,8 @@ import { elapsed, historyDetail, historyWhen, operationStatus } from './platform
                   <td class="fl-mono">
                     <span class="text-fl-ink-muted">{{ row.from }}</span> → {{ row.to }}
                   </td>
-                  <td class="text-fl-ink-secondary">
-                    <span class="fl-cell-clip" [title]="row.detail">{{ row.detail }}</span>
+                  <td class="is-wrap text-fl-ink-secondary">
+                    <span class="line-clamp-2 max-w-sm" [title]="row.detail">{{ row.detail }}</span>
                   </td>
                   <td class="fl-mono is-num text-fl-ink-secondary">{{ row.duration }}</td>
                   <td class="fl-num text-fl-ink-secondary">{{ row.when }}</td>

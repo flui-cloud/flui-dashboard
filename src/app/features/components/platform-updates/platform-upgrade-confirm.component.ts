@@ -1,3 +1,4 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { Component, computed, inject, model, output, signal } from '@angular/core';
 import { provideIcons } from '@ng-icons/core';
 import { lucideX } from '@ng-icons/lucide';
@@ -14,12 +15,15 @@ import { canApplyPlan, planBlockers } from './platform-upgrade-plan';
 
 @Component({
   selector: 'app-platform-upgrade-confirm',
-  imports: [FlAlert, FlButton, FlIcon, FlSpinner, FlStatus],
+  imports: [CdkTrapFocus, FlAlert, FlButton, FlIcon, FlSpinner, FlStatus],
   providers: [provideIcons({ lucideX })],
   template: `
     <div
       class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
       (click)="closed.emit()"
+      (keydown.escape)="closed.emit()"
     >
       <div
         class="fl-dialog fl-dialog--wide"

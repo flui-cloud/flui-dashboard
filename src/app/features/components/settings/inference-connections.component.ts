@@ -125,6 +125,7 @@ const DEFAULT_PRESET = CONNECTION_PRESETS[0];
                         flButton
                         size="sm"
                         type="button"
+                        [attr.aria-label]="'Validate ' + c.label"
                         (click)="validateConn(c.id)"
                         [disabled]="st.validating || st.deleting"
                       >

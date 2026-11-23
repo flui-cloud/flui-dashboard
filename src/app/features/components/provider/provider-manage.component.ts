@@ -55,7 +55,7 @@ import { errorMessageOf } from './provider-credentials';
     FlStatus,
   ],
   template: `
-    <div class="fl-page">
+    <div class="fl-page fl-stack">
       @if (isLoading()) {
         <fl-breadcrumb [items]="crumbs()" />
         <fl-panel><fl-loading-state [rows]="4" /></fl-panel>

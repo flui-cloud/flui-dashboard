@@ -143,8 +143,8 @@ describe('the Now page', () => {
   it('shows the demo spaces, and waiting in amber', () => {
     render(now());
     expect(q('now-demo-live')!.textContent).toContain('18 / 24');
-    expect(q('now-demo-waiting')!.className).toContain('fl-metric--warning');
-    expect(q('now-demo-turned-away')!.className).not.toContain('fl-metric--warning');
+    expect(tone(q('now-demo-waiting')!)).toContain('fl-status--warning');
+    expect(tone(q('now-demo-turned-away')!)).not.toContain('fl-status--warning');
 
     render(now({ sandbox: null }));
     expect(q('now-demo')).toBeNull();

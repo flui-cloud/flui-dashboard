@@ -177,7 +177,7 @@ import { EditTarget, KeyRow, keyRows, reachLine, revokeQuestion } from './agent-
               <tr [hidden]="!isOpen(id) && !edit">
                 <td colspan="4" class="whitespace-normal">
                   <div class="flex flex-col gap-3 py-1">
-                    <div class="flex flex-col gap-2" [hidden]="!isOpen(id)">
+                    <div class="flex flex-col gap-2" [class.hidden]="!isOpen(id)">
                       @if (row.surface.caution; as caution) {
                         <fl-alert
                           tone="warning"

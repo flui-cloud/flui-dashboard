@@ -42,7 +42,7 @@ export class MailVolumeChartComponent {
       showTitle: false,
       enableZoom: false,
       yMin: 0,
-      valueFormatter: (value) => value.toLocaleString(),
+      valueFormatter: (value) => value.toLocaleString('en-GB'),
       timeFormatter: (at) => bucketLabel(at.toISOString(), bucket),
     };
   });

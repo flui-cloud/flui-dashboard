@@ -1,3 +1,4 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { Component, input, output, signal } from '@angular/core';
 import { provideIcons } from '@ng-icons/core';
 import { lucideX } from '@ng-icons/lucide';
@@ -8,12 +9,14 @@ let nextId = 0;
 
 @Component({
   selector: 'app-access-preview-dialog',
-  imports: [FlButton, FlIcon],
+  imports: [CdkTrapFocus, FlButton, FlIcon],
   providers: [provideIcons({ lucideX })],
   template: `
     @if (isOpen()) {
       <div
         class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+        cdkTrapFocus
+        [cdkTrapFocusAutoCapture]="true"
         (click)="cancel()"
         (keydown.escape)="cancel()"
       >

@@ -131,6 +131,8 @@
     </p>
   } @else if (writing()) {
     <app-context-note-form
+      [cdkTrapFocus]="false"
+      [cdkTrapFocusAutoCapture]="true"
       [clusters]="clusters()"
       [probes]="probes()"
       [busy]="saving()"

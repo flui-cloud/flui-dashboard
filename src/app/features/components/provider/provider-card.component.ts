@@ -44,7 +44,10 @@ import {
     <td [attr.title]="credentialLabel()">{{ credentialLabel() || '—' }}</td>
     <td class="is-num" [attr.title]="regionNames()">
       @if (isConfigured()) {
-        {{ enabledRegions().length }} <span class="text-fl-ink-muted">of {{ regionCount() }}</span>
+        {{ enabledRegions().length }}
+        @if (regionCount() > enabledRegions().length) {
+          <span class="text-fl-ink-muted">of {{ regionCount() }}</span>
+        }
       } @else {
         {{ regionCount() || '—' }}
       }

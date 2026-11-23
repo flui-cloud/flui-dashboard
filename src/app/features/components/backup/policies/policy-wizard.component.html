@@ -246,7 +246,13 @@
                       <option value="replica">Replica</option>
                     </select>
                   </span>
-                  <button flButton="ghost" size="sm" type="button" (click)="removeDestination(i)">
+                  <button
+                    flButton="ghost"
+                    size="sm"
+                    type="button"
+                    [attr.aria-label]="'Remove destination ' + (i + 1)"
+                    (click)="removeDestination(i)"
+                  >
                     Remove
                   </button>
                 </div>
@@ -273,6 +279,9 @@
             <div
               class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
               data-testid="destination-modal"
+              cdkTrapFocus
+              [cdkTrapFocusAutoCapture]="true"
+              (keydown.escape)="creatingDestination.set(false)"
             >
               <dialog
                 open

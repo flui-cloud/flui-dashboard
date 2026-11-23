@@ -6,7 +6,7 @@ import {
   formatMbitPerSecond,
   formatRegistrySize,
 } from '../../model/registry-storage.models';
-import { FlMetric, FlMetricStrip } from '../../../ui/patterns/metric-strip';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
 import { FlPanel } from '../../../ui/patterns/panel';
 import { FlLoadingState } from '../../../ui/patterns/states';
 import { FlStatus } from '../../../ui/primitives/status';
@@ -15,7 +15,7 @@ const REFUSED_TITLE = 'over an application quota, an upload too large, or over t
 
 @Component({
   selector: 'app-registry-traffic-panel',
-  imports: [FlMetric, FlMetricStrip, FlPanel, FlLoadingState, FlStatus],
+  imports: [FlKeyValue, FlKvItem, FlPanel, FlLoadingState, FlStatus],
   host: { class: 'fl-stack' },
   template: `
     <fl-panel title="Traffic" data-testid="registry-traffic">
@@ -34,28 +34,20 @@ const REFUSED_TITLE = 'over an application quota, an upload too large, or over t
 
       @if (traffic(); as t) {
         <div class="flex flex-col gap-3" [attr.aria-busy]="loading()">
-          <fl-metric-strip>
-            <fl-metric
-              label="Pulls"
-              [value]="t.requests.pulls"
-              data-testid="registry-traffic-pulls"
-            />
-            <fl-metric
-              label="Pushes"
-              [value]="t.requests.pushes"
-              data-testid="registry-traffic-pushes"
-            />
-            <fl-metric
-              label="Pulled out"
-              [value]="size(t.bytesOut)"
-              data-testid="registry-traffic-out"
-            />
-            <fl-metric
-              label="Pushed in"
-              [value]="size(t.bytesIn)"
-              data-testid="registry-traffic-in"
-            />
-          </fl-metric-strip>
+          <fl-key-value class="fl-kv--compact">
+            <fl-kv-item key="Pulls" data-testid="registry-traffic-pulls">{{
+              t.requests.pulls
+            }}</fl-kv-item>
+            <fl-kv-item key="Pushes" data-testid="registry-traffic-pushes">{{
+              t.requests.pushes
+            }}</fl-kv-item>
+            <fl-kv-item key="Pulled out" data-testid="registry-traffic-out">{{
+              size(t.bytesOut)
+            }}</fl-kv-item>
+            <fl-kv-item key="Pushed in" data-testid="registry-traffic-in">{{
+              size(t.bytesIn)
+            }}</fl-kv-item>
+          </fl-key-value>
           <p class="m-0 text-fl-body-sm text-fl-ink-muted" data-testid="registry-traffic-peak">
             Busiest 5 minutes: {{ mbit(t.peakBytesPerSecondOut) }} out ·
             {{ mbit(t.peakBytesPerSecondIn) }} in

@@ -66,9 +66,9 @@ function menuFor(row: MigrationRow, busy: boolean): MenuAction[] {
                 }
               </td>
               <td class="fl-mono">{{ sourceLabel(row) }}</td>
-              <td class="fl-mono">{{ targetLabel()(row) }}</td>
+              <td class="fl-mono is-wrap break-all">{{ targetLabel()(row) }}</td>
               <td class="is-wrap">
-                <div class="flex flex-col gap-1">
+                <div class="flex min-w-56 max-w-sm flex-col gap-1">
                   <fl-status [tone]="statusTone(row.status)" [label]="statusText(row.status)" />
                   @if (row.errorMessage) {
                     <span class="text-fl-caption text-fl-ink-secondary">{{
@@ -89,6 +89,14 @@ function menuFor(row: MigrationRow, busy: boolean): MenuAction[] {
                       type="button"
                       class="fl-link self-start text-fl-caption"
                       [attr.aria-expanded]="stepsOpen() === key(row)"
+                      [attr.aria-label]="
+                        'Next steps (' +
+                        nextStepsOf(row).length +
+                        '), ' +
+                        typeLabel(row.type) +
+                        ' from ' +
+                        sourceLabel(row)
+                      "
                       (click)="toggleSteps(row)"
                     >
                       Next steps ({{ nextStepsOf(row).length }})

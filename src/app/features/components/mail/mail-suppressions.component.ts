@@ -143,6 +143,7 @@ const REASON_LABEL: Record<string, string> = {
                         size="sm"
                         type="button"
                         title="Start writing to this address again"
+                        [attr.aria-label]="'Allow ' + s.address + ' again'"
                         [disabled]="pending() === s.address"
                         (click)="askRemove(s.address)"
                       >

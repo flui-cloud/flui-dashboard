@@ -1,3 +1,4 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { Component, input, output } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -23,6 +24,7 @@ import { OwnBucketForm } from './registry-storage-view';
 @Component({
   selector: 'app-registry-bucket-panel',
   imports: [
+    CdkTrapFocus,
     DatePipe,
     FormsModule,
     ExplainComponent,
@@ -90,6 +92,8 @@ import { OwnBucketForm } from './registry-storage-view';
             [class.border-fl-border]="status().connected"
             [class.pt-4]="status().connected"
             data-testid="registry-connect"
+            [cdkTrapFocus]="false"
+            [cdkTrapFocusAutoCapture]="status().connected"
           >
             <fieldset class="fl-fieldset">
               <legend>{{ status().connected ? 'New bucket' : 'Connect a bucket' }}</legend>

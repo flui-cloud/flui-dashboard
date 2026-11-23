@@ -1,5 +1,5 @@
 import { Component, input } from '@angular/core';
-import { FlMetric, FlMetricStrip } from '../../../ui/patterns/metric-strip';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
 import { FlPanel } from '../../../ui/patterns/panel';
 import { FlEmptyState } from '../../../ui/patterns/states';
 import { FlTable } from '../../../ui/patterns/table';
@@ -12,7 +12,7 @@ const MIB = 1024 * 1024;
 
 @Component({
   selector: 'app-now-platform',
-  imports: [FlPanel, FlEmptyState, FlTable, FlUsageBar, FlMetricStrip, FlMetric, NowLevel],
+  imports: [FlPanel, FlEmptyState, FlTable, FlUsageBar, FlKeyValue, FlKvItem, NowLevel],
   host: { class: 'fl-stack' },
   template: `
     <fl-panel
@@ -81,20 +81,16 @@ const MIB = 1024 * 1024;
     @if (now().registry; as r) {
       <fl-panel title="Image registry, last hour" data-testid="now-registry">
         <div class="flex flex-col gap-3">
-          <fl-metric-strip>
-            <fl-metric label="Pulls" [value]="r.requests.pulls" />
-            <fl-metric label="Pushes" [value]="r.requests.pushes" />
-            <fl-metric
-              label="Pulled out"
-              [value]="mib(r.bytesOut)"
-              data-testid="now-registry-out"
-            />
-            <fl-metric
-              label="Peak out"
-              [value]="mbit(r.peakBytesPerSecondOut)"
-              data-testid="now-registry-peak"
-            />
-          </fl-metric-strip>
+          <fl-key-value class="fl-kv--compact">
+            <fl-kv-item key="Pulls">{{ r.requests.pulls }}</fl-kv-item>
+            <fl-kv-item key="Pushes">{{ r.requests.pushes }}</fl-kv-item>
+            <fl-kv-item key="Pulled out" data-testid="now-registry-out">{{
+              mib(r.bytesOut)
+            }}</fl-kv-item>
+            <fl-kv-item key="Peak out" data-testid="now-registry-peak">{{
+              mbit(r.peakBytesPerSecondOut)
+            }}</fl-kv-item>
+          </fl-key-value>
           <div class="fl-row text-fl-body-sm">
             <app-now-level
               data-testid="now-registry-refused"

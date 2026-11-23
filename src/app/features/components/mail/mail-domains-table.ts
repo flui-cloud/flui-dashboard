@@ -76,6 +76,10 @@ const PROVIDER_LABELS: Record<string, string> = {
                     flButton="ghost"
                     size="sm"
                     type="button"
+                    [attr.aria-label]="
+                      (testing() === d.domain ? 'Close test for ' : 'Test ') + d.domain
+                    "
+                    [attr.aria-expanded]="testing() === d.domain"
                     (click)="toggleTest.emit(d.domain)"
                   >
                     {{ testing() === d.domain ? 'Close test' : 'Test' }}

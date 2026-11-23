@@ -1,6 +1,6 @@
-const TIME = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' });
-const DAY = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short' });
-const DAY_TIME = new Intl.DateTimeFormat(undefined, {
+const TIME = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit' });
+const DAY = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' });
+const DAY_TIME = new Intl.DateTimeFormat('en-GB', {
   day: 'numeric',
   month: 'short',
   hour: '2-digit',

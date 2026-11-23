@@ -1,3 +1,4 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { provideIcons } from '@ng-icons/core';
@@ -33,6 +34,7 @@ interface ActivityState {
 @Component({
   selector: 'app-temporary-access-tab',
   imports: [
+    CdkTrapFocus,
     NgTemplateOutlet,
     FlPanel,
     FlEmptyState,
@@ -51,6 +53,8 @@ interface ActivityState {
     @if (showBuilder()) {
       <app-grant-builder
         *fluiCan="'iam:assign-role'"
+        [cdkTrapFocus]="false"
+        [cdkTrapFocusAutoCapture]="true"
         [presetRole]="platformOperator"
         presetDuration="1d"
       />

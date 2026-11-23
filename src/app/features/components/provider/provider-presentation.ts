@@ -153,5 +153,13 @@ export function sinceText(iso: string | undefined, now = Date.now()): string {
 export function formatDateTime(value: string | undefined): string {
   if (!value) return '—';
   const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString();
+  return Number.isNaN(d.getTime())
+    ? '—'
+    : d.toLocaleString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
 }

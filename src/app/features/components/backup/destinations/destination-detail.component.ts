@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 
+import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FlAlert } from '../../../../ui/patterns/alert';
 import { FlCopyId } from '../../../../ui/patterns/copy-id';
@@ -35,6 +36,7 @@ const DELETE_ACTIONS: readonly MenuAction[] = [
 @Component({
   selector: 'app-destination-detail',
   imports: [
+    DatePipe,
     ReadOnlySectionDirective,
     RouterLink,
     FlPageHeader,
@@ -88,8 +90,10 @@ const DELETE_ACTIONS: readonly MenuAction[] = [
               <fl-kv-item key="Path prefix" [mono]="!!d.pathPrefix">{{
                 d.pathPrefix || '—'
               }}</fl-kv-item>
-              <fl-kv-item key="Encryption" [mono]="true">{{ d.encryptionMode }}</fl-kv-item>
-              <fl-kv-item key="Last health check">{{ d.lastHealthCheckAt || '—' }}</fl-kv-item>
+              <fl-kv-item key="Encryption">{{ encryptionLabel(d.encryptionMode) }}</fl-kv-item>
+              <fl-kv-item key="Last health check">{{
+                d.lastHealthCheckAt ? (d.lastHealthCheckAt | date: 'd MMM y, HH:mm') : '—'
+              }}</fl-kv-item>
             </fl-key-value>
           </fl-panel>
 
@@ -198,6 +202,12 @@ export class DestinationDetailComponent implements OnInit, OnDestroy {
     }
   }
   protected readonly providerLabel = providerLabel;
+  protected encryptionLabel(mode: string | undefined): string {
+    if (mode === 'flui_managed') return 'Flui-managed';
+    if (mode === 'byo_passphrase') return 'Your own passphrase';
+    if (mode === 'none') return 'None';
+    return mode || '—';
+  }
   protected readonly formatBytes = formatBytes;
 
   private readonly surfaceRevision = new DestinationDetailSurfaceRevision();
