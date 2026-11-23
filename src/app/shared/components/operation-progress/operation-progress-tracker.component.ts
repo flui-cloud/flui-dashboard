@@ -10,9 +10,12 @@ import {
 } from '@angular/core';
 
 import { Router } from '@angular/router';
-import { NgIcon, provideIcons } from '@ng-icons/core';
+import { provideIcons } from '@ng-icons/core';
 import { lucideArrowLeft, lucideArrowRight, lucideRotateCcw } from '@ng-icons/lucide';
-import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlPanel } from '../../../ui/patterns/panel';
 
 import { OperationTrackerService, OperationType } from '../../services/operation-tracker.service';
 import { OperationStepCardComponent } from './operation-step-card.component';
@@ -46,53 +49,61 @@ const DEFAULT_LABELS: OperationLabels = {
 
 @Component({
   selector: 'app-operation-progress-tracker',
-  standalone: true,
-  imports: [NgIcon, HlmButtonDirective, OperationStepCardComponent, OperationProgressBarComponent],
+  imports: [
+    FlButton,
+    FlIcon,
+    FlAlert,
+    FlPanel,
+    OperationStepCardComponent,
+    OperationProgressBarComponent,
+  ],
   providers: [provideIcons({ lucideArrowLeft, lucideArrowRight, lucideRotateCcw })],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <div class="max-w-4xl mx-auto space-y-6">
+    <div class="fl-stack mx-auto max-w-4xl">
       <div class="flex flex-wrap items-end justify-between gap-4">
-        <div class="min-w-0">
-          <h1 class="text-xl font-semibold tracking-tight">{{ heading() }}</h1>
-          <p class="mt-1 text-sm text-muted-foreground">{{ subheading() }}</p>
+        <div class="flex min-w-0 flex-col gap-1">
+          <h1 class="m-0 text-fl-page-title text-fl-ink">{{ heading() }}</h1>
+          <p class="m-0 text-fl-body-sm text-fl-ink-muted">{{ subheading() }}</p>
         </div>
         @if (isOperationCompleted() && successRoute()) {
-          <button hlmBtn size="sm" (click)="navigateToSuccess()">
+          <button flButton="primary" type="button" (click)="navigateToSuccess()">
             {{ mergedLabels().viewDetailsButtonText }}
-            <ng-icon name="lucideArrowRight" class="ml-1.5 h-4 w-4" />
+            <fl-icon name="lucideArrowRight" />
           </button>
         }
       </div>
 
       @if (isOperationFailed()) {
-        <div class="rounded-lg border border-destructive/40 bg-card p-5">
-          <p class="text-sm text-muted-foreground">{{ mergedLabels().failureMessage }}</p>
+        <fl-alert
+          tone="error"
+          [title]="mergedLabels().failureMessage || 'The operation could not be completed'"
+        >
           @if (trackerService.operation()?.errorMessage) {
             <pre
-              class="mt-3 whitespace-pre-wrap break-words rounded-md bg-muted px-3 py-2 font-mono text-xs text-destructive"
+              class="m-0 whitespace-pre-wrap break-words font-mono text-fl-mono-sm text-fl-ink"
               >{{ trackerService.operation()?.errorMessage }}</pre>
           }
           @if (retryRoute() || failureRoute()) {
-            <div class="mt-4 flex items-center gap-2">
+            <div alertActions class="flex items-center gap-2">
               @if (retryRoute()) {
-                <button hlmBtn size="sm" (click)="navigateToRetry()">
-                  <ng-icon name="lucideRotateCcw" class="mr-1.5 h-4 w-4" />
+                <button flButton="primary" size="sm" type="button" (click)="navigateToRetry()">
+                  <fl-icon name="lucideRotateCcw" [size]="14" />
                   {{ mergedLabels().retryButtonText }}
                 </button>
               }
               @if (failureRoute()) {
-                <button hlmBtn variant="outline" size="sm" (click)="navigateToFailure()">
-                  <ng-icon name="lucideArrowLeft" class="mr-1.5 h-4 w-4" />
+                <button flButton="ghost" size="sm" type="button" (click)="navigateToFailure()">
+                  <fl-icon name="lucideArrowLeft" [size]="14" />
                   {{ mergedLabels().backButtonText }}
                 </button>
               }
             </div>
           }
-        </div>
+        </fl-alert>
       }
 
-      <div class="rounded-lg border border-border bg-card">
+      <fl-panel [flush]="true">
         <app-operation-progress-bar
           [title]="mergedLabels().progressTitle || 'Progress'"
           [progress]="trackerService.getOverallProgress()"
@@ -103,17 +114,19 @@ const DEFAULT_LABELS: OperationLabels = {
           [isCompleted]="isOperationCompleted()"
         />
         @if (trackerService.steps().length > 0) {
-          <div class="divide-y divide-border border-t border-border">
+          <ol class="m-0 list-none divide-y divide-fl-border border-t border-fl-border p-0">
             @for (step of trackerService.steps(); track step.id) {
-              <app-operation-step-card
-                [step]="step"
-                [currentStepProgress]="getCurrentStepProgressForStep(step.id)"
-                [isFailed]="isOperationFailed()"
-              />
+              <li>
+                <app-operation-step-card
+                  [step]="step"
+                  [currentStepProgress]="getCurrentStepProgressForStep(step.id)"
+                  [isFailed]="isOperationFailed()"
+                />
+              </li>
             }
-          </div>
+          </ol>
         }
-      </div>
+      </fl-panel>
     </div>
   `,
 })
@@ -199,7 +212,10 @@ export class OperationProgressTrackerComponent implements OnInit {
   getFormattedStartTime(): string {
     const op = this.trackerService.operation();
     if (!op?.startedAt) return '';
-    return new Date(op.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return new Date(op.startedAt).toLocaleTimeString('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   }
 
   getCurrentStepProgressForStep(stepId: string): number | undefined {

@@ -253,6 +253,6 @@ export class SshKeySelectorComponent implements OnInit {
 
   formatDate(date: string | undefined): string {
     if (!date) return 'Unknown';
-    return new Date(date).toLocaleDateString();
+    return new Date(date).toLocaleDateString('en-GB');
   }
 }

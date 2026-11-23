@@ -1,43 +1,38 @@
-import { Component, input, ChangeDetectionStrategy } from '@angular/core';
-
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCircle, lucideCircleCheck, lucideCircleX, lucideLoader } from '@ng-icons/lucide';
+import { Component, input, computed, ChangeDetectionStrategy } from '@angular/core';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
 import { ClusterCreationStep } from '../../../features/model/cluster.models';
+
+const TONES: Record<string, StatusTone> = {
+  completed: 'success',
+  running: 'progress',
+  error: 'error',
+};
+
+const STATES: Record<string, string> = {
+  completed: 'Done',
+  running: 'Running',
+  error: 'Failed',
+};
 
 @Component({
   selector: 'app-operation-step-card',
-  standalone: true,
-  imports: [NgIcon],
-  providers: [provideIcons({ lucideCircle, lucideCircleCheck, lucideCircleX, lucideLoader })],
+  imports: [FlStatus],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <div class="flex items-start gap-3 px-5 py-3">
-      <div class="mt-0.5 flex-shrink-0">
-        @switch (step().status) {
-          @case ('completed') {
-            <ng-icon name="lucideCircleCheck" class="h-4 w-4 text-[hsl(var(--ok))]" />
-          }
-          @case ('running') {
-            <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin text-primary" />
-          }
-          @case ('error') {
-            <ng-icon name="lucideCircleX" class="h-4 w-4 text-destructive" />
-          }
-          @default {
-            <ng-icon name="lucideCircle" class="h-4 w-4 text-muted-foreground/50" />
-          }
-        }
+    <div class="flex items-start gap-3 px-4 py-2.5">
+      <div class="w-24 shrink-0">
+        <fl-status [tone]="tone()" [label]="state()" />
       </div>
 
-      <div class="flex-1 min-w-0">
+      <div class="flex min-w-0 flex-1 flex-col gap-1">
         <div class="flex items-baseline justify-between gap-4">
-          <p
-            class="text-sm"
-            [class]="step().status === 'pending' ? 'text-muted-foreground' : 'text-foreground'"
+          <span
+            class="text-fl-body-sm"
+            [class]="step().status === 'pending' ? 'text-fl-ink-muted' : 'text-fl-ink'"
           >
             {{ step().title }}
-          </p>
-          <span class="flex-shrink-0 text-xs text-muted-foreground tabular-nums">
+          </span>
+          <span class="fl-num shrink-0 font-mono text-fl-caption text-fl-ink-muted">
             @if (step().status === 'running' && step().estimatedDuration) {
               ~{{ getRemainingTime() }} left
             } @else if (step().status === 'completed' && getStepDurationSeconds() >= 1) {
@@ -47,18 +42,18 @@ import { ClusterCreationStep } from '../../../features/model/cluster.models';
         </div>
 
         @if (step().status === 'running' && currentStepProgress() !== undefined) {
-          <div class="mt-2 h-1 w-full rounded-full bg-muted">
-            <div
-              class="h-1 rounded-full bg-primary transition-all duration-500 ease-out"
+          <span class="fl-bar" aria-hidden="true"
+            ><span
+              class="transition-all duration-500 ease-out"
               [style.width.%]="currentStepProgress()"
-            ></div>
-          </div>
+            ></span
+          ></span>
         }
 
         @if (step().details) {
           <p
-            class="mt-1 text-xs"
-            [class]="step().status === 'error' ? 'text-destructive' : 'text-muted-foreground'"
+            class="m-0 text-fl-caption"
+            [class]="step().status === 'error' ? 'text-fl-danger' : 'text-fl-ink-muted'"
           >
             {{ step().details }}
           </p>
@@ -71,6 +66,9 @@ export class OperationStepCardComponent {
   step = input.required<ClusterCreationStep>();
   currentStepProgress = input<number>();
   isFailed = input<boolean>(false);
+
+  protected readonly tone = computed<StatusTone>(() => TONES[this.step().status] ?? 'neutral');
+  protected readonly state = computed(() => STATES[this.step().status] ?? 'Waiting');
 
   getRemainingTime(): string {
     const step = this.step();

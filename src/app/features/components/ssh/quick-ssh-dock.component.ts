@@ -1,59 +1,60 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideTerminal, lucideMaximize2, lucideX } from '@ng-icons/lucide';
+import { Component, inject } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideMaximize2, lucideTerminal, lucideX } from '@ng-icons/lucide';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlStatus } from '../../../ui/primitives/status';
 import { QuickSshService } from '../../service/quick-ssh.service';
 
 @Component({
   selector: 'app-quick-ssh-dock',
-  standalone: true,
-  imports: [NgIcon],
+  imports: [FlButton, FlIcon, FlStatus],
   providers: [provideIcons({ lucideTerminal, lucideMaximize2, lucideX })],
+  host: { class: 'contents' },
   template: `
     @if (sshService.isMinimized()) {
       <div
-        class="fixed bottom-4 right-4 z-50 flex items-center gap-2 px-3 py-2 rounded-fl-lg bg-background border border-border cursor-pointer hover:bg-muted transition-colors"
+        class="fl-panel fixed bottom-4 right-4 z-50 flex cursor-pointer items-center gap-2 py-1 pl-3 pr-1 hover:bg-fl-surface-hover"
         (click)="sshService.restore()"
       >
-        <ng-icon name="lucideTerminal" class="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+        <fl-icon name="lucideTerminal" [size]="14" class="text-fl-ink-muted" />
 
         @if (sshService.activeSession(); as session) {
-          <div class="flex items-center gap-1.5">
-            <div class="h-1.5 w-1.5 rounded-full bg-green-500 flex-shrink-0"></div>
-            <span class="text-xs font-medium text-foreground max-w-[160px] truncate">{{
-              session.serverName
-            }}</span>
-          </div>
+          <span class="max-w-40 truncate text-fl-body-sm font-medium text-fl-ink">{{
+            session.serverName
+          }}</span>
+          <fl-status tone="success" label="Connected" />
         } @else {
-          <span class="text-xs font-medium text-foreground">SSH Terminal</span>
+          <span class="text-fl-body-sm font-medium text-fl-ink">SSH terminal</span>
         }
 
-        <div class="flex items-center gap-0.5 ml-1">
+        <div class="flex items-center">
           <button
-            (click)="$event.stopPropagation(); sshService.restore()"
-            class="p-0.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            flButton="ghost"
+            size="sm"
+            [iconOnly]="true"
+            type="button"
+            aria-label="Restore"
             title="Restore"
+            (click)="$event.stopPropagation(); sshService.restore()"
           >
-            <ng-icon name="lucideMaximize2" class="h-3 w-3" />
+            <fl-icon name="lucideMaximize2" />
           </button>
           <button
-            (click)="$event.stopPropagation(); sshService.close()"
-            class="p-0.5 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors"
+            flButton="ghost"
+            size="sm"
+            [iconOnly]="true"
+            type="button"
+            aria-label="Close"
             title="Close"
+            (click)="$event.stopPropagation(); sshService.close()"
           >
-            <ng-icon name="lucideX" class="h-3 w-3" />
+            <fl-icon name="lucideX" />
           </button>
         </div>
       </div>
     }
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
-  styles: [
-    `
-      :host {
-        display: contents;
-      }
-    `,
-  ],
 })
 export class QuickSshDockComponent {
   protected readonly sshService = inject(QuickSshService);

@@ -1,4 +1,7 @@
-import { Component, input, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, computed, signal } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideX } from '@ng-icons/lucide';
+import { FlIcon } from '../../../../ui/primitives/icon';
 
 import {
   StatusTimelineConfig,
@@ -29,88 +32,94 @@ import {
  */
 @Component({
   selector: 'app-status-timeline',
-  standalone: true,
-  imports: [],
+  imports: [FlIcon],
+  providers: [provideIcons({ lucideX })],
   template: `
-    <div class="status-timeline-card bg-card border border-border rounded-lg p-6">
-      <!-- Header -->
-      <div class="flex items-start justify-between mb-4">
-        <div>
-          <h3 class="text-lg font-semibold text-foreground">{{ data().title }}</h3>
+    <div class="flex flex-col gap-4 rounded-fl-lg border border-fl-border bg-fl-surface p-4">
+      <div class="flex items-start justify-between gap-4">
+        <div class="flex flex-col gap-1">
+          <h3 class="m-0 text-fl-section-title text-fl-ink">{{ data().title }}</h3>
           @if (data().subtitle) {
-            <p class="text-sm text-muted-foreground mt-1">{{ data().subtitle }}</p>
+            <p class="m-0 text-fl-caption text-fl-ink-muted">{{ data().subtitle }}</p>
           }
         </div>
 
         @if (config().showUptimePercentage && data().uptimePercentage !== undefined) {
-          <div class="text-right">
-            <div class="text-2xl font-bold text-green-600">{{ data().uptimePercentage }}%</div>
-            <div class="text-xs text-muted-foreground">Uptime</div>
+          <div class="flex flex-col items-end">
+            <span class="fl-num text-fl-metric text-fl-ink">{{ data().uptimePercentage }}%</span>
+            <span class="text-fl-caption text-fl-ink-muted">Uptime</span>
           </div>
         }
       </div>
 
-      <!-- Timeline Grid -->
       <div class="timeline-grid" [class.compact]="config().compact">
         @for (day of timelineDays(); track day.date) {
-          <div
-            class="timeline-block"
-            [class]="getBlockClass(day.status)"
-            [title]="getBlockTooltip(day)"
-            (click)="onBlockClick(day)"
-          ></div>
+          @if (day.event && day.status !== 'up') {
+            <button
+              type="button"
+              class="timeline-block"
+              [class]="getBlockClass(day.status)"
+              [title]="getBlockTooltip(day)"
+              [attr.aria-label]="getBlockTooltip(day)"
+              (click)="onBlockClick(day)"
+            ></button>
+          } @else {
+            <div
+              class="timeline-block"
+              role="img"
+              [class]="getBlockClass(day.status)"
+              [title]="getBlockTooltip(day)"
+              [attr.aria-label]="getBlockTooltip(day)"
+            ></div>
+          }
         }
       </div>
 
-      <!-- Legend -->
-      <div class="flex items-center gap-4 mt-4 text-xs text-muted-foreground">
-        <div class="flex items-center gap-1">
-          <div class="w-3 h-3 rounded-sm bg-green-500"></div>
-          <span>Up</span>
-        </div>
-        <div class="flex items-center gap-1">
-          <div class="w-3 h-3 rounded-sm bg-red-500"></div>
-          <span>Down</span>
-        </div>
-        <div class="flex items-center gap-1">
-          <div class="w-3 h-3 rounded-sm bg-yellow-500"></div>
-          <span>Degraded</span>
-        </div>
-        <div class="flex items-center gap-1">
-          <div class="w-3 h-3 rounded-sm bg-blue-500"></div>
-          <span>Maintenance</span>
-        </div>
-        <div class="ml-auto text-xs">Last {{ config().daysToShow }} days</div>
+      <div class="flex flex-wrap items-center gap-4 text-fl-caption text-fl-ink-muted">
+        <span class="flex items-center gap-1.5"
+          ><span class="timeline-key status-up"></span>Up</span
+        >
+        <span class="flex items-center gap-1.5"
+          ><span class="timeline-key status-down"></span>Down</span
+        >
+        <span class="flex items-center gap-1.5"
+          ><span class="timeline-key status-degraded"></span>Degraded</span
+        >
+        <span class="flex items-center gap-1.5"
+          ><span class="timeline-key status-maintenance"></span>Maintenance</span
+        >
+        <span class="ml-auto">Last {{ config().daysToShow }} days</span>
       </div>
 
-      <!-- Selected Incident Details -->
-      @if (selectedIncident()) {
-        <div class="mt-4 p-4 bg-muted rounded-lg">
-          <div class="flex items-start justify-between">
-            <div>
-              <div class="text-sm font-semibold text-foreground">
-                {{ formatDate(selectedIncident()!.timestamp) }}
-              </div>
-              @if (selectedIncident()!.message) {
-                <p class="text-sm text-muted-foreground mt-1">
-                  {{ selectedIncident()!.message }}
-                </p>
-              }
-              @if (selectedIncident()!.duration) {
-                <p class="text-xs text-muted-foreground mt-1">
-                  Duration: {{ formatDuration(selectedIncident()!.duration!) }}
-                </p>
-              }
-            </div>
-            <button (click)="clearSelection()" class="text-muted-foreground hover:text-foreground">
-              ✕
-            </button>
+      @if (selectedIncident(); as incident) {
+        <div
+          class="flex items-start justify-between gap-3 rounded-fl-md border border-fl-border bg-fl-surface-subtle p-3"
+        >
+          <div class="flex flex-col gap-1">
+            <span class="text-fl-body-sm font-semibold text-fl-ink">
+              {{ formatDate(incident.timestamp) }}
+            </span>
+            @if (incident.message) {
+              <p class="m-0 text-fl-body-sm text-fl-ink-secondary">{{ incident.message }}</p>
+            }
+            @if (incident.duration) {
+              <p class="m-0 font-mono text-fl-caption text-fl-ink-muted">
+                Duration: {{ formatDuration(incident.duration) }}
+              </p>
+            }
           </div>
+          <button
+            type="button"
+            class="fl-dialog__close"
+            aria-label="Close"
+            (click)="clearSelection()"
+          >
+            <fl-icon name="lucideX" />
+          </button>
         </div>
       }
     </div>
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [
     `
       .timeline-grid {
@@ -129,58 +138,63 @@ import {
         aspect-ratio: 1;
         border-radius: 2px;
         cursor: pointer;
-        transition: all 0.2s ease;
-        border: 1px solid transparent;
+        outline-offset: 1px;
+      }
+
+      button.timeline-block {
+        padding: 0;
+        border: 0;
+      }
+
+      .timeline-block:focus-visible {
+        outline: 2px solid var(--fl-accent);
       }
 
       .timeline-block:hover {
-        transform: scale(1.2);
-        border-color: currentColor;
-        z-index: 10;
+        outline: 1px solid var(--fl-ink-muted);
+      }
+
+      .timeline-key {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
       }
 
       .status-up {
-        background-color: #10b981;
+        background-color: var(--fl-success);
       }
 
       .status-down {
-        background-color: #ef4444;
+        background-color: var(--fl-danger);
       }
 
       .status-degraded {
-        background-color: #f59e0b;
+        background-color: var(--fl-warning-fill);
       }
 
       .status-maintenance {
-        background-color: #3b82f6;
+        background-color: var(--fl-accent);
       }
 
       .status-unknown {
-        background-color: #e5e7eb;
-      }
-
-      :host-context(.dark) .status-unknown {
-        background-color: #374151;
+        background-color: var(--fl-track);
       }
     `,
   ],
 })
 export class StatusTimelineComponent {
-  // Inputs
   data = input.required<StatusTimelineData>();
   config = input<StatusTimelineConfig>({});
 
-  // Selected incident for details
   selectedIncident = computed(() => this._selectedIncident());
-  private readonly _selectedIncident = computed<TimelineEvent | null>(() => null);
+  private readonly _selectedIncident = signal<TimelineEvent | null>(null);
 
-  // Computed configurations
   private readonly mergedConfig = computed(() => ({
     ...DEFAULT_TIMELINE_CONFIG,
     ...this.config(),
   }));
 
-  // Generate timeline days
   timelineDays = computed(() => {
     const daysToShow = this.mergedConfig().daysToShow;
     const events = this.data().events;
@@ -190,14 +204,12 @@ export class StatusTimelineComponent {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - daysToShow);
 
-    // Create array of days
     for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
       const dayStart = new Date(d);
       dayStart.setHours(0, 0, 0, 0);
       const dayEnd = new Date(d);
       dayEnd.setHours(23, 59, 59, 999);
 
-      // Find event for this day
       const dayEvent = events.find((e) => {
         const eventDate = typeof e.timestamp === 'number' ? new Date(e.timestamp) : e.timestamp;
         return eventDate >= dayStart && eventDate <= dayEnd;
@@ -205,7 +217,7 @@ export class StatusTimelineComponent {
 
       days.push({
         date: new Date(d),
-        status: dayEvent?.status || 'up', // Default to 'up' if no event
+        status: dayEvent?.status || 'up',
         event: dayEvent,
       });
     }
@@ -213,12 +225,10 @@ export class StatusTimelineComponent {
     return days;
   });
 
-  // Get block CSS class
   getBlockClass(status: TimelineStatus): string {
     return `status-${status}`;
   }
 
-  // Get block tooltip
   getBlockTooltip(day: { date: Date; status: TimelineStatus; event?: TimelineEvent }): string {
     const dateStr = this.formatDate(day.date);
     const statusStr = day.status.charAt(0).toUpperCase() + day.status.slice(1);
@@ -230,20 +240,16 @@ export class StatusTimelineComponent {
     return `${dateStr}\nStatus: ${statusStr}`;
   }
 
-  // Handle block click
   onBlockClick(day: { date: Date; status: TimelineStatus; event?: TimelineEvent }): void {
     if (day.event && day.status !== 'up') {
-      // Cast to writable signal for update (workaround for readonly computed)
-      (this._selectedIncident as any).set(day.event);
+      this._selectedIncident.set(day.event);
     }
   }
 
-  // Clear selection
   clearSelection(): void {
-    (this._selectedIncident as any).set(null);
+    this._selectedIncident.set(null);
   }
 
-  // Format date
   formatDate(timestamp: Date | number): string {
     const date = typeof timestamp === 'number' ? new Date(timestamp) : timestamp;
     return date.toLocaleDateString('en-US', {
@@ -253,7 +259,6 @@ export class StatusTimelineComponent {
     });
   }
 
-  // Format duration
   formatDuration(milliseconds: number): string {
     const seconds = Math.floor(milliseconds / 1000);
     const minutes = Math.floor(seconds / 60);

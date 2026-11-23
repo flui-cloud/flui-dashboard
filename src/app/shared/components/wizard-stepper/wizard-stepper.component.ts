@@ -1,7 +1,7 @@
-import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
-
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
+import { Component, input, output } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
 import { lucideCheck } from '@ng-icons/lucide';
+import { FlIcon } from '../../../ui/primitives/icon';
 
 /**
  * Wizard Step Definition
@@ -14,163 +14,63 @@ export interface WizardStepperStep {
   isCompleted: boolean;
 }
 
-/**
- * Wizard Stepper Component
- *
- * Reusable horizontal stepper component for multi-step wizards.
- * Provides:
- * - Visual progress indicator with icons
- * - Step completion status (completed/active/inactive)
- * - Optional click navigation between steps
- * - Consistent styling across all wizards
- *
- * Used by:
- * - WizardShellComponent
- * - BuildAgentWizardComponent
- * - Future wizards
- *
- * @example
- * ```html
- * <app-wizard-stepper
- *   [steps]="steps()"
- *   [currentStepIndex]="currentStepIndex()"
- *   [allowStepClick]="false"
- *   (stepClicked)="onStepClick($event)"
- * />
- * ```
- */
 @Component({
   selector: 'app-wizard-stepper',
-  standalone: true,
-  imports: [NgIconComponent],
-  providers: [
-    provideIcons({
-      lucideCheck,
-    }),
-  ],
+  imports: [FlIcon],
+  providers: [provideIcons({ lucideCheck })],
   template: `
-    <div class="flex items-center">
+    <ol class="m-0 flex list-none items-center gap-3 p-0">
       @for (step of steps(); track step.id; let i = $index; let isLast = $last) {
-        <div class="flex items-center" [class.flex-1]="!isLast">
-          <!-- Step Circle -->
-          <div
-            class="flex flex-col items-center"
-            [class.cursor-pointer]="allowStepClick() && canNavigateToStep(i)"
-            (click)="onStepClick(i)"
-          >
-            <div
-              [class]="getStepCircleClass(step, i)"
-              class="flex h-12 w-12 items-center justify-center rounded-full transition-all duration-200"
-            >
-              @if (step.isCompleted) {
-                <ng-icon name="lucideCheck" size="20" class="text-white"></ng-icon>
-              }
-              @if (!step.isCompleted) {
-                <ng-icon [name]="step.icon" size="20" [class]="getStepIconClass(i)"></ng-icon>
-              }
-            </div>
-            <span
-              [class]="getStepLabelClass(i)"
-              class="mt-2 text-sm font-medium transition-colors duration-200"
-            >
+        <li
+          class="fl-step items-center"
+          [class.flex-1]="!isLast"
+          [class.is-done]="step.isCompleted"
+          [attr.aria-current]="i === currentStepIndex() ? 'step' : null"
+        >
+          <span class="fl-step__num">
+            @if (step.isCompleted) {
+              <fl-icon name="lucideCheck" [size]="13" />
+            } @else {
+              {{ i + 1 }}
+            }
+          </span>
+          @if (allowStepClick() && canNavigateToStep(i)) {
+            <button type="button" class="fl-step__name whitespace-nowrap" (click)="onStepClick(i)">
               {{ step.title }}
-            </span>
-          </div>
-
-          <!-- Connector Line -->
-          @if (!isLast) {
-            <div
-              [class]="getConnectorClass(step)"
-              class="mx-4 h-1 flex-1 transition-all duration-200"
-            ></div>
+            </button>
+          } @else {
+            <span class="fl-step__name whitespace-nowrap">{{ step.title }}</span>
           }
-        </div>
+          @if (step.isCompleted) {
+            <span class="fl-sr">Completed</span>
+          }
+          @if (!isLast) {
+            <span
+              class="h-px min-w-4 flex-1"
+              [class]="step.isCompleted ? 'bg-fl-accent' : 'bg-fl-border'"
+              aria-hidden="true"
+            ></span>
+          }
+        </li>
       }
-    </div>
+    </ol>
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
-  styles: [],
 })
 export class WizardStepperComponent {
-  // === Inputs ===
   readonly steps = input.required<WizardStepperStep[]>();
   readonly currentStepIndex = input.required<number>();
   readonly allowStepClick = input<boolean>(false);
 
-  // === Outputs ===
   readonly stepClicked = output<number>();
 
-  // === Methods ===
-
-  /**
-   * Handle step click (if enabled)
-   */
   onStepClick(stepIndex: number): void {
     if (this.allowStepClick() && this.canNavigateToStep(stepIndex)) {
       this.stepClicked.emit(stepIndex);
     }
   }
 
-  /**
-   * Check if user can navigate to a specific step
-   * (only to completed steps or current step)
-   */
   canNavigateToStep(stepIndex: number): boolean {
     const step = this.steps()[stepIndex];
     return step?.isCompleted || stepIndex === this.currentStepIndex();
-  }
-
-  /**
-   * Get CSS class for step circle
-   */
-  getStepCircleClass(step: WizardStepperStep, index: number): string {
-    const isActive = index === this.currentStepIndex();
-
-    if (step.isCompleted) {
-      return 'bg-green-500';
-    }
-
-    if (isActive) {
-      return 'bg-blue-600 ring-4 ring-blue-200';
-    }
-
-    return 'bg-slate-200';
-  }
-
-  /**
-   * Get CSS class for step icon
-   */
-  getStepIconClass(index: number): string {
-    const isActive = index === this.currentStepIndex();
-
-    if (isActive) {
-      return 'text-white';
-    }
-
-    return 'text-slate-500';
-  }
-
-  /**
-   * Get CSS class for step label
-   */
-  getStepLabelClass(index: number): string {
-    const isActive = index === this.currentStepIndex();
-
-    if (isActive) {
-      return 'text-blue-600';
-    }
-
-    return 'text-slate-600';
-  }
-
-  /**
-   * Get CSS class for connector line
-   */
-  getConnectorClass(step: WizardStepperStep): string {
-    if (step.isCompleted) {
-      return 'bg-green-500';
-    }
-
-    return 'bg-slate-200';
   }
 }

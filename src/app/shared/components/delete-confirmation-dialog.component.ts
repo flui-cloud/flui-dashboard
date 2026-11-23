@@ -1,15 +1,11 @@
-import { Component, Input, signal, output, ChangeDetectionStrategy } from '@angular/core';
-
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideTriangleAlert, lucideX, lucideLoader } from '@ng-icons/lucide';
-import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
-import {
-  HlmCardContentDirective,
-  HlmCardDescriptionDirective,
-  HlmCardDirective,
-  HlmCardHeaderDirective,
-  HlmCardTitleDirective,
-} from '@spartan-ng/ui-card-helm';
+import { CdkTrapFocus } from '@angular/cdk/a11y';
+import { Component, Input, signal, output } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideX } from '@ng-icons/lucide';
+import { FlButton } from '../../ui/primitives/button';
+import { FlIcon } from '../../ui/primitives/icon';
+import { FlSpinner } from '../../ui/primitives/spinner';
+import { FlAlert } from '../../ui/patterns/alert';
 
 export interface DeleteConfirmationData {
   title: string;
@@ -20,101 +16,60 @@ export interface DeleteConfirmationData {
   confirmButtonText?: string;
 }
 
+let nextId = 0;
+
 @Component({
   selector: 'app-delete-confirmation-dialog',
-  standalone: true,
-  imports: [
-    NgIcon,
-    HlmButtonDirective,
-    HlmCardDirective,
-    HlmCardHeaderDirective,
-    HlmCardTitleDirective,
-    HlmCardDescriptionDirective,
-    HlmCardContentDirective,
-  ],
-  providers: [
-    provideIcons({
-      lucideTriangleAlert,
-      lucideX,
-      lucideLoader,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [CdkTrapFocus, FlButton, FlIcon, FlSpinner, FlAlert],
+  providers: [provideIcons({ lucideX })],
+  host: { '(document:keydown.escape)': 'isOpen() && onCancel()' },
   template: `
     @if (isOpen()) {
-      <div class="fixed inset-0 z-50 bg-background/80" (click)="onCancel()">
+      <div
+        class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+        (click)="onCancel()"
+      >
         <div
-          class="fixed left-[50%] top-[50%] z-50 w-full max-w-lg translate-x-[-50%] translate-y-[-50%] p-4"
+          class="fl-dialog"
+          cdkTrapFocus
+          [cdkTrapFocusAutoCapture]="true"
+          role="alertdialog"
+          aria-modal="true"
+          [attr.aria-labelledby]="titleId"
+          (click)="$event.stopPropagation()"
         >
-          <div hlmCard (click)="$event.stopPropagation()">
-            <div hlmCardHeader>
-              <div class="flex items-start justify-between">
-                <div class="flex items-center gap-3">
-                  <div
-                    class="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10"
-                  >
-                    <ng-icon name="lucideTriangleAlert" class="h-5 w-5 text-destructive" />
-                  </div>
-                  <div>
-                    <h2 hlmCardTitle class="text-xl">{{ data()?.title }}</h2>
-                    <p hlmCardDescription>
-                      {{ data()?.description || 'This action cannot be undone' }}
-                    </p>
-                  </div>
-                </div>
-                <button hlmBtn variant="ghost" size="sm" (click)="onCancel()" class="h-8 w-8 p-0">
-                  <ng-icon name="lucideX" class="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-
-            <div hlmCardContent class="space-y-4">
-              <div class="space-y-2">
-                <p class="text-sm text-foreground">You are about to delete:</p>
-                <div class="rounded-md bg-muted p-3">
-                  <p class="font-semibold">{{ data()?.itemName }}</p>
-                  @if (data()?.itemDescription) {
-                    <p class="text-sm text-muted-foreground">{{ data()?.itemDescription }}</p>
-                  }
-                </div>
-              </div>
-
-              @if (data()?.warningMessage) {
-                <div class="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
-                  <div class="flex items-start gap-3">
-                    <ng-icon
-                      name="lucideTriangleAlert"
-                      class="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0"
-                    />
-                    <div class="flex-1">
-                      <p class="text-sm text-yellow-700">
-                        {{ data()?.warningMessage }}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+          <header class="fl-dialog__header">
+            <h2 class="fl-dialog__title" [id]="titleId">{{ data()?.title }}</h2>
+            <button type="button" class="fl-dialog__close" aria-label="Close" (click)="onCancel()">
+              <fl-icon name="lucideX" />
+            </button>
+          </header>
+          <div class="fl-dialog__body">
+            <p class="m-0">{{ data()?.description || 'This action cannot be undone' }}</p>
+            <div class="flex flex-col gap-1">
+              <span class="text-fl-caption text-fl-ink-muted">You are about to delete</span>
+              <span class="font-mono font-semibold text-fl-ink">{{ data()?.itemName }}</span>
+              @if (data()?.itemDescription) {
+                <span class="text-fl-body-sm text-fl-ink-muted">{{ data()?.itemDescription }}</span>
               }
-
-              <div class="flex justify-end gap-2 pt-4">
-                <button hlmBtn variant="outline" (click)="onCancel()" [disabled]="isDeleting()">
-                  Cancel
-                </button>
-                <button
-                  hlmBtn
-                  variant="destructive"
-                  (click)="onConfirm()"
-                  [disabled]="isDeleting()"
-                >
-                  @if (isDeleting()) {
-                    <ng-icon name="lucideLoader" class="h-4 w-4 mr-2 animate-spin" />
-                    Deleting...
-                  } @else {
-                    {{ data()?.confirmButtonText || 'Delete' }}
-                  }
-                </button>
-              </div>
             </div>
+            @if (data()?.warningMessage; as warning) {
+              <fl-alert tone="warning" title="Warning">{{ warning }}</fl-alert>
+            }
           </div>
+          <footer class="fl-dialog__footer">
+            <button flButton="ghost" type="button" [disabled]="isDeleting()" (click)="onCancel()">
+              Cancel
+            </button>
+            <button flButton="danger" type="button" [disabled]="isDeleting()" (click)="onConfirm()">
+              @if (isDeleting()) {
+                <fl-spinner label="Deleting" />
+                Deleting…
+              } @else {
+                {{ data()?.confirmButtonText || 'Delete' }}
+              }
+            </button>
+          </footer>
         </div>
       </div>
     }
@@ -135,6 +90,7 @@ export class DeleteConfirmationDialogComponent {
   data = signal<DeleteConfirmationData | null>(null);
   private readonly _isDeleting = signal(false);
   private readonly _isOpen = signal(false);
+  protected readonly titleId = `delete-confirmation-title-${nextId++}`;
 
   isOpen = this._isOpen.asReadonly();
   isDeleting = this._isDeleting.asReadonly();

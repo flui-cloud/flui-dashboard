@@ -1,77 +1,56 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  ElementRef,
-  HostListener,
-  effect,
-  inject,
-  signal,
-  untracked,
-  viewChild,
-} from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
+import { Component, ElementRef, effect, inject, signal, untracked, viewChild } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
 import { lucideX } from '@ng-icons/lucide';
-import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
 import {
   UpgradeProviders,
   VisitorSignInService,
 } from '../../../core/services/visitor-sign-in.service';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
 
 @Component({
   selector: 'app-visitor-sign-in-dialog',
-  standalone: true,
-  imports: [NgIcon, HlmButtonDirective],
+  imports: [FlButton, FlIcon],
   providers: [provideIcons({ lucideX })],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { '(document:keydown.escape)': 'onEscape()' },
   template: `
     @if (gate.dialogOpen()) {
-      <div class="fixed inset-0 z-50 bg-background/80" (click)="close()">
+      <div
+        class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+        (click)="close()"
+      >
         <div
-          class="fixed left-[50%] top-[50%] z-50 w-full max-w-sm translate-x-[-50%] translate-y-[-50%] p-4"
+          #panel
+          class="fl-dialog outline-none"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="visitor-sign-in-title"
+          tabindex="-1"
+          (click)="$event.stopPropagation()"
         >
-          <div
-            #panel
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="visitor-sign-in-title"
-            tabindex="-1"
-            class="bg-white border border-gray-200 rounded-lg p-6 outline-none"
-            (click)="$event.stopPropagation()"
-          >
-            <div class="flex items-start justify-between gap-4">
-              <div>
-                <h3 id="visitor-sign-in-title" class="text-lg font-semibold text-gray-900">
-                  Sign in to deploy
-                </h3>
-                <p class="text-sm text-gray-600 mt-1">Your visit, keys and agent come with you.</p>
-              </div>
-              <button
-                hlmBtn
-                variant="ghost"
-                size="sm"
-                type="button"
-                aria-label="Close"
-                class="h-8 w-8 p-0 flex-shrink-0"
-                data-testid="visitor-sign-in-close"
-                (click)="close()"
-              >
-                <ng-icon name="lucideX" class="h-4 w-4" />
-              </button>
-            </div>
-
-            <div class="mt-5 flex flex-col gap-2">
+          <header class="fl-dialog__header">
+            <h2 class="fl-dialog__title" id="visitor-sign-in-title">Sign in to deploy</h2>
+            <button
+              type="button"
+              class="fl-dialog__close"
+              aria-label="Close"
+              data-testid="visitor-sign-in-close"
+              (click)="close()"
+            >
+              <fl-icon name="lucideX" />
+            </button>
+          </header>
+          <div class="fl-dialog__body">
+            <p class="text-fl-ink-secondary">Your visit, keys and agent come with you.</p>
+            <div class="flex flex-col gap-2" data-sign-in-choices>
               @if (loading()) {
-                <button hlmBtn variant="outline" type="button" disabled>
-                  Continue with GitHub
-                </button>
-                <button hlmBtn variant="outline" type="button" disabled>
-                  Continue with Google
-                </button>
+                <button flButton [block]="true" type="button" disabled>Continue with GitHub</button>
+                <button flButton [block]="true" type="button" disabled>Continue with Google</button>
               } @else {
                 @for (option of choices().providers; track option.provider) {
                   <button
-                    hlmBtn
-                    variant="outline"
+                    flButton
+                    [block]="true"
                     type="button"
                     [attr.data-testid]="'visitor-sign-in-' + option.provider"
                     [disabled]="gate.busy()"
@@ -82,8 +61,8 @@ import {
                 }
                 @if (choices().email) {
                   <button
-                    hlmBtn
-                    variant="outline"
+                    flButton
+                    [block]="true"
                     type="button"
                     data-testid="visitor-sign-in-email"
                     [disabled]="gate.busy()"
@@ -107,13 +86,24 @@ export class VisitorSignInDialogComponent {
   protected readonly loading = signal(false);
   protected readonly choices = signal<UpgradeProviders>({ providers: [], email: false });
 
+  private opener: HTMLElement | null = null;
+
   constructor() {
     effect(() => {
-      if (this.gate.dialogOpen()) untracked(() => void this.load());
+      const open = this.gate.dialogOpen();
+      untracked(() => {
+        if (open) {
+          this.opener = document.activeElement as HTMLElement | null;
+          void this.load();
+        } else if (this.opener) {
+          const opener = this.opener;
+          this.opener = null;
+          setTimeout(() => opener.focus());
+        }
+      });
     });
   }
 
-  @HostListener('document:keydown.escape')
   protected onEscape(): void {
     if (this.gate.dialogOpen()) this.close();
   }
@@ -134,7 +124,7 @@ export class VisitorSignInDialogComponent {
   private firstChoice(): HTMLButtonElement | null {
     return (
       this.panel()?.nativeElement.querySelector<HTMLButtonElement>(
-        '.mt-5 button:not([disabled])',
+        '[data-sign-in-choices] button:not([disabled])',
       ) ?? null
     );
   }

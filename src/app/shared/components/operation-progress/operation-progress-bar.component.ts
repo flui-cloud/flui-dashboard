@@ -1,23 +1,31 @@
-import { Component, input, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, computed } from '@angular/core';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
 
 @Component({
   selector: 'app-operation-progress-bar',
-  standalone: true,
-  imports: [],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FlStatus],
   template: `
-    <div class="px-5 py-4">
-      <div class="flex items-baseline justify-between gap-4">
-        <h2 class="text-sm font-medium">{{ title() }}</h2>
-        <span class="text-xs text-muted-foreground tabular-nums">{{ status() }}</span>
+    <div class="flex flex-col gap-3 px-4 py-3">
+      <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+        <div class="flex items-center gap-3">
+          <h2 class="m-0 text-fl-body-sm font-semibold text-fl-ink">{{ title() }}</h2>
+          <fl-status role="status" [tone]="tone()" [label]="stateLabel()" />
+        </div>
+        <span class="fl-num font-mono text-fl-caption text-fl-ink-muted">{{ status() }}</span>
       </div>
-      <div class="mt-3 h-1 w-full rounded-full bg-muted">
-        <div
-          class="h-1 rounded-full transition-all duration-500 ease-out"
+      <span
+        class="fl-bar"
+        role="progressbar"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        [attr.aria-valuenow]="progress()"
+        [attr.aria-label]="title()"
+        ><span
+          class="transition-all duration-500 ease-out"
           [class]="barClass()"
           [style.width.%]="progress()"
-        ></div>
-      </div>
+        ></span
+      ></span>
     </div>
   `,
 })
@@ -39,9 +47,21 @@ export class OperationProgressBarComponent {
     return [started, state].filter(Boolean).join(' · ');
   });
 
+  readonly tone = computed<StatusTone>(() => {
+    if (this.isFailed()) return 'error';
+    if (this.isCompleted()) return 'success';
+    return 'progress';
+  });
+
+  readonly stateLabel = computed(() => {
+    if (this.isFailed()) return 'Failed';
+    if (this.isCompleted()) return 'Completed';
+    return 'In progress';
+  });
+
   readonly barClass = computed(() => {
-    if (this.isFailed()) return 'bg-destructive';
-    if (this.isCompleted()) return 'bg-[hsl(var(--ok))]';
-    return 'bg-primary';
+    if (this.isFailed()) return 'bg-fl-danger';
+    if (this.isCompleted()) return 'bg-fl-success';
+    return 'bg-fl-accent';
   });
 }

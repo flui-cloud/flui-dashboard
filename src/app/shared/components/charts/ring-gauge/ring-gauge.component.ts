@@ -1,11 +1,4 @@
-import {
-  Component,
-  input,
-  computed,
-  signal,
-  OnDestroy,
-  ChangeDetectionStrategy,
-} from '@angular/core';
+import { Component, input, computed, signal, OnDestroy } from '@angular/core';
 
 import { NgxEchartsDirective, provideEcharts } from 'ngx-echarts';
 import type { EChartsOption } from 'echarts';
@@ -17,6 +10,7 @@ import {
   MetricSeverity,
   ChartTheme,
 } from '../chart.models';
+import { chartInk } from '../chart-colors';
 
 /**
  * Ring Gauge Component
@@ -32,33 +26,32 @@ import {
  */
 @Component({
   selector: 'app-ring-gauge',
-  standalone: true,
   imports: [NgxEchartsDirective],
   providers: [provideEcharts()],
   template: `
     <div class="ring-gauge-container" [style.height]="containerHeight()">
       <div
         echarts
+        role="img"
+        [attr.aria-label]="ariaLabel()"
         [options]="chartOption()"
         [theme]="currentTheme()"
-        class="w-full"
-        style="flex: 1; min-height: 0;"
+        class="min-h-0 w-full flex-1"
       ></div>
 
       @if (config().showTitle && data().subtitle) {
         <div class="text-center mt-2">
-          <p class="text-sm text-muted-foreground">{{ data().subtitle }}</p>
+          <p class="m-0 text-fl-caption text-fl-ink-muted">{{ data().subtitle }}</p>
         </div>
       }
 
       @if (showTrend()) {
         <div class="text-center mt-1">
-          <span class="text-xs" [class]="trendClass()"> {{ trendIcon() }} {{ trendText() }} </span>
+          <span [class]="trendClass()"> {{ trendIcon() }} {{ trendText() }} </span>
         </div>
       }
     </div>
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [
     `
       .ring-gauge-container {
@@ -70,7 +63,6 @@ import {
   ],
 })
 export class RingGaugeComponent implements OnDestroy {
-  // Inputs
   data = input.required<GaugeChartData>();
   config = input<GaugeChartConfig>({});
 
@@ -94,7 +86,6 @@ export class RingGaugeComponent implements OnDestroy {
     return typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
   }
 
-  // Computed configurations
   private readonly mergedConfig = computed(() => ({
     ...DEFAULT_GAUGE_CONFIG,
     ...this.config(),
@@ -106,7 +97,6 @@ export class RingGaugeComponent implements OnDestroy {
     () => this.config().theme ?? (this.isDarkSignal() ? 'dark' : 'light'),
   );
 
-  // Computed values
   private readonly normalizedValue = computed(() => {
     const value = this.data().value;
     const cfg = this.mergedConfig();
@@ -137,26 +127,10 @@ export class RingGaugeComponent implements OnDestroy {
 
   private readonly gaugeColor = computed(() => {
     const severity = this.severity();
-    const colors = DEFAULT_CHART_COLORS;
-
-    // Handle neutral severity which doesn't have gradient
-    const gradient =
-      severity === 'neutral'
-        ? [colors.neutral[0], colors.neutral[1]]
-        : colors.gradient?.[severity] || [colors[severity][0], colors[severity][1]];
-
-    return {
-      type: 'linear' as const,
-      x: 0,
-      y: 0,
-      x2: 0,
-      y2: 1,
-      colorStops: [
-        { offset: 0, color: gradient[0] },
-        { offset: 1, color: gradient[1] },
-      ],
-    };
+    return DEFAULT_CHART_COLORS[severity][0];
   });
+
+  protected readonly ariaLabel = computed(() => `${this.data().title}: ${this.formattedValue()}`);
 
   private readonly formattedValue = computed(() => {
     const value = this.normalizedValue();
@@ -170,7 +144,6 @@ export class RingGaugeComponent implements OnDestroy {
     return `${value.toFixed(1)}${unit}`;
   });
 
-  // Trend calculation
   showTrend = computed(() => {
     return this.data().previousValue !== undefined;
   });
@@ -196,17 +169,16 @@ export class RingGaugeComponent implements OnDestroy {
 
   trendClass = computed(() => {
     const diff = this.trendDiff();
-    if (diff > 0) return 'text-red-500';
-    if (diff < 0) return 'text-green-500';
-    return 'text-gray-500';
+    if (diff > 0) return 'fl-status fl-status--error';
+    if (diff < 0) return 'fl-status fl-status--success';
+    return 'fl-status fl-status--neutral';
   });
 
-  // ECharts option
   chartOption = computed((): EChartsOption => {
     const cfg = this.mergedConfig();
     const value = this.normalizedValue();
     const title = this.data().title;
-    const isDark = this.currentTheme() === 'dark';
+    const ink = chartInk();
 
     return {
       series: [
@@ -224,16 +196,16 @@ export class RingGaugeComponent implements OnDestroy {
           progress: {
             show: true,
             overlap: false,
-            roundCap: true,
-            width: 18,
+            roundCap: false,
+            width: 10,
             itemStyle: {
               color: this.gaugeColor(),
             },
           },
           axisLine: {
             lineStyle: {
-              width: 18,
-              color: [[1, isDark ? '#374151' : '#e5e7eb']],
+              width: 10,
+              color: [[1, ink.track]],
             },
           },
           splitLine: {
@@ -249,17 +221,17 @@ export class RingGaugeComponent implements OnDestroy {
           title: {
             show: cfg.showTitle,
             offsetCenter: [0, '30%'],
-            fontSize: 14,
-            color: isDark ? '#9ca3af' : '#6b7280',
+            fontSize: 12,
+            color: ink.muted,
             fontWeight: 500,
           },
           detail: {
             show: cfg.showValue,
             valueAnimation: cfg.animated,
             formatter: () => this.formattedValue(),
-            fontSize: 32,
-            fontWeight: 'bold',
-            color: isDark ? '#f9fafb' : '#111827',
+            fontSize: 22,
+            fontWeight: 600,
+            color: ink.ink,
             offsetCenter: [0, 0],
           },
         },

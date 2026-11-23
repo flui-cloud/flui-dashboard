@@ -1,65 +1,55 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
-
+import { Component, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { NgIcon, provideIcons } from '@ng-icons/core';
+import { provideIcons } from '@ng-icons/core';
 import {
   lucideCircleCheck,
-  lucideCircleAlert,
+  lucideCircleX,
   lucideTriangleAlert,
   lucideInfo,
   lucideX,
 } from '@ng-icons/lucide';
-
+import { FlIcon } from '../../ui/primitives/icon';
 import { Toast, ToastService } from '../services/toast.service';
 
 @Component({
   selector: 'app-toast-container',
-  standalone: true,
-  imports: [RouterModule, NgIcon],
+  imports: [RouterModule, FlIcon],
   providers: [
     provideIcons({
       lucideCircleCheck,
-      lucideCircleAlert,
+      lucideCircleX,
       lucideTriangleAlert,
       lucideInfo,
       lucideX,
     }),
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <div
-      class="fixed top-16 right-4 z-[100] flex flex-col gap-2 w-full max-w-sm pointer-events-none"
-    >
+    <div class="fl-toasts pointer-events-none">
       @for (t of toastService.toasts(); track t.id) {
         <div
-          class="pointer-events-auto rounded-lg border px-3 py-2.5 flex items-start gap-2.5 animate-in slide-in-from-right duration-200"
-          [class]="containerClass(t)"
+          class="pointer-events-auto"
+          [class]="'fl-toast fl-toast--' + tone(t)"
+          [attr.role]="t.kind === 'error' ? 'alert' : 'status'"
         >
-          <ng-icon
-            [name]="iconName(t)"
-            class="h-4 w-4 flex-shrink-0 mt-0.5"
-            [class]="iconClass(t)"
-          />
-          <div class="flex-1 min-w-0">
+          <fl-icon [name]="iconName(t)" />
+          <div class="fl-toast__text">
             @if (t.title) {
-              <p class="text-sm font-medium text-foreground">{{ t.title }}</p>
+              <span class="fl-toast__title">{{ t.title }}</span>
+              <span class="fl-toast__body">{{ t.message }}</span>
+            } @else {
+              <span>{{ t.message }}</span>
             }
-            <p class="text-xs text-muted-foreground">{{ t.message }}</p>
             @if (t.action) {
-              <div class="mt-1.5">
+              <div class="mt-1">
                 @if (t.action.routerLink) {
-                  <a
-                    [routerLink]="t.action.routerLink"
-                    (click)="onActionClick(t)"
-                    class="text-xs font-medium text-foreground underline hover:no-underline"
-                  >
+                  <a class="fl-link" [routerLink]="t.action.routerLink" (click)="onActionClick(t)">
                     {{ t.action.label }}
                   </a>
                 } @else {
                   <button
                     type="button"
+                    class="fl-link cursor-pointer border-0 bg-transparent p-0"
                     (click)="onActionClick(t)"
-                    class="text-xs font-medium text-foreground underline hover:no-underline"
                   >
                     {{ t.action.label }}
                   </button>
@@ -69,11 +59,11 @@ import { Toast, ToastService } from '../services/toast.service';
           </div>
           <button
             type="button"
-            (click)="toastService.dismiss(t.id)"
-            class="text-muted-foreground hover:text-foreground transition-colors p-0.5"
+            class="fl-toast__close"
             aria-label="Dismiss"
+            (click)="toastService.dismiss(t.id)"
           >
-            <ng-icon name="lucideX" class="h-4 w-4" />
+            <fl-icon name="lucideX" [size]="14" />
           </button>
         </div>
       }
@@ -90,26 +80,20 @@ export class ToastContainerComponent {
       case 'warning':
         return 'lucideTriangleAlert';
       case 'error':
-        return 'lucideCircleAlert';
+        return 'lucideCircleX';
       default:
         return 'lucideInfo';
     }
   }
 
-  containerClass(t: Toast): string {
-    return t.kind === 'error' ? 'border-destructive/40 bg-card' : 'border-border bg-card';
-  }
-
-  iconClass(t: Toast): string {
+  tone(t: Toast): string {
     switch (t.kind) {
       case 'success':
-        return 'text-[hsl(var(--ok))]';
       case 'warning':
-        return 'text-[hsl(var(--warn))]';
       case 'error':
-        return 'text-destructive';
+        return t.kind;
       default:
-        return 'text-muted-foreground';
+        return 'info';
     }
   }
 

@@ -1,37 +1,40 @@
-import { Component, computed, input, output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
+import { FlButton } from '../../../ui/primitives/button';
 import { AgentToolStep, LogSourcesResult } from '../../service/assistant.service';
 import { AppLogsResult, AssistantLogViewerComponent } from './assistant-log-viewer.component';
 import { AssistantDataTableComponent, DataTableConfig } from './assistant-data-table.component';
 
 @Component({
   selector: 'app-assistant-tool-result',
-  standalone: true,
-  imports: [AssistantLogViewerComponent, AssistantDataTableComponent],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FlButton, AssistantLogViewerComponent, AssistantDataTableComponent],
+  host: { class: 'block py-1 empty:hidden' },
   template: `
     @if (isSources()) {
-      <div class="mt-2 rounded-fl-lg border border-border/40 bg-muted/20 px-3 py-2 text-xs">
-        <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">
-          Log sources
-        </p>
-        <div class="flex flex-wrap gap-1">
-          @for (app of sourcesResult().apps; track app) {
-            <button
-              type="button"
-              (click)="sendMessage.emit('Show recent logs for ' + app)"
-              class="rounded-fl-sm border border-fl-border bg-fl-surface px-2 py-0.5 text-[10px] font-medium text-blue-600 hover:bg-blue-500/20 transition-colors"
-            >
-              {{ app }}
-            </button>
-          }
-          @for (ns of sourcesResult().namespaces; track ns) {
-            <span
-              class="rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] text-muted-foreground"
-            >
-              {{ ns }}
-            </span>
-          }
-        </div>
+      <div class="flex flex-col gap-2 rounded-fl-lg border border-fl-border bg-fl-surface p-3">
+        <span class="text-fl-caption font-semibold text-fl-ink-secondary">Log sources</span>
+        @if (sourcesResult().apps.length) {
+          <div class="fl-row">
+            @for (app of sourcesResult().apps; track app) {
+              <button
+                flButton
+                size="sm"
+                type="button"
+                class="font-mono"
+                (click)="sendMessage.emit('Show recent logs for ' + app)"
+              >
+                {{ app }}
+              </button>
+            }
+          </div>
+        }
+        @if (sourcesResult().namespaces.length) {
+          <div class="fl-row">
+            <span class="text-fl-caption text-fl-ink-muted">Namespaces</span>
+            @for (ns of sourcesResult().namespaces; track ns) {
+              <span class="fl-tag font-mono">{{ ns }}</span>
+            }
+          </div>
+        }
       </div>
     } @else if (isLogs()) {
       <app-assistant-log-viewer

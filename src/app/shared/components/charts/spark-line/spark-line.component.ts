@@ -1,4 +1,5 @@
-import { Component, input, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, computed } from '@angular/core';
+import { cssColor } from '../chart-colors';
 
 interface SparkGeometry {
   line: string;
@@ -7,22 +8,8 @@ interface SparkGeometry {
   lastY: number;
 }
 
-/**
- * Spark Line Component
- * A label-free trend mark sized for a stat tile. Drawn as plain SVG rather
- * than ECharts: a page shows a handful of these next to the real charts and
- * an ECharts instance per mark would cost far more than it renders.
- *
- * @example
- * ```html
- * <app-spark-line [values]="[8.1, 8.4, 9.6, 8.2]" color="#2259F1" [width]="132" />
- * ```
- */
 @Component({
   selector: 'app-spark-line',
-  standalone: true,
-  imports: [],
-  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (geometry(); as g) {
       <svg
@@ -37,26 +24,35 @@ interface SparkGeometry {
           [attr.points]="g.line"
           fill="none"
           [attr.stroke]="color()"
-          stroke-width="2"
+          stroke-width="1.5"
           stroke-linejoin="round"
           stroke-linecap="round"
         />
         <circle
           [attr.cx]="g.lastX"
           [attr.cy]="g.lastY"
-          r="3.5"
+          r="3"
           [attr.fill]="color()"
-          [style.stroke]="'hsl(var(--card))'"
+          class="stroke-fl-surface"
           stroke-width="2"
         />
       </svg>
     } @else {
-      <div
-        class="rounded bg-muted"
-        [style.width.px]="width()"
-        [style.height.px]="height()"
+      <svg
+        [attr.width]="width()"
+        [attr.height]="height()"
+        [attr.viewBox]="'0 0 ' + width() + ' ' + height()"
         aria-hidden="true"
-      ></div>
+      >
+        <line
+          x1="0"
+          [attr.x2]="width()"
+          [attr.y1]="height() / 2"
+          [attr.y2]="height() / 2"
+          class="stroke-fl-border"
+          stroke-dasharray="3 3"
+        />
+      </svg>
     }
   `,
   styles: [
@@ -69,12 +65,11 @@ interface SparkGeometry {
 })
 export class SparkLineComponent {
   readonly values = input<number[]>([]);
-  readonly color = input<string>('#2259F1');
+  readonly color = input<string>(cssColor('--fl-accent'));
   readonly width = input<number>(132);
   readonly height = input<number>(30);
   readonly ariaLabel = input<string>('Recent trend');
 
-  /** Fraction of the value range kept as head/foot room, so a flat line sits mid-height. */
   private static readonly PADDING_RATIO = 0.45;
   private static readonly INSET = 2;
 

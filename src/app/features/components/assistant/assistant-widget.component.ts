@@ -1,7 +1,6 @@
 import {
   Component,
   ElementRef,
-  HostListener,
   OnDestroy,
   OnInit,
   afterNextRender,
@@ -10,32 +9,25 @@ import {
   inject,
   signal,
   viewChild,
-  ChangeDetectionStrategy,
 } from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { MarkdownComponent } from 'ngx-markdown';
-import {
-  lucideAlertCircle,
-  lucideBot,
-  lucideChevronLeft,
-  lucideExpand,
-  lucideHistory,
-  lucideMaximize2,
-  lucideMinimize2,
-  lucideShrink,
-  lucideSquarePen,
-  lucideTrash2,
-  lucideX,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideBot, lucideChevronLeft, lucideX } from '@ng-icons/lucide';
 import { Router } from '@angular/router';
 import { AssistantChatService } from '../../service/assistant.service';
 import { InferenceSettingsService } from '../../service/inference-settings.service';
 import { AssistantModelSelectionService } from '../../service/assistant-model-selection.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
 import { AssistantConfirmCardComponent } from './assistant-confirm-card.component';
 import { AssistantMessageComponent } from './assistant-message.component';
 import { AssistantComposerComponent } from './assistant-composer.component';
 import { AssistantEmptyStateComponent } from './assistant-empty-state.component';
+import { AssistantPanelHeader } from './assistant-panel-header';
+import { AssistantConversationList } from './assistant-conversation-list';
+import { AssistantStreamingRow } from './assistant-streaming-row';
+import { wireMarkdown } from './assistant-markdown-wiring';
 
 type SizeMode = 'compact' | 'medium' | 'full';
 
@@ -43,40 +35,32 @@ const SIZE_ORDER: Record<SizeMode, number> = { compact: 0, medium: 1, full: 2 };
 
 @Component({
   selector: 'app-assistant-widget',
-  standalone: true,
   imports: [
-    NgIcon,
-    MarkdownComponent,
+    FlAlert,
+    FlButton,
+    FlIcon,
     AssistantConfirmCardComponent,
     AssistantMessageComponent,
     AssistantComposerComponent,
     AssistantEmptyStateComponent,
+    AssistantPanelHeader,
+    AssistantConversationList,
+    AssistantStreamingRow,
   ],
-  providers: [
-    provideIcons({
-      lucideBot,
-      lucideX,
-      lucideAlertCircle,
-      lucideTrash2,
-      lucideMaximize2,
-      lucideMinimize2,
-      lucideSquarePen,
-      lucideHistory,
-      lucideChevronLeft,
-      lucideExpand,
-      lucideShrink,
-    }),
-  ],
+  providers: [provideIcons({ lucideBot, lucideChevronLeft, lucideX })],
+  host: { '(document:keydown.escape)': 'onEscape()' },
   styles: [
     `
       .panel-sm {
         width: 384px;
+        max-width: calc(100vw - 48px);
         height: min(580px, calc(100vh - 100px));
       }
       .panel-lg {
         width: 680px;
+        max-width: calc(100vw - 48px);
         height: min(85vh, 860px);
-        min-width: 360px;
+        min-width: min(360px, calc(100vw - 48px));
         min-height: 300px;
         resize: both;
       }
@@ -86,155 +70,78 @@ const SIZE_ORDER: Record<SizeMode, number> = { compact: 0, medium: 1, full: 2 };
         max-width: 1024px;
         max-height: 88vh;
       }
+      :host ::ng-deep .md-code-block {
+        border-color: var(--fl-border);
+        border-radius: var(--fl-radius-md);
+        font-family: var(--fl-font-mono);
+      }
+      :host ::ng-deep .md-code-header {
+        background: var(--fl-surface-subtle);
+        border-bottom-color: var(--fl-border-subtle);
+      }
+      :host ::ng-deep .md-code-lang,
+      :host ::ng-deep .md-copy-btn {
+        color: var(--fl-ink-muted);
+      }
+      :host ::ng-deep .md-copy-btn:hover {
+        color: var(--fl-ink);
+        background: var(--fl-surface-hover);
+      }
+      :host ::ng-deep .md-copy-btn.copied {
+        color: var(--fl-success);
+      }
+      :host ::ng-deep .md-code-block pre {
+        background: var(--fl-surface-subtle);
+      }
+      :host ::ng-deep .md-code-block pre code {
+        color: var(--fl-ink);
+        font-size: 12.5px;
+      }
     `,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div [class]="containerClasses()" [class.pointer-events-none]="!expanded()">
       @if (isFull() && expanded()) {
-        <div class="absolute inset-0 bg-black/40" (click)="setSize('medium')"></div>
+        <div class="fl-backdrop absolute inset-0" (click)="setSize('medium')"></div>
       }
 
-      <!-- Panel -->
       @if (hasOpened()) {
-        <div
-          class="relative z-10 flex flex-col rounded-fl-lg overflow-hidden shadow-black/20 border border-border/50"
+        <section
+          #panel
+          class="fl-panel relative z-10 flex flex-col overflow-hidden"
           [class]="panelClasses()"
+          [attr.inert]="expanded() ? null : ''"
+          role="dialog"
+          aria-label="Flui Assistant"
         >
-          <!-- Header -->
-          <div class="shrink-0 flex items-center gap-2 px-4 py-3 bg-fl-accent">
-            @if (showHistory()) {
-              <button
-                type="button"
-                (click)="showHistory.set(false)"
-                class="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors"
-              >
-                <ng-icon name="lucideChevronLeft" class="h-4 w-4 text-white" />
-              </button>
-              <p class="flex-1 text-sm font-semibold text-white leading-none">Conversations</p>
-            } @else {
-              <div
-                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-fl-lg bg-white/10"
-              >
-                @if (imgOk()) {
-                  <img
-                    src="icons/assistant.svg"
-                    class="h-6 w-6 object-contain brightness-0 invert"
-                    alt=""
-                    (error)="imgOk.set(false)"
-                  />
-                } @else {
-                  <ng-icon name="lucideBot" class="h-4 w-4 text-white" />
-                }
-              </div>
-              <div class="flex-1 min-w-0">
-                <p class="text-sm font-semibold text-white leading-none">Flui Assistant</p>
-                @if (sel.endpointLabel()) {
-                  <p class="mt-0.5 text-[10px] text-white/60 leading-none truncate">
-                    {{ sel.endpointLabel() }}
-                  </p>
-                }
-              </div>
-              @if (chatService.displayMessages().length > 0) {
-                <button
-                  type="button"
-                  (click)="chatService.clear()"
-                  class="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors"
-                >
-                  <ng-icon name="lucideTrash2" class="h-3.5 w-3.5 text-white/80" />
-                </button>
-              }
-              @if (chatService.displayMessages().length > 0) {
-                <button
-                  type="button"
-                  (click)="newConv()"
-                  class="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors"
-                >
-                  <ng-icon name="lucideSquarePen" class="h-3.5 w-3.5 text-white" />
-                </button>
-              }
-              @if (chatService.conversations().length > 1) {
-                <button
-                  type="button"
-                  (click)="openHistory()"
-                  class="relative flex h-7 w-7 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors"
-                >
-                  <ng-icon name="lucideHistory" class="h-3.5 w-3.5 text-white" />
-                  <span
-                    class="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-white text-[8px] font-bold text-blue-600 leading-none"
-                  >
-                    {{ chatService.conversations().length }}
-                  </span>
-                </button>
-              }
-            }
-            @if (!isFull() && contentFloor() === 'compact') {
-              <button
-                type="button"
-                (click)="toggleMedium()"
-                class="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors"
-              >
-                <ng-icon
-                  [name]="effectiveSize() === 'medium' ? 'lucideMinimize2' : 'lucideMaximize2'"
-                  class="h-3.5 w-3.5 text-white"
-                />
-              </button>
-            }
-            <button
-              type="button"
-              (click)="toggleFullscreen()"
-              class="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors"
-            >
-              <ng-icon
-                [name]="isFull() ? 'lucideShrink' : 'lucideExpand'"
-                class="h-3.5 w-3.5 text-white"
-              />
-            </button>
-            <button
-              type="button"
-              (click)="close()"
-              class="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors"
-            >
-              <ng-icon name="lucideX" class="h-3.5 w-3.5 text-white" />
-            </button>
-          </div>
+          <app-assistant-panel-header
+            [history]="showHistory()"
+            [endpointLabel]="sel.endpointLabel()"
+            [messageCount]="chatService.displayMessages().length"
+            [conversationCount]="chatService.conversations().length"
+            [canResize]="!isFull() && contentFloor() === 'compact'"
+            [mediumActive]="effectiveSize() === 'medium'"
+            [isFull]="isFull()"
+            (back)="showHistory.set(false)"
+            (clear)="chatService.clear()"
+            (newConversation)="newConv()"
+            (openHistory)="openHistory()"
+            (toggleMedium)="toggleMedium()"
+            (toggleFullscreen)="toggleFullscreen()"
+            (closed)="close()"
+            (navigated)="dismissForNav()"
+          />
 
-          <!-- Messages / History view -->
-          <div #scrollEl (scroll)="onScroll()" class="flex-1 overflow-y-auto min-h-0 bg-background">
+          <div #scrollEl (scroll)="onScroll()" class="min-h-0 flex-1 overflow-y-auto bg-fl-surface">
             @if (showHistory()) {
-              <div class="p-3 space-y-1">
-                @for (conv of chatService.conversations(); track conv.id) {
-                  <div
-                    class="group flex items-center gap-1 rounded-fl-lg border transition-colors hover:bg-muted/80"
-                    [class]="
-                      conv.id === chatService.activeId()
-                        ? 'bg-blue-500/10 border-blue-500/20'
-                        : 'bg-transparent border-transparent'
-                    "
-                  >
-                    <button
-                      type="button"
-                      (click)="selectConv(conv.id)"
-                      class="flex-1 text-left px-3 py-2.5 min-w-0"
-                    >
-                      <p class="text-sm font-medium text-foreground truncate">{{ conv.title }}</p>
-                      <p class="text-xs text-muted-foreground mt-0.5">
-                        {{ conv.messages.length }}
-                        {{ conv.messages.length === 1 ? 'message' : 'messages' }}
-                      </p>
-                    </button>
-                    <button
-                      type="button"
-                      (click)="deleteConv(conv.id)"
-                      class="shrink-0 mr-2 flex h-6 w-6 items-center justify-center rounded-lg text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive hover:bg-destructive/10 transition-all"
-                    >
-                      <ng-icon name="lucideTrash2" class="h-3 w-3" />
-                    </button>
-                  </div>
-                }
-              </div>
+              <app-assistant-conversation-list
+                [conversations]="chatService.conversations()"
+                [activeId]="chatService.activeId()"
+                (selected)="selectConv($event)"
+                (removed)="deleteConv($event)"
+              />
             } @else if (showCenteredComposer()) {
-              <div class="flex min-h-full flex-col items-center justify-center px-6 py-10">
+              <div class="flex min-h-full flex-col items-center justify-center gap-4 px-6 py-10">
                 <app-assistant-empty-state
                   [fullscreen]="true"
                   [noInference]="noInference()"
@@ -258,7 +165,7 @@ const SIZE_ORDER: Record<SizeMode, number> = { compact: 0, medium: 1, full: 2 };
               </div>
             } @else {
               <div
-                class="p-4 space-y-3"
+                class="flex flex-col gap-4 p-4"
                 [class.mx-auto]="isFull()"
                 [class.max-w-3xl]="isFull()"
                 [class.w-full]="isFull()"
@@ -286,104 +193,37 @@ const SIZE_ORDER: Record<SizeMode, number> = { compact: 0, medium: 1, full: 2 };
                   />
                 }
 
-                @if (chatService.streamingText() || chatService.streamingSteps().length) {
-                  <div class="flex gap-2">
-                    <div
-                      class="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 border border-blue-500/20 mt-0.5"
-                    >
-                      @if (imgOk()) {
-                        <img
-                          src="icons/assistant.svg"
-                          class="h-4 w-4 object-contain"
-                          alt=""
-                          (error)="imgOk.set(false)"
-                        />
-                      } @else {
-                        <ng-icon name="lucideBot" class="h-3.5 w-3.5 text-blue-500" />
-                      }
-                    </div>
-                    <div class="flex flex-col min-w-0">
-                      @if (chatService.streamingSteps().length) {
-                        <div
-                          class="mb-1 rounded-lg bg-muted/50 border border-border/40 px-2.5 py-2 font-mono text-[11px] space-y-1"
-                        >
-                          @for (step of chatService.streamingSteps(); track step.toolCallId) {
-                            <div
-                              class="flex items-start gap-2"
-                              [class]="step.ok ? 'text-green-600' : 'text-destructive'"
-                            >
-                              <span class="shrink-0">{{ step.ok ? '✓' : '✗' }}</span>
-                              <span>{{ step.name }}</span>
-                            </div>
-                          }
-                        </div>
-                      }
-                      @if (chatService.streamingText()) {
-                        <div
-                          class="w-fit max-w-[82%] rounded-fl-lg rounded-tl-sm px-3.5 py-2.5 text-sm bg-muted text-foreground border border-border/50"
-                        >
-                          <markdown
-                            class="md leading-relaxed break-words"
-                            [data]="chatService.streamingText()"
-                          />
-                          <span class="inline-block w-[2px] h-3.5 align-middle bg-blue-500"></span>
-                        </div>
-                      }
-                    </div>
-                  </div>
-                } @else if (chatService.sending()) {
-                  <div class="flex gap-2">
-                    <div
-                      class="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 border border-blue-500/20"
-                    >
-                      @if (imgOk()) {
-                        <img
-                          src="icons/assistant.svg"
-                          class="h-4 w-4 object-contain"
-                          alt=""
-                          (error)="imgOk.set(false)"
-                        />
-                      } @else {
-                        <ng-icon name="lucideBot" class="h-3.5 w-3.5 text-blue-500" />
-                      }
-                    </div>
-                    <div
-                      class="bg-muted border border-border/50 rounded-fl-lg rounded-tl-sm px-4 py-3"
-                    >
-                      <div class="flex gap-1.5 items-center">
-                        <div
-                          class="h-1.5 w-1.5 rounded-full bg-muted-foreground/50 [animation-delay:-0.3s]"
-                        ></div>
-                        <div
-                          class="h-1.5 w-1.5 rounded-full bg-muted-foreground/50 [animation-delay:-0.15s]"
-                        ></div>
-                        <div class="h-1.5 w-1.5 rounded-full bg-muted-foreground/50"></div>
-                      </div>
-                    </div>
-                  </div>
+                @if (
+                  chatService.streamingText() ||
+                  chatService.streamingSteps().length ||
+                  chatService.sending()
+                ) {
+                  <app-assistant-streaming-row
+                    [text]="chatService.streamingText()"
+                    [steps]="chatService.streamingSteps()"
+                  />
                 }
 
                 @if (chatService.error()) {
-                  <div
-                    class="flex items-center gap-2 rounded-fl-lg bg-destructive/10 px-3 py-2 text-xs text-destructive border border-destructive/20"
-                  >
-                    <ng-icon name="lucideAlertCircle" class="h-3.5 w-3.5 shrink-0" />
+                  <fl-alert tone="error" title="The assistant could not answer">
                     {{ chatService.error() }}
-                  </div>
+                  </fl-alert>
                 }
               </div>
 
               @if (chatService.pendingActions().length > 0) {
-                <app-assistant-confirm-card
-                  [pending]="chatService.pendingActions()"
-                  (decided)="onConfirmDecision($event)"
-                />
+                <div class="px-4 pb-4">
+                  <app-assistant-confirm-card
+                    [pending]="chatService.pendingActions()"
+                    (decided)="onConfirmDecision($event)"
+                  />
+                </div>
               }
             }
           </div>
 
           @if (!showHistory() && !showCenteredComposer()) {
-            <div class="shrink-0 bg-background border-t border-border/50 p-3">
+            <div class="shrink-0 border-t border-fl-border bg-fl-surface p-3">
               <app-assistant-composer
                 [fullscreen]="isFull()"
                 (sent)="onComposerSent()"
@@ -391,42 +231,38 @@ const SIZE_ORDER: Record<SizeMode, number> = { compact: 0, medium: 1, full: 2 };
               />
             </div>
           }
-        </div>
+        </section>
       }
 
       @if (!isFull()) {
         @if (expanded()) {
           <button
+            #closeBtn
+            flButton="primary"
+            [iconOnly]="true"
             type="button"
+            class="pointer-events-auto"
+            aria-label="Close Flui Assistant"
             (click)="toggle()"
-            class="relative flex h-14 w-14 items-center justify-center rounded-full transition-all duration-300 hover:scale-105 active:scale-95 pointer-events-auto bg-fl-accent"
           >
-            <ng-icon name="lucideX" class="h-6 w-6 text-white" />
+            <fl-icon name="lucideX" />
           </button>
         } @else {
           <button
+            #openBtn
             type="button"
             (click)="toggle()"
             aria-label="Open Flui Assistant"
-            class="group fixed top-1/2 right-0 z-50 flex -translate-y-1/2 items-center rounded-l-fl-lg border border-r-0 border-border bg-card py-3 pl-1.5 pr-1 opacity-40 shadow-black/10 transition-all duration-300 hover:pl-2.5 hover:pr-1.5 hover:opacity-100 hover:shadow-black/20 pointer-events-auto"
+            class="group pointer-events-auto fixed right-0 top-1/2 z-50 flex -translate-y-1/2 items-center rounded-l-fl-lg border border-r-0 border-fl-border bg-fl-surface py-3 pl-1.5 pr-1 opacity-40 transition-all duration-300 hover:pl-2.5 hover:pr-1.5 hover:opacity-100"
           >
-            <ng-icon
+            <fl-icon
               name="lucideChevronLeft"
-              class="h-4 w-4 text-muted-foreground transition-transform duration-300 group-hover:-translate-x-0.5"
+              class="text-fl-ink-muted transition-transform duration-300 group-hover:-translate-x-0.5"
             />
             <span
               class="inline-flex w-0 items-center overflow-hidden opacity-0 transition-all duration-300 group-hover:ml-1 group-hover:w-5 group-hover:opacity-100"
             >
-              @if (imgOk()) {
-                <img
-                  src="icons/assistant.svg"
-                  class="h-5 w-5 max-w-none object-contain"
-                  alt="Flui Assistant"
-                  (error)="imgOk.set(false)"
-                />
-              } @else {
-                <ng-icon name="lucideBot" class="h-5 w-5 max-w-none text-blue-600" />
-              }
+              <fl-icon name="lucideBot" [size]="20" class="text-fl-accent" />
             </span>
           </button>
         }
@@ -441,6 +277,10 @@ export class AssistantWidgetComponent implements OnInit, OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly scrollEl = viewChild<ElementRef<HTMLElement>>('scrollEl');
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly panel = viewChild<ElementRef<HTMLElement>>('panel');
+  private readonly openBtn = viewChild<ElementRef<HTMLElement>>('openBtn');
+  private readonly closeBtn = viewChild<ElementRef<HTMLElement>>('closeBtn');
   private copyObserver?: MutationObserver;
 
   readonly expanded = signal(false);
@@ -488,7 +328,7 @@ export class AssistantWidgetComponent implements OnInit, OnDestroy {
     const size = this.effectiveSize();
     const sizeClass = { compact: 'panel-sm', medium: 'panel-lg', full: 'panel-full' }[size];
     const origin = size === 'full' ? 'origin-center' : 'origin-bottom-right';
-    const motion = this.ready() ? 'transition-[transform,opacity] duration-300 ease-out' : '';
+    const motion = this.ready() ? 'transition duration-300 ease-out' : '';
     const vis = this.expanded()
       ? 'scale-100 opacity-100 translate-y-0'
       : 'scale-95 opacity-0 translate-y-2 pointer-events-none';
@@ -506,7 +346,7 @@ export class AssistantWidgetComponent implements OnInit, OnDestroy {
       const el = this.scrollEl()?.nativeElement;
       if (!el || this.copyObserver) return;
       this.copyObserver = new MutationObserver(() => {
-        this.wireCopyButtons(el);
+        wireMarkdown(el);
         this.scrollToBottom();
       });
       this.copyObserver.observe(el, { childList: true, subtree: true });
@@ -541,49 +381,7 @@ export class AssistantWidgetComponent implements OnInit, OnDestroy {
 
   protected onMarkdownReady(): void {
     const el = this.scrollEl()?.nativeElement;
-    if (el) this.wireCopyButtons(el);
-  }
-
-  private wireCopyButtons(container: HTMLElement): void {
-    container.querySelectorAll<HTMLElement>('.md-copy-btn:not([data-wired])').forEach((btn) => {
-      btn.dataset['wired'] = '';
-      btn.addEventListener('click', (e: MouseEvent) => {
-        e.stopPropagation();
-        if (btn.classList.contains('copied')) return;
-        const code = btn.closest('.md-code-block')?.querySelector('code')?.textContent ?? '';
-        if (!navigator.clipboard) {
-          this.flashError(btn);
-          return;
-        }
-        navigator.clipboard.writeText(code).then(
-          () => this.flashSuccess(btn),
-          () => this.flashError(btn),
-        );
-      });
-    });
-    container.querySelectorAll<HTMLAnchorElement>('a[href]:not([data-ext-wired])').forEach((a) => {
-      if (a.href.startsWith('http')) {
-        a.target = '_blank';
-        a.rel = 'noopener noreferrer';
-        a.dataset['extWired'] = '';
-      }
-    });
-  }
-
-  private flashSuccess(btn: HTMLElement): void {
-    btn.textContent = 'Copied!';
-    btn.classList.add('copied');
-    setTimeout(() => {
-      btn.textContent = 'Copy';
-      btn.classList.remove('copied');
-    }, 2000);
-  }
-
-  private flashError(btn: HTMLElement): void {
-    btn.textContent = 'Error';
-    setTimeout(() => {
-      btn.textContent = 'Copy';
-    }, 1500);
+    if (el) wireMarkdown(el);
   }
 
   toggle(): void {
@@ -592,7 +390,21 @@ export class AssistantWidgetComponent implements OnInit, OnDestroy {
       this.hasOpened.set(true);
       this.stickToBottom = true;
       this.scrollToBottom(true);
+      setTimeout(() => this.focusPanel());
     }
+  }
+
+  private focusPanel(): void {
+    const panel = this.panel()?.nativeElement;
+    const target =
+      panel?.querySelector<HTMLElement>('textarea') ??
+      this.closeBtn()?.nativeElement ??
+      panel?.querySelector<HTMLElement>('button');
+    target?.focus();
+  }
+
+  private focusOpener(): void {
+    setTimeout(() => this.openBtn()?.nativeElement.focus());
   }
 
   protected setSize(mode: SizeMode): void {
@@ -610,6 +422,7 @@ export class AssistantWidgetComponent implements OnInit, OnDestroy {
   protected close(): void {
     this.expanded.set(false);
     if (this.sizeMode() === 'full') this.sizeMode.set('compact');
+    this.focusOpener();
   }
 
   protected openConnectionsSettings(): void {
@@ -627,9 +440,14 @@ export class AssistantWidgetComponent implements OnInit, OnDestroy {
     if (this.sizeMode() === 'full') this.sizeMode.set('compact');
   }
 
-  @HostListener('document:keydown.escape')
   protected onEscape(): void {
-    if (this.isFull()) this.sizeMode.set('medium');
+    if (this.isFull()) {
+      this.sizeMode.set('medium');
+      return;
+    }
+    if (!this.expanded()) return;
+    if (!this.host.nativeElement.contains(document.activeElement)) return;
+    this.close();
   }
 
   protected openHistory(): void {

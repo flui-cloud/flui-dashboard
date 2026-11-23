@@ -45,7 +45,7 @@ describe('StatTileComponent note', () => {
     expect(note.getAttribute('title')).toBe('Last at 10:20');
   });
 
-  it('keeps note text neutral and marks its tone with a dot, several notes in order', () => {
+  it('keeps note text neutral and marks its tone with a status mark, several notes in order', () => {
     const el = render({
       label: 'Health checks',
       value: '3',
@@ -59,12 +59,12 @@ describe('StatTileComponent note', () => {
       'Taken out of the route 3 times',
       'Restarted 1 times',
     ]);
-    expect(notes.every((n) => n.className.includes('text-sub'))).toBeTrue();
+    expect(notes.every((n) => n.className.includes('text-fl-ink-muted'))).toBeTrue();
     expect(notes[0].querySelector('[data-testid="stat-tile-note-dot"]')!.className).toContain(
-      'bg-amber-500',
+      'fl-status--warning',
     );
     expect(notes[1].querySelector('[data-testid="stat-tile-note-dot"]')!.className).toContain(
-      'bg-destructive',
+      'fl-status--error',
     );
   });
 

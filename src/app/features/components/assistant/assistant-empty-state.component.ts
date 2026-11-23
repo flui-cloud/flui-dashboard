@@ -1,109 +1,37 @@
-import { Component, computed, input, output, ChangeDetectionStrategy } from '@angular/core';
-import { NgTemplateOutlet } from '@angular/common';
-import { NgIcon, provideIcons } from '@ng-icons/core';
+import { Component, computed, input, output } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
 import { lucideBot } from '@ng-icons/lucide';
 import { RecommendedProviderDto } from '../../../core/api/model/recommendedProviderDto';
+import { FlEmptyState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
 
 @Component({
   selector: 'app-assistant-empty-state',
-  standalone: true,
-  imports: [NgIcon, NgTemplateOutlet],
+  imports: [FlEmptyState, FlButton],
   providers: [provideIcons({ lucideBot })],
-  styles: [':host { display: contents; }'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  host: { class: 'block w-full' },
   template: `
-    <ng-template #ctas>
-      <div class="flex w-full max-w-[280px] flex-col gap-2">
+    <fl-empty-state icon="lucideBot" [title]="title()" [body]="hint()" [compact]="!fullscreen()">
+      @if (noInference()) {
         @if (recommended(); as rec) {
-          <p class="text-xs text-muted-foreground">
-            Recommended: <span class="font-medium text-foreground">{{ rec.label }}</span> —
-            {{ rec.reason }}
+          <p class="w-full text-fl-caption text-fl-ink-muted">
+            Recommended: <span class="font-medium text-fl-ink">{{ rec.label }}</span> ({{
+              rec.reason
+            }})
           </p>
         }
-        <button
-          type="button"
-          (click)="connect.emit()"
-          class="rounded-fl-lg bg-fl-accent px-4 py-2.5 text-sm font-medium text-white transition-all"
-        >
-          Connect a model
-        </button>
+        <button flButton="primary" type="button" (click)="connect.emit()">Connect a model</button>
         @if (isAdmin()) {
-          <button
-            type="button"
-            (click)="configure.emit()"
-            class="rounded-fl-lg border border-input bg-muted/50 px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors"
-          >
-            Configure a provider
+          <button flButton type="button" (click)="configure.emit()">Configure a provider</button>
+        }
+      } @else if (!fullscreen()) {
+        @if (recommended(); as rec) {
+          <button flButton="ghost" size="sm" type="button" (click)="connect.emit()">
+            Add {{ rec.label }} ({{ rec.reason }})
           </button>
         }
-      </div>
-    </ng-template>
-
-    @if (fullscreen()) {
-      <div class="mb-8 flex flex-col items-center gap-4 text-center">
-        <div
-          class="flex h-16 w-16 items-center justify-center rounded-fl-lg bg-blue-500/10 border border-blue-500/20"
-        >
-          @if (imgOk()) {
-            <img
-              src="icons/assistant.svg"
-              class="h-10 w-10 object-contain"
-              alt=""
-              (error)="imgError.emit()"
-            />
-          } @else {
-            <ng-icon name="lucideBot" class="h-8 w-8 text-blue-500" />
-          }
-        </div>
-        <div class="space-y-1">
-          <h2 class="text-2xl font-semibold text-foreground">{{ title() }}</h2>
-          @if (hint()) {
-            <p class="text-sm text-muted-foreground">{{ hint() }}</p>
-          }
-        </div>
-      </div>
-      @if (noInference()) {
-        <ng-container [ngTemplateOutlet]="ctas"></ng-container>
       }
-    } @else {
-      <div class="flex flex-col items-center justify-center h-full py-10 gap-4 text-center">
-        <div
-          class="flex h-14 w-14 items-center justify-center rounded-fl-lg bg-blue-500/10 border border-blue-500/20"
-        >
-          @if (imgOk()) {
-            <img
-              src="icons/assistant.svg"
-              class="h-9 w-9 object-contain"
-              alt=""
-              (error)="imgError.emit()"
-            />
-          } @else {
-            <ng-icon name="lucideBot" class="h-7 w-7 text-blue-500" />
-          }
-        </div>
-        <div class="space-y-3">
-          <div>
-            <p class="text-sm font-medium text-foreground">{{ title() }}</p>
-            <p class="text-xs text-muted-foreground mt-0.5">{{ hint() }}</p>
-          </div>
-          @if (noInference()) {
-            <div class="flex justify-center">
-              <ng-container [ngTemplateOutlet]="ctas"></ng-container>
-            </div>
-          } @else {
-            @if (recommended(); as rec) {
-              <button
-                type="button"
-                (click)="connect.emit()"
-                class="text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
-              >
-                Add {{ rec.label }} — {{ rec.reason }}
-              </button>
-            }
-          }
-        </div>
-      </div>
-    }
+    </fl-empty-state>
   `,
 })
 export class AssistantEmptyStateComponent {

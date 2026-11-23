@@ -7,10 +7,8 @@ import {
   OnInit,
   OnDestroy,
   NgZone,
-  ChangeDetectionStrategy,
 } from '@angular/core';
-
-import { NgIcon, provideIcons } from '@ng-icons/core';
+import { provideIcons } from '@ng-icons/core';
 import {
   lucideX,
   lucideMinus,
@@ -20,6 +18,7 @@ import {
   lucideChevronRight,
   lucideMaximize2,
   lucideMinimize2,
+  lucideSearch,
 } from '@ng-icons/lucide';
 import { QuickSshService, SshSession } from '../../service/quick-ssh.service';
 import { SshTerminalComponent } from '../compute/ssh-terminal.component';
@@ -27,6 +26,10 @@ import { VirtualInstancesService } from '../../../core/api/api/virtualInstances.
 import { MaskModeService } from '../../../core/services/mask-mode.service';
 import { InstanceResponseDto } from '../../../core/api/model/instanceResponseDto';
 import { InstanceWithLabels, getOwnership, getClusterInfo } from '../../model/instance.models';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlStatus } from '../../../ui/primitives/status';
 
 type ResizeEdge = 'top' | 'left' | 'top-left' | null;
 
@@ -35,8 +38,7 @@ const MIN_H = 280;
 
 @Component({
   selector: 'app-quick-ssh-overlay',
-  standalone: true,
-  imports: [NgIcon, SshTerminalComponent],
+  imports: [SshTerminalComponent, FlEmptyState, FlLoadingState, FlButton, FlIcon, FlStatus],
   providers: [
     provideIcons({
       lucideX,
@@ -47,179 +49,170 @@ const MIN_H = 280;
       lucideChevronRight,
       lucideMaximize2,
       lucideMinimize2,
+      lucideSearch,
     }),
   ],
+  host: { class: 'contents' },
   template: `
     @if (sshService.isOpen()) {
-      <div
-        class="fixed z-50 flex flex-col rounded-fl-lg border border-border bg-background overflow-hidden select-none"
+      <section
+        class="fl-panel fixed bottom-4 right-4 z-50 flex select-none flex-col overflow-hidden"
+        aria-label="SSH terminal"
         [style.width.px]="width()"
         [style.height.px]="height()"
-        [style.bottom.px]="16"
-        [style.right.px]="16"
         [class.cursor-nw-resize]="activeEdge() === 'top-left'"
         [class.cursor-n-resize]="activeEdge() === 'top'"
         [class.cursor-w-resize]="activeEdge() === 'left'"
       >
-        <!-- Resize handle: top edge -->
         <div
-          class="absolute top-0 left-3 right-3 h-1.5 cursor-n-resize z-10 group"
+          class="group absolute left-3 right-3 top-0 z-10 h-1.5 cursor-n-resize"
           (mousedown)="startResize($event, 'top')"
         >
           <div
-            class="absolute inset-x-0 top-0.5 h-0.5 rounded bg-border opacity-0 group-hover:opacity-100 transition-opacity"
+            class="absolute inset-x-0 top-0.5 h-0.5 bg-fl-border opacity-0 transition-opacity group-hover:opacity-100"
           ></div>
         </div>
 
-        <!-- Resize handle: left edge -->
         <div
-          class="absolute left-0 top-3 bottom-3 w-1.5 cursor-w-resize z-10 group"
+          class="group absolute bottom-3 left-0 top-3 z-10 w-1.5 cursor-w-resize"
           (mousedown)="startResize($event, 'left')"
         >
           <div
-            class="absolute inset-y-0 left-0.5 w-0.5 rounded bg-border opacity-0 group-hover:opacity-100 transition-opacity"
+            class="absolute inset-y-0 left-0.5 w-0.5 bg-fl-border opacity-0 transition-opacity group-hover:opacity-100"
           ></div>
         </div>
 
-        <!-- Resize handle: top-left corner -->
         <div
-          class="absolute top-0 left-0 w-4 h-4 cursor-nw-resize z-20"
+          class="absolute left-0 top-0 z-20 h-4 w-4 cursor-nw-resize"
           (mousedown)="startResize($event, 'top-left')"
         ></div>
 
-        <!-- Panel header -->
-        <div
-          class="flex items-center gap-2 px-3 py-2 bg-muted/60 border-b border-border flex-shrink-0"
-        >
-          <ng-icon name="lucideTerminal" class="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-
-          @if (sshService.activeSession(); as session) {
-            <span class="text-xs font-medium text-foreground truncate flex-1">
-              {{ session.serverName }}
-            </span>
-            @if (session.clusterName) {
-              <span class="text-xs text-muted-foreground truncate hidden sm:block">
-                {{ session.clusterName }}
-              </span>
+        <header class="fl-panel__header shrink-0 flex-nowrap">
+          <div class="flex min-w-0 flex-1 items-center gap-2">
+            <fl-icon name="lucideTerminal" [size]="16" class="text-fl-ink-muted" />
+            @if (sshService.activeSession(); as session) {
+              <h2 class="fl-panel__title truncate">{{ session.serverName }}</h2>
+              @if (session.clusterName) {
+                <span class="hidden truncate text-fl-body-sm text-fl-ink-muted sm:block">
+                  {{ session.clusterName }}
+                </span>
+              }
+              <fl-status tone="success" label="Connected" />
+            } @else {
+              <h2 class="fl-panel__title">SSH access</h2>
             }
-            <div class="flex items-center gap-0.5 ml-1">
-              <div class="h-1.5 w-1.5 rounded-full bg-green-500"></div>
-              <span class="text-xs text-green-500 font-medium">SSH</span>
-            </div>
-            <button
-              (click)="changeNode()"
-              class="text-xs text-muted-foreground hover:text-foreground px-1.5 py-0.5 rounded hover:bg-muted transition-colors ml-1 flex-shrink-0"
-            >
-              Change
-            </button>
-          } @else {
-            <span class="text-xs font-medium text-foreground flex-1">SSH Access</span>
-          }
+          </div>
 
-          <div class="flex items-center gap-1 flex-shrink-0">
+          <div class="fl-panel__actions">
+            @if (sshService.activeSession()) {
+              <button flButton="ghost" size="sm" type="button" (click)="changeNode()">
+                Change
+              </button>
+            }
             <button
-              (click)="toggleSize()"
-              class="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+              flButton="ghost"
+              size="sm"
+              [iconOnly]="true"
+              type="button"
+              [attr.aria-label]="isExpanded() ? 'Compact' : 'Expand'"
               [title]="isExpanded() ? 'Compact' : 'Expand'"
+              (click)="toggleSize()"
             >
-              <ng-icon
-                [name]="isExpanded() ? 'lucideMinimize2' : 'lucideMaximize2'"
-                class="h-3.5 w-3.5"
-              />
+              <fl-icon [name]="isExpanded() ? 'lucideMinimize2' : 'lucideMaximize2'" />
             </button>
             <button
-              (click)="sshService.minimize()"
-              class="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+              flButton="ghost"
+              size="sm"
+              [iconOnly]="true"
+              type="button"
+              aria-label="Minimize"
               title="Minimize"
+              (click)="sshService.minimize()"
             >
-              <ng-icon name="lucideMinus" class="h-3.5 w-3.5" />
+              <fl-icon name="lucideMinus" />
             </button>
             <button
-              (click)="close()"
-              class="p-1 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors"
+              flButton="ghost"
+              size="sm"
+              [iconOnly]="true"
+              type="button"
+              aria-label="Close"
               title="Close"
+              (click)="close()"
             >
-              <ng-icon name="lucideX" class="h-3.5 w-3.5" />
+              <fl-icon name="lucideX" />
             </button>
           </div>
-        </div>
+        </header>
 
-        <!-- Node picker view -->
         @if (!sshService.activeSession()) {
-          <div class="flex flex-col flex-1 overflow-hidden">
-            <div class="px-3 pt-3 pb-2 flex-shrink-0">
-              <p class="text-xs text-muted-foreground mb-2">Select a running node to connect</p>
-              <input
-                type="text"
-                placeholder="Search nodes..."
-                [value]="searchQuery()"
-                (input)="searchQuery.set($any($event.target).value)"
-                class="w-full text-xs px-2.5 py-1.5 rounded-md border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-              />
+          <div class="flex flex-1 flex-col overflow-hidden">
+            <div class="flex shrink-0 flex-col gap-2 px-4 pb-2 pt-3">
+              <p class="text-fl-body-sm text-fl-ink-muted">Select a running node to connect</p>
+              <label class="fl-input">
+                <fl-icon name="lucideSearch" [size]="14" />
+                <input
+                  type="text"
+                  placeholder="Search nodes"
+                  aria-label="Search nodes"
+                  [value]="searchQuery()"
+                  (input)="searchQuery.set($any($event.target).value)"
+                />
+              </label>
             </div>
 
             @if (isLoadingNodes()) {
-              <div class="flex items-center justify-center flex-1 gap-2 text-muted-foreground">
-                <ng-icon name="lucideRefreshCw" class="h-4 w-4 animate-spin" />
-                <span class="text-xs">Loading nodes...</span>
-              </div>
+              <fl-loading-state [rows]="4" />
             } @else if (filteredNodes().length === 0) {
-              <div
-                class="flex flex-col items-center justify-center flex-1 gap-1 text-muted-foreground"
-              >
-                <ng-icon name="lucideMonitor" class="h-8 w-8 opacity-30" />
-                <span class="text-xs">No running nodes found</span>
-              </div>
+              <fl-empty-state
+                icon="lucideMonitor"
+                title="No running nodes found"
+                [compact]="true"
+              />
             } @else {
-              <div class="flex-1 overflow-y-auto px-2 pb-2">
+              <ul class="flex-1 divide-y divide-fl-border-subtle overflow-y-auto">
                 @for (node of filteredNodes(); track node.id) {
-                  <button
-                    (click)="connectToNode(node)"
-                    class="w-full text-left px-2.5 py-2 rounded-lg hover:bg-muted transition-colors mb-1 border border-transparent hover:border-border group"
-                  >
-                    <div class="flex items-center gap-2">
-                      <div class="h-1.5 w-1.5 rounded-full bg-green-500 flex-shrink-0"></div>
-                      <span class="text-xs font-medium text-foreground truncate flex-1">
-                        {{ node.displayName || node.name }}
+                  <li>
+                    <button
+                      type="button"
+                      class="group flex w-full items-center gap-3 px-4 py-2 text-left hover:bg-fl-surface-hover"
+                      (click)="connectToNode(node)"
+                    >
+                      <span class="flex min-w-0 flex-1 flex-col">
+                        <span class="truncate text-fl-body-sm font-medium text-fl-ink">
+                          {{ node.displayName || node.name }}
+                        </span>
+                        <span class="flex items-center gap-2 text-fl-caption text-fl-ink-muted">
+                          @if (node.ipConfig?.v4?.ip) {
+                            <span class="fl-mono">{{ node.ipConfig!.v4!.ip }}</span>
+                          }
+                          @if (getNodeClusterName(node)) {
+                            <span>{{ getNodeClusterName(node) }}</span>
+                          }
+                        </span>
                       </span>
-                      <span class="text-xs text-muted-foreground uppercase flex-shrink-0">{{
-                        node.provider
-                      }}</span>
-                      <ng-icon
+                      <span class="fl-tag shrink-0">{{ node.provider }}</span>
+                      <fl-status tone="success" label="Running" />
+                      <fl-icon
                         name="lucideChevronRight"
-                        class="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                        [size]="14"
+                        class="text-fl-ink-muted opacity-0 group-hover:opacity-100"
                       />
-                    </div>
-                    <div class="flex items-center gap-2 mt-0.5 pl-3.5">
-                      @if (node.ipConfig?.v4?.ip) {
-                        <span class="text-xs text-muted-foreground font-mono">{{
-                          node.ipConfig!.v4!.ip
-                        }}</span>
-                      }
-                      @if (getNodeClusterName(node)) {
-                        <span class="text-xs text-muted-foreground"
-                          >· {{ getNodeClusterName(node) }}</span
-                        >
-                      }
-                    </div>
-                  </button>
+                    </button>
+                  </li>
                 }
-              </div>
+              </ul>
             }
 
-            <div class="px-3 pb-2 flex-shrink-0">
-              <button
-                (click)="loadNodes()"
-                class="w-full text-xs text-muted-foreground hover:text-foreground flex items-center justify-center gap-1 py-1 rounded hover:bg-muted transition-colors"
-              >
-                <ng-icon name="lucideRefreshCw" class="h-3 w-3" />
+            <div class="shrink-0 border-t border-fl-border-subtle px-4 py-2">
+              <button flButton="ghost" size="sm" [block]="true" type="button" (click)="loadNodes()">
+                <fl-icon name="lucideRefreshCw" />
                 Refresh
               </button>
             </div>
           </div>
         }
 
-        <!-- Terminal view -->
         @if (sshService.activeSession(); as session) {
           <div class="flex-1 overflow-hidden">
             <app-ssh-terminal
@@ -229,17 +222,9 @@ const MIN_H = 280;
             />
           </div>
         }
-      </div>
+      </section>
     }
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
-  styles: [
-    `
-      :host {
-        display: contents;
-      }
-    `,
-  ],
 })
 export class QuickSshOverlayComponent implements OnInit, OnDestroy {
   protected readonly sshService = inject(QuickSshService);
@@ -302,8 +287,6 @@ export class QuickSshOverlayComponent implements OnInit, OnDestroy {
     this.removeListeners();
   }
 
-  // ── Resize ──────────────────────────────────────────────────────────────────
-
   startResize(event: MouseEvent, edge: ResizeEdge): void {
     event.preventDefault();
     this.edge = edge;
@@ -313,7 +296,6 @@ export class QuickSshOverlayComponent implements OnInit, OnDestroy {
     this.resizeStartW = this.width();
     this.resizeStartH = this.height();
 
-    // Run outside Angular zone for performance during drag
     this.zone.runOutsideAngular(() => {
       document.addEventListener('mousemove', this.onMouseMove);
       document.addEventListener('mouseup', this.onMouseUp);
@@ -321,8 +303,8 @@ export class QuickSshOverlayComponent implements OnInit, OnDestroy {
   }
 
   private doResize(event: MouseEvent): void {
-    const dx = this.resizeStartX - event.clientX; // panel grows left → dx positive = wider
-    const dy = this.resizeStartY - event.clientY; // panel grows up → dy positive = taller
+    const dx = this.resizeStartX - event.clientX;
+    const dy = this.resizeStartY - event.clientY;
 
     const maxW = window.innerWidth - 32;
     const maxH = window.innerHeight - 32;
@@ -361,8 +343,6 @@ export class QuickSshOverlayComponent implements OnInit, OnDestroy {
     this.height.set(expanded ? 600 : 460);
   }
 
-  // ── Nodes ────────────────────────────────────────────────────────────────────
-
   loadNodes(): void {
     this.isLoadingNodes.set(true);
     this.instancesService
@@ -380,8 +360,6 @@ export class QuickSshOverlayComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response: InstanceResponseDto) => {
           const allInstances = (response.data || []) as InstanceWithLabels[];
-          // Only this installation's own nodes are reachable over SSH; nodes from
-          // a parallel installation sharing the provider account are hidden.
           this.nodes.set(
             allInstances.filter((i) => getOwnership(i) === 'self' && !!i.ipConfig?.v4?.ip),
           );

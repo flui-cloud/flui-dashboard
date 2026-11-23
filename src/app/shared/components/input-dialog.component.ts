@@ -1,103 +1,87 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { Component, Input, signal, input, output, ChangeDetectionStrategy } from '@angular/core';
-
 import { FormsModule } from '@angular/forms';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucidePencil, lucideX, lucideLoader } from '@ng-icons/lucide';
-import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
+import { provideIcons } from '@ng-icons/core';
+import { lucideX } from '@ng-icons/lucide';
+import { FlButton } from '../../ui/primitives/button';
+import { FlIcon } from '../../ui/primitives/icon';
+import { FlSpinner } from '../../ui/primitives/spinner';
 
-/**
- * Reusable single-field input modal — the project's styled replacement for the
- * native `prompt()`. Same open()/close()/setProcessing() lifecycle as
- * {@link ConfirmationDialogComponent}; emits the trimmed value on confirm.
- */
+let nextId = 0;
+
 @Component({
   selector: 'app-input-dialog',
-  standalone: true,
-  imports: [FormsModule, NgIcon, HlmButtonDirective],
-  providers: [provideIcons({ lucidePencil, lucideX, lucideLoader })],
+  imports: [CdkTrapFocus, FormsModule, FlButton, FlIcon, FlSpinner],
+  providers: [provideIcons({ lucideX })],
+  host: { '(document:keydown.escape)': 'isOpen() && onCancel()' },
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (isOpen()) {
-      <div class="fixed inset-0 z-50 bg-background/80" (click)="onCancel()">
+      <div
+        class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+        (click)="onCancel()"
+      >
         <div
-          class="fixed left-[50%] top-[50%] z-50 w-full max-w-md translate-x-[-50%] translate-y-[-50%] p-4"
+          class="fl-dialog"
+          cdkTrapFocus
+          [cdkTrapFocusAutoCapture]="true"
+          role="dialog"
+          aria-modal="true"
+          [attr.aria-labelledby]="titleId"
+          (click)="$event.stopPropagation()"
         >
-          <div
-            class="bg-white border border-gray-200 rounded-lg"
-            (click)="$event.stopPropagation()"
-          >
-            <div class="flex items-start justify-between p-6 pb-4">
-              <div class="flex items-start gap-4 flex-1">
-                <div
-                  class="flex h-12 w-12 items-center justify-center rounded-full flex-shrink-0 bg-blue-100"
-                >
-                  <ng-icon [name]="icon()" class="h-6 w-6 text-blue-600" />
-                </div>
-                <div class="flex-1">
-                  <h3 class="text-lg font-semibold text-gray-900">
-                    {{ title() }}
-                  </h3>
-                  @if (message) {
-                    <p class="text-sm text-gray-600 mt-2">
-                      {{ message }}
-                    </p>
-                  }
-                </div>
+          <header class="fl-dialog__header">
+            <h2 class="fl-dialog__title" [id]="titleId">{{ title() }}</h2>
+            <button
+              type="button"
+              class="fl-dialog__close"
+              aria-label="Close"
+              [disabled]="isProcessing()"
+              (click)="onCancel()"
+            >
+              <fl-icon name="lucideX" />
+            </button>
+          </header>
+          <div class="fl-dialog__body">
+            @if (message) {
+              <p class="m-0">{{ message }}</p>
+            }
+            <div class="fl-field" [class.is-invalid]="!!error()">
+              <div class="fl-input fl-input--lg">
+                <input
+                  #field
+                  cdkFocusInitial
+                  type="text"
+                  [attr.aria-labelledby]="titleId"
+                  [(ngModel)]="value"
+                  [placeholder]="placeholder()"
+                  [disabled]="isProcessing()"
+                  (keydown.enter)="onConfirm()"
+                />
               </div>
-              <button
-                hlmBtn
-                variant="ghost"
-                size="sm"
-                (click)="onCancel()"
-                [disabled]="isProcessing()"
-                class="h-8 w-8 p-0 flex-shrink-0"
-              >
-                <ng-icon name="lucideX" class="h-4 w-4" />
-              </button>
-            </div>
-
-            <div class="px-6 pb-2">
-              <input
-                #field
-                type="text"
-                [(ngModel)]="value"
-                [placeholder]="placeholder()"
-                [disabled]="isProcessing()"
-                (keydown.enter)="onConfirm()"
-                class="w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
               @if (error()) {
-                <p class="mt-2 text-xs text-red-600">
-                  {{ error() }}
-                </p>
+                <span class="fl-field__error" role="alert">{{ error() }}</span>
               }
             </div>
-
-            <div class="flex items-center justify-end gap-3 px-6 pb-6 pt-4">
-              <button
-                hlmBtn
-                variant="outline"
-                (click)="onCancel()"
-                [disabled]="isProcessing()"
-                class="min-w-[80px]"
-              >
-                {{ cancelText() }}
-              </button>
-              <button
-                hlmBtn
-                (click)="onConfirm()"
-                [disabled]="isProcessing() || !value.trim()"
-                class="min-w-[100px] bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                @if (isProcessing()) {
-                  <ng-icon name="lucideLoader" class="h-4 w-4 mr-2 animate-spin" />
-                  {{ confirmText() }}…
-                } @else {
-                  {{ confirmText() }}
-                }
-              </button>
-            </div>
           </div>
+          <footer class="fl-dialog__footer">
+            <button flButton="ghost" type="button" [disabled]="isProcessing()" (click)="onCancel()">
+              {{ cancelText() }}
+            </button>
+            <button
+              flButton="primary"
+              type="button"
+              [disabled]="isProcessing() || !value.trim()"
+              (click)="onConfirm()"
+            >
+              @if (isProcessing()) {
+                <fl-spinner [label]="confirmText()" />
+                {{ confirmText() }}…
+              } @else {
+                {{ confirmText() }}
+              }
+            </button>
+          </footer>
         </div>
       </div>
     }
@@ -113,6 +97,8 @@ export class InputDialogComponent {
 
   readonly confirmed = output<string>();
   readonly cancelled = output<void>();
+
+  protected readonly titleId = `input-dialog-title-${nextId++}`;
 
   value = '';
   isOpen = signal(false);

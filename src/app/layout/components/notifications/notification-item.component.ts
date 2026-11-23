@@ -1,6 +1,6 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { NgIcon, provideIcons } from '@ng-icons/core';
+import { provideIcons } from '@ng-icons/core';
 import {
   lucideChevronDown,
   lucideChevronUp,
@@ -9,87 +9,81 @@ import {
   lucideZap,
 } from '@ng-icons/lucide';
 import { AppNotification } from '../../../core/services/notification.service';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
 
 @Component({
   selector: 'app-notification-item',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgIcon, RouterLink],
+  imports: [RouterLink, FlButton, FlIcon, FlStatus],
   providers: [
     provideIcons({ lucideX, lucideExternalLink, lucideChevronDown, lucideChevronUp, lucideZap }),
   ],
+  host: { class: 'block' },
   template: `
     <div
-      class="group relative flex gap-2.5 p-3 cursor-pointer transition-colors"
-      [class]="notification().read ? 'hover:bg-muted/50' : 'bg-blue-50/40 hover:bg-blue-50/60'"
+      class="flex cursor-pointer flex-col gap-1 py-3 pl-4 pr-2 hover:bg-fl-surface-hover"
+      [class.bg-fl-accent-row]="!notification().read"
       (click)="clicked.emit()"
     >
-      <!-- Left type bar -->
-      <div class="w-0.5 flex-shrink-0 rounded-full self-stretch" [class]="typeBarClass()"></div>
-
-      <!-- Content -->
-      <div class="flex-1 min-w-0 space-y-1">
-        <!-- Title + time + delete -->
-        <div class="flex items-start justify-between gap-2">
-          <p class="text-sm font-medium text-foreground leading-tight">
-            {{ notification().title }}
-          </p>
-          <div class="flex items-center gap-1 flex-shrink-0">
-            <span class="text-[11px] text-muted-foreground whitespace-nowrap">{{ timeAgo() }}</span>
-            <button
-              (click)="onDelete($event)"
-              class="p-0.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors opacity-0 group-hover:opacity-100"
-              title="Remove"
-            >
-              <ng-icon name="lucideX" class="!h-3 !w-3" />
-            </button>
-          </div>
+      <div class="flex items-center justify-between gap-2">
+        <fl-status [tone]="tone()" [label]="statusLabel()" />
+        <div class="flex shrink-0 items-center gap-1">
+          <span class="fl-num whitespace-nowrap text-fl-caption text-fl-ink-muted">{{
+            timeAgo()
+          }}</span>
+          <button
+            flButton="ghost"
+            size="sm"
+            [iconOnly]="true"
+            type="button"
+            aria-label="Remove"
+            title="Remove"
+            (click)="onDelete($event)"
+          >
+            <fl-icon name="lucideX" />
+          </button>
         </div>
+      </div>
 
-        <!-- Body -->
-        @if (notification().body) {
-          <p class="text-xs text-muted-foreground leading-relaxed">
-            {{ isLongBody() && !expanded() ? truncatedBody() : notification().body }}
-          </p>
-          @if (isLongBody()) {
-            <button
-              (click)="onToggleExpand($event)"
-              class="inline-flex items-center gap-0.5 text-xs text-primary hover:underline"
+      <p class="pr-2 text-fl-body-sm font-medium text-fl-ink">{{ notification().title }}</p>
+
+      @if (notification().body) {
+        <p class="pr-2 text-fl-caption text-fl-ink-secondary">
+          {{ isLongBody() && !expanded() ? truncatedBody() : notification().body }}
+        </p>
+        @if (isLongBody()) {
+          <button
+            type="button"
+            class="fl-link inline-flex items-center gap-1 self-start text-fl-caption"
+            (click)="onToggleExpand($event)"
+          >
+            <fl-icon [name]="expanded() ? 'lucideChevronUp' : 'lucideChevronDown'" [size]="13" />
+            {{ expanded() ? 'Show less' : 'Show more' }}
+          </button>
+        }
+      }
+
+      @if (notification().link || notification().action) {
+        <div class="fl-row mt-1">
+          @if (notification().link) {
+            <a
+              class="fl-link inline-flex items-center gap-1 text-fl-caption"
+              [routerLink]="notification().link!.route"
+              (click)="onLinkClick($event)"
             >
-              <ng-icon
-                [name]="expanded() ? 'lucideChevronUp' : 'lucideChevronDown'"
-                class="!h-3 !w-3"
-              />
-              {{ expanded() ? 'Show less' : 'Show more' }}
+              <fl-icon name="lucideExternalLink" [size]="13" />
+              {{ notification().link!.label }}
+            </a>
+          }
+          @if (notification().action) {
+            <button flButton size="sm" type="button" (click)="onActionClick($event)">
+              <fl-icon name="lucideZap" />
+              {{ notification().action!.label }}
             </button>
           }
-        }
-
-        <!-- Link and/or Action row -->
-        @if (notification().link || notification().action) {
-          <div class="flex items-center gap-2 mt-0.5 flex-wrap">
-            @if (notification().link) {
-              <a
-                [routerLink]="notification().link!.route"
-                (click)="onLinkClick($event)"
-                class="inline-flex items-center gap-1 text-xs text-primary hover:underline"
-              >
-                <ng-icon name="lucideExternalLink" class="!h-3 !w-3" />
-                {{ notification().link!.label }}
-              </a>
-            }
-            @if (notification().action) {
-              <button
-                (click)="onActionClick($event)"
-                class="inline-flex items-center gap-1 text-xs font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded px-2 py-0.5 transition-colors"
-              >
-                <ng-icon name="lucideZap" class="!h-3 !w-3" />
-                {{ notification().action!.label }}
-              </button>
-            }
-          </div>
-        }
-      </div>
+        </div>
+      }
     </div>
   `,
 })
@@ -103,16 +97,29 @@ export class NotificationItemComponent {
   linkClicked = output<void>();
   actionTriggered = output<void>();
 
-  readonly typeBarClass = computed(() => {
+  readonly tone = computed<StatusTone>(() => {
     switch (this.notification().type) {
       case 'success':
-        return 'bg-green-500';
+        return 'success';
       case 'warning':
-        return 'bg-yellow-500';
+        return 'warning';
       case 'error':
-        return 'bg-red-500';
+        return 'error';
       default:
-        return 'bg-blue-500';
+        return 'neutral';
+    }
+  });
+
+  readonly statusLabel = computed(() => {
+    switch (this.notification().type) {
+      case 'success':
+        return 'Succeeded';
+      case 'warning':
+        return 'Warning';
+      case 'error':
+        return 'Failed';
+      default:
+        return 'Info';
     }
   });
 

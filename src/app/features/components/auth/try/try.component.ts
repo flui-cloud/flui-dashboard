@@ -1,12 +1,4 @@
-import {
-  AfterViewInit,
-  ChangeDetectionStrategy,
-  Component,
-  ElementRef,
-  OnDestroy,
-  inject,
-  viewChild,
-} from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, inject, viewChild } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Meta } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -16,6 +8,8 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { OidcAuthService } from '../../../../core/services/oidc-auth.service';
 import { TurnstileService } from './turnstile.service';
 import { visitorRefusalOf } from './visitor-refusal';
+import { FlSpinner } from '../../../../ui/primitives/spinner';
+import { AuthCard } from '../auth-card';
 
 interface Admission {
   nonce: string;
@@ -25,18 +19,20 @@ interface Admission {
 /** The demo's open door: a visitor looks around without an account. */
 @Component({
   selector: 'app-try',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [AuthCard, FlSpinner],
   template: `
-    <div class="min-h-screen flex items-center justify-center bg-background px-4">
-      <div class="flex flex-col items-center gap-4 text-center">
+    <app-auth-card title="Flui demo">
+      <div class="flex flex-col items-center gap-3 text-center text-fl-body-sm">
         <div #challenge></div>
         @if (ended) {
-          <p class="text-sm">Your visit ended. Here is a new one.</p>
+          <p class="m-0">Your visit ended. Here is a new one.</p>
         }
-        <p class="text-sm text-muted-foreground">Opening the demo…</p>
+        <div class="flex items-center gap-2 text-fl-ink-muted">
+          <fl-spinner label="Opening the demo" />
+          Opening the demo…
+        </div>
       </div>
-    </div>
+    </app-auth-card>
   `,
 })
 export class TryComponent implements AfterViewInit, OnDestroy {

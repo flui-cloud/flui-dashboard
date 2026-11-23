@@ -1,7 +1,9 @@
-import { Component, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideBot } from '@ng-icons/lucide';
+import { Component, input, output, signal } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideBookOpen, lucideChevronDown, lucideChevronRight } from '@ng-icons/lucide';
 import { MarkdownComponent } from 'ngx-markdown';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
 import {
   AgentMessage,
   AgentToolStep,
@@ -10,137 +12,94 @@ import {
 } from '../../service/assistant.service';
 import { AssistantOperationProgressComponent } from './assistant-operation-progress.component';
 import { AssistantToolResultComponent } from './assistant-tool-result.component';
+import { AssistantStepList } from './assistant-step-list';
 
 @Component({
   selector: 'app-assistant-message',
-  standalone: true,
   imports: [
-    NgIcon,
     MarkdownComponent,
+    FlButton,
+    FlIcon,
     AssistantOperationProgressComponent,
     AssistantToolResultComponent,
+    AssistantStepList,
   ],
-  providers: [provideIcons({ lucideBot })],
-  styles: [':host { display: contents; }'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  providers: [provideIcons({ lucideBookOpen, lucideChevronDown, lucideChevronRight })],
+  host: { class: 'flex min-w-0 flex-col gap-1' },
   template: `
-    <div class="flex gap-2" [class.flex-row-reverse]="message().role === 'user'">
-      @if (message().role !== 'user') {
-        <div
-          class="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 border border-blue-500/20 mt-0.5"
-        >
-          @if (imgOk()) {
-            <img
-              src="icons/assistant.svg"
-              class="h-4 w-4 object-contain"
-              alt=""
-              (error)="imgError.emit()"
-            />
-          } @else {
-            <ng-icon name="lucideBot" class="h-3.5 w-3.5 text-blue-500" />
+    <span class="text-fl-caption text-fl-ink-muted">
+      {{ message().role === 'user' ? 'You' : 'Flui Assistant' }}
+    </span>
+    @if (message().role === 'user') {
+      <p class="whitespace-pre-wrap break-words text-fl-body-sm text-fl-ink">
+        {{ message().content }}
+      </p>
+    } @else {
+      <markdown
+        class="md break-words text-fl-body-sm text-fl-ink"
+        [data]="message().content"
+        (ready)="markdownReady.emit()"
+      />
+      @if (message().docLinks?.length) {
+        <div class="fl-row mt-1">
+          @for (link of message().docLinks; track link.url) {
+            <a
+              class="fl-link inline-flex items-center gap-1 text-fl-body-sm"
+              [href]="link.url"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <fl-icon name="lucideBookOpen" [size]="14" />
+              {{ link.title }}
+            </a>
           }
         </div>
       }
-      <div class="flex flex-col min-w-0 flex-1" [class.items-end]="message().role === 'user'">
-        @if (message().role === 'user') {
-          <div
-            class="md-user-bubble w-fit max-w-[78%] rounded-fl-lg rounded-tr-sm px-3.5 py-2.5 text-sm bg-fl-accent text-white"
+      @let stepList = message().steps;
+      @let logSrcs = logSourcesForSteps(stepList);
+      @for (step of stepsWithResult(stepList); track step.toolCallId) {
+        <app-assistant-tool-result
+          [step]="step"
+          [logSources]="logSrcs"
+          (sendMessage)="sendMessage.emit($event)"
+        />
+      }
+      @if (stepList && stepList.length > 0) {
+        <div class="flex flex-col items-start gap-1">
+          <button
+            flButton="ghost"
+            size="sm"
+            type="button"
+            [attr.aria-expanded]="stepsExpanded()"
+            (click)="stepsExpanded.set(!stepsExpanded())"
           >
-            <p class="whitespace-pre-wrap break-words leading-relaxed">{{ message().content }}</p>
-          </div>
-        } @else {
-          <div
-            class="w-fit max-w-[82%] rounded-fl-lg rounded-tl-sm px-3.5 py-2.5 text-sm bg-muted text-foreground border border-border/50"
-          >
-            <markdown
-              class="md leading-relaxed break-words"
-              [data]="message().content"
-              (ready)="markdownReady.emit()"
-            />
-          </div>
-          @if (message().docLinks?.length) {
-            <div class="mt-2 flex flex-wrap gap-1.5">
-              @for (link of message().docLinks; track link.url) {
-                <a
-                  [href]="link.url"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2.5 py-1 text-xs text-foreground hover:bg-muted transition-colors"
-                >
-                  📖 {{ link.title }}
-                </a>
-              }
-            </div>
+            <fl-icon [name]="stepsExpanded() ? 'lucideChevronDown' : 'lucideChevronRight'" />
+            {{ stepList.length }} tool{{ stepList.length === 1 ? '' : 's' }} used
+          </button>
+          @if (stepsExpanded()) {
+            <app-assistant-step-list class="w-full" [steps]="stepList" />
           }
-          @let stepList = message().steps;
-          @let logSrcs = logSourcesForSteps(stepList);
-          @for (step of stepsWithResult(stepList); track step.toolCallId) {
-            <app-assistant-tool-result
-              [step]="step"
-              [logSources]="logSrcs"
-              (sendMessage)="sendMessage.emit($event)"
-            />
-          }
-          @if (stepList && stepList.length > 0) {
-            <div class="mt-1 ml-0.5">
-              <button
-                type="button"
-                (click)="stepsExpanded.set(!stepsExpanded())"
-                class="text-[11px] text-muted-foreground/60 hover:text-muted-foreground transition-colors"
-              >
-                {{ stepsExpanded() ? '▾' : '▸' }} {{ stepList.length }} tool{{
-                  stepList.length === 1 ? '' : 's'
-                }}
-                used
+        </div>
+      }
+      @if (message().uiActions?.length) {
+        <div class="fl-row mt-1">
+          @for (action of message().uiActions; track action.label) {
+            @if (action.kind !== 'open_url' || action.url) {
+              <button flButton size="sm" type="button" (click)="executeUiAction(action)">
+                {{ action.label }}
               </button>
-              @if (stepsExpanded()) {
-                <div
-                  class="mt-1 rounded-lg bg-muted/50 border border-border/40 px-2.5 py-2 font-mono text-[11px] space-y-1"
-                >
-                  @for (step of stepList; track step.toolCallId) {
-                    <div
-                      class="flex items-start gap-2"
-                      [class]="step.ok ? 'text-green-600' : 'text-destructive'"
-                    >
-                      <span class="shrink-0">{{ step.ok ? '✓' : '✗' }}</span>
-                      <span>{{ step.name }}</span>
-                      @if (!step.ok && step.error) {
-                        <span class="text-muted-foreground">— {{ step.error }}</span>
-                      }
-                    </div>
-                  }
-                </div>
-              }
-            </div>
+            }
           }
-          @if (message().uiActions?.length) {
-            <div class="mt-2 flex flex-wrap gap-2">
-              @for (action of message().uiActions; track action.label) {
-                @if (action.kind !== 'open_url' || action.url) {
-                  <button
-                    type="button"
-                    (click)="executeUiAction(action)"
-                    class="rounded-lg border border-blue-500/30 bg-blue-500/10 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-500/20 transition-colors"
-                  >
-                    {{ action.label }}
-                  </button>
-                }
-              }
-            </div>
+        </div>
+      }
+      @if (message().operationPending?.length) {
+        <div class="flex flex-col gap-2">
+          @for (op of message().operationPending; track op.operationId) {
+            <app-assistant-operation-progress [operationId]="op.operationId" [label]="op.label" />
           }
-          @if (message().operationPending?.length) {
-            <div class="w-full max-w-[82%]">
-              @for (op of message().operationPending; track op.operationId) {
-                <app-assistant-operation-progress
-                  [operationId]="op.operationId"
-                  [label]="op.label"
-                />
-              }
-            </div>
-          }
-        }
-      </div>
-    </div>
+        </div>
+      }
+    }
   `,
 })
 export class AssistantMessageComponent {

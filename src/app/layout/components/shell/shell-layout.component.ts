@@ -48,6 +48,7 @@ import { SandboxService } from '../../../core/services/sandbox.service';
 import { VisitorSignInService } from '../../../core/services/visitor-sign-in.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { FlSidenav } from '../../../ui/frame/sidenav';
+import { FlButton } from '../../../ui/primitives/button';
 import { CommandPaletteService } from '../../../ui/frame/command-palette';
 import { ConsoleNav } from '../../console/console-nav';
 import { ConsoleTopbar } from '../../console/console-topbar';
@@ -65,6 +66,7 @@ const OWN_ASSISTANT = [
   selector: 'app-shell-layout',
   imports: [
     RouterOutlet,
+    FlButton,
     ConsoleTopbar,
     FlSidenav,
     PlatformUpdateWatcherComponent,
@@ -113,10 +115,19 @@ const OWN_ASSISTANT = [
   ],
   host: { class: 'fl-shell', '(document:keydown)': 'onKeydown($event)' },
   template: `
+    <button
+      flButton="primary"
+      type="button"
+      class="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50"
+      data-testid="skip-to-main"
+      (click)="skipToMain()"
+    >
+      Skip to main content
+    </button>
     <app-console-topbar
       [navOpen]="navOpen()"
       [menuAlways]="focus()"
-      (menuToggle)="navOpen.set(!navOpen())"
+      (menuToggle)="toggleNav()"
       (searchOpen)="openSearch()"
     />
     <app-sandbox-banner />
@@ -138,7 +149,7 @@ const OWN_ASSISTANT = [
           (click)="navOpen.set(false)"
         ></button>
       }
-      <main class="fl-shell__main page-outlet" id="main">
+      <main class="fl-shell__main page-outlet outline-none" id="main" tabindex="-1">
         <div class="mx-auto w-full p-2" [class]="widthClass()">
           <app-sandbox-section-notice />
           <router-outlet />
@@ -213,7 +224,24 @@ export class ShellLayoutComponent {
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
       event.preventDefault();
       void this.openSearch();
+      return;
     }
+    if (event.key === 'Escape' && this.navOpen()) {
+      this.navOpen.set(false);
+      document.querySelector<HTMLElement>('button[aria-label="Menu"]')?.focus();
+    }
+  }
+
+  protected toggleNav(): void {
+    const open = !this.navOpen();
+    this.navOpen.set(open);
+    if (open && this.focus()) {
+      setTimeout(() => document.querySelector<HTMLElement>('.fl-shell__nav a')?.focus());
+    }
+  }
+
+  protected skipToMain(): void {
+    document.getElementById('main')?.focus();
   }
 
   protected async openSearch(): Promise<void> {

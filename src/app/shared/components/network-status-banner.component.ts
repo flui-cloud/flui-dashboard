@@ -1,31 +1,18 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  DestroyRef,
-  OnInit,
-  inject,
-  signal,
-} from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { fromEvent, merge } from 'rxjs';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideWifiOff } from '@ng-icons/lucide';
+import { FlAlert } from '../../ui/patterns/alert';
 
 @Component({
   selector: 'app-network-status-banner',
-  standalone: true,
-  imports: [NgIcon],
-  providers: [provideIcons({ lucideWifiOff })],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FlAlert],
   template: `
     @if (offline()) {
       <div
-        role="status"
+        class="fixed bottom-4 left-1/2 z-50 w-full max-w-sm -translate-x-1/2 px-4"
         aria-live="polite"
-        class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-900/90 text-white text-xs"
       >
-        <ng-icon name="lucideWifiOff" class="h-3.5 w-3.5" />
-        <span>You are offline</span>
+        <fl-alert tone="warning" title="You are offline" />
       </div>
     }
   `,

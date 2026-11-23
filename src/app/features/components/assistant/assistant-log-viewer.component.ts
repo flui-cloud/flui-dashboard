@@ -1,14 +1,10 @@
-import {
-  Component,
-  computed,
-  effect,
-  input,
-  output,
-  signal,
-  ChangeDetectionStrategy,
-} from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCopy, lucideDownload, lucideZap } from '@ng-icons/lucide';
+import { Component, computed, effect, input, output, signal } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideCopy, lucideDownload, lucideSearch, lucideZap } from '@ng-icons/lucide';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
 import { LogSourcesResult } from '../../service/assistant.service';
 
 interface LogEntry {
@@ -37,32 +33,33 @@ const TIME_WINDOWS = ['15m', '1h', '6h', '24h'] as const;
 
 @Component({
   selector: 'app-assistant-log-viewer',
-  standalone: true,
-  imports: [NgIcon],
-  providers: [provideIcons({ lucideCopy, lucideDownload, lucideZap })],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FlPanel, FlTable, FlButton, FlIcon],
+  providers: [provideIcons({ lucideCopy, lucideDownload, lucideSearch, lucideZap })],
+  host: { class: 'block' },
   template: `
     @if (isEmpty()) {
       <div
-        class="mt-2 rounded-fl-lg border border-border/40 bg-muted/20 px-3 py-2.5 text-xs space-y-1.5"
+        class="flex flex-col gap-2 rounded-fl-lg border border-fl-border bg-fl-surface p-3 text-fl-body-sm"
       >
-        <p class="text-muted-foreground">
+        <p class="text-fl-ink-secondary">
           No logs matched
           @if (result().app) {
-            for <span class="font-mono font-medium text-foreground/80">{{ result().app }}</span>
+            for <span class="fl-mono text-fl-ink">{{ result().app }}</span>
           }
           @if (result().namespace) {
-            in <span class="font-mono text-foreground/80">{{ result().namespace }}</span>
+            in <span class="fl-mono text-fl-ink">{{ result().namespace }}</span>
           }
         </p>
         @if (availableSources().length > 0) {
-          <div class="flex flex-wrap items-center gap-1">
-            <span class="text-[10px] text-muted-foreground/70 shrink-0">Available:</span>
+          <div class="fl-row">
+            <span class="text-fl-caption text-fl-ink-muted">Available</span>
             @for (app of availableSources(); track app) {
               <button
+                flButton
+                size="sm"
                 type="button"
+                class="font-mono"
                 (click)="sendMessage.emit('Show recent logs for ' + app)"
-                class="rounded-fl-sm border border-fl-border bg-fl-surface px-2 py-0.5 text-[10px] font-medium text-blue-600 hover:bg-blue-500/20 transition-colors"
               >
                 {{ app }}
               </button>
@@ -71,170 +68,156 @@ const TIME_WINDOWS = ['15m', '1h', '6h', '24h'] as const;
         }
       </div>
     } @else {
-      <div class="mt-2 rounded-fl-lg border border-border/50 overflow-hidden text-xs bg-background">
-        <div
-          class="flex items-center gap-2 px-3 py-2 border-b border-border/50 bg-muted/30 flex-wrap"
-        >
-          <span class="font-semibold text-foreground truncate max-w-[160px]">{{
-            result().app ?? 'Logs'
-          }}</span>
-          <span class="text-muted-foreground shrink-0">{{ result().count }} lines</span>
-          <div class="flex-1"></div>
-          <button
-            type="button"
-            (click)="copyAll()"
-            class="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors shrink-0"
-          >
-            <ng-icon name="lucideCopy" class="h-3 w-3" />
+      <fl-panel [title]="result().app ?? 'Logs'" [count]="result().count" [flush]="true">
+        <div panelActions class="fl-row">
+          <button flButton="ghost" size="sm" type="button" (click)="copyAll()">
+            <fl-icon name="lucideCopy" />
             Copy
           </button>
-          <button
-            type="button"
-            (click)="download()"
-            class="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors shrink-0"
-          >
-            <ng-icon name="lucideDownload" class="h-3 w-3" />
+          <button flButton="ghost" size="sm" type="button" (click)="download()">
+            <fl-icon name="lucideDownload" />
             Download
           </button>
         </div>
 
-        <div
-          class="flex items-center gap-1 px-3 py-1.5 border-b border-border/50 bg-muted/20 flex-wrap"
-        >
-          @for (lv of levelOptions; track lv) {
-            <button
-              type="button"
-              (click)="levelFilter.set(lv)"
-              class="rounded-full px-2.5 py-0.5 text-[10px] font-semibold transition-colors shrink-0"
-              [class]="
-                levelFilter() === lv
-                  ? activeChipClass(lv)
-                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
-              "
-            >
-              {{ lv === 'all' ? 'All' : lv[0].toUpperCase() + lv.slice(1) }}
-            </button>
-          }
-          <input
-            type="text"
-            placeholder="Search messages…"
-            [value]="search()"
-            (input)="onSearchInput($event)"
-            class="ml-1 flex-1 min-w-[80px] rounded-md bg-muted/50 border border-input/50 px-2 py-0.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-ring"
-          />
+        <div panelToolbar class="fl-toolbar">
+          <div class="fl-segmented" role="group" aria-label="Level">
+            @for (lv of levelOptions; track lv) {
+              <button
+                type="button"
+                [attr.aria-pressed]="levelFilter() === lv"
+                (click)="levelFilter.set(lv)"
+              >
+                {{ lv === 'all' ? 'All' : lv[0].toUpperCase() + lv.slice(1) }}
+              </button>
+            }
+          </div>
+          <label class="fl-input min-w-0 flex-1">
+            <fl-icon name="lucideSearch" [size]="14" />
+            <input
+              type="text"
+              placeholder="Search messages"
+              aria-label="Search messages"
+              [value]="search()"
+              (input)="onSearchInput($event)"
+            />
+          </label>
         </div>
 
         @if (result().app) {
-          <div
-            class="flex items-center gap-1 px-3 py-1.5 border-b border-border/50 bg-muted/10 flex-wrap"
-          >
-            <span class="text-[10px] text-muted-foreground/70 shrink-0">Since:</span>
-            @for (tw of timeWindows; track tw) {
-              <button
-                type="button"
-                (click)="reQueryWindow(tw)"
-                class="rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground hover:bg-muted/80 hover:text-foreground transition-colors shrink-0"
-              >
-                {{ tw }}
-              </button>
-            }
-            <input
-              type="text"
-              [value]="customWindow()"
-              (input)="onCustomWindowInput($event)"
-              (keydown.enter)="reQueryCustomWindow()"
-              placeholder="custom…"
-              class="w-16 rounded-md bg-muted/50 border border-input/50 px-2 py-0.5 text-[10px] focus:outline-none focus:ring-1 focus:ring-ring"
-            />
+          <div panelToolbar class="fl-toolbar">
+            <div class="fl-toolbar__group">
+              <span class="fl-toolbar__info">Since</span>
+              @for (tw of timeWindows; track tw) {
+                <button type="button" class="fl-chip" (click)="reQueryWindow(tw)">
+                  {{ tw }}
+                </button>
+              }
+              <label class="fl-input w-24">
+                <input
+                  type="text"
+                  placeholder="Custom"
+                  aria-label="Custom time window"
+                  [value]="customWindow()"
+                  (input)="onCustomWindowInput($event)"
+                  (keydown.enter)="reQueryCustomWindow()"
+                />
+              </label>
+            </div>
           </div>
         }
 
-        <div class="overflow-y-auto max-h-[260px] divide-y divide-border/20">
-          @if (filteredLogs().length === 0) {
-            <p class="text-center text-muted-foreground py-4 px-3">
-              No entries match the current filters.
-            </p>
-          }
-          @for (entry of filteredLogs(); track $index) {
-            <div [class]="rowClass(entry)">
-              <input
-                type="checkbox"
-                class="mt-1 h-3 w-3 shrink-0 accent-blue-500 cursor-pointer"
-                [checked]="selectedLines().has(entry)"
-                (change)="toggleLine(entry, $event)"
-              />
-              <span
-                class="shrink-0 font-mono text-muted-foreground text-[10px] w-[86px] leading-relaxed pt-px"
-              >
-                {{ formatTime(entry.timestamp) }}
-              </span>
-              @if (entry.level) {
-                <span
-                  class="shrink-0 rounded px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide leading-none mt-[3px]"
-                  [class]="levelBadgeClass(entry.level)"
-                >
-                  {{ entry.level }}
-                </span>
+        <div class="fl-table-wrap max-h-64 overflow-y-auto">
+          <table flTable density="log">
+            <thead>
+              <tr>
+                <th scope="col" class="is-fit"><span class="fl-sr">Select</span></th>
+                <th scope="col">Time</th>
+                <th scope="col">Level</th>
+                <th scope="col">Source</th>
+                <th scope="col">Message</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (entry of filteredLogs(); track $index) {
+                <tr [class.is-selected]="selectedLines().has(entry)">
+                  <td class="is-fit">
+                    <input
+                      type="checkbox"
+                      class="cursor-pointer"
+                      aria-label="Select line"
+                      [checked]="selectedLines().has(entry)"
+                      (change)="toggleLine(entry, $event)"
+                    />
+                  </td>
+                  <td class="text-fl-ink-muted">{{ formatTime(entry.timestamp) }}</td>
+                  <td>
+                    @if (entry.level) {
+                      <span [class]="levelClass(entry.level)">{{ entry.level }}</span>
+                    }
+                  </td>
+                  <td>
+                    <span class="fl-cell-clip text-fl-ink-muted">{{
+                      entry.pod ?? entry.container ?? ''
+                    }}</span>
+                  </td>
+                  <td class="is-wrap break-all">{{ entry.message }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="5" class="text-center text-fl-ink-muted">
+                    No entries match the current filters.
+                  </td>
+                </tr>
               }
-              @if (entry.pod || entry.container) {
-                <span
-                  class="shrink-0 text-muted-foreground/60 text-[10px] leading-relaxed truncate max-w-[72px]"
-                >
-                  {{ entry.pod ?? entry.container }}
-                </span>
-              }
-              <span
-                class="font-mono break-all leading-relaxed text-foreground/90 flex-1 text-[11px]"
-                >{{ entry.message }}</span
-              >
-            </div>
-          }
+            </tbody>
+          </table>
         </div>
 
-        <div
-          class="flex items-center gap-1.5 px-3 py-2 border-t border-border/50 bg-muted/10 flex-wrap"
-        >
-          <ng-icon name="lucideZap" class="h-3 w-3 text-muted-foreground/60 shrink-0" />
-          @if (selectedLines().size > 0) {
-            <span class="text-[10px] text-muted-foreground/70 shrink-0">
+        <div class="fl-toolbar border-b-0 border-t border-fl-border">
+          <span class="fl-toolbar__info inline-flex items-center gap-1">
+            <fl-icon name="lucideZap" [size]="14" />
+            @if (selectedLines().size > 0) {
               {{ selectedLines().size }} line{{ selectedLines().size === 1 ? '' : 's' }} selected
-            </span>
-          } @else {
-            <span class="text-[10px] text-muted-foreground/70 shrink-0"
-              >Select 1–5 lines to analyze</span
-            >
-          }
-          <div class="flex-1"></div>
-          @if (!canAnalyze() || hasErrorsSelected()) {
+            } @else {
+              Select 1 to 5 lines to analyze
+            }
+          </span>
+          <div class="fl-toolbar__group">
+            @if (!canAnalyze() || hasErrorsSelected()) {
+              <button
+                flButton
+                size="sm"
+                type="button"
+                [disabled]="!canAnalyze()"
+                (click)="explainSelected()"
+              >
+                Explain errors
+              </button>
+            }
             <button
+              flButton
+              size="sm"
               type="button"
-              (click)="explainSelected()"
               [disabled]="!canAnalyze()"
-              class="rounded-lg border border-border bg-background px-2.5 py-1 text-[10px] font-medium text-foreground hover:bg-muted transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              (click)="summarizeSelected()"
             >
-              Explain errors
+              Summarize
             </button>
-          }
-          <button
-            type="button"
-            (click)="summarizeSelected()"
-            [disabled]="!canAnalyze()"
-            class="rounded-lg border border-border bg-background px-2.5 py-1 text-[10px] font-medium text-foreground hover:bg-muted transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            Summarize
-          </button>
-          @if (!canAnalyze() || hasProblemsSelected()) {
-            <button
-              type="button"
-              (click)="diagnoseSelected()"
-              [disabled]="!canAnalyze()"
-              class="rounded-lg border border-border bg-background px-2.5 py-1 text-[10px] font-medium text-foreground hover:bg-muted transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              Why is it failing?
-            </button>
-          }
+            @if (!canAnalyze() || hasProblemsSelected()) {
+              <button
+                flButton
+                size="sm"
+                type="button"
+                [disabled]="!canAnalyze()"
+                (click)="diagnoseSelected()"
+              >
+                Why is it failing?
+              </button>
+            }
+          </div>
         </div>
-      </div>
+      </fl-panel>
     }
   `,
 })
@@ -284,11 +267,6 @@ export class AssistantLogViewerComponent {
       return true;
     });
   });
-
-  protected rowClass(entry: LogEntry): string {
-    const base = 'flex items-start gap-2 px-3 py-1 hover:bg-muted/20 transition-colors';
-    return this.selectedLines().has(entry) ? base + ' bg-blue-500/5' : base;
-  }
 
   protected onSearchInput(e: Event): void {
     this.search.set((e.target as HTMLInputElement).value);
@@ -374,31 +352,10 @@ export class AssistantLogViewerComponent {
     return `${hh}:${mm}:${ss}.${ms}`;
   }
 
-  protected levelBadgeClass(level: string): string {
-    switch (level.toLowerCase()) {
-      case 'error':
-        return 'bg-destructive/15 text-destructive';
-      case 'warn':
-      case 'warning':
-        return 'bg-amber-500/15 text-amber-700';
-      case 'info':
-        return 'bg-blue-500/15 text-blue-600';
-      default:
-        return 'bg-muted text-muted-foreground';
-    }
-  }
-
-  protected activeChipClass(level: LevelFilter): string {
-    switch (level) {
-      case 'error':
-        return 'bg-destructive text-white';
-      case 'warn':
-        return 'bg-amber-500 text-white';
-      case 'info':
-        return 'bg-blue-500 text-white';
-      default:
-        return 'bg-foreground text-background';
-    }
+  protected levelClass(level: string): string {
+    const lv = this.normalizeLevel(level);
+    const known = ['error', 'warn', 'info', 'debug', 'trace'];
+    return known.includes(lv) ? `fl-level fl-level--${lv}` : 'fl-level';
   }
 
   private toTsv(entries: LogEntry[]): string {

@@ -1,4 +1,9 @@
-import { Component, computed, input, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, input, signal } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideSearch } from '@ng-icons/lucide';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlIcon } from '../../../ui/primitives/icon';
 
 export interface DataTableConfig {
   columns: string[];
@@ -7,57 +12,52 @@ export interface DataTableConfig {
 
 @Component({
   selector: 'app-assistant-data-table',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FlPanel, FlTable, FlIcon],
+  providers: [provideIcons({ lucideSearch })],
+  host: { class: 'block' },
   template: `
-    <div class="mt-2 rounded-fl-lg border border-border/50 overflow-hidden text-xs bg-background">
-      <div class="flex items-center gap-2 px-3 py-2 border-b border-border/50 bg-muted/30">
-        <span class="font-semibold text-foreground">{{ title() }}</span>
-        <span class="text-muted-foreground">{{ data().rows.length }} items</span>
-        <div class="flex-1"></div>
+    <fl-panel [title]="title()" [count]="data().rows.length" [flush]="true">
+      <label panelActions class="fl-input w-36">
+        <fl-icon name="lucideSearch" [size]="14" />
         <input
           type="text"
-          placeholder="Filter…"
+          placeholder="Filter"
+          [attr.aria-label]="'Filter ' + title()"
           [value]="search()"
           (input)="onSearchInput($event)"
-          class="w-32 rounded-md bg-muted/50 border border-input/50 px-2 py-0.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-ring"
         />
-      </div>
-      <div class="overflow-auto max-h-[220px]">
-        <table class="w-full">
-          <thead class="sticky top-0 bg-muted/50">
+      </label>
+      <div class="fl-table-wrap max-h-56 overflow-y-auto">
+        <table flTable density="dense">
+          <thead>
             <tr>
               @for (col of data().columns; track col) {
-                <th
-                  class="text-left px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground whitespace-nowrap"
-                >
-                  {{ col }}
-                </th>
+                <th scope="col">{{ col }}</th>
               }
             </tr>
           </thead>
-          <tbody class="divide-y divide-border/30">
-            @if (filteredRows().length === 0) {
+          <tbody>
+            @for (row of filteredRows(); track $index) {
               <tr>
-                <td
-                  [attr.colspan]="data().columns.length"
-                  class="text-center text-muted-foreground py-4 px-3"
-                >
+                @for (col of data().columns; track col; let first = $first) {
+                  <td>
+                    <span class="fl-cell-clip" [class.fl-mono]="first" [attr.title]="row[col]">{{
+                      row[col]
+                    }}</span>
+                  </td>
+                }
+              </tr>
+            } @empty {
+              <tr>
+                <td class="text-center text-fl-ink-muted" [attr.colspan]="data().columns.length">
                   No results.
                 </td>
-              </tr>
-            }
-            @for (row of filteredRows(); track $index) {
-              <tr class="hover:bg-muted/20 transition-colors">
-                @for (col of data().columns; track col) {
-                  <td class="px-3 py-1.5 text-foreground truncate max-w-[200px]">{{ row[col] }}</td>
-                }
               </tr>
             }
           </tbody>
         </table>
       </div>
-    </div>
+    </fl-panel>
   `,
 })
 export class AssistantDataTableComponent {

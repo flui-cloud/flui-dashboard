@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { HlmBadgeDirective } from '@spartan-ng/ui-badge-helm';
+import { Component, computed, input } from '@angular/core';
+import { FlTag } from '../../ui/primitives/tag';
 
 export type ServerArchitecture = 'x86' | 'arm';
 
@@ -18,20 +18,12 @@ export function architectureWarning(architecture: string | null | undefined): st
 
 @Component({
   selector: 'app-architecture-badge',
-  standalone: true,
-  imports: [HlmBadgeDirective],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FlTag],
   template: `
     @if (label(); as text) {
-      <span
-        hlmBadge
-        variant="outline"
-        static
-        class="px-1.5 py-0 text-[10px] font-medium leading-4 text-muted-foreground"
-        [attr.title]="'CPU architecture: ' + text"
-        data-testid="architecture-badge"
-        >{{ text }}</span
-      >
+      <fl-tag [attr.title]="'CPU architecture: ' + text" data-testid="architecture-badge">{{
+        text
+      }}</fl-tag>
     }
   `,
 })

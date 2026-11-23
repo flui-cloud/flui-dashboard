@@ -1,27 +1,33 @@
-import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { AuthService as ApiAuthService } from '../../../../core/api/api/auth.service';
 import { OidcAuthService } from '../../../../core/services/oidc-auth.service';
 import { consumeLoginRedirect } from '../../../../core/utils/safe-redirect';
+import { FlAlert } from '../../../../ui/patterns/alert';
+import { FlButton } from '../../../../ui/primitives/button';
+import { FlSpinner } from '../../../../ui/primitives/spinner';
+import { AuthCard } from '../auth-card';
 
 @Component({
   selector: 'app-auth-callback',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [AuthCard, FlAlert, FlButton, FlSpinner],
   template: `
-    <div class="min-h-screen flex items-center justify-center bg-background">
-      @if (apiError()) {
-        <div class="text-center space-y-3 px-4">
-          <p class="text-sm text-destructive">
-            Authentication service unavailable. Please try again later.
-          </p>
-          <a href="/" class="text-xs underline text-muted-foreground">← Back to dashboard</a>
+    @if (apiError()) {
+      <app-auth-card title="Sign-in failed">
+        <fl-alert tone="error" title="Authentication service unavailable">
+          Try again later.
+        </fl-alert>
+        <a flButton="primary" [block]="true" href="/">Back to the dashboard</a>
+      </app-auth-card>
+    } @else {
+      <app-auth-card title="Signing you in">
+        <div class="flex items-center justify-center gap-2 text-fl-body-sm text-fl-ink-muted">
+          <fl-spinner label="Signing in" />
+          Completing the sign-in…
         </div>
-      } @else {
-        <p class="text-sm text-muted-foreground">Autenticazione in corso...</p>
-      }
-    </div>
+      </app-auth-card>
+    }
   `,
 })
 export class CallbackComponent implements OnInit {

@@ -1,131 +1,91 @@
-import { Component, Input, signal, input, output, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideCircleAlert,
-  lucideTriangleAlert,
-  lucideInfo,
-  lucideX,
-  lucideLoader,
-} from '@ng-icons/lucide';
-import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
+import { CdkTrapFocus } from '@angular/cdk/a11y';
+import { Component, Input, signal, input, output } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideX } from '@ng-icons/lucide';
+import { FlButton } from '../../ui/primitives/button';
+import { FlIcon } from '../../ui/primitives/icon';
+import { FlSpinner } from '../../ui/primitives/spinner';
 
 export type ConfirmationDialogVariant = 'danger' | 'warning' | 'info';
 
+let nextId = 0;
+
 @Component({
   selector: 'app-confirmation-dialog',
-  standalone: true,
-  imports: [CommonModule, NgIcon, HlmButtonDirective],
-  providers: [
-    provideIcons({
-      lucideCircleAlert,
-      lucideTriangleAlert,
-      lucideInfo,
-      lucideX,
-      lucideLoader,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [CdkTrapFocus, FlButton, FlIcon, FlSpinner],
+  providers: [provideIcons({ lucideX })],
+  host: { '(document:keydown.escape)': 'isOpen() && onCancel()' },
   template: `
     @if (isOpen()) {
-      <div class="fixed inset-0 z-50 bg-background/80" (click)="onCancel()">
+      <div
+        class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+        (click)="onCancel()"
+      >
         <div
-          class="fixed left-[50%] top-[50%] z-50 w-full max-w-md translate-x-[-50%] translate-y-[-50%] p-4"
+          class="fl-dialog"
+          cdkTrapFocus
+          [cdkTrapFocusAutoCapture]="true"
+          [attr.role]="variant() === 'info' ? 'dialog' : 'alertdialog'"
+          aria-modal="true"
+          [attr.aria-labelledby]="titleId"
+          (click)="$event.stopPropagation()"
         >
-          <div
-            class="bg-white border border-gray-200 rounded-lg"
-            (click)="$event.stopPropagation()"
-          >
-            <!-- Header -->
-            <div class="flex items-start justify-between p-6 pb-4">
-              <div class="flex items-start gap-4 flex-1">
-                <div
-                  class="flex h-12 w-12 items-center justify-center rounded-full flex-shrink-0"
-                  [ngClass]="{
-                    'bg-red-100': variant() === 'danger',
-                    'bg-yellow-100': variant() === 'warning',
-                    'bg-blue-100': variant() === 'info',
-                  }"
+          <header class="fl-dialog__header">
+            <h2 class="fl-dialog__title" [id]="titleId">{{ title() }}</h2>
+            <button
+              type="button"
+              class="fl-dialog__close"
+              aria-label="Close"
+              [disabled]="isProcessing()"
+              (click)="onCancel()"
+            >
+              <fl-icon name="lucideX" />
+            </button>
+          </header>
+          <div class="fl-dialog__body">
+            <p class="m-0">{{ message() }}</p>
+            @if (details?.length) {
+              <div class="flex flex-col gap-2">
+                <button
+                  flButton="ghost"
+                  size="sm"
+                  type="button"
+                  class="self-start px-0"
+                  [attr.aria-expanded]="detailsOpen()"
+                  (click)="detailsOpen.set(!detailsOpen())"
                 >
-                  <ng-icon
-                    [name]="iconName"
-                    class="h-6 w-6"
-                    [ngClass]="{
-                      'text-red-600': variant() === 'danger',
-                      'text-yellow-600': variant() === 'warning',
-                      'text-blue-600': variant() === 'info',
-                    }"
-                  />
-                </div>
-                <div class="flex-1">
-                  <h3 class="text-lg font-semibold text-gray-900">
-                    {{ title() }}
-                  </h3>
-                  <p class="text-sm text-gray-600 mt-2">
-                    {{ message() }}
-                  </p>
-
-                  @if (details?.length) {
-                    <button
-                      type="button"
-                      (click)="detailsOpen.set(!detailsOpen())"
-                      class="mt-2 text-xs font-medium text-blue-600 hover:underline"
-                    >
-                      {{ detailsOpen() ? 'Hide details' : 'What exactly happens' }}
-                    </button>
-                    @if (detailsOpen()) {
-                      <ul class="mt-2 space-y-1.5 border-l-2 border-gray-200 pl-3">
-                        @for (line of details; track line) {
-                          <li class="text-xs text-gray-600">{{ line }}</li>
-                        }
-                      </ul>
+                  {{ detailsOpen() ? 'Hide details' : 'What exactly happens' }}
+                </button>
+                @if (detailsOpen()) {
+                  <ul
+                    class="m-0 flex list-disc flex-col gap-1 pl-5 text-fl-body-sm text-fl-ink-secondary"
+                  >
+                    @for (line of details; track line) {
+                      <li>{{ line }}</li>
                     }
-                  }
-                </div>
-              </div>
-              <button
-                hlmBtn
-                variant="ghost"
-                size="sm"
-                (click)="onCancel()"
-                [disabled]="isProcessing()"
-                class="h-8 w-8 p-0 flex-shrink-0"
-              >
-                <ng-icon name="lucideX" class="h-4 w-4" />
-              </button>
-            </div>
-
-            <!-- Footer / Actions -->
-            <div class="flex items-center justify-end gap-3 px-6 pb-6">
-              <button
-                hlmBtn
-                variant="outline"
-                (click)="onCancel()"
-                [disabled]="isProcessing()"
-                class="min-w-[80px]"
-              >
-                {{ cancelText() }}
-              </button>
-              <button
-                hlmBtn
-                (click)="onConfirm()"
-                [disabled]="isProcessing()"
-                [ngClass]="{
-                  'bg-red-600 hover:bg-red-700 text-white': variant() === 'danger',
-                  'bg-yellow-600 hover:bg-yellow-700 text-white': variant() === 'warning',
-                  'bg-blue-600 hover:bg-blue-700 text-white': variant() === 'info',
-                }"
-                class="min-w-[100px]"
-              >
-                @if (isProcessing()) {
-                  <ng-icon name="lucideLoader" class="h-4 w-4 mr-2 animate-spin" />
-                  {{ processingText() ?? confirmText() }}
-                } @else {
-                  {{ confirmText() }}
+                  </ul>
                 }
-              </button>
-            </div>
+              </div>
+            }
           </div>
+          <footer class="fl-dialog__footer">
+            <button flButton="ghost" type="button" [disabled]="isProcessing()" (click)="onCancel()">
+              {{ cancelText() }}
+            </button>
+            <button
+              [flButton]="variant() === 'danger' ? 'danger' : 'primary'"
+              type="button"
+              [disabled]="isProcessing()"
+              (click)="onConfirm()"
+            >
+              @if (isProcessing()) {
+                <fl-spinner [label]="processingText() ?? confirmText()" />
+                {{ processingText() ?? confirmText() }}
+              } @else {
+                {{ confirmText() }}
+              }
+            </button>
+          </footer>
         </div>
       </div>
     }
@@ -136,6 +96,7 @@ export class ConfirmationDialogComponent {
   @Input() details?: string[];
 
   protected readonly detailsOpen = signal(false);
+  protected readonly titleId = `confirmation-dialog-title-${nextId++}`;
 
   readonly title = input('Confirm Action');
   readonly message = input('Are you sure you want to proceed?');
@@ -154,14 +115,11 @@ export class ConfirmationDialogComponent {
     const icon = this.icon();
     if (icon) return icon;
 
-    // Default icons based on variant
     switch (this.variant()) {
       case 'danger':
         return 'lucideCircleAlert';
       case 'warning':
         return 'lucideTriangleAlert';
-      case 'info':
-        return 'lucideInfo';
       default:
         return 'lucideInfo';
     }
@@ -184,7 +142,6 @@ export class ConfirmationDialogComponent {
 
   onConfirm() {
     this.confirmed.emit();
-    // Don't auto-close - let the parent handle it after async operations
   }
 
   onCancel() {

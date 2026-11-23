@@ -1,34 +1,21 @@
-import { Component, input, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, computed } from '@angular/core';
 import { MeterBarConfig } from '../chart.models';
+import { cssColor } from '../chart-colors';
 
-/**
- * Meter Bar Component
- * A horizontal usage track with optional warning/danger tick marks — the
- * compact replacement for a full gauge when the same number has to be read
- * once per node, per row.
- *
- * @example
- * ```html
- * <app-meter-bar [value]="48.2" [config]="{ warning: 75, danger: 90 }" color="#0D9488" />
- * ```
- */
 @Component({
   selector: 'app-meter-bar',
-  standalone: true,
-  imports: [],
-  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="flex flex-col gap-1 w-full">
       @if (label() || caption()) {
         <div class="flex items-baseline justify-between gap-2">
-          <span class="font-mono text-xs text-foreground">{{ label() }}</span>
+          <span class="font-mono text-fl-caption text-fl-ink">{{ label() }}</span>
           @if (caption()) {
-            <span class="text-[10px] text-sub">{{ caption() }}</span>
+            <span class="text-fl-caption text-fl-ink-muted">{{ caption() }}</span>
           }
         </div>
       }
       <div
-        class="relative w-full rounded-full bg-muted"
+        class="relative w-full rounded-full bg-fl-track"
         [style.height.px]="height()"
         role="meter"
         [attr.aria-valuenow]="clamped()"
@@ -37,20 +24,20 @@ import { MeterBarConfig } from '../chart.models';
         [attr.aria-label]="ariaLabel()"
       >
         <div
-          class="absolute inset-y-0 left-0 rounded-full transition-[width] duration-500"
+          class="absolute inset-y-0 left-0 rounded-full transition-all duration-500"
           [style.width.%]="clamped()"
           [style.background-color]="color()"
         ></div>
         @if (warning(); as w) {
           <span
-            class="absolute -top-0.5 -bottom-0.5 w-px bg-amber-600/70"
+            class="absolute -top-0.5 -bottom-0.5 w-px bg-fl-warning"
             [style.left.%]="w"
             [attr.title]="'Warning threshold ' + w + '%'"
           ></span>
         }
         @if (danger(); as d) {
           <span
-            class="absolute -top-0.5 -bottom-0.5 w-px bg-red-600/70"
+            class="absolute -top-0.5 -bottom-0.5 w-px bg-fl-danger"
             [style.left.%]="d"
             [attr.title]="'Critical threshold ' + d + '%'"
           ></span>
@@ -69,7 +56,7 @@ import { MeterBarConfig } from '../chart.models';
 export class MeterBarComponent {
   readonly value = input.required<number>();
   readonly config = input<MeterBarConfig>({});
-  readonly color = input<string>('#2259F1');
+  readonly color = input<string>(cssColor('--fl-accent'));
   /** Value shown above the track; omit to draw the track alone. */
   readonly label = input<string>('');
   /** Secondary text on the right of the label row, e.g. "5.8 GB / 12 GB". */

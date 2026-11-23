@@ -1,36 +1,23 @@
-import { Component, input, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, computed } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideInfo } from '@ng-icons/lucide';
+import { lucideCircleX, lucideInfo, lucideTriangleAlert } from '@ng-icons/lucide';
 import { SparkLineComponent } from '../spark-line/spark-line.component';
 import { StatTileData, StatTileNote } from '../chart.models';
+import { cssColor } from '../chart-colors';
 
-/**
- * Stat Tile Component
- * One headline figure — label, value, change over the window, trend mark.
- * Five of these across the top of a page give the pulse of a cluster without
- * a single chart being read.
- *
- * @example
- * ```html
- * <app-stat-tile [data]="{ label: 'CPU media', value: '15.0', unit: '%', spark: cpuTrend() }" />
- * ```
- */
 @Component({
   selector: 'app-stat-tile',
-  standalone: true,
   imports: [SparkLineComponent, NgIcon],
-  providers: [provideIcons({ lucideInfo })],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  providers: [provideIcons({ lucideInfo, lucideTriangleAlert, lucideCircleX })],
   template: `
-    <div class="card-surface p-4 flex flex-col gap-2 h-full">
-      <div
-        class="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-sub"
-      >
+    <div class="fl-metric h-full rounded-fl-lg border border-fl-border">
+      <div class="fl-metric__label flex items-center gap-1">
         {{ data().label }}
         @if (data().hint; as hint) {
           <ng-icon
             name="lucideInfo"
-            class="h-3 w-3 shrink-0 normal-case"
+            size="12px"
+            class="shrink-0"
             tabindex="0"
             role="img"
             data-testid="stat-tile-hint"
@@ -41,15 +28,13 @@ import { StatTileData, StatTileNote } from '../chart.models';
       </div>
 
       <div class="flex items-baseline gap-1.5">
-        <span class="text-2xl font-semibold text-foreground tracking-tight">{{
-          data().value
-        }}</span>
+        <span class="fl-metric__value">{{ data().value }}</span>
         @if (data().unit) {
-          <span class="text-xs text-sub">{{ data().unit }}</span>
+          <span class="text-fl-caption text-fl-ink-muted">{{ data().unit }}</span>
         }
         @if (data().delta) {
           <span
-            class="ml-auto text-[11px] font-semibold"
+            class="fl-num ml-auto text-fl-caption font-medium"
             [class]="deltaClass()"
             [attr.title]="data().deltaHint"
             [attr.aria-label]="data().delta + ' ' + (data().deltaHint ?? '')"
@@ -62,36 +47,33 @@ import { StatTileData, StatTileNote } from '../chart.models';
       @for (note of data().notes ?? []; track note.text) {
         @if (note.kind === 'chip') {
           <span
-            class="self-start inline-flex items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-sub"
+            class="fl-tag gap-1 self-start"
             data-testid="stat-tile-note"
             [attr.title]="note.hint"
           >
             @if (note.tone !== 'muted') {
-              <span
-                class="h-1.5 w-1.5 shrink-0 rounded-full"
-                [class]="dotClass(note.tone)"
-                data-testid="stat-tile-note-dot"
-              ></span>
+              <span [class]="markClass(note.tone)" data-testid="stat-tile-note-dot">
+                <ng-icon [name]="markIcon(note.tone)" size="12px" />
+              </span>
             }
             {{ note.text }}
           </span>
         } @else {
           <p
-            class="m-0 flex items-start gap-1.5 text-[11px] leading-snug text-sub"
+            class="m-0 flex items-start gap-1.5 text-fl-caption text-fl-ink-muted"
             data-testid="stat-tile-note"
           >
             @if (note.tone !== 'muted') {
-              <span
-                class="mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full"
-                [class]="dotClass(note.tone)"
-                data-testid="stat-tile-note-dot"
-              ></span>
+              <span [class]="markClass(note.tone)" data-testid="stat-tile-note-dot">
+                <ng-icon [name]="markIcon(note.tone)" size="12px" />
+              </span>
             }
             <span>{{ note.text }}</span>
             @if (note.hint) {
               <ng-icon
                 name="lucideInfo"
-                class="mt-px h-3 w-3 shrink-0"
+                size="12px"
+                class="mt-0.5 shrink-0"
                 tabindex="0"
                 role="img"
                 [attr.title]="note.hint"
@@ -112,11 +94,11 @@ import { StatTileData, StatTileNote } from '../chart.models';
             [ariaLabel]="data().label + ': trend over the selected window'"
           />
         } @else if (data().spark !== undefined) {
-          <span class="text-[10px] text-sub">no history yet</span>
+          <span class="fl-metric__caption">no history yet</span>
         }
         @if (data().footnote; as footnote) {
           <span
-            class="truncate text-[10px] text-sub"
+            class="fl-metric__caption truncate"
             [attr.title]="footnote"
             data-testid="stat-tile-footnote"
             >{{ footnote }}</span
@@ -138,11 +120,17 @@ export class StatTileComponent {
   readonly sparkWidth = input<number>(120);
 
   readonly spark = computed(() => this.data().spark ?? []);
-  readonly color = computed(() => this.data().color ?? '#2259F1');
+  readonly color = computed(() => this.data().color ?? cssColor('--fl-accent'));
 
-  readonly deltaClass = computed(() => 'text-sub');
+  readonly deltaClass = computed(() => 'text-fl-ink-muted');
 
-  dotClass(tone: StatTileNote['tone']): string {
-    return tone === 'bad' ? 'bg-destructive' : 'bg-amber-500';
+  markClass(tone: StatTileNote['tone']): string {
+    return tone === 'bad'
+      ? 'fl-status fl-status--error mt-0.5 shrink-0'
+      : 'fl-status fl-status--warning mt-0.5 shrink-0';
+  }
+
+  markIcon(tone: StatTileNote['tone']): string {
+    return tone === 'bad' ? 'lucideCircleX' : 'lucideTriangleAlert';
   }
 }

@@ -1,5 +1,5 @@
-import { Component, input, computed, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, input, computed } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import {
   ProportionBarConfig,
   ProportionBarData,
@@ -29,76 +29,69 @@ import {
  */
 @Component({
   selector: 'app-proportion-bar',
-  standalone: true,
-  imports: [CommonModule],
+  imports: [DecimalPipe],
   template: `
     <div class="proportion-bar-container">
       @if (data().title) {
-        <div class="flex items-baseline justify-between mb-1">
-          <h3 class="text-sm font-medium text-foreground">{{ data().title }}</h3>
-          <span class="text-xs text-muted-foreground">
+        <div class="mb-1 flex items-baseline justify-between">
+          <h3 class="m-0 text-fl-body-sm font-semibold text-fl-ink">{{ data().title }}</h3>
+          <span class="fl-num text-fl-caption text-fl-ink-muted">
             {{ totalFormatted() }}
           </span>
         </div>
       }
       @if (data().subtitle) {
-        <p class="text-xs text-muted-foreground mb-2">{{ data().subtitle }}</p>
+        <p class="mb-2 text-fl-caption text-fl-ink-muted">{{ data().subtitle }}</p>
       }
 
-      <!-- Stacked bar -->
       <div
-        class="bar-track rounded-lg overflow-hidden flex"
+        role="img"
+        [attr.aria-label]="ariaLabel()"
+        class="flex overflow-hidden rounded-fl-md border border-fl-border bg-fl-track"
         [style.height.px]="mergedConfig().barHeight"
-        [class.border]="true"
-        [class.border-border]="true"
       >
         @for (seg of segments(); track seg.name) {
           <div
-            class="bar-segment relative group transition-opacity duration-150"
+            class="bar-segment group relative hover:opacity-80"
             [style.width.%]="seg.percent"
             [style.background-color]="seg.color"
-            [class.hover:opacity-80]="true"
           >
-            <!-- Percent label inside segment (if wide enough) -->
             @if (mergedConfig().showPercentLabels && seg.percent >= 8) {
               <span
-                class="absolute inset-0 flex items-center justify-center text-xs font-medium text-white drop-shadow-sm"
+                class="fl-num absolute inset-0 flex items-center justify-center text-fl-caption font-medium text-fl-on-accent"
               >
                 {{ seg.percent | number: '1.0-1' }}%
               </span>
             }
 
-            <!-- Tooltip -->
             <div
-              class="bar-tooltip hidden group-hover:block absolute z-10 bottom-full left-1/2 -translate-x-1/2 mb-2
-                        px-3 py-1.5 rounded-md text-xs whitespace-nowrap
-                        bg-popover text-popover-foreground border border-border"
+              class="bar-tooltip absolute bottom-full left-1/2 z-10 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded-fl-md border border-fl-border bg-fl-surface px-3 py-1.5 text-fl-caption text-fl-ink group-hover:block"
             >
               <strong>{{ seg.name }}</strong><br />
-              {{ seg.valueFormatted }} ({{ seg.percent | number: '1.1-1' }}%)
+              <span class="fl-num"
+                >{{ seg.valueFormatted }} ({{ seg.percent | number: '1.1-1' }}%)</span
+              >
             </div>
           </div>
         }
       </div>
 
-      <!-- Legend -->
       @if (mergedConfig().showLegend) {
-        <div class="flex flex-wrap gap-x-4 gap-y-1 mt-3">
+        <div class="mt-3 flex flex-wrap gap-x-4 gap-y-1">
           @for (seg of segments(); track seg.name) {
-            <div class="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <div class="flex items-center gap-1.5 text-fl-caption text-fl-ink-muted">
               <span
-                class="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+                class="inline-block h-2.5 w-2.5 shrink-0 rounded-fl-sm"
                 [style.background-color]="seg.color"
               ></span>
               <span>{{ seg.name }}</span>
-              <span class="font-medium text-foreground">{{ seg.valueFormatted }}</span>
+              <span class="fl-num font-medium text-fl-ink">{{ seg.valueFormatted }}</span>
             </div>
           }
         </div>
       }
     </div>
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [
     `
       .proportion-bar-container {
@@ -130,6 +123,13 @@ export class ProportionBarComponent {
     const formatter = this.config().valueFormatter;
     if (formatter) return formatter(total, 100);
     return `${total.toLocaleString()}${cfg.unit ? ' ' + cfg.unit : ''}`;
+  });
+
+  protected readonly ariaLabel = computed(() => {
+    const parts = this.segments().map((seg) => `${seg.name} ${seg.valueFormatted}`);
+    const title = this.data().title;
+    const list = parts.join(', ');
+    return title ? `${title}: ${list}` : list;
   });
 
   segments = computed(() => {

@@ -1,6 +1,8 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideArrowRight, lucideCircleCheck, lucideCircleAlert } from '@ng-icons/lucide';
+import { Component, input } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideArrowRight } from '@ng-icons/lucide';
+import { FlIcon } from '../../ui/primitives/icon';
+import { FlStatus } from '../../ui/primitives/status';
 
 export interface SituationAction {
   does: string;
@@ -9,57 +11,50 @@ export interface SituationAction {
 
 @Component({
   selector: 'app-situation',
-  standalone: true,
-  imports: [NgIcon],
-  providers: [provideIcons({ lucideArrowRight, lucideCircleAlert, lucideCircleCheck })],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FlIcon, FlStatus],
+  providers: [provideIcons({ lucideArrowRight })],
   template: `
     <section
-      class="rounded-lg border px-4 py-3.5"
-      [class]="
-        tone() === 'attention' ? 'border-amber-500/40 bg-amber-500/[0.05]' : 'border-border bg-card'
-      "
+      class="flex flex-col gap-2 rounded-fl-lg border border-fl-border bg-fl-surface px-4 py-3"
       [attr.data-testid]="testid()"
     >
-      <div class="flex items-start gap-3">
-        <ng-icon
-          [name]="tone() === 'attention' ? 'lucideCircleAlert' : 'lucideCircleCheck'"
-          class="mt-0.5 h-4 w-4 shrink-0"
-          [class]="tone() === 'attention' ? 'text-amber-500' : 'text-muted-foreground'"
+      @for (line of where(); track line) {
+        <fl-status
+          class="whitespace-normal"
+          [tone]="tone() === 'attention' ? 'warning' : 'success'"
+          [label]="line"
         />
+      }
 
-        <div class="min-w-0 space-y-1">
-          @for (line of where(); track line) {
-            <p class="m-0 text-sm text-foreground">{{ line }}</p>
-          }
-
-          @if (actions().length) {
-            <ul class="m-0 mt-2 list-none space-y-1 p-0">
-              @for (a of actions(); track a.does) {
-                <li class="flex items-start gap-2" [attr.data-testid]="testid() + '-todo'">
-                  <ng-icon
-                    name="lucideArrowRight"
-                    class="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground"
-                  />
-                  <span class="text-[13px] text-foreground">
-                    {{ a.does }}
-                    @if (a.why) {
-                      <span class="text-muted-foreground"> — {{ a.why }}</span>
-                    }
-                  </span>
-                </li>
-              }
-            </ul>
-          } @else {
-            <p
-              class="m-0 mt-1 text-[13px] text-muted-foreground"
-              [attr.data-testid]="testid() + '-nothing-to-do'"
+      @if (actions().length) {
+        <ul class="m-0 flex list-none flex-col gap-1 p-0">
+          @for (a of actions(); track a.does) {
+            <li
+              class="flex items-start gap-2 text-fl-body-sm text-fl-ink"
+              [attr.data-testid]="testid() + '-todo'"
             >
-              {{ nothingToDo() }}
-            </p>
+              <fl-icon
+                name="lucideArrowRight"
+                [size]="14"
+                class="mt-0.5 shrink-0 text-fl-ink-muted"
+              />
+              <span>
+                {{ a.does }}
+                @if (a.why) {
+                  <span class="text-fl-ink-muted"> — {{ a.why }}</span>
+                }
+              </span>
+            </li>
           }
-        </div>
-      </div>
+        </ul>
+      } @else {
+        <p
+          class="m-0 text-fl-body-sm text-fl-ink-muted"
+          [attr.data-testid]="testid() + '-nothing-to-do'"
+        >
+          {{ nothingToDo() }}
+        </p>
+      }
     </section>
   `,
 })

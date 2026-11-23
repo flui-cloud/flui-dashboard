@@ -1,11 +1,4 @@
-import {
-  Component,
-  input,
-  computed,
-  signal,
-  OnDestroy,
-  ChangeDetectionStrategy,
-} from '@angular/core';
+import { Component, input, computed, signal, OnDestroy } from '@angular/core';
 
 import { NgxEchartsDirective, provideEcharts } from 'ngx-echarts';
 import type { EChartsOption } from 'echarts';
@@ -16,6 +9,7 @@ import {
   DEFAULT_CHART_COLORS,
   ChartTheme,
 } from '../chart.models';
+import { ChartInk, chartInk } from '../chart-colors';
 
 /**
  * Time Series Line Chart Component
@@ -40,15 +34,20 @@ import {
  */
 @Component({
   selector: 'app-time-series-line',
-  standalone: true,
   imports: [NgxEchartsDirective],
   providers: [provideEcharts()],
   template: `
     <div class="time-series-container" [style.height]="config().height">
-      <div echarts [options]="chartOption()" [theme]="currentTheme()" class="w-full h-full"></div>
+      <div
+        echarts
+        role="img"
+        [attr.aria-label]="ariaLabel()"
+        [options]="chartOption()"
+        [theme]="currentTheme()"
+        class="w-full h-full"
+      ></div>
     </div>
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [
     `
       .time-series-container {
@@ -60,7 +59,6 @@ import {
   ],
 })
 export class TimeSeriesLineComponent implements OnDestroy {
-  // Inputs
   data = input.required<TimeSeriesChartData>();
   config = input<TimeSeriesChartConfig>({});
 
@@ -84,7 +82,6 @@ export class TimeSeriesLineComponent implements OnDestroy {
     return typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
   }
 
-  // Computed configurations
   private readonly mergedConfig = computed(() => ({
     ...DEFAULT_TIMESERIES_CONFIG,
     ...this.config(),
@@ -94,7 +91,6 @@ export class TimeSeriesLineComponent implements OnDestroy {
     () => this.config().theme ?? (this.isDarkSignal() ? 'dark' : 'light'),
   );
 
-  // Get colors for series
   private getSeriesColor(index: number, customColor?: string): string {
     if (customColor) return customColor;
 
@@ -109,7 +105,12 @@ export class TimeSeriesLineComponent implements OnDestroy {
     return colorPalette[index % colorPalette.length];
   }
 
-  // Format timestamp for display
+  protected readonly ariaLabel = computed(() => {
+    const { title, series } = this.data();
+    const names = series.map((s) => s.name).join(', ');
+    return names ? `${title}: line chart of ${names}` : `${title}: line chart`;
+  });
+
   private formatTimestamp(timestamp: Date | number): string {
     const date = typeof timestamp === 'number' ? new Date(timestamp) : timestamp;
     const formatter = this.config().timeFormatter;
@@ -118,13 +119,11 @@ export class TimeSeriesLineComponent implements OnDestroy {
       return formatter(date);
     }
 
-    // Default format: HH:MM
     const hours = date.getHours().toString().padStart(2, '0');
     const minutes = date.getMinutes().toString().padStart(2, '0');
     return `${hours}:${minutes}`;
   }
 
-  // Format value for display
   private formatValue(value: number): string {
     const formatter = this.config().valueFormatter;
     const unit = this.mergedConfig().unit;
@@ -136,15 +135,13 @@ export class TimeSeriesLineComponent implements OnDestroy {
     return `${value.toFixed(1)}${unit}`;
   }
 
-  // ECharts option
   chartOption = computed((): EChartsOption => {
     const cfg = this.mergedConfig();
     const chartData = this.data();
-    const isDark = this.currentTheme() === 'dark';
+    const ink = chartInk();
 
     const series = this.buildSeries(chartData, cfg);
 
-    // Add mark lines to first series
     const thresholdMarkLines = this.buildThresholdMarkLines(cfg);
     if (series.length > 0 && thresholdMarkLines.length > 0) {
       series[0].markLine = {
@@ -157,50 +154,50 @@ export class TimeSeriesLineComponent implements OnDestroy {
     const withTitle = cfg.showTitle !== false;
 
     return {
-      // The card behind the chart carries its own surface, in both themes. The
-      // built-in dark theme paints one of its own, which showed as a lighter
-      // rectangle sitting inside the card.
       backgroundColor: 'transparent',
       title: {
         text: withTitle ? chartData.title : '',
         left: 'left',
         textStyle: {
-          fontSize: 16,
+          fontSize: 13,
           fontWeight: 600,
-          color: isDark ? '#f9fafb' : '#111827',
+          color: ink.ink,
         },
       },
       tooltip: {
         trigger: 'axis',
-        backgroundColor: isDark ? '#1f2937' : '#ffffff',
-        borderColor: isDark ? '#374151' : '#e5e7eb',
+        backgroundColor: ink.surface,
+        borderColor: ink.border,
+        shadowBlur: 0,
+        shadowColor: 'transparent',
         textStyle: {
-          color: isDark ? '#f9fafb' : '#111827',
+          color: ink.ink,
+          fontSize: 12,
         },
         formatter: (params: any) => this.formatTooltip(params),
       },
-      legend: this.buildLegendConfig(cfg, chartData, isDark),
+      legend: this.buildLegendConfig(cfg, chartData, ink),
       grid: this.buildGridConfig(cfg, chartData),
-      xAxis: this.buildXAxisConfig(cfg, isDark),
-      yAxis: this.buildYAxisConfig(cfg, isDark),
+      xAxis: this.buildXAxisConfig(cfg, ink),
+      yAxis: this.buildYAxisConfig(cfg, ink),
       series: series,
       animation: cfg.animated,
       dataZoom: this.buildDataZoomConfig(cfg),
     };
   });
 
-  private buildLegendConfig(cfg: any, chartData: TimeSeriesChartData, isDark: boolean): object {
+  private buildLegendConfig(cfg: any, chartData: TimeSeriesChartData, ink: ChartInk): object {
     return {
       show: this.hasLegend(cfg, chartData),
       top: this.titleHeight(cfg),
       left: 'left',
       textStyle: {
-        color: isDark ? '#9ca3af' : '#6b7280',
+        color: ink.muted,
+        fontSize: 12,
       },
     };
   }
 
-  /** Height the title takes above everything else, or nothing where it is not drawn. */
   private titleHeight(cfg: any): number {
     return cfg.showTitle === false ? 0 : 38;
   }
@@ -209,11 +206,6 @@ export class TimeSeriesLineComponent implements OnDestroy {
     return Boolean(cfg.showLegend) && chartData.series.length > 1;
   }
 
-  /**
-   * Room above the plot: the title where it is drawn, then the legend under it.
-   * Both are measured from the same numbers as the legend's own offset, so
-   * dropping the title moves the legend up instead of onto the axis labels.
-   */
   private plotTop(cfg: any, chartData: TimeSeriesChartData): number {
     const legend = this.hasLegend(cfg, chartData) ? 26 : 0;
     return Math.max(12, this.titleHeight(cfg) + legend + 10);
@@ -229,31 +221,32 @@ export class TimeSeriesLineComponent implements OnDestroy {
     };
   }
 
-  private buildXAxisConfig(cfg: any, isDark: boolean): object {
+  private buildXAxisConfig(cfg: any, ink: ChartInk): object {
     return {
       type: 'time',
       boundaryGap: false as any,
       axisLine: {
         lineStyle: {
-          color: isDark ? '#374151' : '#e5e7eb',
+          color: ink.border,
         },
       },
       axisLabel: {
-        color: isDark ? '#9ca3af' : '#6b7280',
+        color: ink.muted,
         fontSize: 11,
+        hideOverlap: true,
         formatter: (value: number) => this.formatTimestamp(new Date(value)),
       },
       splitLine: {
         show: cfg.showGrid,
         lineStyle: {
-          color: isDark ? '#374151' : '#f3f4f6',
+          color: ink.subtle,
           type: 'dashed',
         },
       },
     };
   }
 
-  private buildYAxisConfig(cfg: any, isDark: boolean): object {
+  private buildYAxisConfig(cfg: any, ink: ChartInk): object {
     return {
       type: 'value',
       min: cfg.yMin,
@@ -262,14 +255,14 @@ export class TimeSeriesLineComponent implements OnDestroy {
         show: false,
       },
       axisLabel: {
-        color: isDark ? '#9ca3af' : '#6b7280',
+        color: ink.muted,
         fontSize: 11,
         formatter: (value: number) => this.formatValue(value),
       },
       splitLine: {
         show: cfg.showGrid,
         lineStyle: {
-          color: isDark ? '#374151' : '#f3f4f6',
+          color: ink.subtle,
           type: 'dashed',
         },
       },
@@ -302,7 +295,7 @@ export class TimeSeriesLineComponent implements OnDestroy {
         symbol: cfg.showDataPoints ? 'circle' : 'none',
         symbolSize: 6,
         lineStyle: {
-          width: 2,
+          width: 1.5,
           color: this.getSeriesColor(index, s.color),
         },
         itemStyle: {
@@ -374,7 +367,7 @@ export class TimeSeriesLineComponent implements OnDestroy {
       const value = param.value[1];
       const color = param.color;
       result += `<div style="display: flex; align-items: center; margin-top: 4px;">
-        <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: ${color}; margin-right: 8px;"></span>
+        <span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: ${color}; margin-right: 8px;"></span>
         <span style="flex: 1;">${param.seriesName}:</span>
         <span style="font-weight: 600; margin-left: 8px;">${this.formatValue(value)}</span>
       </div>`;

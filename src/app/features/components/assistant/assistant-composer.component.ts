@@ -1,83 +1,69 @@
-import {
-  Component,
-  computed,
-  inject,
-  input,
-  output,
-  signal,
-  ChangeDetectionStrategy,
-} from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideAlertCircle, lucideSend } from '@ng-icons/lucide';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideSend } from '@ng-icons/lucide';
 import { SandboxService } from '../../../core/services/sandbox.service';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
 import { AssistantChatService } from '../../service/assistant.service';
 import { AssistantModelSelectionService } from '../../service/assistant-model-selection.service';
-import { AssistantModelPickerComponent } from './assistant-model-picker.component';
 
 @Component({
   selector: 'app-assistant-composer',
-  standalone: true,
-  imports: [NgIcon, AssistantModelPickerComponent],
-  providers: [provideIcons({ lucideAlertCircle, lucideSend })],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FlAlert, FlButton, FlIcon],
+  providers: [provideIcons({ lucideSend })],
   template: `
     <div
-      class="space-y-2"
+      class="flex flex-col gap-2"
       [class.mx-auto]="fullscreen()"
       [class.max-w-3xl]="fullscreen()"
       [class.w-full]="fullscreen()"
     >
       @if (destructiveNotice()) {
-        <div
-          class="flex items-center gap-2 rounded-lg bg-destructive/10 border border-destructive/20 px-3 py-1.5"
+        <fl-alert
+          tone="warning"
+          title="Destructive actions are enabled"
           data-testid="assistant-destructive-notice"
         >
-          <ng-icon name="lucideAlertCircle" class="h-3.5 w-3.5 shrink-0 text-destructive" />
-          <p class="text-[11px] text-destructive leading-tight">
-            Destructive actions (delete/uninstall) are enabled on this server — they still ask for
-            confirmation, but proceed with care.
-          </p>
-        </div>
+          Delete and uninstall are enabled on this server. They still ask for confirmation, so
+          proceed with care.
+        </fl-alert>
       }
       @if (chatService.contextLong()) {
-        <div
-          class="flex items-center justify-between gap-2 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-1.5"
-        >
-          <p class="text-[11px] text-amber-700 leading-tight">
-            Long conversation — responses may degrade
-          </p>
+        <fl-alert tone="info" title="Long conversation">
+          Responses may degrade.
           <button
+            alertActions
+            flButton="ghost"
+            size="sm"
             type="button"
             (click)="chatService.newConversation()"
-            class="shrink-0 text-[11px] font-semibold text-blue-600 hover:text-blue-700 transition-colors whitespace-nowrap"
           >
-            New chat →
+            New chat
           </button>
-        </div>
+        </fl-alert>
       }
-      <div
-        class="rounded-fl-lg border border-input bg-muted/50 transition-shadow focus-within:ring-1 focus-within:ring-ring"
-      >
+      <div class="flex items-end gap-2">
         <textarea
+          class="fl-textarea max-h-44 min-h-0"
+          rows="2"
+          aria-label="Message"
+          placeholder="Ask Flui Assistant"
           [value]="draft()"
           (input)="onDraftInput($event)"
           (keydown)="onKeydown($event)"
           [disabled]="chatService.sending()"
-          rows="1"
-          placeholder="Ask Flui Assistant…"
-          class="w-full resize-none bg-transparent px-4 pt-3 pb-1 text-sm placeholder:text-muted-foreground focus:outline-none disabled:opacity-50 min-h-[44px] max-h-[180px]"
         ></textarea>
-        <div class="flex items-center justify-between gap-2 px-2 pb-2">
-          <app-assistant-model-picker (navigated)="navigated.emit()" />
-          <button
-            type="button"
-            (click)="submit()"
-            [disabled]="chatService.sending() || !draft().trim()"
-            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-fl-accent text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:scale-100"
-          >
-            <ng-icon name="lucideSend" class="h-4 w-4" />
-          </button>
-        </div>
+        <button
+          flButton="primary"
+          [iconOnly]="true"
+          type="button"
+          aria-label="Send"
+          (click)="submit()"
+          [disabled]="chatService.sending() || !draft().trim()"
+        >
+          <fl-icon name="lucideSend" />
+        </button>
       </div>
     </div>
   `,

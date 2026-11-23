@@ -1,11 +1,4 @@
-import {
-  Component,
-  input,
-  computed,
-  signal,
-  OnDestroy,
-  ChangeDetectionStrategy,
-} from '@angular/core';
+import { Component, input, computed, signal, OnDestroy } from '@angular/core';
 
 import { NgxEchartsDirective, provideEcharts } from 'ngx-echarts';
 import type { EChartsOption } from 'echarts';
@@ -16,6 +9,7 @@ import {
   DISTRIBUTION_PALETTE,
   ChartTheme,
 } from '../chart.models';
+import { ChartInk, chartInk } from '../chart-colors';
 
 /**
  * Proportion Donut/Pie Chart Component
@@ -43,20 +37,21 @@ import {
  */
 @Component({
   selector: 'app-proportion-donut',
-  standalone: true,
   imports: [NgxEchartsDirective],
   providers: [provideEcharts()],
   template: `
     <div class="proportion-donut-container">
       @if (data().title) {
-        <h3 class="text-sm font-medium text-foreground mb-1">{{ data().title }}</h3>
+        <h3 class="mb-1 text-fl-body-sm font-semibold text-fl-ink">{{ data().title }}</h3>
       }
       @if (data().subtitle) {
-        <p class="text-xs text-muted-foreground mb-2">{{ data().subtitle }}</p>
+        <p class="mb-2 text-fl-caption text-fl-ink-muted">{{ data().subtitle }}</p>
       }
 
       <div
         echarts
+        role="img"
+        [attr.aria-label]="ariaLabel()"
         [options]="chartOption()"
         [theme]="currentTheme()"
         class="w-full"
@@ -64,7 +59,6 @@ import {
       ></div>
     </div>
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [
     `
       .proportion-donut-container {
@@ -115,11 +109,16 @@ export class ProportionDonutComponent implements OnDestroy {
     })),
   );
 
+  protected readonly ariaLabel = computed(() => {
+    const parts = this.data().slices.map((s) => `${s.name} ${s.value}`);
+    return parts.length ? `${this.data().title}: ${parts.join(', ')}` : this.data().title;
+  });
+
   chartOption = computed((): EChartsOption => {
     const cfg = this.mergedConfig();
     const slices = this.coloredSlices();
     const total = this.total();
-    const isDark = this.currentTheme() === 'dark';
+    const ink = chartInk();
     const formatter = this.config().valueFormatter;
     const unit = cfg.unit;
 
@@ -127,19 +126,20 @@ export class ProportionDonutComponent implements OnDestroy {
       tooltip: {
         trigger: 'item',
         formatter: (params: any) => this.formatTooltip(params, formatter, unit),
-        backgroundColor: isDark ? '#1f2937' : '#ffffff',
-        borderColor: isDark ? '#374151' : '#e5e7eb',
-        textStyle: { color: isDark ? '#f9fafb' : '#111827' },
+        backgroundColor: ink.surface,
+        borderColor: ink.border,
+        shadowBlur: 0,
+        shadowColor: 'transparent',
+        textStyle: { color: ink.ink, fontSize: 12 },
       },
-      series: [this.buildPieSeries(cfg, isDark, slices, formatter, unit) as any],
+      series: [this.buildPieSeries(cfg, ink, slices, formatter, unit) as any],
       animation: cfg.animated,
     };
 
-    // Legend (disabled if showLabels is true)
     if (cfg.showLegend && !cfg.showLabels) {
       option.legend = this.buildLegendOption(
         cfg.legendPosition,
-        isDark,
+        ink,
         slices,
         total,
         formatter,
@@ -163,7 +163,7 @@ export class ProportionDonutComponent implements OnDestroy {
 
   private buildPieSeries(
     cfg: any,
-    isDark: boolean,
+    ink: ChartInk,
     slices: Array<{ name: string; value: number; color?: string }>,
     formatter: ((value: number, percent: number) => string) | undefined,
     unit: string | undefined,
@@ -178,16 +178,11 @@ export class ProportionDonutComponent implements OnDestroy {
       padAngle: cfg.padAngle,
       itemStyle: {
         borderRadius: cfg.borderRadius,
-        borderColor: isDark ? '#1f2937' : '#ffffff',
+        borderColor: ink.surface,
         borderWidth: 2,
       },
-      label: this.buildPieLabel(cfg, isDark, formatter, unit),
+      label: this.buildPieLabel(cfg, ink, formatter, unit),
       emphasis: {
-        itemStyle: {
-          shadowBlur: 10,
-          shadowOffsetX: 0,
-          shadowColor: 'rgba(0, 0, 0, 0.3)',
-        },
         scale: true,
         scaleSize: 5,
       },
@@ -198,7 +193,7 @@ export class ProportionDonutComponent implements OnDestroy {
             length2: 60,
             smooth: false,
             lineStyle: {
-              color: isDark ? '#4b5563' : '#9ca3af',
+              color: ink.muted,
               width: 1,
             },
           }
@@ -215,7 +210,7 @@ export class ProportionDonutComponent implements OnDestroy {
 
   private buildPieLabel(
     cfg: any,
-    isDark: boolean,
+    ink: ChartInk,
     formatter: ((value: number, percent: number) => string) | undefined,
     unit: string | undefined,
   ): object {
@@ -232,15 +227,15 @@ export class ProportionDonutComponent implements OnDestroy {
         name: {
           fontSize: 12,
           fontWeight: 'bold',
-          color: isDark ? '#f9fafb' : '#111827',
+          color: ink.ink,
         },
         value: {
           fontSize: 11,
-          color: isDark ? '#d1d5db' : '#4b5563',
+          color: ink.secondary,
         },
         percent: {
           fontSize: 10,
-          color: isDark ? '#9ca3af' : '#6b7280',
+          color: ink.muted,
         },
       },
       alignTo: 'edge',
@@ -262,15 +257,15 @@ export class ProportionDonutComponent implements OnDestroy {
 
   private buildLegendOption(
     legendPosition: 'top' | 'right' | 'bottom',
-    isDark: boolean,
+    ink: ChartInk,
     slices: Array<{ name: string; value: number; color?: string }>,
     total: number,
     formatter: ((value: number, percent: number) => string) | undefined,
     unit: string | undefined,
   ): object {
     const legendBase = {
-      textStyle: { color: isDark ? '#d1d5db' : '#4b5563', fontSize: 12 },
-      icon: 'circle',
+      textStyle: { color: ink.secondary, fontSize: 12 },
+      icon: 'roundRect',
       itemWidth: 10,
       itemHeight: 10,
       itemGap: 16,
@@ -298,7 +293,6 @@ export class ProportionDonutComponent implements OnDestroy {
       };
     }
 
-    // bottom
     return {
       ...legendBase,
       bottom: 0,

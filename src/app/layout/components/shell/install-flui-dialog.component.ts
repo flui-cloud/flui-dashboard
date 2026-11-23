@@ -1,86 +1,69 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  ElementRef,
-  HostListener,
-  effect,
-  inject,
-  viewChild,
-} from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
+import { Component, ElementRef, effect, inject, untracked, viewChild } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
 import { lucideExternalLink, lucideX } from '@ng-icons/lucide';
-import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
 import { InstallPromptService } from '../../../core/services/install-prompt.service';
 import { INSTALL_FLUI_URL } from '../../../core/utils/install-flui';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
 
 @Component({
   selector: 'app-install-flui-dialog',
-  standalone: true,
-  imports: [NgIcon, HlmButtonDirective],
+  imports: [FlButton, FlIcon],
   providers: [provideIcons({ lucideExternalLink, lucideX })],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { '(document:keydown.escape)': 'onEscape()' },
   template: `
     @if (prompt.dialogOpen()) {
-      <div class="fixed inset-0 z-50 bg-background/80" (click)="close()">
+      <div
+        class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+        (click)="close()"
+      >
         <div
-          class="fixed left-[50%] top-[50%] z-50 w-full max-w-sm translate-x-[-50%] translate-y-[-50%] p-4"
+          class="fl-dialog outline-none"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="install-flui-title"
+          tabindex="-1"
+          (click)="$event.stopPropagation()"
         >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="install-flui-title"
-            tabindex="-1"
-            class="bg-white border border-gray-200 rounded-lg p-6 outline-none"
-            (click)="$event.stopPropagation()"
-          >
-            <div class="flex items-start justify-between gap-4">
-              <div>
-                <h3 id="install-flui-title" class="text-lg font-semibold text-gray-900">
-                  Want the full experience?
-                </h3>
-                <p class="text-sm text-gray-600 mt-1">
-                  This demo is read-only. Install Flui on your own server: it is free and open
-                  source.
-                </p>
-              </div>
-              <button
-                hlmBtn
-                variant="ghost"
-                size="sm"
-                type="button"
-                aria-label="Close"
-                class="h-8 w-8 p-0 flex-shrink-0"
-                data-testid="install-flui-close"
-                (click)="close()"
-              >
-                <ng-icon name="lucideX" class="h-4 w-4" />
-              </button>
-            </div>
-
-            <div class="mt-5 flex flex-col gap-2">
-              <a
-                #install
-                hlmBtn
-                [href]="installUrl"
-                target="_blank"
-                rel="noopener"
-                data-testid="install-flui-link"
-                (click)="close()"
-              >
-                Install Flui
-                <ng-icon name="lucideExternalLink" class="h-4 w-4 ml-1.5" />
-              </a>
-              <button
-                hlmBtn
-                variant="ghost"
-                type="button"
-                data-testid="install-flui-stay"
-                (click)="close()"
-              >
-                Keep looking around
-              </button>
-            </div>
+          <header class="fl-dialog__header">
+            <h2 class="fl-dialog__title" id="install-flui-title">Want the full experience?</h2>
+            <button
+              type="button"
+              class="fl-dialog__close"
+              aria-label="Close"
+              data-testid="install-flui-close"
+              (click)="close()"
+            >
+              <fl-icon name="lucideX" />
+            </button>
+          </header>
+          <div class="fl-dialog__body">
+            <p class="text-fl-ink-secondary">
+              This demo is read-only. Install Flui on your own server: it is free and open source.
+            </p>
           </div>
+          <footer class="fl-dialog__footer">
+            <button
+              flButton="ghost"
+              type="button"
+              data-testid="install-flui-stay"
+              (click)="close()"
+            >
+              Keep looking around
+            </button>
+            <a
+              #install
+              flButton="primary"
+              [href]="installUrl"
+              target="_blank"
+              rel="noopener"
+              data-testid="install-flui-link"
+              (click)="close()"
+            >
+              Install Flui
+              <fl-icon name="lucideExternalLink" />
+            </a>
+          </footer>
         </div>
       </div>
     }
@@ -91,14 +74,27 @@ export class InstallFluiDialogComponent {
   protected readonly installUrl = INSTALL_FLUI_URL;
   private readonly install = viewChild<ElementRef<HTMLAnchorElement>>('install');
 
+  private opener: HTMLElement | null = null;
+
   constructor() {
+    effect(() => {
+      const open = this.prompt.dialogOpen();
+      untracked(() => {
+        if (open) {
+          this.opener = document.activeElement as HTMLElement | null;
+        } else if (this.opener) {
+          const opener = this.opener;
+          this.opener = null;
+          setTimeout(() => opener.focus());
+        }
+      });
+    });
     effect(() => {
       const link = this.install();
       if (link) setTimeout(() => link.nativeElement.focus());
     });
   }
 
-  @HostListener('document:keydown.escape')
   protected onEscape(): void {
     if (this.prompt.dialogOpen()) this.close();
   }

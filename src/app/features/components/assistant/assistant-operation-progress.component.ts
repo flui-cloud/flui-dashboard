@@ -7,12 +7,10 @@ import {
   input,
   output,
   signal,
-  ChangeDetectionStrategy,
 } from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCircleCheck, lucideCircleX, lucideLoaderCircle } from '@ng-icons/lucide';
 import { firstValueFrom } from 'rxjs';
 import { InfrastructureOperationsService } from '../../../core/api/api/infrastructureOperations.service';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
 
 type OperationState = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
 
@@ -28,56 +26,46 @@ const TERMINAL = new Set<OperationState>(['COMPLETED', 'FAILED', 'CANCELLED']);
 
 @Component({
   selector: 'app-assistant-operation-progress',
-  standalone: true,
-  imports: [NgIcon],
-  providers: [provideIcons({ lucideCircleCheck, lucideCircleX, lucideLoaderCircle })],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FlStatus],
+  host: {
+    class: 'mt-2 flex flex-col gap-2 rounded-fl-lg border border-fl-border bg-fl-surface p-3',
+  },
   template: `
-    <div
-      class="mt-2 rounded-fl-lg border px-3 py-2.5 text-xs"
-      [class]="
-        succeeded()
-          ? 'border-green-500/30 bg-green-500/5'
-          : failed()
-            ? 'border-destructive/30 bg-destructive/5'
-            : 'border-border/50 bg-muted/30'
-      "
-    >
-      <div class="flex items-center gap-2">
-        @if (succeeded()) {
-          <ng-icon name="lucideCircleCheck" class="h-4 w-4 shrink-0 text-green-600" />
-        } @else if (failed()) {
-          <ng-icon name="lucideCircleX" class="h-4 w-4 shrink-0 text-destructive" />
-        } @else {
-          <ng-icon name="lucideLoaderCircle" class="h-4 w-4 shrink-0 text-blue-500 animate-spin" />
-        }
-        <span class="font-medium text-foreground truncate">{{ label() }}</span>
-        <div class="flex-1"></div>
-        @if (isRunning() && hasProgress()) {
-          <span class="shrink-0 font-mono text-[11px] text-muted-foreground"
-            >{{ progress() }}%</span
-          >
-        }
-      </div>
-
-      @if (isRunning()) {
-        <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-          @if (hasProgress()) {
-            <div
-              class="h-full rounded-full bg-blue-500 transition-[width] duration-500 ease-out"
-              [style.width.%]="progress()"
-            ></div>
-          } @else {
-            <div class="h-full w-1/3 rounded-full bg-blue-500/60"></div>
-          }
-        </div>
-        @if (stepLabel()) {
-          <p class="mt-1.5 text-[11px] text-muted-foreground">{{ stepLabel() }}</p>
-        }
-      } @else if (failed()) {
-        <p class="mt-1.5 text-[11px] text-destructive/90 break-words">{{ failureText() }}</p>
+    <div class="flex items-center gap-3">
+      <span class="min-w-0 flex-1 truncate text-fl-body-sm font-medium text-fl-ink">{{
+        label()
+      }}</span>
+      @if (isRunning() && hasProgress()) {
+        <span class="fl-mono fl-num shrink-0 text-fl-ink-muted">{{ progress() }}%</span>
       }
+      <fl-status [tone]="tone()" [label]="statusLabel()" />
     </div>
+
+    @if (isRunning()) {
+      @if (hasProgress()) {
+        <span
+          class="fl-bar"
+          role="progressbar"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          [attr.aria-valuenow]="progress()"
+          [attr.aria-label]="label()"
+          ><span [style.width.%]="progress()"></span
+        ></span>
+      }
+      @if (stepLabel()) {
+        <ol class="fl-steps">
+          <li class="fl-step" aria-current="step">
+            <span class="fl-step__text">
+              <span class="fl-step__kicker">Current step</span>
+              <span class="fl-step__name">{{ stepLabel() }}</span>
+            </span>
+          </li>
+        </ol>
+      }
+    } @else if (failed()) {
+      <p class="break-words text-fl-body-sm text-fl-ink-secondary">{{ failureText() }}</p>
+    }
   `,
 })
 export class AssistantOperationProgressComponent implements OnInit, OnDestroy {
@@ -103,6 +91,27 @@ export class AssistantOperationProgressComponent implements OnInit, OnDestroy {
   protected readonly isRunning = computed(() => !this.succeeded() && !this.failed());
   protected readonly stepLabel = computed(() => this.humanizeStep(this.currentStep()));
 
+  protected readonly tone = computed<StatusTone>(() => {
+    if (this.succeeded()) return 'success';
+    if (this.failed()) return 'error';
+    return 'progress';
+  });
+
+  protected readonly statusLabel = computed(() => {
+    switch (this.status()) {
+      case 'COMPLETED':
+        return 'Completed';
+      case 'FAILED':
+        return 'Failed';
+      case 'CANCELLED':
+        return 'Cancelled';
+      case 'PENDING':
+        return 'Pending';
+      default:
+        return 'Running';
+    }
+  });
+
   protected readonly failureText = computed(() => {
     if (this.status() === 'CANCELLED') return 'Operation cancelled.';
     return this.error() || 'Operation failed.';
@@ -119,13 +128,9 @@ export class AssistantOperationProgressComponent implements OnInit, OnDestroy {
 
   private async poll(): Promise<void> {
     if (this.stopped) return;
-    try {
-      const res = (await firstValueFrom(
-        this.operationsApi.infrastructureOperationsControllerGetOperationStatus(this.operationId()),
-      )) as OperationStatusResponse;
-
-      if (this.stopped) return;
-
+    const res = await this.fetchStatus();
+    if (this.stopped) return;
+    if (res) {
       this.status.set(res.status);
       if (typeof res.progress === 'number')
         this.progressValue.set(Math.max(0, Math.min(100, res.progress)));
@@ -137,10 +142,17 @@ export class AssistantOperationProgressComponent implements OnInit, OnDestroy {
         this.settled.emit(res.status);
         return;
       }
-    } catch {
-      /* transient error — keep polling */
     }
-    if (!this.stopped) this.timer = setTimeout(() => void this.poll(), POLL_INTERVAL);
+    this.timer = setTimeout(() => void this.poll(), POLL_INTERVAL);
+  }
+
+  private fetchStatus(): Promise<OperationStatusResponse | null> {
+    return firstValueFrom(
+      this.operationsApi.infrastructureOperationsControllerGetOperationStatus(this.operationId()),
+    ).then(
+      (res) => res as OperationStatusResponse,
+      () => null,
+    );
   }
 
   private humanizeStep(step: string): string {

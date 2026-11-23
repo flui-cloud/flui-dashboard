@@ -1,33 +1,29 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  HostListener,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
+import { Component, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
 import { Router } from '@angular/router';
-import { NgIcon, provideIcons } from '@ng-icons/core';
+import { provideIcons } from '@ng-icons/core';
 import { lucideBell, lucideCheck } from '@ng-icons/lucide';
 import { AppNotification, NotificationService } from '../../../core/services/notification.service';
+import { FlEmptyState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
 import { NotificationItemComponent } from './notification-item.component';
 
 @Component({
   selector: 'app-notification-panel',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgIcon, NotificationItemComponent],
+  imports: [FlEmptyState, FlButton, FlIcon, NotificationItemComponent],
   providers: [provideIcons({ lucideBell, lucideCheck })],
+  host: { '(document:click)': 'onDocumentClick()', '(document:keydown.escape)': 'onEscape()' },
   template: `
     <div class="relative">
       <button
+        #trigger
         type="button"
         class="fl-topbar__icon"
         [attr.aria-label]="triggerLabel()"
         [attr.aria-expanded]="isOpen()"
         (click)="togglePanel($event)"
       >
-        <ng-icon name="lucideBell" size="17px" />
+        <fl-icon name="lucideBell" />
         @if (notifService.unreadCount() > 0) {
           <span class="fl-topbar__dot"></span>
         }
@@ -35,30 +31,27 @@ import { NotificationItemComponent } from './notification-item.component';
 
       @if (isOpen()) {
         <div
-          class="fl-popover"
+          class="fl-popover max-sm:fixed max-sm:inset-x-3 max-sm:top-14 max-sm:w-auto"
           role="dialog"
           aria-label="Notifications"
           (click)="$event.stopPropagation()"
         >
           <div class="fl-popover__header">
             <span class="fl-popover__title">Notifications</span>
-            <div class="flex items-center gap-1">
+            <div class="fl-row gap-1">
               @if (notifService.unreadCount() > 0) {
                 <button
+                  flButton="ghost"
+                  size="sm"
                   type="button"
-                  class="fl-btn fl-btn--ghost fl-btn--sm"
                   (click)="notifService.markAllRead()"
                 >
-                  <ng-icon name="lucideCheck" />
+                  <fl-icon name="lucideCheck" />
                   Mark all read
                 </button>
               }
               @if (notifService.notifications().length > 0) {
-                <button
-                  type="button"
-                  class="fl-btn fl-btn--ghost fl-btn--sm"
-                  (click)="notifService.clear()"
-                >
+                <button flButton="ghost" size="sm" type="button" (click)="notifService.clear()">
                   Clear all
                 </button>
               }
@@ -67,10 +60,12 @@ import { NotificationItemComponent } from './notification-item.component';
 
           <div class="fl-popover__body">
             @if (notifService.notifications().length === 0) {
-              <div class="fl-state fl-state--compact">
-                <p class="fl-state__title">No notifications</p>
-                <p class="fl-state__body">Events from deployments and clusters appear here.</p>
-              </div>
+              <fl-empty-state
+                icon="lucideBell"
+                title="No notifications"
+                body="Events from deployments and clusters appear here."
+                [compact]="true"
+              />
             } @else {
               @for (notif of notifService.notifications(); track notif.id) {
                 <app-notification-item
@@ -105,6 +100,7 @@ export class NotificationPanelComponent {
   protected notifService = inject(NotificationService);
   private readonly router = inject(Router);
 
+  private readonly trigger = viewChild.required<ElementRef<HTMLButtonElement>>('trigger');
   protected isOpen = signal(false);
   protected expandedId = signal<string | null>(null);
 
@@ -113,11 +109,16 @@ export class NotificationPanelComponent {
     return count > 0 ? `Notifications, ${count} unread` : 'Notifications';
   });
 
-  @HostListener('document:click')
   onDocumentClick(): void {
     if (this.isOpen()) {
       this.isOpen.set(false);
     }
+  }
+
+  onEscape(): void {
+    if (!this.isOpen()) return;
+    this.isOpen.set(false);
+    this.trigger().nativeElement.focus();
   }
 
   togglePanel(event: Event): void {

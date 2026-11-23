@@ -1,13 +1,10 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 
-// Providers are shown by name only: their logos are trademarks whose owners restrict use in third-party products.
 @Component({
   selector: 'app-provider-mark',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <span
-      class="inline-flex items-center justify-center shrink-0 rounded-md border border-border bg-muted text-muted-foreground font-semibold leading-none select-none"
+      class="inline-flex shrink-0 select-none items-center justify-center rounded-fl-md border border-fl-border bg-fl-surface font-semibold leading-none text-fl-ink-secondary"
       [style.width.px]="size()"
       [style.height.px]="size()"
       [style.font-size.px]="size() * 0.5"

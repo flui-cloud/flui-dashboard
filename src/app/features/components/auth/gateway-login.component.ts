@@ -1,8 +1,11 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { AppConfigService } from '../../../core/services/app-config.service';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+import { AuthCard } from './auth-card';
 
 /**
  * Where a gateway route that requires a Flui login sends a browser without a
@@ -11,22 +14,20 @@ import { AppConfigService } from '../../../core/services/app-config.service';
  */
 @Component({
   selector: 'app-gateway-login',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [AuthCard, FlAlert, FlSpinner],
   template: `
-    <div class="min-h-screen flex items-center justify-center bg-background p-4">
-      <div class="max-w-md w-full rounded-lg border border-border bg-card p-6 space-y-2">
-        @if (error()) {
-          <h1 class="text-base font-semibold">Could not open this page</h1>
-          <p class="text-sm text-muted-foreground">{{ error() }}</p>
-        } @else {
-          <h1 class="text-base font-semibold">Signing you in…</h1>
-          <p class="text-sm text-muted-foreground">
-            You will be taken back to the page you asked for.
-          </p>
-        }
-      </div>
-    </div>
+    @if (error()) {
+      <app-auth-card title="Could not open this page">
+        <fl-alert tone="error" title="Sign-in not completed">{{ error() }}</fl-alert>
+      </app-auth-card>
+    } @else {
+      <app-auth-card title="Signing you in">
+        <div class="flex flex-col items-center gap-2 text-center text-fl-body-sm text-fl-ink-muted">
+          <fl-spinner label="Signing in" />
+          You will be taken back to the page you asked for.
+        </div>
+      </app-auth-card>
+    }
   `,
 })
 export class GatewayLoginComponent implements OnInit {

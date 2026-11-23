@@ -1,6 +1,9 @@
-import { Component, computed, input, output, ChangeDetectionStrategy } from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideAlertTriangle, lucideCheck, lucideExternalLink, lucideX } from '@ng-icons/lucide';
+import { Component, computed, input, output } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideCheck, lucideExternalLink, lucideX } from '@ng-icons/lucide';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
 import { ChatActionRequest, PendingAction } from '../../service/assistant.service';
 
 interface ActionGroup {
@@ -13,108 +16,65 @@ interface ActionGroup {
 
 @Component({
   selector: 'app-assistant-confirm-card',
-  standalone: true,
-  imports: [NgIcon],
-  providers: [
-    provideIcons({
-      lucideAlertTriangle,
-      lucideCheck,
-      lucideExternalLink,
-      lucideX,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FlAlert, FlButton, FlIcon],
+  providers: [provideIcons({ lucideCheck, lucideExternalLink, lucideX })],
+  host: { class: 'block' },
   template: `
-    <div
-      class="mx-4 mb-3 rounded-fl-lg border overflow-hidden text-sm"
-      [class]="
-        isDestructive()
-          ? 'border-destructive/30 bg-destructive/5'
-          : 'border-amber-500/30 bg-amber-500/5'
-      "
+    <fl-alert
+      [tone]="isDestructive() ? 'error' : 'warning'"
+      [title]="isDestructive() ? 'Destructive action, confirm carefully' : 'Confirm action'"
     >
-      <div
-        class="flex items-center gap-2 px-3 py-2 border-b"
-        [class]="
-          isDestructive()
-            ? 'border-destructive/20 bg-destructive/10'
-            : 'border-amber-500/20 bg-amber-500/10'
-        "
-      >
-        <ng-icon
-          name="lucideAlertTriangle"
-          class="h-3.5 w-3.5 shrink-0"
-          [class]="isDestructive() ? 'text-destructive' : 'text-amber-600'"
-        />
-        <p
-          class="text-xs font-semibold"
-          [class]="isDestructive() ? 'text-destructive' : 'text-amber-700'"
-        >
-          {{ isDestructive() ? 'Destructive action — confirm carefully' : 'Confirm action' }}
-        </p>
-      </div>
-
-      <div class="p-3 space-y-3">
+      <div class="mt-1 flex flex-col gap-3">
         @for (group of groups(); track group.toolCallIds[0]) {
-          <div class="space-y-2">
-            <div class="flex items-center gap-2 flex-wrap">
-              <span
-                class="rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
-                [class]="
-                  group.tier === 'destructive'
-                    ? 'bg-destructive/15 text-destructive'
-                    : 'bg-amber-500/15 text-amber-700'
-                "
-              >
-                {{ group.tier }}
+          <div class="flex flex-col gap-2">
+            <div class="fl-row">
+              <span class="font-medium text-fl-ink">{{ group.label }}</span>
+              <span class="text-fl-caption text-fl-ink-muted">
+                {{ group.tier === 'destructive' ? 'Destructive' : 'Write'
+                }}{{
+                  group.toolCallIds.length > 1
+                    ? ', ' + group.toolCallIds.length + ' components'
+                    : ''
+                }}
               </span>
-              <span class="font-medium text-foreground text-xs">{{ group.label }}</span>
-              @if (group.toolCallIds.length > 1) {
-                <span class="text-[10px] text-muted-foreground"
-                  >({{ group.toolCallIds.length }} components)</span
-                >
-              }
             </div>
 
             @if (group.toolCallIds.length === 1 && argEntries(group.args).length > 0) {
-              <div class="rounded-lg bg-muted/60 px-3 py-2 font-mono text-[11px] space-y-0.5">
+              <dl
+                class="flex flex-col gap-0.5 rounded-fl-md border border-fl-border-subtle bg-fl-surface px-3 py-2 font-mono text-fl-mono-sm"
+              >
                 @for (entry of argEntries(group.args); track entry[0]) {
                   <div class="flex gap-2">
-                    <span class="text-muted-foreground shrink-0">{{ entry[0] }}:</span>
-                    <span class="text-foreground break-all">{{ entry[1] }}</span>
+                    <dt class="shrink-0 text-fl-ink-muted">{{ entry[0] }}:</dt>
+                    <dd class="break-all text-fl-ink">{{ entry[1] }}</dd>
                   </div>
                 }
-              </div>
+              </dl>
             }
 
             @for (request of group.requests; track request) {
               <div
-                class="rounded-lg border border-border bg-background/70 px-3 py-2.5 space-y-2"
+                class="flex flex-col gap-1.5 rounded-fl-md border border-fl-border bg-fl-surface px-3 py-2"
                 data-testid="cycle-request"
               >
-                <p class="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <span class="text-fl-caption font-semibold text-fl-ink-secondary">
                   Approving here answers this request
-                </p>
-                <p class="text-xs text-foreground" data-testid="cycle-sentence">
-                  {{ request.sentence }}
-                </p>
+                </span>
+                <p class="text-fl-ink" data-testid="cycle-sentence">{{ request.sentence }}</p>
                 @if (request.estimateNote) {
-                  <p
-                    class="text-[11px] leading-relaxed text-amber-700"
-                    data-testid="cycle-estimate"
-                  >
+                  <p class="text-fl-caption text-fl-ink-secondary" data-testid="cycle-estimate">
                     {{ request.estimateNote }}
                   </p>
                 }
                 @if (request.decideUrl) {
                   <a
+                    class="fl-link inline-flex items-center gap-1 text-fl-caption"
                     [href]="request.decideUrl"
                     target="_blank"
                     rel="noopener noreferrer"
-                    class="inline-flex items-center gap-1 text-[11px] font-medium text-blue-600 hover:underline"
                     data-testid="cycle-decide-url"
                   >
-                    <ng-icon name="lucideExternalLink" class="h-3 w-3" />
+                    <fl-icon name="lucideExternalLink" [size]="13" />
                     Open it on the requests page
                   </a>
                 }
@@ -122,28 +82,23 @@ interface ActionGroup {
             }
           </div>
         }
-
-        <div class="flex gap-2 pt-1">
-          <button
-            type="button"
-            (click)="deny()"
-            class="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
-          >
-            <ng-icon name="lucideX" class="h-3 w-3" />
-            Deny
-          </button>
-          <button
-            type="button"
-            (click)="approve()"
-            class="flex-1 flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition-all hover:opacity-90 active:scale-95"
-            [class]="isDestructive() ? 'bg-destructive' : 'bg-fl-accent'"
-          >
-            <ng-icon name="lucideCheck" class="h-3 w-3" />
-            {{ isDestructive() ? 'Confirm delete' : 'Approve' }}
-          </button>
-        </div>
       </div>
-    </div>
+      <ng-container alertActions>
+        <button flButton="ghost" size="sm" type="button" (click)="deny()">
+          <fl-icon name="lucideX" />
+          Deny
+        </button>
+        <button
+          [flButton]="isDestructive() ? 'danger' : 'primary'"
+          size="sm"
+          type="button"
+          (click)="approve()"
+        >
+          <fl-icon name="lucideCheck" />
+          {{ isDestructive() ? 'Confirm delete' : 'Approve' }}
+        </button>
+      </ng-container>
+    </fl-alert>
   `,
 })
 export class AssistantConfirmCardComponent {

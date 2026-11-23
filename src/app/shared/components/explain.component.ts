@@ -1,6 +1,5 @@
 import {
   booleanAttribute,
-  ChangeDetectionStrategy,
   Component,
   ElementRef,
   computed,
@@ -11,31 +10,34 @@ import {
   untracked,
   viewChild,
 } from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
+import { provideIcons } from '@ng-icons/core';
 import { lucideInfo } from '@ng-icons/lucide';
+import { FlIcon } from '../../ui/primitives/icon';
 
 let nextId = 0;
 
 @Component({
   selector: 'app-explain',
-  standalone: true,
-  imports: [NgIcon],
+  imports: [FlIcon],
   providers: [provideIcons({ lucideInfo })],
-  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <span class="inline-block max-w-full" [class.relative]="floating()">
+    <span
+      class="inline-block max-w-full"
+      [class.relative]="floating()"
+      (keydown.escape)="dismiss($event)"
+    >
       <span class="inline-flex items-center gap-1.5 align-middle">
         <span [class]="labelClass()">{{ label() }}</span>
         <button
           type="button"
-          class="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          class="inline-flex h-4 w-4 shrink-0 cursor-pointer items-center justify-center rounded-fl-sm border-0 bg-transparent p-0 text-fl-ink-muted hover:text-fl-ink focus-visible:shadow-fl-focus focus-visible:outline-none"
           [attr.aria-expanded]="open()"
           [attr.aria-controls]="id"
           [attr.aria-label]="open() ? 'Hide the explanation' : 'What is this?'"
           [attr.data-testid]="testid() ? testid() + '-toggle' : null"
           (click)="toggle()"
         >
-          <ng-icon name="lucideInfo" class="h-3.5 w-3.5" />
+          <fl-icon name="lucideInfo" [size]="14" />
         </button>
       </span>
 
@@ -58,7 +60,7 @@ let nextId = 0;
 export class ExplainComponent {
   readonly label = input.required<string>();
 
-  readonly labelClass = input('text-[12px] font-medium text-foreground');
+  readonly labelClass = input('text-fl-caption font-medium text-fl-ink');
 
   readonly testid = input<string | null>(null);
 
@@ -75,60 +77,33 @@ export class ExplainComponent {
 
   protected readonly panelClass = computed(() => {
     if (!this.floating()) {
-      return 'mt-1.5 block max-w-prose text-[12px] leading-relaxed text-muted-foreground';
+      return 'mt-1 block max-w-prose text-fl-caption text-fl-ink-muted';
     }
     const look =
-      'z-30 block w-72 rounded-md border border-border bg-card p-3 text-[12px] leading-relaxed text-muted-foreground';
+      'z-30 block w-72 rounded-fl-md border border-fl-border bg-fl-surface p-3 text-fl-caption text-fl-ink-secondary';
     if (this.escaped()) return `fixed ${look}`;
     const side = this.dropUp() ? 'bottom-full mb-1.5' : 'top-full mt-1.5';
     const edge = this.alignRight() ? 'right-0' : 'left-0';
     return `absolute ${edge} ${side} ${look}`;
   });
 
-  /**
-   * Opens upward where opening downward would be cut off.
-   *
-   * The settings table scrolls sideways, and a box told to scroll on one axis
-   * clips the other too — so a panel hung under the last row is half hidden by
-   * its container rather than by the window. Measured against whatever actually
-   * clips: that container on the last rows, the window elsewhere.
-   */
   private readonly dropUp = signal(false);
 
-  /**
-   * Hangs from the right edge where hanging from the left would run past what
-   * clips it — the case of a column near the end of a table that scrolls
-   * sideways, where the overflow is silent rather than scrollable.
-   */
   private readonly alignRight = signal(false);
 
-  /**
-   * Coordinates for a panel that has left its container entirely.
-   *
-   * The last resort, for a clipping box too small to hold the panel on either
-   * side of the anchor — a table of one row, whose header is both at its top
-   * and near its bottom. Positioned against the window, so it closes on a
-   * scroll rather than drifting away from what it explains.
-   */
   protected readonly escaped = signal<{ top: number; left: number } | null>(null);
 
   private readonly host = inject(ElementRef<HTMLElement>);
 
-  /** Roughly the panel: a side has to be chosen before it exists to measure. */
   private static readonly PANEL_HEIGHT = 110;
 
-  /** `w-72`, and the one number here that is exact. */
   private static readonly PANEL_WIDTH = 288;
 
   private readonly panelRef = viewChild<ElementRef<HTMLElement>>('panel');
 
-  /** One correction per opening: a flip changes the rect it was measured from. */
   private corrected = false;
 
   constructor() {
-    // The side is chosen before the panel exists, from an estimate of its
-    // height; this measures the one that was drawn. An effect rather than a
-    // frame callback because only Angular knows when the panel is there.
     effect(() => {
       const el = this.panelRef()?.nativeElement;
       if (!el || !this.floating()) return;
@@ -138,6 +113,13 @@ export class ExplainComponent {
         this.correct(el);
       });
     });
+  }
+
+  protected dismiss(event: Event): void {
+    if (!this.open()) return;
+    event.stopPropagation();
+    this.open.set(false);
+    this.escaped.set(null);
   }
 
   protected toggle(): void {
@@ -190,12 +172,6 @@ export class ExplainComponent {
     this.escaped.set(null);
   };
 
-  /**
-   * Picks the corner to hang from, against whatever actually clips: the
-   * container on a table that scrolls sideways, the window elsewhere. Each axis
-   * flips only when the other side has more room, so a panel never moves to a
-   * place that is worse.
-   */
   private place(): void {
     const anchor = (this.host.nativeElement as HTMLElement).getBoundingClientRect();
     const clip = this.clipRect();

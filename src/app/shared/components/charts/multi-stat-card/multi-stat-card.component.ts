@@ -1,4 +1,6 @@
-import { Component, input, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, computed } from '@angular/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideCircleX, lucideTriangleAlert } from '@ng-icons/lucide';
 
 import {
   MultiStatCardConfig,
@@ -29,43 +31,36 @@ import {
  */
 @Component({
   selector: 'app-multi-stat-card',
-  standalone: true,
-  imports: [],
+  imports: [NgIcon],
+  providers: [provideIcons({ lucideCircleX, lucideTriangleAlert })],
   template: `
-    <div class="multi-stat-card bg-card border border-border rounded-lg p-6">
-      <!-- Header -->
-      <div class="mb-4">
-        <h3 class="text-lg font-semibold text-foreground">{{ data().title }}</h3>
+    <div class="multi-stat-card rounded-fl-lg border border-fl-border bg-fl-surface p-4">
+      <div class="mb-4 flex flex-col gap-1">
+        <h3 class="m-0 text-fl-section-title text-fl-ink">{{ data().title }}</h3>
         @if (data().subtitle) {
-          <p class="text-sm text-muted-foreground mt-1">{{ data().subtitle }}</p>
+          <p class="m-0 text-fl-caption text-fl-ink-muted">{{ data().subtitle }}</p>
         }
       </div>
 
-      <!-- Stats Grid -->
       <div [class]="statsGridClass()">
         @for (stat of data().stats; track stat.label) {
           <div class="stat-item" [class]="statItemClass()">
-            <!-- Label -->
-            <div class="text-xs text-muted-foreground mb-1 font-medium">
+            <div class="fl-metric__label mb-1">
               {{ stat.label }}
             </div>
 
-            <!-- Value -->
             <div class="flex items-baseline gap-2">
               @if (statusDot(stat); as dot) {
-                <span
-                  class="h-2 w-2 shrink-0 self-center rounded-full"
-                  [class]="dot"
-                  data-testid="multi-stat-dot"
-                ></span>
+                <span [class]="dot" class="self-center" data-testid="multi-stat-dot">
+                  <ng-icon [name]="statusIcon(stat)" size="14px" />
+                </span>
               }
-              <span class="text-2xl font-bold text-foreground">
+              <span class="fl-metric__value">
                 {{ formatValue(stat.value) }}{{ stat.unit || '' }}
               </span>
 
-              <!-- Trend -->
               @if (config().showTrend && stat.trend) {
-                <span class="text-xs" [class]="getTrendClass(stat.trend)">
+                <span class="fl-num text-fl-caption" [class]="getTrendClass(stat.trend)">
                   {{ getTrendIcon(stat.trend) }}
                   @if (stat.trendValue) {
                     <span>{{ stat.trendValue }}</span>
@@ -78,7 +73,6 @@ import {
       </div>
     </div>
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [
     `
       .multi-stat-card {
@@ -121,17 +115,14 @@ import {
   ],
 })
 export class MultiStatCardComponent {
-  // Inputs
   data = input.required<MultiStatCardData>();
   config = input<MultiStatCardConfig>({});
 
-  // Computed configurations
   private readonly mergedConfig = computed(() => ({
     ...DEFAULT_MULTISTAT_CONFIG,
     ...this.config(),
   }));
 
-  // Grid class based on layout
   statsGridClass = computed(() => {
     const layout = this.mergedConfig().layout;
     switch (layout) {
@@ -146,7 +137,6 @@ export class MultiStatCardComponent {
     }
   });
 
-  // Stat item class based on layout
   statItemClass = computed(() => {
     const layout = this.mergedConfig().layout;
     switch (layout) {
@@ -161,7 +151,6 @@ export class MultiStatCardComponent {
     }
   });
 
-  // Format value
   formatValue(value: number | string): string {
     if (typeof value === 'string') {
       return value;
@@ -170,17 +159,19 @@ export class MultiStatCardComponent {
   }
 
   statusDot(stat: StatItem): string | null {
-    if (stat.severity === 'danger') return 'bg-destructive';
-    if (stat.severity === 'warning') return 'bg-amber-500';
+    if (stat.severity === 'danger') return 'fl-status fl-status--error';
+    if (stat.severity === 'warning') return 'fl-status fl-status--warning';
     return null;
   }
 
-  // Get trend class
-  getTrendClass(_trend: 'up' | 'down' | 'stable'): string {
-    return 'text-sub';
+  statusIcon(stat: StatItem): string {
+    return stat.severity === 'danger' ? 'lucideCircleX' : 'lucideTriangleAlert';
   }
 
-  // Get trend icon
+  getTrendClass(_trend: 'up' | 'down' | 'stable'): string {
+    return 'text-fl-ink-muted';
+  }
+
   getTrendIcon(trend: 'up' | 'down' | 'stable'): string {
     switch (trend) {
       case 'up':

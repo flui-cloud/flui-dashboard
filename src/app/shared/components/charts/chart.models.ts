@@ -1,13 +1,4 @@
 /**
- * Chart Models and Interfaces
- * Shared types for all chart components
- */
-
-import tokens from '../../../../theme/tokens.json';
-
-const c = (primitive: keyof typeof tokens.primitives): string => tokens.primitives[primitive];
-
-/**
  * Theme options for charts
  */
 export type ChartTheme = 'light' | 'dark';
@@ -66,8 +57,8 @@ export interface GaugeChartConfig extends BaseChartConfig {
   unit?: string;
   /** Severity thresholds for color coding */
   thresholds?: {
-    warning: number; // Value above which shows warning color
-    danger: number; // Value above which shows danger color
+    warning: number;
+    danger: number;
   };
   /** Fixed severity (overrides threshold-based color) */
   severity?: MetricSeverity;
@@ -86,23 +77,6 @@ export interface GaugeChartData {
   /** Previous value for trend calculation */
   previousValue?: number;
 }
-
-/**
- * Chart colors come from the console tokens: charts draw on canvas, where CSS variables do not reach.
- */
-export const DEFAULT_CHART_COLORS: ChartColorScheme = {
-  success: [c('green-700'), c('green-400'), c('green-200')],
-  warning: [c('amber-700'), c('amber-400'), c('amber-200')],
-  danger: [c('red-700'), c('red-400'), c('red-200')],
-  info: [c('blue-600'), c('blue-400'), c('blue-200')],
-  neutral: [c('gray-600'), c('gray-500'), c('gray-300')],
-  gradient: {
-    success: [c('green-700'), c('green-400')],
-    warning: [c('amber-700'), c('amber-400')],
-    danger: [c('red-700'), c('red-400')],
-    info: [c('blue-600'), c('blue-400')],
-  },
-};
 
 /**
  * Default configuration values
@@ -140,8 +114,8 @@ export interface TimeSeriesSeries {
   name: string;
   data: TimeSeriesDataPoint[];
   color?: string;
-  showArea?: boolean; // Fill area under line
-  smooth?: boolean; // Smooth curve vs angular line
+  showArea?: boolean;
+  smooth?: boolean;
 }
 
 /**
@@ -267,8 +241,8 @@ export type TimelineStatus = 'up' | 'down' | 'degraded' | 'maintenance';
 export interface TimelineEvent {
   timestamp: Date | number;
   status: TimelineStatus;
-  duration?: number; // Duration in milliseconds
-  message?: string; // Incident description
+  duration?: number;
+  message?: string;
 }
 
 /**
@@ -403,8 +377,6 @@ export const DEFAULT_BAR_CONFIG: Required<Omit<ProportionBarConfig, 'theme' | 'v
   showPercentLabels: true,
 };
 
-// ─── Log Volume Histogram ────────────────────────────────────────────────────
-
 /**
  * A single bucket/point in a log level series
  */
@@ -437,31 +409,7 @@ export interface LogVolumeRangeSelection {
   end: Date;
 }
 
-/**
- * Distribution charts tell slices apart by lightness within the accent and neutral ramps, never by a
- * new hue: the console keeps one accent, and green, amber and red for state only.
- */
-export const DISTRIBUTION_PALETTE = [
-  c('blue-600'),
-  c('gray-700'),
-  c('blue-300'),
-  c('gray-500'),
-  c('blue-800'),
-  c('gray-300'),
-  c('blue-400'),
-  c('gray-600'),
-  c('blue-200'),
-  c('gray-800'),
-  c('blue-500'),
-  c('gray-200'),
-];
-
-/**
- * Per-node series palette for cluster metrics, assigned by node index in this fixed order. The first
- * node takes the accent, the rest step through neutral and lighter accent so nodes differ by
- * lightness, not hue; past four nodes the charts summarise rather than name each node by color.
- */
-export const NODE_SERIES_COLORS = [c('blue-600'), c('gray-700'), c('blue-300'), c('gray-500')];
+export { DEFAULT_CHART_COLORS, DISTRIBUTION_PALETTE, NODE_SERIES_COLORS } from './chart-colors';
 
 /** Horizontal usage bar with optional warning/danger tick marks. */
 export interface MeterBarConfig {
