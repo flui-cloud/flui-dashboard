@@ -163,7 +163,7 @@ export class ZoneReplicasComponent {
   formatDate(iso: string | null | undefined): string {
     if (!iso) return 'Never';
     const d = new Date(iso);
-    return Number.isNaN(d.getTime()) ? iso : d.toLocaleString();
+    return Number.isNaN(d.getTime()) ? iso : d.toLocaleString('en-GB');
   }
 
   reportSummary(report: ReplicaDiffReport): string {

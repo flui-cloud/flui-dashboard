@@ -9,11 +9,11 @@ import { EgressService, EgressView, formatEgressPorts } from '../../service/egre
   template: `
     @if (reading(); as r) {
       @if (!r.open) {
-        <p class="m-0 mt-2 text-xs text-sub" data-testid="cluster-egress-line">
+        <p class="m-0 mt-2 text-fl-caption text-fl-ink-muted" data-testid="cluster-egress-line">
           Applications reach only {{ portsOf(r) }} outside the cluster.
         </p>
       } @else if (sayOpen()) {
-        <p class="m-0 mt-2 text-xs text-sub" data-testid="cluster-egress-line">
+        <p class="m-0 mt-2 text-fl-caption text-fl-ink-muted" data-testid="cluster-egress-line">
           Applications may reach any port outside the cluster.
         </p>
       }

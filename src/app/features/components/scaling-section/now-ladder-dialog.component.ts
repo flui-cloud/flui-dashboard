@@ -1,3 +1,4 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { Component, computed, input, output, signal } from '@angular/core';
 import { provideIcons } from '@ng-icons/core';
 import { lucideArrowLeft, lucideArrowRight, lucideX } from '@ng-icons/lucide';
@@ -15,12 +16,14 @@ import { FlStatus } from '../../../ui/primitives/status';
  */
 @Component({
   selector: 'app-scaling-ladder-dialog',
-  imports: [FlButton, FlIcon, FlStatus],
+  imports: [CdkTrapFocus, FlButton, FlIcon, FlStatus],
   providers: [provideIcons({ lucideArrowLeft, lucideArrowRight, lucideX })],
   host: { '(document:keydown.escape)': 'closed.emit()' },
   template: `
     <div
       class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
       (click)="closed.emit()"
     >
       <div

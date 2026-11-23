@@ -1,55 +1,62 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { TopologyResponseDto } from '../../../core/api/model/topologyResponseDto';
 import { TopologyFocus } from './topology-state';
 import { ClusterConnection, clusterConnections } from './topology-tiles';
+import { connectionTone } from './topology-kit';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlTag } from '../../../ui/primitives/tag';
+import { FlStatus } from '../../../ui/primitives/status';
 
-const LINE: Record<ClusterConnection['kind'], { style: string; color: string; label: string }> = {
-  tunnel: { style: 'solid', color: 'hsl(var(--ok))', label: 'Flui network' },
-  'public-address': { style: 'dashed', color: 'hsl(var(--warn))', label: 'Public address' },
-  off: { style: 'dotted', color: 'hsl(var(--muted-foreground))', label: 'Flui network off' },
+const LINE: Record<ClusterConnection['kind'], { style: string; label: string }> = {
+  tunnel: { style: 'border-solid', label: 'Flui network' },
+  'public-address': { style: 'border-dashed', label: 'Public address' },
+  off: { style: 'border-dotted', label: 'Flui network off' },
 };
 
 /** How the control reaches every other cluster: one line each, its kind drawn and named. */
 @Component({
   selector: 'app-topology-network-strip',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FlPanel, FlTag, FlStatus],
+  host: { class: 'fl-stack' },
   template: `
     @if (view(); as v) {
-      <section class="card-surface p-4" aria-label="How the clusters are connected">
-        <h2 class="text-label mb-3">Between clusters</h2>
+      <fl-panel title="Between clusters">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
           @if (v.control; as control) {
             <button
               type="button"
-              class="flex-none rounded-lg border-2 px-3 py-2 text-left"
-              style="border-color: hsl(var(--brand))"
-              [class.ring-1]="isFocused(control.id)"
+              class="flex-none rounded-fl-md border bg-fl-surface px-3 py-2 text-left hover:bg-fl-surface-hover focus-visible:shadow-fl-focus focus-visible:outline-none"
+              [class.border-fl-accent]="isFocused(control.id)"
+              [class.border-fl-ink-muted]="!isFocused(control.id)"
+              [attr.aria-pressed]="isFocused(control.id)"
               (click)="selected.emit({ type: 'cluster', id: control.id })"
             >
-              <span class="block text-sm font-semibold text-foreground">{{ control.name }}</span>
-              <span class="text-sub">control · {{ control.provider }}</span>
+              <span class="block text-fl-body-sm font-semibold text-fl-ink">{{
+                control.name
+              }}</span>
+              <span class="text-fl-caption text-fl-ink-muted"
+                >control · {{ control.provider }}</span
+              >
             </button>
           }
           <ul class="flex min-w-0 flex-1 flex-col gap-2">
             @for (c of v.connections; track c.clusterId) {
               <li class="flex items-center gap-2">
                 <span
-                  class="hidden h-0 flex-1 border-t-2 sm:block"
+                  class="hidden h-0 flex-1 border-t-2 border-fl-ink-muted sm:block"
                   aria-hidden="true"
-                  [style.border-top-style]="line(c).style"
-                  [style.border-top-color]="line(c).color"
+                  [class]="line(c).style"
                 ></span>
-                <span class="flex-none text-xs font-medium" [style.color]="line(c).color">{{
-                  line(c).label
-                }}</span>
+                <fl-status class="flex-none" [tone]="tone(c)" [label]="line(c).label" />
                 @if (c.crossProvider) {
-                  <span class="badge badge-pending flex-none">other provider</span>
+                  <fl-tag class="flex-none">other provider</fl-tag>
                 }
                 <button
                   type="button"
-                  class="w-40 flex-none truncate rounded-md border border-border px-2 py-1 text-left text-sm font-medium text-foreground hover:bg-muted"
-                  [class.ring-1]="isFocused(c.clusterId)"
+                  class="w-40 flex-none truncate rounded-fl-md border bg-fl-surface px-2 py-1 text-left text-fl-body-sm font-medium text-fl-ink hover:bg-fl-surface-hover focus-visible:shadow-fl-focus focus-visible:outline-none"
+                  [class.border-fl-accent]="isFocused(c.clusterId)"
+                  [class.border-fl-border]="!isFocused(c.clusterId)"
+                  [attr.aria-pressed]="isFocused(c.clusterId)"
                   [attr.aria-label]="c.name + ', reached over ' + line(c).label"
                   (click)="selected.emit({ type: 'cluster', id: c.clusterId })"
                 >
@@ -59,7 +66,7 @@ const LINE: Record<ClusterConnection['kind'], { style: string; color: string; la
             }
           </ul>
         </div>
-      </section>
+      </fl-panel>
     }
   `,
 })
@@ -75,6 +82,10 @@ export class TopologyNetworkStripComponent {
 
   protected line(c: ClusterConnection) {
     return LINE[c.kind];
+  }
+
+  protected tone(c: ClusterConnection) {
+    return connectionTone(c.kind);
   }
 
   protected isFocused(clusterId: string): boolean {

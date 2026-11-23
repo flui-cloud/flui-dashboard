@@ -45,8 +45,13 @@ export function edgeLabelAt(
 }
 
 export function edgeStroke(edge: GraphEdge): string {
-  if (edge.failing) return 'hsl(var(--destructive) / 0.8)';
-  return edge.measured ? 'hsl(var(--brand) / 0.4)' : 'hsl(var(--muted-foreground) / 0.35)';
+  if (edge.failing) return 'var(--fl-danger)';
+  return edge.measured ? 'var(--fl-ink-secondary)' : 'var(--fl-ink-muted)';
+}
+
+export function edgeOpacity(edge: GraphEdge): number {
+  if (edge.failing) return 0.85;
+  return edge.measured ? 0.7 : 0.5;
 }
 
 /** Thin by default; traffic thickens a line a little, never past 1.5 px. */

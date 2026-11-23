@@ -87,9 +87,9 @@ export interface LogFilter {
                     [attr.data-testid]="'decision-row-' + row.decision.id"
                     [attr.data-outcome]="row.decision.outcome"
                   >
-                    <th scope="row" class="fl-mono fl-num font-normal text-fl-ink-muted">
+                    <td role="rowheader" class="fl-mono fl-num text-fl-ink-muted">
                       {{ row.when }}
-                    </th>
+                    </td>
                     <td>
                       <fl-status [tone]="row.tone" [label]="row.outcome" />
                     </td>

@@ -153,7 +153,7 @@ interface MarketRow {
                   <tbody>
                     @for (row of rows(); track row.shape) {
                       <tr [attr.data-testid]="'shape-' + row.shape" [attr.data-state]="row.state">
-                        <th scope="row" class="font-normal">
+                        <td role="rowheader">
                           <span class="inline-flex items-center gap-1.5">
                             <span class="fl-mono">{{ row.shape }}</span>
                             <app-architecture-badge [architecture]="row.architecture" />
@@ -165,7 +165,7 @@ interface MarketRow {
                               >{{ row.spec }}</span
                             >
                           }
-                        </th>
+                        </td>
                         <td>
                           <fl-status
                             [tone]="tone(row.state)"

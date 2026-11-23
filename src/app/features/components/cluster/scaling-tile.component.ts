@@ -9,7 +9,7 @@ import { FlIcon } from '../../../ui/primitives/icon';
   providers: [provideIcons({ lucideTriangleAlert })],
   host: {
     class: 'fl-metric',
-    role: 'listitem',
+
     '[class.fl-metric--warning]': 'attention()',
     '[attr.data-testid]': "'tile-' + testid()",
   },

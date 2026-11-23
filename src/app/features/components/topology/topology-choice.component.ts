@@ -1,31 +1,19 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
+import { FlSegmented } from '../../../ui/patterns/filter-bar';
 
 /** A small segmented control: one of a few values, labelled. */
 @Component({
   selector: 'app-topology-choice',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FlSegmented],
+  host: { class: 'inline-flex items-center gap-2' },
   template: `
-    <div class="flex items-center gap-2 text-xs" role="radiogroup" [attr.aria-label]="label()">
-      <span class="text-muted-foreground">{{ label() }}</span>
-      <div class="flex gap-0.5 rounded-lg border border-border bg-muted/50 p-0.5">
-        @for (choice of choices(); track choice.value) {
-          <button
-            type="button"
-            role="radio"
-            class="rounded-md px-2.5 py-1 font-medium transition-colors"
-            [class.bg-card]="choice.value === value()"
-            [class.text-foreground]="choice.value === value()"
-            [class.shadow-sm]="choice.value === value()"
-            [class.text-muted-foreground]="choice.value !== value()"
-            [attr.aria-checked]="choice.value === value()"
-            (click)="changed.emit(choice.value)"
-          >
-            {{ choice.label }}
-          </button>
-        }
-      </div>
-    </div>
+    <span class="text-fl-body-sm text-fl-ink-muted">{{ label() }}</span>
+    <fl-segmented
+      [label]="label()"
+      [options]="choices()"
+      [value]="value()"
+      (valueChange)="changed.emit($event)"
+    />
   `,
 })
 export class TopologyChoiceComponent {

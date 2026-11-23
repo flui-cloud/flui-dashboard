@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, signal } from '@angular/core';
+import { Component, effect, inject, input, signal } from '@angular/core';
 import {
   ClusterMaintenance,
   DeferredAction,
@@ -9,57 +9,73 @@ import {
 import { MaintenanceWindowEditorComponent } from './maintenance-window-editor.component';
 import { DeferredListComponent } from './deferred-list.component';
 import { CanDirective } from '../../../core/directives/can.directive';
+import { FlErrorState, FlKeyValue, FlKvItem, FlLoadingState, FlPanel } from '../../../ui/patterns';
+import { FlButton } from '../../../ui/primitives';
 
 /** A cluster's maintenance window, its next opening and the changes held for it. */
 @Component({
   selector: 'app-cluster-maintenance-card',
-  standalone: true,
-  imports: [MaintenanceWindowEditorComponent, DeferredListComponent, CanDirective],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    MaintenanceWindowEditorComponent,
+    DeferredListComponent,
+    CanDirective,
+    FlPanel,
+    FlKeyValue,
+    FlKvItem,
+    FlLoadingState,
+    FlErrorState,
+    FlButton,
+  ],
+  host: { class: 'fl-stack' },
   template: `
-    <section class="card-surface space-y-3 p-4" data-testid="cluster-maintenance">
-      <div class="flex flex-wrap items-start justify-between gap-2">
-        <div class="min-w-0">
-          <h3 class="m-0 text-sm font-semibold text-foreground">Maintenance window</h3>
-          <p class="m-0 mt-0.5 text-[13px] text-muted-foreground">
-            {{ reading()?.says ?? (failed() ? 'Could not be read right now.' : 'Reading…') }}
-            @if (reading()?.nextOpening; as next) {
-              · next {{ label(next) }}
+    <fl-panel title="Maintenance window" data-testid="cluster-maintenance">
+      @if (!editing()) {
+        <ng-container ngProjectAs="[panelActions]">
+          <div class="fl-row" *fluiCan="'cluster:manage'">
+            @if (reading()?.window) {
+              <button flButton="ghost" size="sm" type="button" (click)="clear()">Remove</button>
             }
-          </p>
-        </div>
-        @if (!editing()) {
-          <div class="flex gap-2" *fluiCan="'cluster:manage'">
             <button
+              flButton
+              size="sm"
               type="button"
-              class="text-[13px] text-primary hover:underline"
               (click)="editing.set(true)"
               data-testid="maintenance-edit"
             >
               {{ reading()?.window ? 'Change' : 'Set a window' }}
             </button>
-            @if (reading()?.window) {
-              <button
-                type="button"
-                class="text-[13px] text-muted-foreground hover:text-destructive"
-                (click)="clear()"
-              >
-                Remove
-              </button>
-            }
           </div>
+        </ng-container>
+      }
+      <div class="flex flex-col gap-4">
+        @if (reading(); as r) {
+          <fl-key-value>
+            <fl-kv-item key="Window">{{ r.says }}</fl-kv-item>
+            @if (r.nextOpening; as next) {
+              <fl-kv-item key="Next opening">{{ label(next) }}</fl-kv-item>
+            }
+          </fl-key-value>
+        } @else if (failed()) {
+          <fl-error-state
+            title="Could not read the maintenance window"
+            [compact]="true"
+            (retry)="retry()"
+          />
+        } @else {
+          <fl-loading-state [rows]="2" />
+        }
+        @if (editing()) {
+          <app-maintenance-window-editor
+            class="border-t border-fl-border pt-4"
+            [value]="reading()?.window ?? null"
+            [saving]="saving()"
+            (saved)="save($event)"
+            (cancelled)="editing.set(false)"
+          />
         }
       </div>
-      @if (editing()) {
-        <app-maintenance-window-editor
-          [value]="reading()?.window ?? null"
-          [saving]="saving()"
-          (saved)="save($event)"
-          (cancelled)="editing.set(false)"
-        />
-      }
-      <app-deferred-list [rows]="held()" />
-    </section>
+    </fl-panel>
+    <app-deferred-list [rows]="held()" />
   `,
 })
 export class ClusterMaintenanceCardComponent {
@@ -78,6 +94,11 @@ export class ClusterMaintenanceCardComponent {
       const id = this.clusterId();
       if (id) void this.load(id);
     });
+  }
+
+  protected retry(): void {
+    const id = this.clusterId();
+    if (id) void this.load(id);
   }
 
   private async load(id: string): Promise<void> {

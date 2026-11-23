@@ -40,7 +40,13 @@ const ROLE: Record<ClusterHaView['missing'][number]['role'], string> = {
             <fl-alert tone="warning" [title]="w" />
           }
           <div class="flex flex-wrap items-center gap-4 text-fl-body-sm">
-            <button type="button" class="fl-link" (click)="open.set(!open())">
+            <button
+              type="button"
+              class="fl-link"
+              [attr.aria-expanded]="open()"
+              aria-controls="cluster-ha-details"
+              (click)="open.set(!open())"
+            >
               {{ open() ? 'Hide details' : 'What it survives' }}
             </button>
             <a routerLink="../availability" class="fl-link" data-testid="cluster-ha-open-tab"
@@ -48,7 +54,11 @@ const ROLE: Record<ClusterHaView['missing'][number]['role'], string> = {
             >
           </div>
           @if (open()) {
-            <ul class="m-0 flex list-none flex-col gap-1.5 p-0" data-testid="cluster-ha-details">
+            <ul
+              id="cluster-ha-details"
+              class="m-0 flex list-none flex-col gap-1.5 p-0"
+              data-testid="cluster-ha-details"
+            >
               @for (s of v.survives; track s) {
                 <li><fl-status tone="success" [label]="'Survives ' + s" /></li>
               }

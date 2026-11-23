@@ -68,7 +68,7 @@ interface OverviewRow {
                 [attr.data-attention]="row.needsPerson ? 'yes' : 'no'"
                 [attr.aria-current]="row.highlighted ? 'true' : null"
               >
-                <th scope="row" class="fl-cell-name is-wrap font-normal">
+                <td role="rowheader" class="fl-cell-name is-wrap">
                   <span class="flex flex-col gap-1">
                     <span class="flex flex-wrap items-center gap-2">
                       <span class="fl-mono font-medium">{{ row.name }}</span>
@@ -101,7 +101,7 @@ interface OverviewRow {
                       </span>
                     }
                   </span>
-                </th>
+                </td>
 
                 <td class="text-fl-ink-secondary">{{ row.provider }}</td>
 
@@ -176,8 +176,8 @@ interface OverviewRow {
             class="flex flex-wrap items-center gap-x-3 gap-y-1 text-fl-body-sm text-fl-ink-muted"
             [attr.data-testid]="'legend-' + mode.id"
           >
-            <fl-status [tone]="mode.tone" [label]="mode.label" />
-            <span>{{ mode.how }}</span>
+            <fl-status class="min-w-0 whitespace-normal" [tone]="mode.tone" [label]="mode.label" />
+            <span class="min-w-0">{{ mode.how }}</span>
           </li>
         }
       </ul>

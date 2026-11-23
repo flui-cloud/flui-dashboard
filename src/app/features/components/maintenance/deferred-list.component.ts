@@ -1,39 +1,77 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { DeferredAction, openingLabel } from '../../service/maintenance.service';
+import { FlPanel, FlTable } from '../../../ui/patterns';
+import { FlButton, FlStatus, StatusTone } from '../../../ui/primitives';
+
+const STATUS: Record<string, { tone: StatusTone; label: string }> = {
+  pending: { tone: 'warning', label: 'Waiting' },
+  running: { tone: 'progress', label: 'Running' },
+  applied: { tone: 'success', label: 'Applied' },
+  done: { tone: 'success', label: 'Done' },
+  completed: { tone: 'success', label: 'Done' },
+  failed: { tone: 'error', label: 'Failed' },
+  cancelled: { tone: 'neutral', label: 'Cancelled' },
+  expired: { tone: 'neutral', label: 'Expired' },
+};
 
 /** Changes held for a window, and what became of each. */
 @Component({
   selector: 'app-deferred-list',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FlPanel, FlTable, FlButton, FlStatus],
   template: `
     @if (rows().length) {
-      <ul class="m-0 list-none space-y-1.5 p-0 text-[13px]" data-testid="deferred-list">
-        @for (row of rows(); track row.id) {
-          <li class="flex flex-wrap items-baseline gap-x-2">
-            <span class="text-foreground">{{ row.says }}</span>
-            @if (row.status === 'pending') {
-              <span class="text-amber-600">waits for {{ label(row.runAt) }}</span>
-              @if (cancellable()) {
-                <button
-                  type="button"
-                  class="text-[12px] text-muted-foreground hover:text-destructive"
-                  (click)="cancelAction.emit(row)"
-                  [attr.data-testid]="'deferred-cancel-' + row.id"
-                >
-                  Cancel
-                </button>
+      <fl-panel
+        title="Held changes"
+        [count]="rows().length"
+        [flush]="true"
+        data-testid="deferred-list"
+      >
+        <div class="fl-table-wrap">
+          <table flTable density="dense">
+            <thead>
+              <tr>
+                <th scope="col">Change</th>
+                <th scope="col">Status</th>
+                <th scope="col">Runs</th>
+                <th scope="col">Asked by</th>
+                @if (cancellable()) {
+                  <th scope="col" class="is-fit"><span class="fl-sr">Actions</span></th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of rows(); track row.id) {
+                <tr>
+                  <td class="is-wrap">
+                    <span class="block text-fl-ink">{{ row.says }}</span>
+                    @if (row.outcome) {
+                      <span class="block text-fl-caption text-fl-ink-muted">{{ row.outcome }}</span>
+                    }
+                  </td>
+                  <td><fl-status [tone]="tone(row.status)" [label]="statusLabel(row.status)" /></td>
+                  <td class="fl-num">{{ label(row.runAt) }}</td>
+                  <td>{{ row.requestedBy }}</td>
+                  @if (cancellable()) {
+                    <td class="is-fit">
+                      @if (row.status === 'pending') {
+                        <button
+                          flButton="ghost"
+                          size="sm"
+                          type="button"
+                          (click)="cancelAction.emit(row)"
+                          [attr.data-testid]="'deferred-cancel-' + row.id"
+                        >
+                          Cancel
+                        </button>
+                      }
+                    </td>
+                  }
+                </tr>
               }
-            } @else {
-              <span class="text-muted-foreground">{{ row.status }}</span>
-            }
-            <span class="text-[12px] text-muted-foreground">asked by {{ row.requestedBy }}</span>
-            @if (row.outcome) {
-              <span class="block w-full text-[12px] text-muted-foreground">{{ row.outcome }}</span>
-            }
-          </li>
-        }
-      </ul>
+            </tbody>
+          </table>
+        </div>
+      </fl-panel>
     }
   `,
 })
@@ -42,4 +80,15 @@ export class DeferredListComponent {
   readonly cancellable = input(false);
   readonly cancelAction = output<DeferredAction>();
   protected label = openingLabel;
+
+  protected tone(status: string): StatusTone {
+    return STATUS[status]?.tone ?? 'neutral';
+  }
+
+  protected statusLabel(status: string): string {
+    const known = STATUS[status]?.label;
+    if (known) return known;
+    const text = status.replaceAll(/[-_]/g, ' ');
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  }
 }

@@ -1,102 +1,124 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TopologyResponseDto } from '../../../core/api/model/topologyResponseDto';
 import { TopologyColorBy, TopologyFocus } from './topology-state';
 import { FULL_PCT, fullestServers, replicaSpread } from './topology-tiles';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlUsageBar } from '../../../ui/patterns/usage-bar';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlStatus } from '../../../ui/primitives/status';
 
 @Component({
   selector: 'app-topology-infra-panels',
-  standalone: true,
-  imports: [RouterLink],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, FlPanel, FlAlert, FlTable, FlUsageBar, FlButton, FlStatus],
+  host: { class: 'fl-grid-2' },
   template: `
-    <div class="grid gap-4 xl:grid-cols-2">
-      @if (spread(); as s) {
-        <section class="card-surface space-y-3 p-4" aria-label="Replica spread">
-          <header class="flex items-baseline justify-between gap-2">
-            <h2 class="text-sm font-semibold text-foreground">Replica spread · {{ s.name }}</h2>
-            <span class="text-sub"
-              >{{ s.replicas }} replicas · {{ s.servers }} servers · {{ s.rows.length }} cluster{{
-                s.rows.length === 1 ? '' : 's'
-              }}</span
-            >
-          </header>
+    @if (spread(); as s) {
+      <fl-panel [title]="'Replica spread · ' + s.name">
+        <span panelActions class="fl-toolbar__info"
+          >{{ s.replicas }} replicas · {{ s.servers }} servers · {{ s.rows.length }} cluster{{
+            s.rows.length === 1 ? '' : 's'
+          }}</span
+        >
+        <div class="flex flex-col gap-3">
           @for (row of s.rows; track row.clusterId) {
-            <div class="grid grid-cols-[7rem_minmax(0,1fr)] items-center gap-3">
-              <span class="truncate text-xs font-medium text-foreground">{{ row.cluster }}</span>
-              <span class="flex gap-1">
+            <div class="flex items-center gap-3">
+              <span class="w-28 flex-none truncate text-fl-body-sm font-medium text-fl-ink">{{
+                row.cluster
+              }}</span>
+              <span class="flex min-w-0 flex-1 gap-1">
                 @for (seg of row.segments; track seg.serverId) {
                   <button
                     type="button"
-                    class="h-6 min-w-0 truncate rounded px-1.5 font-mono text-[10px] font-semibold"
+                    class="flex h-7 min-w-0 items-center overflow-hidden rounded-fl-sm border border-fl-border bg-fl-surface px-1.5 font-mono text-fl-caption text-fl-ink hover:bg-fl-surface-hover focus-visible:shadow-fl-focus focus-visible:outline-none"
                     [style.flex]="seg.count"
-                    [style.background]="seg.piled ? 'hsl(var(--warn))' : 'hsl(var(--brand))'"
-                    style="color: hsl(var(--primary-foreground))"
                     [attr.aria-label]="seg.label + ', ' + seg.count + ' replicas'"
                     (click)="selected.emit({ type: 'server', id: seg.serverId })"
                   >
-                    {{ seg.label }}{{ seg.count > 1 ? ' ×' + seg.count : '' }}
+                    @if (seg.piled) {
+                      <fl-status class="min-w-0" tone="warning" [label]="segmentText(seg)" />
+                    } @else {
+                      <span class="truncate">{{ segmentText(seg) }}</span>
+                    }
                   </button>
                 }
               </span>
             </div>
           }
           @for (row of s.piled; track row.clusterId) {
-            <div
-              class="flex gap-3 rounded-lg border p-3 text-sm"
-              style="border-color: hsl(var(--warn)); background: hsl(var(--warn) / 0.08)"
-              role="note"
-            >
-              <span class="space-y-2">
-                <span class="block text-foreground">
-                  {{ row.most }} of the {{ row.replicas }} {{ row.cluster }} replicas run on
-                  <span class="font-mono">{{ row.piledOn }}</span>. If that server goes down,
-                  {{ row.cluster }} loses most of {{ s.name }}.
-                </span>
-                @if (!guest()) {
-                  <a
-                    class="card-link mt-0"
-                    [routerLink]="['/apps/applications', s.appId, 'resources']"
-                    >Spread across servers</a
-                  >
-                }
-              </span>
-            </div>
+            <fl-alert tone="warning" title="Replicas piled on one server">
+              {{ row.most }} of the {{ row.replicas }} {{ row.cluster }} replicas run on
+              <span class="fl-mono">{{ row.piledOn }}</span>. If that server goes down,
+              {{ row.cluster }} loses most of {{ s.name }}.
+              @if (!guest()) {
+                <a
+                  alertActions
+                  flButton
+                  size="sm"
+                  [routerLink]="['/apps/applications', s.appId, 'resources']"
+                  >Spread across servers</a
+                >
+              }
+            </fl-alert>
           }
-        </section>
-      }
+        </div>
+      </fl-panel>
+    }
 
-      @if (fullest().length) {
-        <section class="card-surface space-y-2 p-4" aria-label="Fullest servers">
-          <header class="flex items-baseline justify-between gap-2">
-            <h2 class="text-sm font-semibold text-foreground">Fullest servers</h2>
-            <span class="text-sub">{{ fullestBy() }} · whole fleet</span>
-          </header>
-          @for (row of fullest(); track row.server.id) {
-            <button
-              type="button"
-              class="grid w-full grid-cols-[7rem_6rem_minmax(0,1fr)_3rem] items-center gap-2 rounded-md px-1 py-1 text-left text-xs hover:bg-muted"
-              (click)="selected.emit({ type: 'server', id: row.server.id })"
-            >
-              <span class="truncate font-mono text-foreground" [title]="row.server.nodeName">{{
-                row.label
-              }}</span>
-              <span class="text-sub truncate">{{ row.cluster }}</span>
-              <span class="block h-1.5 rounded-full bg-muted">
-                <span
-                  class="block h-1.5 rounded-full"
-                  [style.width.%]="barOf(row.value)"
-                  [style.background]="
-                    isFull(row.value) ? 'hsl(var(--destructive))' : 'hsl(var(--brand))'
-                  "
-                ></span>
-              </span>
-              <span class="text-right font-mono text-foreground">{{ textOf(row.value) }}</span>
-            </button>
-          }
-        </section>
-      }
-    </div>
+    @if (fullest().length) {
+      <fl-panel title="Fullest servers" [flush]="true">
+        <span panelActions class="fl-toolbar__info">{{ fullestBy() }} · whole fleet</span>
+        <div class="fl-table-wrap">
+          <table flTable density="dense">
+            <thead>
+              <tr>
+                <th scope="col">Server</th>
+                <th scope="col">Cluster</th>
+                <th scope="col">{{ fullestColumn() }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of fullest(); track row.server.id) {
+                <tr [class.is-selected]="isFocused(row.server.id)">
+                  <td>
+                    <button
+                      type="button"
+                      class="fl-link fl-mono"
+                      [title]="row.server.nodeName"
+                      (click)="selected.emit({ type: 'server', id: row.server.id })"
+                    >
+                      {{ row.label }}
+                    </button>
+                  </td>
+                  <td class="text-fl-ink-muted">{{ row.cluster }}</td>
+                  @if (pods()) {
+                    <td>
+                      <span class="flex items-center gap-2">
+                        <span class="fl-bar min-w-24 flex-1" aria-hidden="true"
+                          ><span [style.width.%]="podShare(row.value)"></span
+                        ></span>
+                        <span class="fl-num w-8 text-right">{{ textOf(row.value) }}</span>
+                      </span>
+                    </td>
+                  } @else {
+                    <td>
+                      <fl-usage-bar
+                        [percent]="row.value"
+                        [label]="fullestColumn() + ' of ' + row.server.nodeName"
+                        [warnAt]="full"
+                        [criticalAt]="full"
+                      />
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </fl-panel>
+    }
   `,
 })
 export class TopologyInfraPanelsComponent {
@@ -133,19 +155,31 @@ export class TopologyInfraPanelsComponent {
 
   protected readonly fullest = computed(() => fullestServers(this.snapshot(), this.colorBy()));
 
+  protected readonly full = FULL_PCT;
+  protected readonly pods = computed(() => this.colorBy() === 'pods');
+  protected readonly fullestColumn = computed(() => {
+    const by = this.fullestBy();
+    return by.charAt(0).toUpperCase() + by.slice(1);
+  });
+
   private readonly maxPods = computed(() =>
     Math.max(1, ...this.snapshot().servers.map((s) => s.podCount)),
   );
 
-  protected barOf(value: number): number {
-    return this.colorBy() === 'pods' ? (value / this.maxPods()) * 100 : Math.min(100, value);
+  protected podShare(value: number): number {
+    return (value / this.maxPods()) * 100;
   }
 
-  protected isFull(value: number): boolean {
-    return this.colorBy() !== 'pods' && value >= FULL_PCT;
+  protected segmentText(seg: { label: string; count: number }): string {
+    return seg.count > 1 ? `${seg.label} ×${seg.count}` : seg.label;
+  }
+
+  protected isFocused(serverId: string): boolean {
+    const f = this.focus();
+    return f?.type === 'server' && f.id === serverId;
   }
 
   protected textOf(value: number): string {
-    return this.colorBy() === 'pods' ? `${value}` : `${Math.round(value)}%`;
+    return this.pods() ? `${value}` : `${Math.round(value)}%`;
   }
 }

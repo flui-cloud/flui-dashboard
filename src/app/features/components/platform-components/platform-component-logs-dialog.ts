@@ -1,3 +1,4 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { provideIcons } from '@ng-icons/core';
@@ -13,12 +14,15 @@ import { filterLogEntries, parseLogText } from './platform-component-logs';
 
 @Component({
   selector: 'app-platform-component-logs-dialog',
-  imports: [FormsModule, LogTableComponent, FlAlert, FlLoadingState, FlIcon],
+  imports: [CdkTrapFocus, FormsModule, LogTableComponent, FlAlert, FlLoadingState, FlIcon],
   providers: [provideIcons({ lucideSearch, lucideX })],
   template: `
     <div
       class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
       (click)="closed.emit()"
+      (keydown.escape)="closed.emit()"
     >
       <div
         class="fl-dialog fl-dialog--wide"

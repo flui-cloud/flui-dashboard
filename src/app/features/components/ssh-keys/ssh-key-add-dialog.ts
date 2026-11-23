@@ -1,3 +1,4 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -18,12 +19,15 @@ export interface NewKeyRequest {
 
 @Component({
   selector: 'app-ssh-key-add-dialog',
-  imports: [ReactiveFormsModule, FlAlert, FlField, FlButton, FlIcon, FlSpinner],
+  imports: [CdkTrapFocus, ReactiveFormsModule, FlAlert, FlField, FlButton, FlIcon, FlSpinner],
   providers: [provideIcons({ lucideX })],
   template: `
     <div
       class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
       (click)="cancelled.emit()"
+      (keydown.escape)="cancelled.emit()"
     >
       <form
         class="fl-dialog fl-dialog--wide"

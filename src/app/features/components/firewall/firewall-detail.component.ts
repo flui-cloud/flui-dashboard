@@ -220,6 +220,6 @@ export class FirewallDetailComponent implements OnInit {
 
   formatDate(dateString?: string): string {
     if (!dateString) return 'Never';
-    return new Date(dateString).toLocaleString();
+    return new Date(dateString).toLocaleString('en-GB');
   }
 }

@@ -94,7 +94,7 @@ interface OrderRow {
             <tbody>
               @for (row of rows(); track row.order.kind + row.order.shape) {
                 <tr [attr.data-testid]="'order-' + row.order.kind + '-' + row.order.shape">
-                  <th scope="row" class="font-normal">
+                  <td role="rowheader">
                     <span class="flex flex-col gap-0.5">
                       <span class="flex items-center gap-2">
                         <fl-tag [attr.data-testid]="'order-kind-' + row.order.kind">{{
@@ -106,7 +106,7 @@ interface OrderRow {
                         <span class="text-fl-caption text-fl-ink-muted">{{ row.kindNote }}</span>
                       }
                     </span>
-                  </th>
+                  </td>
                   <td>
                     <fl-status
                       [tone]="row.stateTone"

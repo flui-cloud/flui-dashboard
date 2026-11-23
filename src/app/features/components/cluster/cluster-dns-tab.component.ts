@@ -1,3 +1,4 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import {
   Component,
   inject,
@@ -39,6 +40,7 @@ import { FlSpinner } from '../../../ui/primitives/spinner';
 @Component({
   selector: 'app-cluster-dns-tab',
   imports: [
+    CdkTrapFocus,
     DnsEndpointsListComponent,
     ClusterDnsZoneSectionComponent,
     ClusterEndpointFormComponent,
@@ -128,6 +130,8 @@ import { FlSpinner } from '../../../ui/primitives/spinner';
     @if (showEndpointForm()) {
       <div
         class="fl-backdrop fixed inset-0 z-50 overflow-y-auto"
+        cdkTrapFocus
+        [cdkTrapFocusAutoCapture]="true"
         (click)="closeEndpointForm()"
         (keydown.escape)="closeEndpointForm()"
       >

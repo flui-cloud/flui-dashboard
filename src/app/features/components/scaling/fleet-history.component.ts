@@ -1,10 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
+import { Component, computed, input, output, signal } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
 import { lucideEuro, lucideServer } from '@ng-icons/lucide';
-import {
-  DEFAULT_CHART_COLORS,
-  DISTRIBUTION_PALETTE,
-} from '../../../shared/components/charts/chart.models';
+import { FlIcon } from '../../../ui/primitives';
+import { MarkerTone, SHAPE_CLASSES, outcomeMark } from './fleet-history-marks';
 import { ExplainComponent } from '../../../shared/components/explain.component';
 import { FleetHistoryDetailComponent } from './fleet-history-detail.component';
 import { ScalingDecision } from '../../model/scaling-group.models';
@@ -37,7 +35,7 @@ export interface FleetPoint {
 
 interface ShapeBand {
   shape: string;
-  color: string;
+  tone: string;
   area: string;
   edge: string;
   count: number;
@@ -46,55 +44,45 @@ interface ShapeBand {
 interface DecisionMarker {
   id: string;
   x: number;
-  color: string;
+  tone: MarkerTone;
   acted: boolean;
   aria: string;
 }
 
 @Component({
   selector: 'app-fleet-history',
-  standalone: true,
-  imports: [NgIcon, ExplainComponent, FleetHistoryDetailComponent],
+  imports: [FlIcon, ExplainComponent, FleetHistoryDetailComponent],
   providers: [provideIcons({ lucideEuro, lucideServer })],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  styleUrl: './fleet-chart.css',
+  host: { class: 'block' },
   template: `
-    <section class="space-y-4" data-testid="fleet-history">
-      <div class="card-surface space-y-3 p-4">
+    <section class="flex flex-col gap-4" data-testid="fleet-history">
+      <div class="flex flex-col gap-3">
         <div class="flex flex-wrap items-center justify-between gap-3">
-          <div
-            class="inline-flex rounded-md border border-border p-0.5"
-            role="group"
-            data-testid="mode"
-          >
+          <div class="fl-segmented" role="group" aria-label="Measure" data-testid="mode">
             @for (m of modes; track m.id) {
               <button
                 type="button"
+                class="inline-flex items-center gap-1.5"
                 (click)="mode.set(m.id)"
-                class="inline-flex items-center gap-1.5 rounded px-2.5 py-1 text-xs font-medium transition-colors"
-                [class]="
-                  mode() === m.id
-                    ? 'bg-muted text-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
-                "
                 [attr.aria-pressed]="mode() === m.id"
                 [attr.data-testid]="'mode-' + m.id"
               >
-                <ng-icon [name]="m.icon" class="h-3.5 w-3.5" />
+                <fl-icon [name]="m.icon" [size]="14" />
                 <span>{{ m.label }}</span>
               </button>
             }
           </div>
 
           @if (mode() === 'nodes') {
-            <div class="flex flex-wrap items-center gap-x-4 gap-y-1" data-testid="legend-shapes">
+            <div class="fl-legend" data-testid="legend-shapes">
               @for (b of bands(); track b.shape) {
-                <span
-                  class="inline-flex items-center gap-1.5 text-[12px] text-muted-foreground"
-                  [attr.data-testid]="'legend-' + b.shape"
-                >
-                  <span class="h-2.5 w-2.5 rounded-sm" [style.background-color]="b.color"></span>
-                  <span class="font-mono text-foreground">{{ b.shape }}</span>
-                  <span class="tabular-nums">{{ b.count }}</span>
+                <span [attr.data-testid]="'legend-' + b.shape">
+                  <svg width="10" height="10" aria-hidden="true">
+                    <rect x="1" y="1" width="8" height="8" rx="1" [attr.class]="b.tone + ' edge'" />
+                  </svg>
+                  <span class="fl-mono text-fl-ink">{{ b.shape }}</span>
+                  <span class="fl-num">{{ b.count }}</span>
                 </span>
               }
             </div>
@@ -102,7 +90,7 @@ interface DecisionMarker {
             <app-explain
               [floating]="true"
               label="Hourly rate, monthly scale"
-              labelClass="text-[12px] text-muted-foreground"
+              labelClass="text-fl-caption text-fl-ink-muted"
               testid="spend-why"
             >
               Nodes are billed by the hour and the cap is written per month, so the line is the
@@ -130,8 +118,7 @@ interface DecisionMarker {
                 [attr.x2]="plotR"
                 [attr.y1]="t.y"
                 [attr.y2]="t.y"
-                class="stroke-border"
-                stroke-width="1"
+                class="grid"
                 [attr.stroke-dasharray]="t.v === 0 ? null : '3 4'"
               />
               <text
@@ -139,7 +126,7 @@ interface DecisionMarker {
                 [attr.y]="t.y"
                 text-anchor="end"
                 dominant-baseline="middle"
-                class="fill-muted-foreground text-[10px] tabular-nums"
+                class="tick"
               >
                 {{ t.label }}
               </text>
@@ -148,17 +135,10 @@ interface DecisionMarker {
             @for (b of bands(); track b.shape) {
               <path
                 [attr.d]="b.area"
-                [attr.fill]="b.color"
-                fill-opacity="0.28"
+                [attr.class]="b.tone + ' band'"
                 [attr.data-testid]="'band-' + b.shape"
               />
-              <path
-                [attr.d]="b.edge"
-                fill="none"
-                [attr.stroke]="b.color"
-                stroke-width="2"
-                stroke-linejoin="round"
-              />
+              <path [attr.d]="b.edge" [attr.class]="b.tone + ' edge'" />
             }
 
             @if (capLine(); as cap) {
@@ -167,17 +147,10 @@ interface DecisionMarker {
                 [attr.x2]="plotR"
                 [attr.y1]="cap.y"
                 [attr.y2]="cap.y"
-                class="stroke-destructive"
-                stroke-width="1.5"
-                stroke-dasharray="5 4"
+                class="cap"
                 data-testid="cap-line"
               />
-              <text
-                [attr.x]="plotR"
-                [attr.y]="cap.y - 6"
-                text-anchor="end"
-                class="fill-destructive text-[10px] tabular-nums"
-              >
+              <text [attr.x]="plotR" [attr.y]="cap.y - 6" text-anchor="end" class="cap-label">
                 {{ cap.label }}
               </text>
             }
@@ -187,8 +160,7 @@ interface DecisionMarker {
               [attr.x2]="plotR"
               [attr.y1]="plotB"
               [attr.y2]="plotB"
-              class="stroke-border"
-              stroke-width="1"
+              class="axis"
             />
 
             @if (activeMarker(); as a) {
@@ -197,21 +169,13 @@ interface DecisionMarker {
                 [attr.x2]="a.x"
                 [attr.y1]="plotT"
                 [attr.y2]="markerY"
-                [attr.stroke]="a.color"
-                stroke-width="1"
-                stroke-dasharray="3 3"
-                stroke-opacity="0.7"
+                [attr.class]="'rule mk-' + a.tone"
                 data-testid="active-rule"
               />
             }
 
             @for (t of xTicks(); track t.x) {
-              <text
-                [attr.x]="t.x"
-                [attr.y]="dateY"
-                [attr.text-anchor]="t.anchor"
-                class="fill-muted-foreground text-[10px]"
-              >
+              <text [attr.x]="t.x" [attr.y]="dateY" [attr.text-anchor]="t.anchor" class="tick">
                 {{ t.label }}
               </text>
             }
@@ -222,8 +186,7 @@ interface DecisionMarker {
                 [attr.y]="plotT"
                 [attr.width]="sel.width"
                 [attr.height]="plotB - plotT"
-                class="fill-primary/15 stroke-primary"
-                stroke-width="1"
+                class="zoom"
                 data-testid="zoom-selection"
               />
             }
@@ -232,7 +195,7 @@ interface DecisionMarker {
               <g
                 role="button"
                 tabindex="0"
-                class="cursor-pointer focus:outline-none"
+                class="marker-hit"
                 [attr.aria-label]="m.aria"
                 [attr.aria-pressed]="activeId() === m.id"
                 [attr.data-testid]="'decision-' + m.id"
@@ -245,37 +208,38 @@ interface DecisionMarker {
                 (blur)="hovered.set(null)"
               >
                 <title>{{ m.aria }}</title>
-                <circle [attr.cx]="m.x" [attr.cy]="markerY" r="13" fill="transparent" />
+                <circle [attr.cx]="m.x" [attr.cy]="markerY" r="13" class="hit" />
                 <circle
                   [attr.cx]="m.x"
                   [attr.cy]="markerY"
                   [attr.r]="activeId() === m.id ? 7 : 5"
-                  [attr.fill]="m.color"
-                  [attr.fill-opacity]="m.acted ? 1 : 0.16"
-                  [attr.stroke]="m.color"
-                  stroke-width="2"
+                  [attr.class]="'marker mk-' + m.tone + (m.acted ? ' is-acted' : '')"
                 />
               </g>
             }
           </svg>
 
-          <div class="flex flex-wrap items-center gap-x-4 gap-y-1" data-testid="legend-decisions">
-            <span class="text-label">Decisions</span>
-            <span class="inline-flex items-center gap-1.5 text-[12px] text-muted-foreground">
-              <span class="h-2.5 w-2.5 rounded-full bg-muted-foreground"></span>
+          <div class="fl-legend" data-testid="legend-decisions">
+            <span class="font-medium text-fl-ink-secondary">Decisions</span>
+            <span>
+              <svg width="10" height="10" aria-hidden="true">
+                <circle cx="5" cy="5" r="4" class="swatch-solid" />
+              </svg>
               acted
             </span>
-            <span class="inline-flex items-center gap-1.5 text-[12px] text-muted-foreground">
-              <span class="h-2.5 w-2.5 rounded-full border-2 border-muted-foreground"></span>
+            <span>
+              <svg width="10" height="10" aria-hidden="true">
+                <circle cx="5" cy="5" r="3.5" class="swatch-hollow" />
+              </svg>
               did not
             </span>
             <app-explain
               [floating]="true"
               label="Why a decline is a marker"
-              labelClass="text-[12px] text-muted-foreground"
+              labelClass="text-fl-caption text-fl-ink-muted"
               testid="declines-why"
             >
-              “Why did you not scale?” is the only question anybody asks an autoscaler, so the times
+              "Why did you not scale?" is the only question anybody asks an autoscaler, so the times
               it added nothing sit on the same axis, at the same size, as the times it did.
             </app-explain>
           </div>
@@ -283,7 +247,7 @@ interface DecisionMarker {
           <app-explain
             [floating]="true"
             label="No nodes added or removed yet"
-            labelClass="text-sm text-muted-foreground"
+            labelClass="text-fl-body-sm text-fl-ink-muted"
             testid="no-history"
           >
             The fleet is counted from node lifetimes. A group that has never changed shape has
@@ -293,7 +257,7 @@ interface DecisionMarker {
       </div>
 
       @if (active(); as d) {
-        <app-fleet-history-detail [decision]="d" />
+        <app-fleet-history-detail class="border-t border-fl-border pt-4" [decision]="d" />
       }
     </section>
   `,
@@ -343,25 +307,6 @@ export class FleetHistoryComponent {
   private readonly ordered = computed(() =>
     [...this.decisions()].sort((a, b) => Date.parse(a.at) - Date.parse(b.at)),
   );
-
-  private readonly shapeColors = [0, 4, 6, 9, 10, 8, 5].map((i) => DISTRIBUTION_PALETTE[i]);
-
-  private readonly outcomeColors: Record<
-    ScalingDecision['outcome'],
-    { color: string; acted: boolean }
-  > = {
-    added: { color: DEFAULT_CHART_COLORS.success[0], acted: true },
-    replaced: { color: DEFAULT_CHART_COLORS.info[0], acted: true },
-    removed: { color: DEFAULT_CHART_COLORS.neutral[0], acted: true },
-    declined: { color: DEFAULT_CHART_COLORS.warning[0], acted: false },
-    alerted: { color: DEFAULT_CHART_COLORS.danger[0], acted: false },
-    changed: { color: DEFAULT_CHART_COLORS.neutral[0], acted: false },
-    'node-ordered': { color: DEFAULT_CHART_COLORS.info[0], acted: true },
-    'node-joined': { color: DEFAULT_CHART_COLORS.success[0], acted: true },
-    'purchase-failed': { color: DEFAULT_CHART_COLORS.danger[0], acted: true },
-    'node-drained': { color: DEFAULT_CHART_COLORS.neutral[0], acted: true },
-    'node-removed': { color: DEFAULT_CHART_COLORS.neutral[0], acted: true },
-  };
 
   private readonly shapes = computed(() => shapesInOrder(this.points().map((p) => p.byShape)));
 
@@ -417,7 +362,7 @@ export class FleetHistoryComponent {
       return [
         {
           shape: 'spend',
-          color: DEFAULT_CHART_COLORS.info[0],
+          tone: 'shape-0',
           area: this.area(values, floor),
           edge: this.line(values),
           count: 0,
@@ -433,7 +378,7 @@ export class FleetHistoryComponent {
       });
       return {
         shape,
-        color: this.shapeColors[i % this.shapeColors.length],
+        tone: `shape-${i % SHAPE_CLASSES}`,
         area: this.area([...running], below),
         edge: this.line([...running]),
         count: pts.at(-1)!.byShape[shape] ?? 0,
@@ -451,13 +396,13 @@ export class FleetHistoryComponent {
 
   protected readonly markers = computed<DecisionMarker[]>(() =>
     this.ordered().map((d) => {
-      const style = this.outcomeColors[d.outcome];
+      const style = outcomeMark(d.outcome);
       return {
         id: d.id,
         x: this.x(Date.parse(d.at)),
-        color: style.color,
+        tone: style.tone,
         acted: style.acted,
-        aria: `${whenLabel(d.at)} — ${d.outcome}, ${d.force}: ${d.saw}`,
+        aria: `${whenLabel(d.at)}, ${d.outcome}, ${d.force}: ${d.saw}`,
       };
     }),
   );
@@ -507,7 +452,6 @@ export class FleetHistoryComponent {
     this.dragTo.set(null);
   }
 
-  /** The pointer in the chart's own coordinates; the SVG scales uniformly to its width. */
   private viewX(event: PointerEvent): number {
     const box = (event.currentTarget as Element).getBoundingClientRect();
     return box.width ? ((event.clientX - box.left) / box.width) * this.W : 0;

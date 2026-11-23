@@ -127,7 +127,11 @@
                     "
                     >{{ firewall.clusterInfo?.clusterName || firewall.clusterId }}</a
                   >
-                  <span class="block fl-mono fl-muted">{{ firewall.id }}</span>
+                  <span
+                    class="block max-w-48 truncate fl-mono fl-muted"
+                    [attr.title]="firewall.id"
+                    >{{ firewall.id }}</span
+                  >
                 </td>
                 <td class="whitespace-normal">
                   <fl-status
@@ -136,7 +140,10 @@
                     [attr.title]="driftMessage(firewall.hasDrift, firewall.reconciliationStatus)"
                   />
                   @if (firewall.errorMessage) {
-                    <span class="block text-fl-caption text-fl-ink-muted">
+                    <span
+                      class="block max-w-40 truncate text-fl-caption text-fl-ink-muted"
+                      [attr.title]="firewall.errorMessage"
+                    >
                       {{ firewall.errorMessage }}
                     </span>
                   }
@@ -147,7 +154,7 @@
                     [label]="coverageOf(firewall.coverageStatus).label"
                   />
                   @if (coverageNote(firewall); as note) {
-                    <span class="block text-fl-caption text-fl-ink-muted">{{ note }}</span>
+                    <span class="block max-w-48 text-fl-caption text-fl-ink-muted">{{ note }}</span>
                   }
                 </td>
                 <td>
@@ -169,7 +176,15 @@
                 </td>
                 <td class="is-num">{{ firewall.desiredRules.length || 0 }}</td>
                 <td class="fl-mono">
-                  {{ firewall.providerFirewallId ? (firewall.providerFirewallId | maskId) : '—' }}
+                  <span
+                    class="block max-w-24 truncate"
+                    [attr.title]="
+                      firewall.providerFirewallId ? (firewall.providerFirewallId | maskId) : null
+                    "
+                    >{{
+                      firewall.providerFirewallId ? (firewall.providerFirewallId | maskId) : '—'
+                    }}</span
+                  >
                 </td>
                 <td>{{ formatDate(firewall.lastReconciliationAt) }}</td>
                 <td class="is-fit">

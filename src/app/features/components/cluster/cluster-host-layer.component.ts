@@ -97,12 +97,18 @@ const REASON_TITLE: Partial<Record<HostFirewallLayerState, string>> = {
         type="button"
         class="fl-link self-start"
         data-testid="host-layer-more"
+        [attr.aria-expanded]="showMore()"
+        aria-controls="host-layer-explanation"
         (click)="showMore.set(!showMore())"
       >
         {{ showMore() ? 'Less' : 'What is this?' }}
       </button>
       @if (showMore()) {
-        <p class="m-0 text-fl-ink-muted" data-testid="host-layer-explanation">
+        <p
+          id="host-layer-explanation"
+          class="m-0 text-fl-ink-muted"
+          data-testid="host-layer-explanation"
+        >
           The cluster firewall is kept by your provider and covers the servers it is attached to.
           When this is on, each node also applies the same rules itself, so a node that ends up
           outside the provider firewall still refuses what the cluster does not open, including

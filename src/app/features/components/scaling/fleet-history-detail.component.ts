@@ -1,73 +1,84 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { HlmBadgeDirective } from '@spartan-ng/ui-badge-helm';
+import { Component, computed, input } from '@angular/core';
 import { ScalingDecision } from '../../model/scaling-group.models';
-import { outcomeBadgeClass, whenLabel } from './fleet-history.geometry';
-import { operationDetail, operationLabel, operationTone } from './decision-operation';
+import { FlKeyValue, FlKvItem, FlTable } from '../../../ui/patterns';
+import { FlStatus } from '../../../ui/primitives';
+import { outcomeText, whenLabel } from './fleet-history.geometry';
+import { operationDetail, operationLabel } from './decision-operation';
+import { operationStatusTone, outcomeStatusTone } from './fleet-history-marks';
 
 @Component({
   selector: 'app-fleet-history-detail',
-  standalone: true,
-  imports: [HlmBadgeDirective],
+  imports: [FlKeyValue, FlKvItem, FlTable, FlStatus],
+  host: { class: 'block' },
   template: `
-    <div class="card-surface space-y-3 p-4" data-testid="decision-detail" aria-live="polite">
-      <div class="flex flex-wrap items-center gap-2">
-        <span [class]="badgeClass()" data-testid="detail-outcome">
-          {{ decision().outcome.replaceAll('-', ' ') }}
-        </span>
-        <span class="font-mono text-[11px] text-muted-foreground" data-testid="detail-force">
-          {{ decision().force }}
-        </span>
+    <div class="flex flex-col gap-4" data-testid="decision-detail" aria-live="polite">
+      <fl-key-value class="fl-kv--compact">
+        <fl-kv-item key="Outcome">
+          <fl-status [tone]="tone()" [label]="outcome()" data-testid="detail-outcome" />
+        </fl-kv-item>
+        <fl-kv-item key="Force" [mono]="true">
+          <span data-testid="detail-force">{{ decision().force }}</span>
+        </fl-kv-item>
         @if (decision().shape) {
-          <span hlmBadge variant="outline" class="text-xs">
+          <fl-kv-item key="Shape" [mono]="true">
             {{ decision().shape }}
             @if (decision().region) {
               · {{ decision().region }}
             }
-          </span>
+          </fl-kv-item>
         }
-        <span
-          class="ml-auto text-[12px] tabular-nums text-muted-foreground"
-          data-testid="detail-at"
-        >
-          {{ when() }}
-        </span>
-      </div>
+        <fl-kv-item key="When">
+          <span class="fl-num" data-testid="detail-at">{{ when() }}</span>
+        </fl-kv-item>
+      </fl-key-value>
 
-      <dl class="m-0 grid gap-x-4 gap-y-2 sm:grid-cols-[3.5rem_1fr]">
-        <dt class="text-label m-0 pt-0.5">Saw</dt>
-        <dd class="m-0 text-sm text-foreground" data-testid="detail-saw">
-          {{ decision().saw }}
-        </dd>
-        <dt class="text-label m-0 pt-0.5">Did</dt>
-        <dd class="m-0 text-sm text-foreground" data-testid="detail-did">
-          {{ decision().did }}
-        </dd>
-        <dt class="text-label m-0 pt-0.5">Why</dt>
-        <dd class="m-0 text-sm text-muted-foreground" data-testid="detail-why">
-          {{ decision().why }}
-        </dd>
-        @if (decision().operation; as op) {
-          <dt class="text-label m-0 pt-0.5">Then</dt>
-          <dd class="m-0 text-sm" data-testid="detail-operation">
-            <span [class]="tone(op.state)">{{ label(op) }}</span>
-            @if (detail(op); as text) {
-              <span class="text-muted-foreground"> — {{ text }}</span>
+      <div class="fl-table-wrap">
+        <table flTable density="dense">
+          <tbody>
+            <tr>
+              <th scope="row" class="is-fit">Saw</th>
+              <td class="whitespace-normal" data-testid="detail-saw">{{ decision().saw }}</td>
+            </tr>
+            <tr>
+              <th scope="row" class="is-fit">Did</th>
+              <td class="whitespace-normal" data-testid="detail-did">{{ decision().did }}</td>
+            </tr>
+            <tr>
+              <th scope="row" class="is-fit">Why</th>
+              <td class="whitespace-normal text-fl-ink-secondary" data-testid="detail-why">
+                {{ decision().why }}
+              </td>
+            </tr>
+            @if (decision().operation; as op) {
+              <tr>
+                <th scope="row" class="is-fit">Then</th>
+                <td class="whitespace-normal" data-testid="detail-operation">
+                  <span class="fl-row">
+                    <fl-status [tone]="opTone(op.state)" [label]="label(op)" />
+                    @if (detail(op); as text) {
+                      <span class="text-fl-ink-muted">{{ text }}</span>
+                    }
+                  </span>
+                </td>
+              </tr>
             }
-          </dd>
-        }
-      </dl>
+          </tbody>
+        </table>
+      </div>
     </div>
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FleetHistoryDetailComponent {
   readonly decision = input.required<ScalingDecision>();
 
-  protected readonly badgeClass = computed(() => outcomeBadgeClass(this.decision().outcome));
-
+  protected readonly tone = computed(() => outcomeStatusTone(this.decision().outcome));
+  protected readonly outcome = computed(() => {
+    const text = outcomeText(this.decision().outcome);
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  });
   protected readonly when = computed(() => whenLabel(this.decision().at));
 
   protected readonly label = operationLabel;
   protected readonly detail = operationDetail;
-  protected readonly tone = operationTone;
+  protected readonly opTone = operationStatusTone;
 }

@@ -108,7 +108,7 @@ interface FleetRow {
               <tbody>
                 @for (row of rows(); track row.node.id) {
                   <tr [attr.data-testid]="'node-' + row.node.id">
-                    <th scope="row" class="fl-mono font-normal">{{ row.node.name }}</th>
+                    <td role="rowheader" class="fl-mono">{{ row.node.name }}</td>
                     <td>
                       <span class="inline-flex items-center gap-2">
                         <span class="fl-mono">{{ row.node.shape }}</span>

@@ -371,6 +371,6 @@ export class DnsZonesListComponent implements OnInit, OnDestroy {
   }
 
   formatDate(iso: string): string {
-    return new Date(iso).toLocaleDateString();
+    return new Date(iso).toLocaleDateString('en-GB');
   }
 }

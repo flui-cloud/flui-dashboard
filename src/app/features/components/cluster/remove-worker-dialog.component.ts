@@ -1,3 +1,4 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
@@ -16,12 +17,15 @@ import { FlStatus } from '../../../ui/primitives/status';
 
 @Component({
   selector: 'app-remove-worker-dialog',
-  imports: [FormsModule, FlAlert, FlUsageBar, FlButton, FlIcon, FlSpinner, FlStatus],
+  imports: [CdkTrapFocus, FormsModule, FlAlert, FlUsageBar, FlButton, FlIcon, FlSpinner, FlStatus],
   providers: [provideIcons({ lucideX, lucideTrash })],
   template: `
     <div
       class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
       (click)="onCancel()"
+      (keydown.escape)="onCancel()"
     >
       <div
         class="fl-dialog"

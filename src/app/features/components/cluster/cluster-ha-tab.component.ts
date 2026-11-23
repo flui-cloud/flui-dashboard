@@ -149,6 +149,7 @@ interface ZoneCard extends ClusterHaZone {
                         size="sm"
                         type="button"
                         [disabled]="adding()"
+                        [attr.aria-label]="'Add ' + m.label"
                         [attr.data-testid]="'ha-add-' + m.role + '-' + z.zone"
                         (click)="ask(m.role, z.zone)"
                       >

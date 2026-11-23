@@ -1,103 +1,156 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, signal } from '@angular/core';
+import { Component, effect, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CanDirective } from '../../../core/directives/can.directive';
 import {
+  FlAlert,
+  FlField,
+  FlKeyValue,
+  FlKvItem,
+  FlLoadingState,
+  FlPanel,
+} from '../../../ui/patterns';
+import { FlButton, FlSpinner, FlStatus, FlTag } from '../../../ui/primitives';
+import {
   EgressChange,
+  EgressPort,
   EgressService,
   EgressView,
   formatEgressPorts,
   parseEgressPorts,
 } from '../../service/egress.service';
 
-/** Which ports applications on a cluster may reach outside it — not the machines, which the firewall above covers. */
 @Component({
   selector: 'app-cluster-egress-card',
-  standalone: true,
-  imports: [FormsModule, CanDirective],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    FormsModule,
+    CanDirective,
+    FlPanel,
+    FlKeyValue,
+    FlKvItem,
+    FlField,
+    FlAlert,
+    FlLoadingState,
+    FlButton,
+    FlStatus,
+    FlTag,
+    FlSpinner,
+  ],
+  host: { class: 'fl-stack' },
   template: `
-    <section class="card-surface space-y-3 p-6" data-testid="cluster-egress">
-      <div class="flex flex-wrap items-start justify-between gap-2">
-        <div class="min-w-0">
-          <h3 class="m-0 text-sm font-semibold text-foreground">Applications' outbound traffic</h3>
-          <p class="m-0 mt-0.5 text-[13px] text-muted-foreground">
-            Which ports your applications can reach outside the cluster. The platform's own services
-            are not affected.
-          </p>
-          <p class="m-0 mt-1.5 text-[13px] text-foreground" data-testid="egress-summary">
-            {{ reading()?.summary ?? 'Reading…' }}
-          </p>
-        </div>
-        @if (!editing() && reading()) {
-          <div class="flex gap-2" *fluiCan="'egress:manage'">
-            <button
-              type="button"
-              class="text-[13px] text-primary hover:underline"
-              (click)="edit()"
-              data-testid="egress-edit"
-            >
-              {{ reading()?.open ? 'Limit' : 'Change' }}
-            </button>
+    <fl-panel title="Outbound traffic" data-testid="cluster-egress">
+      @if (!editing() && reading()) {
+        <ng-container ngProjectAs="[panelActions]">
+          <div class="fl-row" *fluiCan="'egress:manage'">
             @if (!reading()?.open) {
               <button
+                flButton="ghost"
+                size="sm"
                 type="button"
-                class="text-[13px] text-muted-foreground hover:text-destructive"
                 (click)="open()"
                 data-testid="egress-open"
               >
                 Open all
               </button>
             }
+            <button flButton size="sm" type="button" (click)="edit()" data-testid="egress-edit">
+              {{ reading()?.open ? 'Limit' : 'Change' }}
+            </button>
+          </div>
+        </ng-container>
+      }
+      <div class="flex flex-col gap-4">
+        <p class="m-0 text-fl-body-sm text-fl-ink-muted">
+          Which ports your applications can reach outside the cluster. The platform's own services
+          are not affected.
+        </p>
+        @if (reading(); as r) {
+          <fl-key-value>
+            <fl-kv-item key="Policy">
+              @if (r.open) {
+                <fl-status tone="neutral" label="Open on every port" />
+              } @else {
+                <fl-status tone="warning" label="Limited to listed ports" />
+              }
+            </fl-kv-item>
+            @if (!r.open) {
+              <fl-kv-item key="Allowed ports">
+                <span class="fl-row">
+                  @for (p of r.ports; track p.port + p.protocol) {
+                    <fl-tag class="fl-mono">{{ portLabel(p) }}</fl-tag>
+                  } @empty {
+                    <span class="text-fl-ink-muted">None</span>
+                  }
+                </span>
+              </fl-kv-item>
+            }
+          </fl-key-value>
+          <p class="m-0 text-fl-body-sm text-fl-ink" data-testid="egress-summary">
+            {{ r.summary }}
+          </p>
+        } @else {
+          <fl-loading-state [rows]="2" />
+        }
+        @if (editing()) {
+          <form class="flex flex-col gap-3 border-t border-fl-border pt-4" (ngSubmit)="save()">
+            <fl-field
+              label="Allowed ports"
+              for="egress-ports"
+              class="max-w-sm"
+              [hint]="
+                problem()
+                  ? undefined
+                  : 'Comma separated, TCP unless written as 123/udp. Applies to every application that is not part of the platform.'
+              "
+            >
+              <div class="fl-input fl-input--lg">
+                <input
+                  id="egress-ports"
+                  type="text"
+                  name="ports"
+                  class="fl-mono"
+                  placeholder="80, 443"
+                  [(ngModel)]="draft"
+                  data-testid="egress-input"
+                />
+              </div>
+              @if (problem(); as p) {
+                <span class="fl-field__error" role="alert" data-testid="egress-problem">{{
+                  p
+                }}</span>
+              }
+            </fl-field>
+            <div class="fl-row">
+              <button
+                flButton="primary"
+                type="submit"
+                [disabled]="saving()"
+                data-testid="egress-save"
+              >
+                @if (saving()) {
+                  <fl-spinner label="Saving" />
+                  Saving…
+                } @else {
+                  Save
+                }
+              </button>
+              <button flButton="ghost" type="button" (click)="editing.set(false)">Cancel</button>
+            </div>
+          </form>
+        }
+        @if (outcome(); as o) {
+          <div class="flex flex-col gap-2" data-testid="egress-outcome">
+            <p class="m-0 text-fl-caption text-fl-ink-muted">
+              Written into {{ o.applied }} application {{ o.applied === 1 ? 'space' : 'spaces' }}.
+            </p>
+            @if (o.failed.length) {
+              <fl-alert tone="warning" title="Some application spaces were not updated">
+                Not written in {{ o.failed.length }}; the next deploy there writes it.
+              </fl-alert>
+            }
           </div>
         }
       </div>
-      @if (editing()) {
-        <form class="space-y-2" (ngSubmit)="save()">
-          <input
-            type="text"
-            name="ports"
-            class="h-8 w-full max-w-sm rounded-md border border-border bg-background px-2 text-xs text-foreground"
-            placeholder="80, 443"
-            [(ngModel)]="draft"
-            data-testid="egress-input"
-          />
-          <p class="m-0 text-[12px] text-muted-foreground">
-            Comma separated, TCP unless written as 123/udp. Applies to every application that is not
-            part of the platform.
-          </p>
-          @if (problem(); as p) {
-            <p class="m-0 text-[12px] text-destructive" data-testid="egress-problem">{{ p }}</p>
-          }
-          <div class="flex gap-2">
-            <button
-              type="submit"
-              class="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-              [disabled]="saving()"
-              data-testid="egress-save"
-            >
-              Save
-            </button>
-            <button
-              type="button"
-              class="rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted"
-              (click)="editing.set(false)"
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
-      }
-      @if (outcome(); as o) {
-        <p class="m-0 text-[12px] text-muted-foreground" data-testid="egress-outcome">
-          Written into {{ o.applied }} application {{ o.applied === 1 ? 'space' : 'spaces' }}.
-          @if (o.failed.length) {
-            <span class="text-destructive"
-              >Not written in {{ o.failed.length }}; the next deploy there writes it.</span
-            >
-          }
-        </p>
-      }
-    </section>
+    </fl-panel>
   `,
 })
 export class ClusterEgressCardComponent {
@@ -124,6 +177,10 @@ export class ClusterEgressCardComponent {
     } catch {
       this.reading.set(null);
     }
+  }
+
+  protected portLabel(p: EgressPort): string {
+    return formatEgressPorts([p]);
   }
 
   protected edit(): void {

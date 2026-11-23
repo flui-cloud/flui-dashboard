@@ -5,7 +5,6 @@ import {
   linePath,
   niceStep,
   nodeScale,
-  outcomeBadgeClass,
   round1,
   shapesInOrder,
   spendScale,
@@ -174,22 +173,6 @@ describe('fleet-history geometry', () => {
       expect(tickAnchor(0, 0, 4)).toBe('start');
       expect(tickAnchor(9, 3, 4)).toBe('end');
       expect(tickAnchor(3, 1, 4)).toBe('middle');
-    });
-  });
-
-  describe('outcomeBadgeClass', () => {
-    it('reads a purchase and a replacement as the same success', () => {
-      expect(outcomeBadgeClass('added')).toBe(outcomeBadgeClass('replaced'));
-    });
-
-    it('separates an alert from an action', () => {
-      expect(outcomeBadgeClass('alerted')).not.toBe(outcomeBadgeClass('added'));
-    });
-
-    it('has an answer for an outcome it does not know', () => {
-      expect(outcomeBadgeClass('held' as Parameters<typeof outcomeBadgeClass>[0])).toContain(
-        'badge',
-      );
     });
   });
 });

@@ -63,7 +63,6 @@ const PURCHASE_STATUS: Record<PurchaseState, { tone: StatusTone; label: string }
         @for (card of cards(); track card.id) {
           <div
             class="fl-metric"
-            role="listitem"
             [class.fl-metric--warning]="card.warn"
             [attr.data-testid]="'tile-' + card.id"
           >
@@ -212,7 +211,7 @@ export class ScalingNowSummaryComponent {
   protected readonly retryError = signal<string | null>(null);
 
   protected clockOf(at: Date): string {
-    return at.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return at.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
   }
 
   protected readonly heldAge = computed(() => {
@@ -366,7 +365,7 @@ export class ScalingNowSummaryComponent {
   }
 
   protected clock(at: Date): string {
-    return at.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return at.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
   }
 
   protected readonly state = computed(() => {

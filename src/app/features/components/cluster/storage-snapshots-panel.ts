@@ -24,6 +24,7 @@ import { storageSnapshotRow } from './storage-format';
         size="sm"
         type="button"
         [attr.aria-expanded]="open()"
+        [attr.aria-label]="(open() ? 'Hide' : 'Show') + ' application snapshots'"
         (click)="toggled.emit()"
       >
         {{ open() ? 'Hide' : 'Show' }}

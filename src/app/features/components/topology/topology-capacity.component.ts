@@ -1,84 +1,100 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideArrowLeft } from '@ng-icons/lucide';
 import { TopologyResponseDto } from '../../../core/api/model/topologyResponseDto';
 import { TopologyFocus } from './topology-state';
-import { clusterCapacity } from './topology-drills';
-import { memory, toneOf } from './topology-format';
+import { CapacityBlock, CapacityColumn, clusterCapacity } from './topology-drills';
+import { memory } from './topology-format';
+import { kitToneOfStatus } from './topology-kit';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlUsageBar } from '../../../ui/patterns/usage-bar';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlStatus } from '../../../ui/primitives/status';
 
 const PX_PER_MI = 0.022;
 
 /** Each server a column sized by its memory, each app a block sized by what it asks for. */
 @Component({
   selector: 'app-topology-capacity',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FlPanel, FlAlert, FlUsageBar, FlButton, FlIcon, FlStatus],
+  providers: [provideIcons({ lucideArrowLeft })],
+  host: { class: 'fl-stack' },
   template: `
-    <section class="card-surface space-y-4 p-4" aria-label="Cluster capacity">
-      <header class="flex flex-wrap items-baseline gap-2">
-        <button type="button" class="text-sub hover:underline" (click)="back.emit()">← Map</button>
-        <h2 class="text-base font-semibold text-foreground">Capacity · {{ clusterName() }}</h2>
-        <span class="text-sub">memory requested per server</span>
-      </header>
-      @if (model(); as m) {
-        <div class="flex items-end gap-4 overflow-x-auto pb-2">
-          @for (col of m.columns; track col.server.id) {
-            <div class="flex min-w-[6rem] flex-1 flex-col gap-1">
-              <div
-                class="flex flex-col-reverse overflow-hidden rounded-md border border-border"
-                [style.height.px]="col.allocatableMi * px"
-                role="list"
-                [attr.aria-label]="col.server.nodeName"
-              >
-                @for (block of col.blocks; track block.label) {
-                  <button
-                    type="button"
-                    role="listitem"
-                    class="flex-none truncate border-t border-card px-1.5 text-left text-[10px] font-medium"
-                    [style.height.px]="block.mi * px"
-                    [style.background]="block.appId ? fillOf(block.tone) : 'hsl(var(--muted))'"
-                    [style.color]="'hsl(var(--foreground))'"
-                    [attr.aria-label]="block.label + ', ' + mem(block.mi)"
-                    [title]="block.label + ' · ' + mem(block.mi)"
-                    (click)="block.appId && selected.emit({ type: 'app', id: block.appId })"
-                  >
-                    @if (block.mi * px >= 14) {
-                      {{ block.label }}
-                    }
-                  </button>
-                }
-                @if (col.ghost) {
-                  <span
-                    class="flex-none border-2 border-dashed px-1.5 text-[10px] font-medium"
-                    style="border-color: hsl(var(--brand)); color: hsl(var(--brand))"
-                    [style.height.px]="ghostHeight(col.ghost)"
-                    >next replica</span
-                  >
-                }
-                <span
-                  class="flex-1"
-                  aria-hidden="true"
-                  style="background-image: repeating-linear-gradient(45deg, hsl(var(--muted-foreground) / 0.12) 0 4px, transparent 4px 9px)"
-                ></span>
+    <fl-panel [title]="'Capacity · ' + clusterName()">
+      <button panelActions flButton="ghost" size="sm" type="button" (click)="back.emit()">
+        <fl-icon name="lucideArrowLeft" />
+        Map
+      </button>
+      <div class="flex flex-col gap-4">
+        <p class="text-fl-body-sm text-fl-ink-muted">Memory requested per server.</p>
+        @if (model(); as m) {
+          <div class="flex items-end gap-4 overflow-x-auto pb-2">
+            @for (col of m.columns; track col.server.id) {
+              <div class="flex min-w-36 flex-1 flex-col gap-2">
+                <div
+                  class="flex flex-col-reverse overflow-hidden rounded-fl-md border border-fl-border bg-fl-surface"
+                  [style.height.px]="col.allocatableMi * px"
+                  role="list"
+                  [attr.aria-label]="col.server.nodeName"
+                >
+                  @for (block of col.blocks; track block.label) {
+                    <button
+                      type="button"
+                      role="listitem"
+                      class="flex flex-none items-center overflow-hidden border-t border-fl-border px-1.5 text-left text-fl-caption font-medium text-fl-ink focus-visible:shadow-fl-focus focus-visible:outline-none"
+                      [class.bg-fl-surface-subtle]="block.appId"
+                      [class.bg-fl-surface-hover]="!block.appId"
+                      [class.text-fl-ink-muted]="!block.appId"
+                      [style.height.px]="block.mi * px"
+                      [attr.aria-label]="block.label + ', ' + mem(block.mi)"
+                      [title]="block.label + ' · ' + mem(block.mi)"
+                      (click)="block.appId && selected.emit({ type: 'app', id: block.appId })"
+                    >
+                      @if (block.mi * px >= 14) {
+                        @if (flagged(block)) {
+                          <fl-status class="min-w-0" [tone]="toneOf(block)" [label]="block.label" />
+                        } @else {
+                          <span class="truncate">{{ block.label }}</span>
+                        }
+                      }
+                    </button>
+                  }
+                  @if (col.ghost) {
+                    <span
+                      class="flex flex-none items-center border border-dashed border-fl-accent px-1.5 text-fl-caption font-medium text-fl-accent"
+                      [style.height.px]="ghostHeight(col.ghost)"
+                      >next replica</span
+                    >
+                  }
+                  <span class="flex-1" aria-hidden="true"></span>
+                </div>
+                <button
+                  type="button"
+                  class="fl-link truncate text-left font-mono text-fl-caption"
+                  (click)="selected.emit({ type: 'server', id: col.server.id })"
+                >
+                  {{ col.server.nodeName }}
+                </button>
+                <fl-usage-bar
+                  [percent]="usedPct(col)"
+                  [label]="'Memory requested on ' + col.server.nodeName"
+                />
+                <span class="text-fl-caption text-fl-ink-muted"
+                  >{{ mem(col.freeMi) }} free of {{ mem(col.allocatableMi) }}</span
+                >
               </div>
-              <button
-                type="button"
-                class="truncate text-left font-mono text-xs text-foreground hover:underline"
-                (click)="selected.emit({ type: 'server', id: col.server.id })"
-              >
-                {{ col.server.nodeName }}
-              </button>
-              <span class="text-sub"
-                >{{ mem(col.freeMi) }} free of {{ mem(col.allocatableMi) }}</span
-              >
-            </div>
+            }
+          </div>
+          @if (m.ghostFits === false) {
+            <fl-alert tone="warning" title="No room for another replica">
+              No server has room for another {{ mem(m.ghostMi) }} replica.
+            </fl-alert>
           }
-        </div>
-        @if (m.ghostFits === false) {
-          <p class="text-sm status-degraded" role="note">
-            No server has room for another {{ mem(m.ghostMi) }} replica.
-          </p>
         }
-      }
-    </section>
+      </div>
+    </fl-panel>
   `,
 })
 export class TopologyCapacityComponent {
@@ -105,10 +121,17 @@ export class TopologyCapacityComponent {
     return memory(mi);
   }
 
-  protected fillOf(status: string): string {
-    const tone = toneOf(status);
-    if (tone === 'error') return 'hsl(var(--destructive) / 0.25)';
-    if (tone === 'degraded') return 'hsl(var(--warn) / 0.25)';
-    return 'hsl(var(--brand) / 0.22)';
+  protected usedPct(col: CapacityColumn): number {
+    if (!col.allocatableMi) return 0;
+    return ((col.allocatableMi - col.freeMi) / col.allocatableMi) * 100;
+  }
+
+  protected toneOf(block: CapacityBlock) {
+    return kitToneOfStatus(block.tone);
+  }
+
+  protected flagged(block: CapacityBlock): boolean {
+    const tone = this.toneOf(block);
+    return !!block.appId && (tone === 'error' || tone === 'warning');
   }
 }

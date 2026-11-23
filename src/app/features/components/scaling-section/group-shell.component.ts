@@ -51,7 +51,13 @@ interface ShellTab {
     <div class="fl-page">
       <fl-page-header [title]="title()" [breadcrumb]="breadcrumb()" data-testid="group-header">
         @if (mode(); as m) {
-          <fl-status headerStatus [tone]="m.tone" [label]="m.label" data-testid="group-status" />
+          <fl-status
+            headerStatus
+            class="min-w-0 whitespace-normal"
+            [tone]="m.tone"
+            [label]="m.label"
+            data-testid="group-status"
+          />
         }
         @if (group(); as g) {
           <div headerMeta class="flex flex-col gap-1.5">

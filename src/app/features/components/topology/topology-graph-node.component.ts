@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
+import { Component, computed, input } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
 import {
   lucideActivity,
+  lucideArrowDownRight,
   lucideBoxes,
   lucideBriefcase,
   lucideDatabase,
@@ -14,6 +15,9 @@ import {
   lucideZap,
 } from '@ng-icons/lucide';
 import { GraphNode } from './topology-graph';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlStatus } from '../../../ui/primitives/status';
+import { kitTone, toneWord } from './topology-kit';
 
 const ICON: Record<string, string> = {
   database: 'lucideDatabase',
@@ -27,21 +31,14 @@ const ICON: Record<string, string> = {
   infra: 'lucideServer',
 };
 
-const RING: Record<string, string> = {
-  healthy: 'hsl(var(--ok))',
-  degraded: 'hsl(var(--warn))',
-  error: 'hsl(var(--destructive))',
-  pending: 'hsl(var(--muted-foreground))',
-};
-
 /** One node of the service map: its kind decides what it says, never its colour. */
 @Component({
   selector: 'app-topology-graph-node',
-  standalone: true,
-  imports: [NgIcon],
+  imports: [FlIcon, FlStatus],
   providers: [
     provideIcons({
       lucideActivity,
+      lucideArrowDownRight,
       lucideBoxes,
       lucideBriefcase,
       lucideDatabase,
@@ -54,79 +51,86 @@ const RING: Record<string, string> = {
       lucideZap,
     }),
   ],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'block h-full' },
   template: `
     @switch (node().kind) {
       @case ('internet') {
         <span
-          class="flex h-full items-center justify-center gap-2 rounded-full border border-border bg-card px-3 text-sm font-medium text-foreground"
+          class="flex h-full items-center justify-center gap-2 rounded-fl-md border bg-fl-surface px-3 text-fl-body-sm font-medium text-fl-ink"
+          [class.border-fl-accent]="selected()"
+          [class.border-fl-border]="!selected()"
         >
-          <ng-icon name="lucideGlobe" class="h-4 w-4 text-muted-foreground" />Internet
+          <fl-icon class="text-fl-ink-muted" name="lucideGlobe" />Internet
         </span>
       }
       @case ('pill') {
         <span
-          class="flex h-full items-center gap-2 rounded-full border-2 bg-card px-3 text-sm text-foreground"
-          [style.border-style]="node().dashed ? 'dashed' : 'solid'"
-          style="border-color: hsl(var(--border))"
+          class="flex h-full items-center gap-2 rounded-fl-md border bg-fl-surface px-3"
+          [class.border-dashed]="node().dashed"
+          [class.border-fl-accent]="selected()"
+          [class.border-fl-border]="!selected()"
         >
-          <span class="h-2 w-2 flex-none rounded-full" [class]="'dot-' + node().tone"></span>
-          <span class="truncate font-medium">{{ node().label }}</span>
+          <fl-status class="flex-none" [tone]="tone()" label="" />
+          <span class="truncate font-mono text-fl-body-sm font-medium text-fl-ink">{{
+            node().label
+          }}</span>
         </span>
       }
       @default {
         <span
-          class="card-surface flex h-full items-center gap-3 px-3 text-left"
-          [class.opacity-75]="node().muted"
-          [style.background]="node().muted ? 'hsl(var(--muted) / 0.5)' : null"
-          [style.border-style]="node().dashed ? 'dashed' : 'solid'"
-          [style.border-width.px]="node().dashed ? 2 : 1"
+          class="flex h-full flex-col justify-center gap-1 rounded-fl-md border px-3 text-left"
+          [class.bg-fl-surface]="!node().muted"
+          [class.bg-fl-surface-subtle]="node().muted"
+          [class.border-dashed]="node().dashed"
+          [class.border-fl-accent]="selected()"
+          [class.border-fl-ink-muted]="!selected() && node().center"
+          [class.border-fl-border]="!selected() && !node().center"
         >
-          <span
-            class="relative flex h-10 w-10 flex-none items-center justify-center rounded-full border-[1.5px] bg-muted/60"
-            [style.border-color]="ring()"
-          >
-            <ng-icon [name]="icon()" class="h-4 w-4 text-foreground" />
+          <span class="flex min-w-0 items-center gap-2">
+            <fl-icon class="flex-none text-fl-ink-muted" [name]="icon()" />
+            <span
+              class="min-w-0 flex-1 truncate font-mono text-fl-body-sm font-semibold"
+              [class.text-fl-ink]="!node().muted"
+              [class.text-fl-ink-secondary]="node().muted"
+              >{{ node().label }}</span
+            >
             @if (node().replicas > 1) {
-              <span
-                class="absolute -bottom-1.5 -right-2 rounded-full px-1 font-mono text-[10px] font-semibold"
-                style="background: hsl(var(--foreground)); color: hsl(var(--background))"
+              <span class="flex-none font-mono text-fl-caption text-fl-ink-muted"
                 >×{{ node().replicas }}</span
               >
             }
-          </span>
-          <span class="min-w-0 flex-1">
-            <span class="block truncate text-sm font-semibold text-foreground">{{
-              node().label
-            }}</span>
-            <span class="text-sub block truncate">{{ node().sub }}</span>
-            @if (node().dots.length) {
-              <span class="mt-1 flex flex-wrap gap-1" aria-hidden="true">
-                @for (dot of node().dots; track $index) {
-                  <span class="h-1.5 w-1.5 rounded-full" [class]="'dot-' + dot"></span>
-                }
-              </span>
+            @if (showIngress()) {
+              @if (node().ingressFailing) {
+                <fl-status
+                  class="ml-auto flex-none"
+                  tone="error"
+                  [label]="ingressText()"
+                  [attr.aria-label]="'Ingress ' + ingressText()"
+                />
+              } @else {
+                <span
+                  class="ml-auto inline-flex flex-none items-center gap-1 font-mono text-fl-caption text-fl-ink-secondary"
+                  [attr.aria-label]="'Ingress ' + ingressText()"
+                  ><fl-icon name="lucideArrowDownRight" [size]="13" />{{ ingressText() }}</span
+                >
+              }
             }
           </span>
-          @if ((node().ingress ?? 0) >= 0.05) {
-            <span
-              class="flex-none rounded-full px-1.5 py-0.5 font-mono text-[10px] font-semibold"
-              [style.background]="
-                node().ingressFailing
-                  ? 'hsl(var(--destructive) / 0.12)'
-                  : 'hsl(var(--brand) / 0.12)'
-              "
-              [style.color]="
-                node().ingressFailing ? 'hsl(var(--destructive))' : 'hsl(var(--brand))'
-              "
-              [attr.aria-label]="'Ingress ' + ingressText()"
-              >↘ {{ ingressText() }}</span
-            >
-          }
-          @if (node().problems) {
-            <span class="badge badge-error flex-none px-1.5 py-0.5 text-[10px]">{{
-              node().problems
+          <span class="flex min-w-0 items-center gap-2">
+            <fl-status class="flex-none" [tone]="tone()" [label]="word()" />
+            <span class="min-w-0 flex-1 truncate text-fl-caption text-fl-ink-muted">{{
+              node().sub
             }}</span>
+            @if (node().problems) {
+              <fl-status class="flex-none" tone="error" [label]="'' + node().problems" />
+            }
+          </span>
+          @if (node().dots.length) {
+            <span class="flex min-w-0 items-center gap-1">
+              @for (dot of node().dots; track $index) {
+                <fl-status aria-hidden="true" [tone]="kit(dot)" label="" />
+              }
+            </span>
           }
         </span>
       }
@@ -135,13 +139,17 @@ const RING: Record<string, string> = {
 })
 export class TopologyGraphNodeComponent {
   readonly node = input.required<GraphNode>();
+  readonly selected = input(false);
 
   protected readonly ingressText = computed(() => {
     const rps = this.node().ingress ?? 0;
     return rps >= 10 ? `${Math.round(rps)}/s` : `${rps.toFixed(1)}/s`;
   });
 
-  protected readonly ring = computed(() => RING[this.node().tone] ?? RING['pending']);
+  protected readonly showIngress = computed(() => (this.node().ingress ?? 0) >= 0.05);
+  protected readonly tone = computed(() => kitTone(this.node().tone));
+  protected readonly word = computed(() => toneWord(this.node().tone));
+  protected readonly kit = kitTone;
   protected readonly icon = computed(() => {
     const n = this.node();
     if (n.kind === 'cluster') return 'lucideBoxes';

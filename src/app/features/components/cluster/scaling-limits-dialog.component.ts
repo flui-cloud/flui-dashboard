@@ -1,3 +1,4 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { provideIcons } from '@ng-icons/core';
@@ -17,12 +18,14 @@ import { ClusterAutoscaleService } from '../../service/cluster-autoscale.service
  */
 @Component({
   selector: 'app-scaling-limits-dialog',
-  imports: [FormsModule, FlAlert, FlField, FlButton, FlIcon],
+  imports: [CdkTrapFocus, FormsModule, FlAlert, FlField, FlButton, FlIcon],
   providers: [provideIcons({ lucideX })],
   host: { class: 'contents', '(document:keydown.escape)': 'close()' },
   template: `
     <div
       class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
       (click)="close()"
     >
       <div

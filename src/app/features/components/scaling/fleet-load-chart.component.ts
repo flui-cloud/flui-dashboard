@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
+import { Component, computed, input, signal } from '@angular/core';
 import { FleetHistoryPoint } from '../../model/scaling-section.models';
 
 type Resource = 'memory' | 'cpu';
@@ -12,26 +12,21 @@ const B = 100;
 
 @Component({
   selector: 'app-fleet-load-chart',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  styleUrl: './fleet-chart.css',
+  host: { class: 'block' },
   template: `
     @if (series(); as s) {
-      <section class="card-surface space-y-2 p-4" data-testid="load-chart">
+      <section class="flex flex-col gap-3 border-t border-fl-border pt-4" data-testid="load-chart">
         <div class="flex flex-wrap items-center justify-between gap-2">
-          <h3 class="m-0 text-[13px] font-semibold text-foreground">
+          <h3 class="m-0 text-fl-body-sm font-semibold text-fl-ink">
             Reserved vs capacity
-            <span class="ml-1 font-normal text-muted-foreground">since {{ s.since }}</span>
+            <span class="ml-1 font-normal text-fl-ink-muted">since {{ s.since }}</span>
           </h3>
-          <div class="inline-flex rounded-md border border-border p-0.5 text-[12px]">
+          <div class="fl-segmented" role="group" aria-label="Resource">
             @for (r of resources; track r) {
               <button
                 type="button"
-                class="rounded px-2 py-0.5"
-                [class]="
-                  resource() === r
-                    ? 'bg-muted font-medium text-foreground'
-                    : 'text-muted-foreground'
-                "
+                [attr.aria-pressed]="resource() === r"
                 (click)="resource.set(r)"
                 [attr.data-testid]="'load-' + r"
               >
@@ -47,53 +42,31 @@ const B = 100;
           role="img"
           [attr.aria-label]="'Reserved ' + resource() + ' against what the nodes hold'"
         >
-          <text
-            [attr.x]="L - 6"
-            [attr.y]="T + 4"
-            text-anchor="end"
-            class="fill-muted-foreground text-[10px]"
-          >
+          <text [attr.x]="L - 6" [attr.y]="T + 4" text-anchor="end" class="tick">
             {{ s.topLabel }}
           </text>
-          <text
-            [attr.x]="L - 6"
-            [attr.y]="B"
-            text-anchor="end"
-            class="fill-muted-foreground text-[10px]"
-          >
-            0
-          </text>
-          <line
-            [attr.x1]="L"
-            [attr.x2]="R"
-            [attr.y1]="B"
-            [attr.y2]="B"
-            class="stroke-border"
-            stroke-width="1"
-          />
-          <path [attr.d]="s.reservedArea" class="fill-sky-500/25" />
-          <path [attr.d]="s.reservedLine" fill="none" class="stroke-sky-600" stroke-width="1.5" />
-          <path
-            [attr.d]="s.capacityLine"
-            fill="none"
-            class="stroke-foreground"
-            stroke-width="1.5"
-            stroke-dasharray="5 4"
-          />
+          <text [attr.x]="L - 6" [attr.y]="B" text-anchor="end" class="tick">0</text>
+          <line [attr.x1]="L" [attr.x2]="R" [attr.y1]="B" [attr.y2]="B" class="axis" />
+          <path [attr.d]="s.reservedArea" class="reserved" />
+          <path [attr.d]="s.reservedLine" class="reserved-line" />
+          <path [attr.d]="s.capacityLine" class="capacity-line" />
         </svg>
-        <p class="m-0 flex flex-wrap gap-x-4 text-[12px] text-muted-foreground">
-          <span
-            ><span class="mr-1 inline-block h-2 w-3 rounded-sm bg-sky-500/60 align-middle"></span
-            >reserved by running apps</span
-          >
-          <span
-            ><span
-              class="mr-1 inline-block w-4 border-t border-dashed border-foreground align-middle"
-            ></span
-            >what the nodes hold</span
-          >
-          <span>now {{ s.nowLabel }}</span>
-        </p>
+        <div class="fl-legend">
+          <span>
+            <svg width="16" height="8" aria-hidden="true">
+              <rect x="0" y="1" width="16" height="6" class="reserved" />
+              <line x1="0" y1="1" x2="16" y2="1" class="reserved-line" />
+            </svg>
+            reserved by running apps
+          </span>
+          <span>
+            <svg width="16" height="6" aria-hidden="true">
+              <line x1="0" y1="3" x2="16" y2="3" class="capacity-line" />
+            </svg>
+            what the nodes hold
+          </span>
+          <span class="fl-num">now {{ s.nowLabel }}</span>
+        </div>
       </section>
     }
   `,
@@ -141,7 +114,7 @@ export class FleetLoadChartComponent {
       capacityLine: line(capacity),
       topLabel: fmt(top),
       nowLabel: `${fmt(reserved.at(-1)!)} of ${fmt(capacity.at(-1)!)}`,
-      since: withLoad[0].at.toLocaleDateString([], { day: 'numeric', month: 'short' }),
+      since: withLoad[0].at.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
     };
   });
 }

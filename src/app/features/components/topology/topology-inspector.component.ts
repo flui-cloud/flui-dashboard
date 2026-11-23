@@ -1,146 +1,164 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { NgIcon, provideIcons } from '@ng-icons/core';
+import { provideIcons } from '@ng-icons/core';
 import { lucideArrowUpRight, lucideX } from '@ng-icons/lucide';
-import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
 import { TopologyResponseDto } from '../../../core/api/model/topologyResponseDto';
+import { FlAlert, AlertTone } from '../../../ui/patterns/alert';
+import { FlCopyId } from '../../../ui/patterns/copy-id';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlStatus } from '../../../ui/primitives/status';
 import { TopologyDestinations } from './topology-navigation';
 import { TopologyFocus, TopologyViewState } from './topology-state';
 import { describeFocus } from './topology-describe';
 import { TopologyAttentionComponent } from './topology-attention.component';
+import { kitTone, toneWord } from './topology-kit';
+
+const MONO_FACTS = new Set(['Type', 'Delivered to']);
 
 @Component({
   selector: 'app-topology-inspector',
-  standalone: true,
-  imports: [RouterLink, NgIcon, HlmButtonDirective, TopologyAttentionComponent],
+  imports: [
+    RouterLink,
+    FlAlert,
+    FlCopyId,
+    FlKeyValue,
+    FlKvItem,
+    FlPanel,
+    FlTable,
+    FlButton,
+    FlIcon,
+    FlStatus,
+    TopologyAttentionComponent,
+  ],
   providers: [provideIcons({ lucideArrowUpRight, lucideX })],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'block min-w-0 max-h-full overflow-y-auto' },
   template: `
-    <aside class="card-surface flex h-full flex-col overflow-hidden" aria-label="Inspector">
-      @if (view(); as v) {
-        <header class="flex items-start justify-between gap-3 border-b border-border p-4">
-          <div class="min-w-0">
-            <p class="text-label">{{ v.kind }}</p>
-            <h2 class="truncate text-base font-semibold text-foreground">{{ v.title }}</h2>
-            @if (v.subtitle) {
-              <p class="text-sub truncate">{{ v.subtitle }}</p>
-            }
-          </div>
+    @if (view(); as v) {
+      <fl-panel [monoTitle]="true" [title]="v.title" aria-label="Inspector">
+        <ng-container panelActions>
+          @if (v.status) {
+            <fl-status [tone]="kit(v.tone)" [label]="v.status" />
+          }
           <button
+            flButton="ghost"
+            size="sm"
+            [iconOnly]="true"
             type="button"
-            class="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
             aria-label="Clear selection"
             (click)="cleared.emit()"
           >
-            <ng-icon name="lucideX" class="h-4 w-4" />
+            <fl-icon name="lucideX" [size]="16" />
           </button>
-        </header>
+        </ng-container>
 
-        <div class="flex-1 space-y-4 overflow-y-auto p-4 text-sm">
-          @if (v.status) {
-            <p class="flex items-center gap-2">
-              <span class="h-2 w-2 rounded-full" [class]="'dot-' + v.tone"></span>
-              <span class="text-value">{{ v.status }}</span>
-              @if (v.reason) {
-                <span class="text-sub">· {{ v.reason }}</span>
-              }
-            </p>
+        <div class="fl-stack min-w-0">
+          <p class="text-fl-body-sm text-fl-ink-muted break-words">
+            {{ v.kind }}
+            @if (v.subtitle) {
+              · {{ v.subtitle }}
+            }
+          </p>
+
+          @if (v.reason) {
+            <fl-alert [tone]="alertTone(v.tone)" [title]="v.status ?? 'Status'">
+              {{ v.reason }}
+            </fl-alert>
           }
 
-          @if (v.facts.length) {
-            <dl class="grid grid-cols-2 gap-x-3 gap-y-2">
-              @for (fact of v.facts; track fact.label) {
-                <div>
-                  <dt class="text-sub">{{ fact.label }}</dt>
-                  <dd class="text-value">{{ fact.value }}</dd>
-                </div>
-              }
-            </dl>
-          }
+          <fl-key-value class="fl-kv--compact">
+            @for (fact of v.facts; track fact.label) {
+              <fl-kv-item [key]="fact.label" [mono]="isMono(fact.label)">{{
+                fact.value
+              }}</fl-kv-item>
+            }
+            @if (focus(); as f) {
+              <fl-kv-item key="ID">
+                <fl-copy-id [value]="f.id" label="ID" />
+              </fl-kv-item>
+            }
+          </fl-key-value>
 
           @for (section of v.sections; track section.title) {
-            <section>
-              <h3 class="text-label mb-2">{{ section.title }}</h3>
-              <ul class="space-y-1">
-                @for (row of section.rows; track row.key) {
-                  <li>
-                    <button
-                      type="button"
-                      class="flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left hover:bg-muted"
-                      [disabled]="!row.focus"
-                      (click)="row.focus && selected.emit(row.focus)"
-                    >
-                      <span class="flex min-w-0 items-center gap-2">
+            <section class="min-w-0">
+              <h3 class="mb-2 text-fl-body-sm font-semibold text-fl-ink">{{ section.title }}</h3>
+              <div class="fl-table-wrap">
+                <table flTable density="dense">
+                  <tbody>
+                    @for (row of section.rows; track row.key) {
+                      <tr>
+                        <td class="whitespace-normal break-words">
+                          @if (row.focus; as target) {
+                            <button
+                              type="button"
+                              class="fl-link text-left"
+                              (click)="selected.emit(target)"
+                            >
+                              {{ row.label }}
+                            </button>
+                          } @else {
+                            {{ row.label }}
+                          }
+                        </td>
+                        <td class="whitespace-normal break-words text-fl-ink-muted">
+                          {{ row.detail }}
+                        </td>
                         @if (row.tone) {
-                          <span
-                            class="h-1.5 w-1.5 flex-none rounded-full"
-                            [class]="'dot-' + row.tone"
-                          ></span>
+                          <td class="is-fit">
+                            <fl-status [tone]="kit(row.tone)" [label]="word(row.tone)" />
+                          </td>
                         }
-                        <span class="truncate text-foreground">{{ row.label }}</span>
-                      </span>
-                      <span class="text-sub flex-none">{{ row.detail }}</span>
-                    </button>
-                  </li>
-                }
-              </ul>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
             </section>
           }
-        </div>
 
-        @if (destinations().open || destinations().quick.length || destinations().drills.length) {
-          <footer class="space-y-2 border-t border-border p-4">
-            @if (destinations().drills.length) {
-              <div class="flex flex-wrap gap-2">
-                @for (drill of destinations().drills; track drill.label) {
-                  <button
-                    type="button"
-                    class="rounded-md border border-border px-2.5 py-1 text-xs font-medium text-foreground hover:bg-muted"
-                    (click)="drilled.emit(drill.state)"
-                  >
-                    {{ drill.label }}
-                  </button>
-                }
-              </div>
-            }
-            @if (destinations().open; as open) {
-              <a
-                hlmBtn
-                class="w-full"
-                [routerLink]="open.commands"
-                [queryParams]="open.queryParams"
-              >
-                {{ open.label }}
-                <ng-icon name="lucideArrowUpRight" class="ml-1 h-4 w-4" />
-              </a>
-            }
-            @if (destinations().quick.length) {
-              <nav class="flex flex-wrap gap-x-3 gap-y-1" aria-label="Quick links">
-                @for (link of destinations().quick; track link.label) {
-                  <a
-                    class="card-link mt-0"
-                    [routerLink]="link.commands"
-                    [queryParams]="link.queryParams"
-                    >{{ link.label }}</a
-                  >
-                }
-              </nav>
-            }
-          </footer>
-        }
-        @if (guest() && !destinations().open) {
-          <p class="text-sub border-t border-border px-4 py-3">
-            Example data. Install Flui to open these pages on your own fleet.
-          </p>
-        }
-      } @else {
-        <app-topology-attention
-          class="flex-1 overflow-y-auto"
-          [snapshot]="snapshot()"
-          (selected)="selected.emit($event)"
-        />
-      }
-    </aside>
+          @if (destinations().drills.length) {
+            <div class="flex flex-wrap gap-2">
+              @for (drill of destinations().drills; track drill.label) {
+                <button flButton size="sm" type="button" (click)="drilled.emit(drill.state)">
+                  {{ drill.label }}
+                </button>
+              }
+            </div>
+          }
+          @if (destinations().open; as open) {
+            <a
+              flButton
+              size="sm"
+              [block]="true"
+              [routerLink]="open.commands"
+              [queryParams]="open.queryParams"
+            >
+              {{ open.label }}
+              <fl-icon name="lucideArrowUpRight" [size]="14" />
+            </a>
+          }
+          @if (destinations().quick.length) {
+            <nav class="flex flex-wrap gap-x-3 gap-y-1" aria-label="Quick links">
+              @for (link of destinations().quick; track link.label) {
+                <a class="fl-link" [routerLink]="link.commands" [queryParams]="link.queryParams">{{
+                  link.label
+                }}</a>
+              }
+            </nav>
+          }
+          @if (guest() && !destinations().open) {
+            <fl-alert tone="info" title="Example data">
+              Install Flui to open these pages on your own fleet.
+            </fl-alert>
+          }
+        </div>
+      </fl-panel>
+    } @else {
+      <app-topology-attention [snapshot]="snapshot()" (selected)="selected.emit($event)" />
+    }
   `,
 })
 export class TopologyInspectorComponent {
@@ -152,5 +170,16 @@ export class TopologyInspectorComponent {
   readonly cleared = output<void>();
   readonly drilled = output<Partial<TopologyViewState>>();
 
+  protected readonly kit = kitTone;
+  protected readonly word = toneWord;
   protected readonly view = computed(() => describeFocus(this.focus(), this.snapshot()));
+
+  protected isMono(label: string): boolean {
+    return MONO_FACTS.has(label);
+  }
+
+  protected alertTone(tone: string | undefined): AlertTone {
+    if (tone === 'error') return 'error';
+    return tone === 'degraded' ? 'warning' : 'info';
+  }
 }

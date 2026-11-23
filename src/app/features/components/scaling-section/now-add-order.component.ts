@@ -1,3 +1,4 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
@@ -40,7 +41,7 @@ function regionAvailability(up: string[] | null, region: string): string {
 
 @Component({
   selector: 'app-scaling-now-add-order',
-  imports: [FormsModule, FlAlert, FlField, FlButton, FlIcon, FlSpinner, FlStatus],
+  imports: [CdkTrapFocus, FormsModule, FlAlert, FlField, FlButton, FlIcon, FlSpinner, FlStatus],
   providers: [provideIcons({ lucideClock, lucideX })],
   host: { class: 'contents', '(document:keydown.escape)': 'onEscape()' },
   template: `
@@ -60,6 +61,8 @@ function regionAvailability(up: string[] | null, region: string): string {
     @if (open()) {
       <div
         class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+        cdkTrapFocus
+        [cdkTrapFocusAutoCapture]="true"
         (click)="close()"
       >
         <form

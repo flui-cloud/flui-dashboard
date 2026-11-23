@@ -1,3 +1,4 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { Component, input, output } from '@angular/core';
 import { provideIcons } from '@ng-icons/core';
 import { lucideX } from '@ng-icons/lucide';
@@ -11,12 +12,15 @@ import { ProviderRef } from './ssh-keys-rows';
 
 @Component({
   selector: 'app-ssh-keys-bulk-delete-dialog',
-  imports: [FlAlert, FlField, FlButton, FlIcon, FlSpinner, FlStatus],
+  imports: [CdkTrapFocus, FlAlert, FlField, FlButton, FlIcon, FlSpinner, FlStatus],
   providers: [provideIcons({ lucideX })],
   template: `
     <div
       class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
       (click)="close()"
+      (keydown.escape)="close()"
     >
       <div
         class="fl-dialog"

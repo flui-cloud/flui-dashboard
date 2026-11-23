@@ -26,12 +26,13 @@ import { formatDisk, formatMemory } from './instance-status';
         <div class="flex items-center gap-1.5">
           @if (isSelf()) {
             <a
-              class="fl-link"
+              class="fl-link block max-w-52 truncate"
+              [attr.title]="name"
               [routerLink]="['/infrastructure/compute', instance.provider, instance.providerId]"
               >{{ name }}</a
             >
           } @else {
-            <span class="font-medium">{{ name }}</span>
+            <span class="block max-w-52 truncate font-medium" [attr.title]="name">{{ name }}</span>
           }
           @if (architecture(); as arch) {
             <fl-tag [attr.title]="'CPU architecture: ' + arch" data-testid="architecture-badge">{{
@@ -46,7 +47,7 @@ import { formatDisk, formatMemory } from './instance-status';
     </td>
     <td><app-instance-status-badge [status]="instance.status" /></td>
     <td>{{ instance.provider }}</td>
-    <td>{{ instance.regionName || instance.region || '—' }}</td>
+    <td class="max-w-32 whitespace-normal">{{ instance.regionName || instance.region || '—' }}</td>
     <td class="is-num">{{ instance.cpuCores }}</td>
     <td class="is-num">{{ memory(instance.ramMb) }}</td>
     <td class="is-num">{{ disk(instance.diskMb) }}</td>

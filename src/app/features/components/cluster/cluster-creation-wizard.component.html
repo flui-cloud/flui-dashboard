@@ -6,9 +6,9 @@
   <div class="fl-wizard">
     <nav aria-label="Steps">
       <fl-wizard-steps
-        [steps]="stepList()"
+        [steps]="steps.stepList()"
         [current]="currentStepIndex()"
-        (stepSelect)="goToStep($event)"
+        (stepSelect)="steps.goToStep($event)"
       />
     </nav>
 
@@ -28,16 +28,16 @@
           @case (0) {
             <app-cluster-create-step-infrastructure
               [name]="nameControl"
-              [generating]="generatingName()"
+              [generating]="state.generatingName()"
               [provider]="selectedProvider()"
               [region]="selectedRegion()"
               [serverTypeId]="selectedServerTypeId()"
-              [lockedProvider]="lockedProvider()"
-              [refusal]="providerRefusal()"
-              (generate)="generateUniqueClusterName()"
-              (providerSelected)="onProviderSelected($event)"
-              (regionSelected)="onRegionSelected($event)"
-              (serverTypeSelected)="onServerTypeSelected($event)"
+              [lockedProvider]="state.lockedProvider()"
+              [refusal]="state.providerRefusal()"
+              (generate)="provider.generateUniqueClusterName()"
+              (providerSelected)="provider.onProviderSelected($event)"
+              (regionSelected)="provider.onRegionSelected($event)"
+              (serverTypeSelected)="provider.onServerTypeSelected($event)"
             />
           }
           @case (1) {
@@ -45,76 +45,76 @@
               [provider]="selectedProvider()"
               [region]="selectedRegion()"
               [serverTypeId]="selectedServerTypeId()"
-              [needsDisk]="needsDiskConfig()"
-              [diskSizeGb]="diskSizeGb()"
+              [needsDisk]="state.needsDiskConfig()"
+              [diskSizeGb]="state.diskSizeGb()"
               [storagePricePerGbMonthly]="
-                selectedServerType()?.blockStoragePricePerGbMonthly ?? null
+                state.selectedServerType()?.blockStoragePricePerGbMonthly ?? null
               "
-              [costPerNodeHour]="totalCostPerNodePerHour()"
-              [sharedStorage]="sharedStorageEnabled()"
-              [sharedStorageSizeGb]="sharedStorageVolumeSizeGb()"
-              [draft]="availabilityDraft()"
-              [highlyAvailable]="highlyAvailable()"
-              [nodes]="fixedNodes()"
-              (regionSelected)="onRegionSelected($event)"
-              (serverTypeSelected)="onServerTypeSelected($event)"
-              (diskSizeChange)="setDiskSizeGb($event)"
-              (sharedStorageChange)="setSharedStorageEnabled($event)"
-              (sharedStorageSizeChange)="setSharedStorageVolumeSizeGb($event)"
-              (draftChange)="availabilityDraft.set($event)"
+              [costPerNodeHour]="state.totalCostPerNodePerHour()"
+              [sharedStorage]="state.sharedStorageEnabled()"
+              [sharedStorageSizeGb]="state.sharedStorageVolumeSizeGb()"
+              [draft]="state.availabilityDraft()"
+              [highlyAvailable]="state.highlyAvailable()"
+              [nodes]="state.fixedNodes()"
+              (regionSelected)="provider.onRegionSelected($event)"
+              (serverTypeSelected)="provider.onServerTypeSelected($event)"
+              (diskSizeChange)="state.setDiskSizeGb($event)"
+              (sharedStorageChange)="state.setSharedStorageEnabled($event)"
+              (sharedStorageSizeChange)="state.setSharedStorageVolumeSizeGb($event)"
+              (draftChange)="state.availabilityDraft.set($event)"
               (availabilityChange)="availability.set($event)"
-              (nodesChange)="setFixedNodes($event)"
+              (nodesChange)="state.setFixedNodes($event)"
             />
           }
           @case (2) {
             <app-ssh-key-selector
-              [selectedKeyId]="selectedSshKeyId()"
-              (keySelected)="onSshKeySelected($event)"
+              [selectedKeyId]="state.selectedSshKeyId()"
+              (keySelected)="provider.onSshKeySelected($event)"
             />
           }
           @case (3) {
             <app-cluster-create-step-network
-              [environmentNetwork]="environmentNetwork()"
-              [canBuildNetwork]="canBuildNetwork()"
-              [fluiBuilds]="fluiBuildsNetwork()"
-              [cidr]="fluiNetworkCidr()"
-              [showHelp]="showNetworkHelp()"
+              [environmentNetwork]="state.environmentNetwork()"
+              [canBuildNetwork]="state.canBuildNetwork()"
+              [fluiBuilds]="state.fluiBuildsNetwork()"
+              [cidr]="state.fluiNetworkCidr()"
+              [showHelp]="state.showNetworkHelp()"
               [provider]="selectedProvider()"
               [region]="selectedRegion()"
-              [vnetRequired]="vnetRequired()"
-              [vnet]="selectedVNetId() ? selectedVNetData() : null"
-              [subnets]="orderedSubnets()"
-              [selectedSubnetId]="selectedSubnetId()"
-              [showAddForm]="showAddSubnetForm()"
-              [adding]="addingSubnet()"
-              [addError]="addSubnetError()"
-              [zones]="addSubnetZones()"
-              [zone]="addSubnetZone"
-              [ipRange]="addSubnetIpRange"
-              [cidrValid]="isValidAddSubnetCidr()"
-              [addValid]="isAddSubnetValid()"
-              (fluiBuildsChange)="fluiBuildsNetwork.set($event)"
-              (cidrChange)="fluiNetworkCidr.set($event)"
-              (helpToggle)="showNetworkHelp.set(!showNetworkHelp())"
-              (vnetSelected)="onVNetSelected($event)"
-              (subnetSelect)="selectSubnet($event)"
-              (openAdd)="openAddSubnetForm()"
-              (closeAdd)="closeAddSubnetForm()"
-              (submitAdd)="submitAddSubnet()"
-              (zoneChange)="addSubnetZone = $event"
-              (ipRangeChange)="addSubnetIpRange = $event"
+              [vnetRequired]="state.vnetRequired()"
+              [vnet]="state.selectedVNetId() ? state.selectedVNetData() : null"
+              [subnets]="network.orderedSubnets()"
+              [selectedSubnetId]="state.selectedSubnetId()"
+              [showAddForm]="network.showAddSubnetForm()"
+              [adding]="network.addingSubnet()"
+              [addError]="network.addSubnetError()"
+              [zones]="network.addSubnetZones()"
+              [zone]="network.addSubnetZone"
+              [ipRange]="network.addSubnetIpRange"
+              [cidrValid]="network.isValidAddSubnetCidr()"
+              [addValid]="network.isAddSubnetValid()"
+              (fluiBuildsChange)="state.fluiBuildsNetwork.set($event)"
+              (cidrChange)="state.fluiNetworkCidr.set($event)"
+              (helpToggle)="state.showNetworkHelp.set(!state.showNetworkHelp())"
+              (vnetSelected)="network.onVNetSelected($event)"
+              (subnetSelect)="network.selectSubnet($event)"
+              (openAdd)="network.openAddSubnetForm()"
+              (closeAdd)="network.closeAddSubnetForm()"
+              (submitAdd)="network.submitAddSubnet()"
+              (zoneChange)="network.addSubnetZone = $event"
+              (ipRangeChange)="network.addSubnetIpRange = $event"
             />
           }
           @case (4) {
             <app-cluster-create-step-endpoint
-              [mode]="endpointHostnameMode()"
+              [mode]="state.endpointHostnameMode()"
               [zonesLoading]="dnsZonesService.loading()"
-              [zones]="dnsZones()"
-              [selectedZoneId]="selectedDnsZoneId()"
-              [selectedZoneName]="selectedZone()?.zoneName ?? null"
-              [clusterName]="getClusterName()"
-              (modeChange)="endpointHostnameMode.set($event)"
-              (zoneSelect)="selectedDnsZoneId.set($event)"
+              [zones]="state.dnsZones()"
+              [selectedZoneId]="state.selectedDnsZoneId()"
+              [selectedZoneName]="state.selectedZone()?.zoneName ?? null"
+              [clusterName]="state.getClusterName()"
+              (modeChange)="state.endpointHostnameMode.set($event)"
+              (zoneSelect)="state.selectedDnsZoneId.set($event)"
             />
           }
           @case (5) {
@@ -122,41 +122,47 @@
               [form]="firewallConfigForm"
               [detecting]="ipDetectionService.isDetecting()"
               [userIp]="ipDetectionService.userPublicIP()"
-              [throughTunnel]="isCrossProviderWorkload() && overlayEnabled()"
-              [controlProvider]="controlClusterProvider()"
-              [managedRules]="managedFirewallRules()"
-              (detectIp)="detectAndSetIP($event)"
-              (resetIps)="resetRuleIPs($event)"
-              (addRule)="addCustomRule()"
-              (removeRule)="removeRule($event)"
-              (directionChange)="onCustomRuleDirectionChange($event)"
+              [throughTunnel]="state.isCrossProviderWorkload() && state.overlayEnabled()"
+              [controlProvider]="state.controlClusterProvider()"
+              [managedRules]="state.managedFirewallRules()"
+              (detectIp)="firewall.detectAndSetIP($event)"
+              (resetIps)="firewall.resetRuleIPs($event)"
+              (addRule)="firewall.addCustomRule()"
+              (removeRule)="firewall.removeRule($event)"
+              (directionChange)="firewall.onCustomRuleDirectionChange($event)"
             />
           }
           @case (6) {
             <app-cluster-create-step-review
               [editable]="editableSteps"
-              [name]="getClusterName()"
-              [providerName]="getSelectedProviderName()"
-              [regionName]="getSelectedRegionName()"
-              [serverType]="getSelectedServerType()"
+              [name]="state.getClusterName()"
+              [providerName]="state.getSelectedProviderName()"
+              [regionName]="state.getSelectedRegionName()"
+              [serverType]="state.getSelectedServerType()"
               [serverMonthly]="
-                selectedServerType()
-                  ? pricingService.calculateMonthlyPriceRounded(selectedServerType()!.pricePerHour)
+                state.selectedServerType()
+                  ? pricingService.calculateMonthlyPriceRounded(
+                      state.selectedServerType()!.pricePerHour
+                    )
                   : null
               "
               [nodes]="costedNodes()"
-              [highlyAvailable]="highlyAvailable()"
-              [availabilityZones]="availabilityZones()"
-              [sshKey]="selectedSshKeyId() ? (getSshKeyById(selectedSshKeyId()!) ?? null) : null"
-              [environmentNetwork]="environmentNetwork()"
-              [vnet]="reviewVnet()"
-              [endpointMode]="endpointHostnameMode()"
-              [zoneName]="selectedZone()?.zoneName ?? null"
+              [highlyAvailable]="state.highlyAvailable()"
+              [availabilityZones]="state.availabilityZones()"
+              [sshKey]="
+                state.selectedSshKeyId()
+                  ? (state.getSshKeyById(state.selectedSshKeyId()!) ?? null)
+                  : null
+              "
+              [environmentNetwork]="state.environmentNetwork()"
+              [vnet]="network.reviewVnet()"
+              [endpointMode]="state.endpointHostnameMode()"
+              [zoneName]="state.selectedZone()?.zoneName ?? null"
               [firewallEnabled]="!!firewallConfigForm.get('enabled')?.value"
-              [ruleCount]="getFirewallRulesArray().length"
-              [sourceCidrs]="getTotalCustomCIDRs()"
+              [ruleCount]="state.getFirewallRulesArray().length"
+              [sourceCidrs]="firewall.getTotalCustomCIDRs()"
               [monthlyCost]="getEstimatedMonthlyCost()"
-              (edit)="editStep($event)"
+              (edit)="steps.editStep($event)"
             />
           }
         }
@@ -168,7 +174,7 @@
           flButton
           type="button"
           [disabled]="currentStepIndex() === 0"
-          (click)="previousStep()"
+          (click)="steps.previousStep()"
         >
           Previous
         </button>
@@ -177,7 +183,7 @@
             flButton="primary"
             type="button"
             [disabled]="!wizardSteps()[currentStepIndex()].isValid"
-            (click)="nextStep()"
+            (click)="steps.nextStep()"
           >
             Next
           </button>

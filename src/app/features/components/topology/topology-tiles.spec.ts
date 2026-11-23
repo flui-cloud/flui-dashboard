@@ -8,7 +8,7 @@ import {
   shortName,
   tileGroups,
 } from './topology-tiles';
-import { tileLook } from './topology-tile';
+import { tileValueTone } from './topology-tile';
 import { topologyFixture } from './topology.fixture';
 
 describe('the server tile map', () => {
@@ -47,16 +47,16 @@ describe('the server tile map', () => {
     expect(asia.dimmed).toBeFalse();
   });
 
-  it('turns a tile red from 90% and leaves no value grey', () => {
+  it('writes a value in the error colour from 90%, and mutes a server with no data', () => {
     const [eu, asia] = tileGroups(t, 'memory', 'cluster', null);
-    expect(tileLook(eu.tiles[0], 'memory', 0).background).toBe('hsl(var(--destructive))');
-    expect(tileLook(eu.tiles[1], 'memory', 0).background).toContain('--brand');
-    expect(tileLook(asia.tiles[0], 'memory', 0).background).toBe('hsl(var(--muted))');
+    expect(tileValueTone(eu.tiles[0], 'memory')).toBe('err');
+    expect(tileValueTone(eu.tiles[1], 'memory')).toBe('ink');
+    expect(tileValueTone(asia.tiles[0], 'memory')).toBe('muted');
   });
 
-  it('never paints red when coloring by replicas', () => {
+  it('never writes a value in the error colour when coloring by replicas', () => {
     const [eu] = tileGroups(t, 'pods', 'cluster', null);
-    expect(tileLook(eu.tiles[0], 'pods', 3).background).toContain('--brand');
+    expect(tileValueTone(eu.tiles[0], 'pods')).toBe('ink');
   });
 
   it('shortens names only by what every sibling shares', () => {
@@ -94,8 +94,8 @@ describe('the network mode', () => {
   it('colors tiles by network, not by load', () => {
     const [eu] = tileGroups(t, 'network', 'cluster', null);
     expect(eu.tiles[0].valueText).toBe('Flui');
-    expect(tileLook(eu.tiles[0], 'network', 0).border).toBe('hsl(var(--ok))');
-    expect(tileLook(eu.tiles[1], 'network', 0).border).toBe('hsl(var(--warn))');
+    expect(tileValueTone(eu.tiles[0], 'network')).toBe('ok');
+    expect(tileValueTone(eu.tiles[1], 'network')).toBe('warn');
   });
 
   it('describes how the control reaches every other cluster', () => {

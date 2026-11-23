@@ -11,23 +11,19 @@ export interface ExportPalette {
   track: string;
 }
 
-/** The portal's own colours, read from the theme in use. */
 export function paletteFromDocument(root: HTMLElement = document.documentElement): ExportPalette {
   const css = getComputedStyle(root);
-  const token = (name: string, alpha?: number) => {
-    const value = css.getPropertyValue(`--${name}`).trim();
-    return alpha === undefined ? `hsl(${value})` : `hsl(${value} / ${alpha})`;
-  };
+  const token = (name: string) => css.getPropertyValue(`--${name}`).trim();
   return {
-    bg: token('background'),
-    card: token('card'),
-    border: token('border'),
-    fg: token('foreground'),
-    muted: token('muted-foreground'),
-    brand: token('brand'),
-    ok: token('ok'),
-    warn: token('warn'),
-    err: token('destructive'),
-    track: token('muted'),
+    bg: token('fl-surface'),
+    card: token('fl-surface'),
+    border: token('fl-border'),
+    fg: token('fl-ink'),
+    muted: token('fl-ink-muted'),
+    brand: token('fl-accent'),
+    ok: token('fl-success'),
+    warn: token('fl-warning'),
+    err: token('fl-danger'),
+    track: token('fl-surface-subtle'),
   };
 }

@@ -1,3 +1,4 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { Component, input, output, signal } from '@angular/core';
 import { provideIcons } from '@ng-icons/core';
 import { lucideFileText, lucideRefreshCw, lucideX } from '@ng-icons/lucide';
@@ -23,6 +24,7 @@ interface LogsTarget {
 @Component({
   selector: 'app-platform-component-detail-panel',
   imports: [
+    CdkTrapFocus,
     FlAlert,
     FlKeyValue,
     FlKvItem,
@@ -39,7 +41,10 @@ interface LogsTarget {
   template: `
     <div
       class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
       (click)="closed.emit()"
+      (keydown.escape)="closed.emit()"
     >
       <div
         class="fl-dialog fl-dialog--wide"

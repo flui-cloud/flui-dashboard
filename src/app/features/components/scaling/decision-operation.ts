@@ -21,9 +21,3 @@ export function operationDetail(op: DecisionOperation): string | null {
   if (op.state === 'failed') return op.error;
   return op.state === 'running' || op.state === 'pending' ? op.step : null;
 }
-
-export function operationTone(state: DecisionOperation['state']): string {
-  if (state === 'failed') return 'font-medium text-red-600';
-  if (state === 'completed') return 'font-medium status-healthy';
-  return 'font-medium text-sky-600';
-}

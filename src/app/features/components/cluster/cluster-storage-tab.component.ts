@@ -179,6 +179,7 @@ import { FlStatus } from '../../../ui/primitives/status';
               size="sm"
               type="button"
               [attr.aria-expanded]="nfsOpen()"
+              [attr.aria-label]="(nfsOpen() ? 'Hide' : 'Show') + ' NFS configuration'"
               (click)="toggleNfs()"
             >
               {{ nfsOpen() ? 'Hide' : 'Show' }}

@@ -1,3 +1,4 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { Component, Input, signal, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { provideIcons } from '@ng-icons/core';
@@ -11,13 +12,16 @@ import { InstanceWithLabels, getClusterInfo } from '../../model/instance.models'
 
 @Component({
   selector: 'app-instance-delete-dialog',
-  imports: [RouterLink, FlAlert, FlKeyValue, FlKvItem, FlButton, FlIcon, FlSpinner],
+  imports: [CdkTrapFocus, RouterLink, FlAlert, FlKeyValue, FlKvItem, FlButton, FlIcon, FlSpinner],
   providers: [provideIcons({ lucideX })],
   template: `
     @if (isOpen()) {
       <div
         class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+        cdkTrapFocus
+        [cdkTrapFocusAutoCapture]="true"
         (click)="onCancel()"
+        (keydown.escape)="onCancel()"
       >
         <div
           class="fl-dialog"

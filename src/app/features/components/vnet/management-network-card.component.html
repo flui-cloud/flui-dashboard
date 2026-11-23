@@ -239,6 +239,8 @@
   @if (pendingDemote(); as c) {
     <div
       class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
       (click)="$event.target === $event.currentTarget && closeDemote()"
       (keydown.escape)="closeDemote()"
     >

@@ -1,3 +1,4 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { provideIcons } from '@ng-icons/core';
@@ -17,12 +18,24 @@ import { FlSpinner } from '../../../ui/primitives/spinner';
 
 @Component({
   selector: 'app-resize-node-dialog',
-  imports: [FormsModule, FlAlert, FlField, FlLoadingState, FlButton, FlIcon, FlSpinner],
+  imports: [
+    CdkTrapFocus,
+    FormsModule,
+    FlAlert,
+    FlField,
+    FlLoadingState,
+    FlButton,
+    FlIcon,
+    FlSpinner,
+  ],
   providers: [provideIcons({ lucideX })],
   template: `
     <div
       class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
       (click)="closed.emit()"
+      (keydown.escape)="closed.emit()"
     >
       <div
         class="fl-dialog"

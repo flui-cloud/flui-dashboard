@@ -227,7 +227,7 @@ export class FirewallClusterManagementComponent implements OnInit, OnDestroy {
 
   formatDate(dateString?: string): string {
     if (!dateString) return 'Never';
-    return new Date(dateString).toLocaleString();
+    return new Date(dateString).toLocaleString('en-GB');
   }
 
   async refresh() {

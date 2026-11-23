@@ -18,7 +18,12 @@ let nextCapId = 0;
   template: `
     <div class="flex flex-col gap-3" data-testid="scaling-mode">
       <div class="flex flex-wrap items-center gap-3">
-        <fl-status [tone]="mode().tone" [label]="label()" data-testid="scaling-mode-status" />
+        <fl-status
+          class="min-w-0 whitespace-normal"
+          [tone]="mode().tone"
+          [label]="label()"
+          data-testid="scaling-mode-status"
+        />
         <app-explain
           [floating]="true"
           label="What this means"

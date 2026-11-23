@@ -1,3 +1,4 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { Component, input, output } from '@angular/core';
 import { provideIcons } from '@ng-icons/core';
 import { lucideCheck, lucideCopy, lucideDownload, lucideX } from '@ng-icons/lucide';
@@ -8,12 +9,14 @@ import { ParsedError } from './endpoint-format';
 
 @Component({
   selector: 'app-endpoint-error-dialog',
-  imports: [FlButton, FlIcon, FlTag],
+  imports: [CdkTrapFocus, FlButton, FlIcon, FlTag],
   providers: [provideIcons({ lucideCheck, lucideCopy, lucideDownload, lucideX })],
   host: { '(document:keydown.escape)': 'closed.emit()' },
   template: `
     <div
       class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
       (click)="closed.emit()"
     >
       <div

@@ -1,7 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { TopologyResponseDto } from '../../../core/api/model/topologyResponseDto';
 import { TopologyFocus } from './topology-state';
 import { percent, statusLabel, toneOf } from './topology-format';
+import { kitTone, toneWord } from './topology-kit';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlEmptyState } from '../../../ui/patterns/states';
+import { FlStatus } from '../../../ui/primitives/status';
 
 interface AttentionItem {
   key: string;
@@ -86,46 +91,60 @@ export function attentionOf(t: TopologyResponseDto | null): {
 
 @Component({
   selector: 'app-topology-attention',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FlPanel, FlTable, FlStatus, FlEmptyState],
+  host: { class: 'fl-stack min-w-0' },
   template: `
-    <div class="space-y-5 p-4 text-sm">
-      <p class="text-sub">Select anything on the map to see what it runs and open its page.</p>
-      @for (group of groups(); track group.title) {
-        <section>
-          <h3 class="text-label mb-2">{{ group.title }}</h3>
-          @if (group.items.length) {
-            <ul class="space-y-1">
-              @for (item of group.items; track item.key) {
-                <li>
-                  <button
-                    type="button"
-                    class="flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left hover:bg-muted"
-                    (click)="selected.emit(item.focus)"
-                  >
-                    <span class="flex min-w-0 max-w-[60%] flex-none items-center gap-2">
-                      <span
-                        class="h-1.5 w-1.5 flex-none rounded-full"
-                        [class]="'dot-' + item.tone"
-                      ></span>
-                      <span class="truncate text-foreground">{{ item.label }}</span>
-                    </span>
-                    <span class="text-sub truncate">{{ item.detail }}</span>
-                  </button>
-                </li>
-              }
-            </ul>
-          } @else {
-            <p class="text-sub">{{ group.empty }}</p>
-          }
-        </section>
-      }
-    </div>
+    <p class="text-fl-body-sm text-fl-ink-muted">
+      Select anything on the map to see what it runs and open its page.
+    </p>
+    @for (group of groups(); track group.title) {
+      <fl-panel [title]="group.title" [count]="group.items.length" [flush]="true">
+        @if (group.items.length) {
+          <div class="fl-table-wrap">
+            <table flTable density="dense">
+              <thead>
+                <tr>
+                  <th scope="col">Name</th>
+                  <th scope="col">Detail</th>
+                  <th scope="col" class="is-fit">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of group.items; track item.key) {
+                  <tr>
+                    <td class="whitespace-normal break-words">
+                      <button
+                        type="button"
+                        class="fl-link text-left"
+                        (click)="selected.emit(item.focus)"
+                      >
+                        {{ item.label }}
+                      </button>
+                    </td>
+                    <td class="whitespace-normal break-words text-fl-ink-muted">
+                      {{ item.detail }}
+                    </td>
+                    <td class="is-fit">
+                      <fl-status [tone]="kit(item.tone)" [label]="word(item.tone)" />
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <fl-empty-state [compact]="true" [title]="group.empty" />
+        }
+      </fl-panel>
+    }
   `,
 })
 export class TopologyAttentionComponent {
   readonly snapshot = input<TopologyResponseDto | null>(null);
   readonly selected = output<TopologyFocus>();
+
+  protected readonly kit = kitTone;
+  protected readonly word = toneWord;
 
   protected readonly groups = computed(() => {
     const { needs, spread } = attentionOf(this.snapshot());

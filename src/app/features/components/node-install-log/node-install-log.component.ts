@@ -29,12 +29,12 @@ const NEAR_END_PX = 24;
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-      <span class="text-gray-300" data-testid="install-log-state">{{ stateLine() }}</span>
+      <span class="text-fl-topbar-muted" data-testid="install-log-state">{{ stateLine() }}</span>
       <span class="flex-1"></span>
       @if (!finished()) {
         <button
           type="button"
-          class="text-gray-300 underline underline-offset-2"
+          class="text-fl-topbar-muted underline underline-offset-2"
           (click)="togglePause()"
           data-testid="install-log-pause"
         >
@@ -44,7 +44,7 @@ const NEAR_END_PX = 24;
       @if (!stick() && text()) {
         <button
           type="button"
-          class="text-gray-300 underline underline-offset-2"
+          class="text-fl-topbar-muted underline underline-offset-2"
           (click)="jumpToEnd()"
           data-testid="install-log-jump"
         >
@@ -54,7 +54,7 @@ const NEAR_END_PX = 24;
       @if (text()) {
         <button
           type="button"
-          class="text-gray-300 underline underline-offset-2"
+          class="text-fl-topbar-muted underline underline-offset-2"
           (click)="save()"
           data-testid="install-log-download"
         >
@@ -63,7 +63,7 @@ const NEAR_END_PX = 24;
       }
     </div>
     @if (failed()) {
-      <p class="m-0 mt-2 text-xs text-red-300" data-testid="install-log-error">
+      <p class="m-0 mt-2 text-xs text-fl-danger-border" data-testid="install-log-error">
         {{ failed() }}
       </p>
     }
@@ -71,12 +71,12 @@ const NEAR_END_PX = 24;
       <pre
         #box
         (scroll)="onScroll()"
-        class="m-0 mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap font-mono text-xs leading-relaxed text-green-400"
+        class="m-0 mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap font-mono text-xs leading-relaxed text-fl-topbar-fg"
         data-testid="install-log-text"
         >{{ text() }}</pre>
     }
     @if (note()) {
-      <p class="m-0 mt-2 text-xs text-gray-300" data-testid="install-log-note">
+      <p class="m-0 mt-2 text-xs text-fl-topbar-muted" data-testid="install-log-note">
         {{ note() }}
       </p>
     }

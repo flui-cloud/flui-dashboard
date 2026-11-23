@@ -127,7 +127,9 @@ export class ClusterProgressTrackerComponent implements OnInit, AfterViewChecked
 
   protected readonly startedTime = computed(() => {
     const started = this.startedAt();
-    return started ? started.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+    return started
+      ? started.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+      : '';
   });
 
   protected readonly elapsed = computed(() => {

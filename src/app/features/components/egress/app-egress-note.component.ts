@@ -1,18 +1,39 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, signal } from '@angular/core';
-import { EgressService, EgressView } from '../../service/egress.service';
+import { Component, effect, inject, input, signal } from '@angular/core';
+import {
+  EgressPort,
+  EgressService,
+  EgressView,
+  formatEgressPorts,
+} from '../../service/egress.service';
+import { FlKeyValue, FlKvItem, FlPanel } from '../../../ui/patterns';
+import { FlStatus, FlTag } from '../../../ui/primitives';
 
-/** One line on what the application may reach outside its cluster; shown only when limited. */
 @Component({
   selector: 'app-egress-note',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FlPanel, FlKeyValue, FlKvItem, FlStatus, FlTag],
+  host: { class: 'fl-stack' },
   template: `
     @if (reading(); as r) {
       @if (!r.open) {
-        <section class="card-surface p-4" data-testid="app-egress">
-          <h3 class="m-0 text-sm font-semibold text-foreground">Outbound ports</h3>
-          <p class="m-0 mt-0.5 text-[13px] text-muted-foreground">{{ r.summary }}</p>
-        </section>
+        <fl-panel title="Outbound ports" data-testid="app-egress">
+          <div class="flex flex-col gap-3">
+            <fl-key-value>
+              <fl-kv-item key="Policy">
+                <fl-status tone="warning" label="Limited to listed ports" />
+              </fl-kv-item>
+              <fl-kv-item key="Allowed ports">
+                <span class="fl-row">
+                  @for (p of r.ports; track p.port + p.protocol) {
+                    <fl-tag class="fl-mono">{{ portLabel(p) }}</fl-tag>
+                  } @empty {
+                    <span class="text-fl-ink-muted">None</span>
+                  }
+                </span>
+              </fl-kv-item>
+            </fl-key-value>
+            <p class="m-0 text-fl-body-sm text-fl-ink-muted">{{ r.summary }}</p>
+          </div>
+        </fl-panel>
       }
     }
   `,
@@ -27,6 +48,10 @@ export class AppEgressNoteComponent {
       const id = this.appId();
       if (id) void this.load(id);
     });
+  }
+
+  protected portLabel(p: EgressPort): string {
+    return formatEgressPorts([p]);
   }
 
   private async load(id: string): Promise<void> {

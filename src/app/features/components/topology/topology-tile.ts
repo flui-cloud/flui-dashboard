@@ -1,58 +1,30 @@
 import { FULL_PCT, NetworkKind, Tile } from './topology-tiles';
 import { TopologyColorBy } from './topology-state';
+import { ExportPalette } from './topology-export';
 
-export interface TileLook {
-  background: string;
-  color: string;
-  border: string;
-}
+export type TileTone = 'ink' | 'muted' | 'ok' | 'warn' | 'err';
 
-const LIGHT_TEXT = 'hsl(var(--primary-foreground))';
-const DARK_TEXT = 'hsl(var(--foreground))';
-
-const NETWORK_LOOK: Record<NetworkKind, TileLook> = {
-  flui: { background: 'hsl(var(--ok) / 0.18)', color: DARK_TEXT, border: 'hsl(var(--ok))' },
-  'flui-waiting': {
-    background: 'hsl(var(--warn) / 0.18)',
-    color: DARK_TEXT,
-    border: 'hsl(var(--warn))',
-  },
-  private: {
-    background: 'hsl(var(--brand) / 0.14)',
-    color: DARK_TEXT,
-    border: 'hsl(var(--brand) / 0.6)',
-  },
-  public: {
-    background: 'hsl(var(--muted))',
-    color: DARK_TEXT,
-    border: 'hsl(var(--muted-foreground) / 0.6)',
-  },
+const NETWORK_TONE: Record<NetworkKind, TileTone> = {
+  flui: 'ok',
+  'flui-waiting': 'warn',
+  private: 'muted',
+  public: 'muted',
 };
 
-/**
- * One ramp from the portal's brand token, red from 90% up. Text switches to the
- * light colour only where the fill is dark enough to keep it readable.
- */
-export function tileLook(tile: Tile, colorBy: TopologyColorBy, maxPods: number): TileLook {
-  if (colorBy === 'network') return NETWORK_LOOK[tile.network];
-  if (tile.value === null) {
-    return { background: 'hsl(var(--muted))', color: DARK_TEXT, border: 'transparent' };
-  }
-  if (colorBy !== 'pods' && tile.value >= FULL_PCT) {
-    return { background: 'hsl(var(--destructive))', color: LIGHT_TEXT, border: 'transparent' };
-  }
-  const k =
-    colorBy === 'pods'
-      ? share(tile.value, maxPods)
-      : Math.min(1, Math.max(0, (tile.value - 30) / 60));
-  const alpha = 0.12 + 0.78 * k;
-  return {
-    background: `hsl(var(--brand) / ${alpha.toFixed(2)})`,
-    color: alpha >= 0.7 ? LIGHT_TEXT : DARK_TEXT,
-    border: 'transparent',
-  };
+export function tileValueTone(tile: Tile, colorBy: TopologyColorBy): TileTone {
+  if (colorBy === 'network') return NETWORK_TONE[tile.network];
+  if (tile.value === null) return 'muted';
+  return (colorBy === 'memory' || colorBy === 'cpu') && tile.value >= FULL_PCT ? 'err' : 'ink';
 }
 
-function share(value: number, max: number): number {
-  return max > 0 ? value / max : 0;
+const PALETTE_KEY: Record<TileTone, keyof ExportPalette> = {
+  ink: 'fg',
+  muted: 'muted',
+  ok: 'ok',
+  warn: 'warn',
+  err: 'err',
+};
+
+export function tileValueColor(palette: ExportPalette, tone: TileTone): string {
+  return palette[PALETTE_KEY[tone]];
 }

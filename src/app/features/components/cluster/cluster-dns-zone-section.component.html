@@ -108,6 +108,7 @@
               size="sm"
               type="button"
               data-testid="zone-remove"
+              [attr.aria-label]="'Remove zone ' + a.dnsZone.zoneName"
               [disabled]="removeConfirmId() === a.id || isBusy(a)"
               (click)="removeConfirmId.set(a.id)"
             >

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, effect, input, output, signal } from '@angular/core';
+import { Component, effect, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   MaintenanceSlot,
@@ -6,98 +6,94 @@ import {
   WEEKDAYS,
   Weekday,
 } from '../../service/maintenance.service';
+import { FlField } from '../../../ui/patterns';
+import { FlButton, FlSpinner } from '../../../ui/primitives';
+
+let nextEditor = 0;
 
 /** Weekly slots in one time zone; emits the window as written. */
 @Component({
   selector: 'app-maintenance-window-editor',
-  standalone: true,
-  imports: [FormsModule],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FormsModule, FlField, FlButton, FlSpinner],
+  host: { class: 'block' },
   template: `
-    <div class="space-y-3" data-testid="window-editor">
+    <div class="flex flex-col gap-4" data-testid="window-editor">
       @for (slot of slots(); track $index; let i = $index) {
-        <div class="flex flex-wrap items-center gap-2 text-sm">
-          <div class="inline-flex gap-0.5 rounded-md border border-border p-0.5">
-            @for (d of days; track d) {
-              <button
-                type="button"
-                class="rounded px-1.5 py-0.5 text-[12px]"
-                [class]="
-                  slot.days.includes(d)
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-muted'
-                "
-                (click)="toggle(i, d)"
-                [attr.data-testid]="'slot-' + i + '-' + d"
-              >
-                {{ d }}
-              </button>
-            }
+        <div class="flex flex-wrap items-end gap-3">
+          <div class="fl-field">
+            <span class="fl-field__label" [id]="uid + '-days-' + i">Days</span>
+            <div class="fl-segmented" role="group" [attr.aria-labelledby]="uid + '-days-' + i">
+              @for (d of days; track d) {
+                <button
+                  type="button"
+                  [attr.aria-pressed]="slot.days.includes(d)"
+                  (click)="toggle(i, d)"
+                  [attr.data-testid]="'slot-' + i + '-' + d"
+                >
+                  {{ dayLabel(d) }}
+                </button>
+              }
+            </div>
           </div>
-          <label class="inline-flex items-center gap-1 text-muted-foreground"
-            >from
-            <input
-              type="time"
-              class="h-8 w-28 rounded-md border border-border bg-background px-2 text-xs text-foreground"
-              [ngModel]="slot.start"
-              (ngModelChange)="patch(i, { start: $event })"
-            />
-          </label>
-          <label class="inline-flex items-center gap-1 text-muted-foreground"
-            >for
-            <input
-              type="number"
-              min="15"
-              max="1440"
-              step="15"
-              class="h-8 w-20 rounded-md border border-border bg-background px-2 text-xs text-foreground"
-              [ngModel]="slot.durationMinutes"
-              (ngModelChange)="patch(i, { durationMinutes: +$event })"
-            />
-            min
-          </label>
+          <fl-field label="Starts at" [for]="uid + '-start-' + i">
+            <div class="fl-input">
+              <input
+                type="time"
+                class="fl-num"
+                [id]="uid + '-start-' + i"
+                [ngModel]="slot.start"
+                (ngModelChange)="patch(i, { start: $event })"
+              />
+            </div>
+          </fl-field>
+          <fl-field label="Minutes" [for]="uid + '-minutes-' + i">
+            <div class="fl-input">
+              <input
+                type="number"
+                min="15"
+                max="1440"
+                step="15"
+                class="fl-num"
+                [id]="uid + '-minutes-' + i"
+                [ngModel]="slot.durationMinutes"
+                (ngModelChange)="patch(i, { durationMinutes: +$event })"
+              />
+            </div>
+          </fl-field>
           @if (slots().length > 1) {
-            <button
-              type="button"
-              class="text-[12px] text-muted-foreground hover:text-destructive"
-              (click)="remove(i)"
-            >
-              Remove
-            </button>
+            <button flButton="ghost" size="sm" type="button" (click)="remove(i)">Remove</button>
           }
         </div>
       }
-      <div class="flex flex-wrap items-center gap-3 text-sm">
-        <button type="button" class="text-[12px] text-primary hover:underline" (click)="add()">
-          Add a slot
-        </button>
-        <label class="inline-flex items-center gap-1 text-muted-foreground"
-          >Time zone
+      <div>
+        <button flButton size="sm" type="button" (click)="add()">Add a slot</button>
+      </div>
+      <fl-field label="Time zone" [for]="uid + '-timezone'" class="max-w-sm">
+        <div class="fl-input fl-input--lg">
           <input
-            class="h-8 w-44 rounded-md border border-border bg-background px-2 text-xs text-foreground"
+            [id]="uid + '-timezone'"
             [ngModel]="timezone()"
             (ngModelChange)="timezone.set($event)"
             data-testid="window-timezone"
           />
-        </label>
-      </div>
-      <div class="flex gap-2">
+        </div>
+      </fl-field>
+      <div class="fl-row">
         <button
+          flButton="primary"
           type="button"
-          class="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           [disabled]="saving()"
           (click)="emit()"
           data-testid="window-save"
         >
-          {{ saving() ? 'Saving…' : 'Save window' }}
+          @if (saving()) {
+            <fl-spinner label="Saving" />
+            Saving…
+          } @else {
+            Save window
+          }
         </button>
-        <button
-          type="button"
-          class="rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted"
-          (click)="cancelled.emit()"
-        >
-          Cancel
-        </button>
+        <button flButton="ghost" type="button" (click)="cancelled.emit()">Cancel</button>
       </div>
     </div>
   `,
@@ -108,6 +104,7 @@ export class MaintenanceWindowEditorComponent {
   readonly saved = output<MaintenanceWindow>();
   readonly cancelled = output<void>();
 
+  protected readonly uid = `window-editor-${nextEditor++}`;
   protected readonly days = WEEKDAYS;
   protected readonly slots = signal<MaintenanceSlot[]>([]);
   protected readonly timezone = signal(Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC');
@@ -122,6 +119,10 @@ export class MaintenanceWindowEditorComponent {
       );
       if (v?.timezone) this.timezone.set(v.timezone);
     });
+  }
+
+  protected dayLabel(d: Weekday): string {
+    return d.charAt(0).toUpperCase() + d.slice(1);
   }
 
   protected toggle(i: number, d: Weekday): void {

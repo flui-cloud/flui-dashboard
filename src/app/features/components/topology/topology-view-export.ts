@@ -14,7 +14,6 @@ export function esc(text: string): string {
   return text.replace(/[&<>"']/g, (c) => `&#${c.codePointAt(0)};`);
 }
 
-/** `hsl(var(--brand) / 0.4)` as the theme in use says it: an exported image has no stylesheet to ask. */
 export function resolveColor(value: string, root: HTMLElement = document.documentElement): string {
   if (!value.includes('var(')) return value;
   const css = getComputedStyle(root);
@@ -25,6 +24,13 @@ export function resolveColor(value: string, root: HTMLElement = document.documen
 
 export function fontFamily(): string {
   return getComputedStyle(document.body).fontFamily || 'system-ui, sans-serif';
+}
+
+export function monoFamily(): string {
+  const value = getComputedStyle(document.documentElement)
+    .getPropertyValue('--fl-font-mono')
+    .trim();
+  return value || 'ui-monospace, monospace';
 }
 
 /** Text cut to a width, roughly: the image has no layout engine to measure with. */
@@ -42,13 +48,13 @@ export function frame(
   const width = Math.max(720, Math.ceil(size.width + 2 * MARGIN));
   const height = Math.ceil(HEADER_H + size.height + MARGIN);
   const stamp = header.masked
-    ? `<g><rect x="${width - MARGIN - 92}" y="${MARGIN - 4}" width="92" height="28" rx="14" fill="${palette.err}"/>` +
-      `<text x="${width - MARGIN - 46}" y="${MARGIN + 15}" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">Masked</text></g>`
+    ? `<g><rect x="${width - MARGIN - 92}" y="${MARGIN - 4}" width="92" height="28" rx="6" fill="${palette.card}" stroke="${palette.err}"/>` +
+      `<text x="${width - MARGIN - 46}" y="${MARGIN + 15}" text-anchor="middle" font-size="12" font-weight="600" fill="${palette.err}">Masked</text></g>`
     : '';
   const svg = [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" font-family="${esc(fontFamily())}">`,
     `<rect width="${width}" height="${height}" fill="${palette.bg}"/>`,
-    `<rect x="${MARGIN}" y="${MARGIN}" width="18" height="18" rx="5" fill="${palette.brand}"/>`,
+    `<rect x="${MARGIN}" y="${MARGIN}" width="18" height="18" rx="4" fill="${palette.brand}"/>`,
     `<text x="${MARGIN + 26}" y="${MARGIN + 14}" font-size="14" font-weight="600" fill="${palette.fg}">Flui</text>`,
     `<text x="${MARGIN}" y="${MARGIN + 46}" font-size="20" font-weight="700" fill="${palette.fg}">${esc(header.title)}</text>`,
     `<text x="${MARGIN}" y="${MARGIN + 64}" font-size="12" fill="${palette.muted}">${esc(header.subtitle)}</text>`,

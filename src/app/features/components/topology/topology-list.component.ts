@@ -1,8 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { TopologyResponseDto } from '../../../core/api/model/topologyResponseDto';
 import { TopologyFocus } from './topology-state';
-import { memory, percent, statusLabel, toneOf } from './topology-format';
+import { memory, statusLabel, toneOf } from './topology-format';
 import { shortName } from './topology-tiles';
+import { kitTone } from './topology-kit';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlUsageBar } from '../../../ui/patterns/usage-bar';
+import { FlStatus } from '../../../ui/primitives/status';
 
 type Cell =
   | { kind: 'text'; text: string }
@@ -11,7 +16,6 @@ type Cell =
 
 interface Column {
   label: string;
-  width: string;
   end?: boolean;
 }
 
@@ -22,6 +26,7 @@ interface ListRow {
   tone: string;
   status: string;
   cells: Cell[];
+  mono: boolean;
 }
 
 interface ListGroup {
@@ -30,94 +35,79 @@ interface ListGroup {
   rows: ListRow[];
 }
 
-const STATUS_COLUMN = '5.5rem';
-
 /** The same fleet as the map, as tables a keyboard and a screen reader can walk. */
 @Component({
   selector: 'app-topology-list',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FlPanel, FlTable, FlUsageBar, FlStatus],
+  host: { class: 'fl-stack' },
   template: `
-    <div class="space-y-6">
-      @for (group of groups(); track group.title) {
-        <section class="card-surface overflow-hidden" [attr.aria-label]="group.title">
-          <div
-            class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 border-b border-border bg-muted/40 px-4 py-2 md:[grid-template-columns:var(--cols)]"
-            [style.--cols]="templateOf(group)"
-          >
-            <h2 class="text-label">{{ group.title }} · {{ group.rows.length }}</h2>
-            @for (col of group.columns; track col.label) {
-              <span class="text-label hidden md:block" [class.text-right]="col.end">{{
-                col.label
-              }}</span>
-            }
-            <span class="text-label text-right">Status</span>
-          </div>
-          <ul role="list">
-            @for (row of group.rows; track row.focus.type + row.focus.id) {
-              <li class="border-b border-border last:border-b-0">
-                <button
-                  type="button"
-                  class="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 px-4 py-2 text-left text-sm transition-colors hover:bg-muted/60 md:[grid-template-columns:var(--cols)]"
-                  [style.--cols]="templateOf(group)"
-                  [class.bg-muted]="isFocused(row.focus)"
-                  [attr.aria-pressed]="isFocused(row.focus)"
-                  [attr.aria-label]="row.label + ', ' + row.status"
-                  (click)="selected.emit(row.focus)"
-                >
-                  <span class="flex min-w-0 items-center gap-2.5">
-                    <span class="h-2 w-2 flex-none rounded-full" [class]="'dot-' + row.tone"></span>
-                    <span class="min-w-0">
-                      <span class="block truncate font-medium text-foreground">{{
-                        row.label
+    @for (group of groups(); track group.title) {
+      <fl-panel [title]="group.title" [count]="group.rows.length" [flush]="true">
+        <div class="fl-table-wrap">
+          <table flTable density="dense">
+            <thead>
+              <tr>
+                <th scope="col">Name</th>
+                @for (col of group.columns; track col.label) {
+                  <th scope="col" [class.is-num]="col.end">{{ col.label }}</th>
+                }
+                <th scope="col" class="is-fit">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of group.rows; track row.focus.type + row.focus.id) {
+                <tr [class.is-selected]="isFocused(row.focus)">
+                  <td class="fl-cell-name">
+                    <button
+                      type="button"
+                      class="fl-link block max-w-full truncate text-left"
+                      [class.fl-mono]="row.mono"
+                      [attr.aria-pressed]="isFocused(row.focus)"
+                      [attr.aria-label]="row.label + ', ' + row.status"
+                      (click)="selected.emit(row.focus)"
+                    >
+                      {{ row.label }}
+                    </button>
+                    @if (row.detail) {
+                      <span class="block truncate text-fl-caption text-fl-ink-muted">{{
+                        row.detail
                       }}</span>
-                      @if (row.detail) {
-                        <span class="block truncate text-xs text-muted-foreground">{{
-                          row.detail
-                        }}</span>
-                      }
-                    </span>
-                  </span>
+                    }
+                  </td>
                   @for (cell of row.cells; track $index) {
-                    <span class="hidden min-w-0 md:block">
-                      @switch (cell.kind) {
-                        @case ('meter') {
-                          <span class="flex items-center gap-2">
-                            <span class="h-1 flex-1 rounded-full bg-muted">
-                              <span
-                                class="block h-1 rounded-full"
-                                [style.width.%]="cell.value ?? 0"
-                                [style.background]="meterColor(cell.value)"
-                              ></span>
-                            </span>
-                            <span
-                              class="w-9 text-right font-mono text-xs tabular-nums text-foreground"
-                              >{{ pct(cell.value) }}</span
-                            >
-                          </span>
-                        }
-                        @case ('num') {
-                          <span
-                            class="block text-right font-mono text-xs tabular-nums text-foreground"
-                            >{{ cell.text }}</span
-                          >
-                        }
-                        @default {
-                          <span class="block truncate text-muted-foreground">{{ cell.text }}</span>
-                        }
+                    @switch (cell.kind) {
+                      @case ('meter') {
+                        <td>
+                          @if (cell.value === null) {
+                            <span class="text-fl-ink-muted">—</span>
+                          } @else {
+                            <fl-usage-bar
+                              [percent]="cell.value"
+                              [label]="group.columns[$index].label + ' of ' + row.label"
+                              [warnAt]="75"
+                              [criticalAt]="90"
+                            />
+                          }
+                        </td>
                       }
-                    </span>
+                      @case ('num') {
+                        <td class="is-num fl-mono">{{ cell.text }}</td>
+                      }
+                      @default {
+                        <td class="text-fl-ink-muted">{{ cell.text }}</td>
+                      }
+                    }
                   }
-                  <span class="text-right text-xs font-medium" [class]="'status-' + row.tone">{{
-                    row.status
-                  }}</span>
-                </button>
-              </li>
-            }
-          </ul>
-        </section>
-      }
-    </div>
+                  <td class="is-fit">
+                    <fl-status [tone]="kit(row.tone)" [label]="row.status" />
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </fl-panel>
+    }
   `,
 })
 export class TopologyListComponent {
@@ -131,19 +121,7 @@ export class TopologyListComponent {
     return !!current && current.type === f.type && current.id === f.id;
   }
 
-  protected templateOf(group: ListGroup): string {
-    return `minmax(0,1.6fr) ${group.columns.map((c) => c.width).join(' ')} ${STATUS_COLUMN}`;
-  }
-
-  protected pct(value: number | null): string {
-    return percent(value);
-  }
-
-  protected meterColor(value: number | null): string {
-    if ((value ?? 0) >= 90) return 'hsl(var(--destructive))';
-    if ((value ?? 0) >= 75) return 'hsl(var(--warn))';
-    return 'hsl(var(--brand) / 0.7)';
-  }
+  protected readonly kit = kitTone;
 
   protected readonly groups = computed<ListGroup[]>(() => {
     const t = this.snapshot();
@@ -162,6 +140,7 @@ export class TopologyListComponent {
       cells: Cell[],
     ): ListRow => ({
       focus,
+      mono: focus.type === 'server',
       label,
       detail,
       cells,
@@ -173,9 +152,9 @@ export class TopologyListComponent {
       {
         title: 'Clusters',
         columns: [
-          { label: 'Provider', width: 'minmax(0,1fr)' },
-          { label: 'Servers', width: '4rem', end: true },
-          { label: 'Apps', width: '4rem', end: true },
+          { label: 'Provider' },
+          { label: 'Servers', end: true },
+          { label: 'Apps', end: true },
         ],
         rows: t.clusters.map((c) =>
           row({ type: 'cluster', id: c.id }, c.name, '', c.status, [
@@ -188,10 +167,10 @@ export class TopologyListComponent {
       {
         title: 'Servers',
         columns: [
-          { label: 'Cluster', width: 'minmax(0,1fr)' },
-          { label: 'Memory', width: 'minmax(0,1fr)' },
-          { label: 'CPU', width: 'minmax(0,1fr)' },
-          { label: 'Replicas', width: '4rem', end: true },
+          { label: 'Cluster' },
+          { label: 'Memory' },
+          { label: 'CPU' },
+          { label: 'Replicas', end: true },
         ],
         rows: t.servers.map((s) =>
           row(
@@ -216,9 +195,9 @@ export class TopologyListComponent {
       {
         title: 'Apps',
         columns: [
-          { label: 'Cluster', width: 'minmax(0,1fr)' },
-          { label: 'Memory', width: '5rem', end: true },
-          { label: 'Replicas', width: '4rem', end: true },
+          { label: 'Cluster' },
+          { label: 'Memory', end: true },
+          { label: 'Replicas', end: true },
         ],
         rows: t.apps
           .filter((a) => !project || a.projectId === project)

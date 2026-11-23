@@ -36,7 +36,7 @@ type Step =
   selector: 'app-scaling-fleet-tile',
   imports: [RemovalPreviewNoteComponent, FlButton, FlIcon],
   providers: [provideIcons({ lucideMinus, lucidePlus })],
-  host: { class: 'fl-metric', role: 'listitem', 'data-testid': 'tile-fleet' },
+  host: { class: 'fl-metric', 'data-testid': 'tile-fleet' },
   template: `
     <span class="fl-metric__label">Nodes</span>
     <span class="fl-metric__value">

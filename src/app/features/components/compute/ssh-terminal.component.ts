@@ -17,6 +17,7 @@ import { FitAddon } from '@xterm/addon-fit';
 import { TerminalService } from '../../../core/services/terminal.service';
 import { FlStatus } from '../../../ui/primitives/status';
 import { FlSpinner } from '../../../ui/primitives/spinner';
+import { readTerminalTheme } from './ssh-terminal-theme';
 
 /**
  * SSH Terminal Component
@@ -59,7 +60,7 @@ import { FlSpinner } from '../../../ui/primitives/spinner';
       .terminal-container {
         position: relative;
         height: 100%;
-        background: #1e1e1e;
+        background: var(--fl-topbar-bg);
         border-radius: var(--fl-radius-md);
         overflow: hidden;
         border: 1px solid var(--fl-border);
@@ -179,29 +180,7 @@ export class SshTerminalComponent implements OnInit, AfterViewInit, OnDestroy {
       fontWeightBold: '700',
       letterSpacing: 0,
       lineHeight: 1.0,
-      theme: {
-        background: '#1e1e1e',
-        foreground: '#d4d4d4',
-        cursor: '#ffffff',
-        cursorAccent: '#000000',
-        selectionBackground: 'rgba(255, 255, 255, 0.3)',
-        black: '#000000',
-        red: '#cd3131',
-        green: '#0dbc79',
-        yellow: '#e5e510',
-        blue: '#2472c8',
-        magenta: '#bc3fbc',
-        cyan: '#11a8cd',
-        white: '#e5e5e5',
-        brightBlack: '#666666',
-        brightRed: '#f14c4c',
-        brightGreen: '#23d18b',
-        brightYellow: '#f5f543',
-        brightBlue: '#3b8eea',
-        brightMagenta: '#d670d6',
-        brightCyan: '#29b8db',
-        brightWhite: '#ffffff',
-      },
+      theme: readTerminalTheme(),
       cols: 80,
       rows: 24,
       scrollback: 10000,

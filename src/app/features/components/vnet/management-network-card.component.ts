@@ -1,3 +1,4 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
@@ -86,6 +87,7 @@ const PEER_STATUS: Record<PeerStatus, { tone: StatusTone; label: string }> = {
 @Component({
   selector: 'app-management-network-card',
   imports: [
+    CdkTrapFocus,
     FlPanel,
     FlAlert,
     FlTable,

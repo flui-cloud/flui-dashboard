@@ -11,9 +11,10 @@ import { FlStatus } from '../../../ui/primitives/status';
   host: { class: 'block' },
   template: `
     <fl-panel title="How this cluster grows" data-testid="growth-card">
-      <div panelActions class="fl-row">
+      <div panelActions class="fl-row min-w-0">
         @if (row()?.mode; as mode) {
           <fl-status
+            class="min-w-0 whitespace-normal"
             [tone]="mode.attention ? 'warning' : 'neutral'"
             [label]="mode.label"
             data-testid="growth-mode"

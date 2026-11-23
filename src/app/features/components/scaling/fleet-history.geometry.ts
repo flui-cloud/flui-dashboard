@@ -170,18 +170,18 @@ export function tickAnchor(
 }
 
 export function dayLabel(at: Date): string {
-  return at.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  return at.toLocaleDateString('en-GB', { month: 'short', day: 'numeric' });
 }
 
 /** The day across days, the time within one: a short window labelled by day says the same thing at every tick. */
 export function axisLabel(at: Date, spanMs: number): string {
   return spanMs < 2 * 24 * 60 * 60 * 1000
-    ? at.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+    ? at.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
     : dayLabel(at);
 }
 
 export function whenLabel(iso: string): string {
-  return new Date(iso).toLocaleString(undefined, {
+  return new Date(iso).toLocaleString('en-GB', {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
@@ -191,27 +191,4 @@ export function whenLabel(iso: string): string {
 
 export function outcomeText(outcome: ScalingDecision['outcome']): string {
   return outcome.replaceAll('-', ' ');
-}
-
-export function outcomeBadgeClass(outcome: ScalingDecision['outcome']): string {
-  switch (outcome) {
-    case 'added':
-    case 'replaced':
-    case 'node-joined':
-      return 'badge badge-success';
-    case 'purchase-failed':
-      return 'badge badge-error';
-    case 'node-ordered':
-    case 'node-drained':
-    case 'node-removed':
-      return 'badge bg-sky-500/15 text-sky-700';
-    case 'removed':
-      return 'badge badge-in-progress';
-    case 'alerted':
-      return 'badge badge-error';
-    case 'changed':
-      return 'badge bg-violet-500/15 text-violet-700';
-    default:
-      return 'badge bg-amber-500/15 text-amber-600';
-  }
 }

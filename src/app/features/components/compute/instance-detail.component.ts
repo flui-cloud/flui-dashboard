@@ -134,7 +134,7 @@ import {
               @if (clusterInfo(); as cluster) {
                 <fl-kv-item key="Cluster">
                   <a class="fl-link" [routerLink]="['/cluster', cluster.clusterId]">{{
-                    cluster.clusterName
+                    cluster.clusterName || cluster.clusterId
                   }}</a>
                 </fl-kv-item>
                 <fl-kv-item key="Node type">{{ cluster.nodeType }}</fl-kv-item>

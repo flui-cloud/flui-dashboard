@@ -203,8 +203,8 @@ export class ScalingHistoryTabComponent {
   );
 
   protected zoomLabel(z: HistoryZoom): string {
-    const day = (d: Date) => d.toLocaleDateString([], { day: 'numeric', month: 'short' });
-    const time = (d: Date) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const day = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    const time = (d: Date) => d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
     return day(z.from) === day(z.to)
       ? `${day(z.from)}, ${time(z.from)} – ${time(z.to)}`
       : `${day(z.from)} ${time(z.from)} – ${day(z.to)} ${time(z.to)}`;
@@ -314,14 +314,14 @@ export class ScalingHistoryTabComponent {
       .sort((a, b) => Date.parse(b.at) - Date.parse(a.at))
       .map((decision) => ({
         decision,
-        when: `${new Date(decision.at).toLocaleString(undefined, {
+        when: `${new Date(decision.at).toLocaleString('en-GB', {
           month: 'short',
           day: 'numeric',
           hour: '2-digit',
           minute: '2-digit',
         })} · ${ago(decision.at, now)} ago${
           decision.repeats && decision.repeats > 1 && decision.since
-            ? ` · ×${decision.repeats} since ${new Date(decision.since).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`
+            ? ` · ×${decision.repeats} since ${new Date(decision.since).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`
             : ''
         }`,
         outcome: `${decision.force} · ${outcomeText(decision.outcome)}`,

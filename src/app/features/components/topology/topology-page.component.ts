@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   OnDestroy,
   OnInit,
@@ -14,17 +13,26 @@ import { paletteFromDocument } from './topology-export';
 import { downloadView } from './topology-view-export';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
 import { TopologyStore } from './topology.store';
-import { TopologyFocus } from './topology-state';
+import { TopologyFocus, TopologyView } from './topology-state';
 import { TopologyInspectorComponent } from './topology-inspector.component';
 import { TopologyListComponent } from './topology-list.component';
 import { TopologyInfrastructureComponent } from './topology-infrastructure.component';
 import { TopologyInfraPanelsComponent } from './topology-infra-panels.component';
-import { TopologyChoiceComponent } from './topology-choice.component';
 import { TopologyServicesComponent } from './topology-services.component';
 import { TopologyCapacityComponent } from './topology-capacity.component';
 import { TopologyRequestPathComponent } from './topology-request-path.component';
 import { destinationsFor } from './topology-navigation';
 import { Router } from '@angular/router';
+import { provideIcons } from '@ng-icons/core';
+import { lucideDownload } from '@ng-icons/lucide';
+import { FlPageHeader } from '../../../ui/patterns/page-header';
+import { FlChip, FlSegmented } from '../../../ui/patterns/filter-bar';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlLoadingState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlStatus } from '../../../ui/primitives/status';
 import {
   TopologySurfaceRevision,
   buildTopologySurface,
@@ -33,50 +41,54 @@ import {
 
 @Component({
   selector: 'app-topology-page',
-  standalone: true,
   imports: [
+    FlPageHeader,
+    FlSegmented,
+    FlChip,
+    FlButton,
+    FlIcon,
+    FlStatus,
+    FlAlert,
+    FlPanel,
+    FlLoadingState,
     TopologyInspectorComponent,
     TopologyListComponent,
     TopologyInfrastructureComponent,
     TopologyInfraPanelsComponent,
-    TopologyChoiceComponent,
     TopologyServicesComponent,
     TopologyCapacityComponent,
     TopologyRequestPathComponent,
   ],
-  providers: [TopologyStore],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [TopologyStore, provideIcons({ lucideDownload })],
   host: { '(document:keydown.escape)': 'clear()' },
   template: `
-    <div class="flex h-full flex-col gap-4 p-4 sm:p-6">
-      <header class="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 class="text-2xl font-semibold text-foreground">Topology</h1>
-          @if (store.snapshot(); as t) {
-            <p class="text-sub mt-1 flex flex-wrap items-center gap-x-2">
-              <span>{{ t.stats.totalClusters }} clusters</span>
-              <span aria-hidden="true">·</span>
-              <span>{{ t.stats.totalServers }} servers</span>
-              <span aria-hidden="true">·</span>
-              <span>{{ t.stats.totalApps }} apps</span>
-              <span class="ml-2 inline-flex items-center gap-1.5">
-                <span
-                  class="h-1.5 w-1.5 rounded-full"
-                  [class]="store.live() ? 'dot-healthy' : 'dot-pending'"
-                ></span>
-                {{ store.live() ? 'Live' : 'Connecting' }}
-              </span>
-            </p>
-          }
-        </div>
-        <div class="flex flex-wrap items-center gap-3">
+    <div class="fl-page h-full">
+      <fl-page-header title="Topology">
+        @if (store.snapshot(); as t) {
+          <ng-container headerMeta>
+            <span
+              >{{ t.stats.totalClusters }}
+              {{ t.stats.totalClusters === 1 ? 'cluster' : 'clusters' }}</span
+            >
+            <span
+              >{{ t.stats.totalServers }}
+              {{ t.stats.totalServers === 1 ? 'server' : 'servers' }}</span
+            >
+            <span>{{ t.stats.totalApps }} {{ t.stats.totalApps === 1 ? 'app' : 'apps' }}</span>
+            <fl-status
+              [tone]="store.live() ? 'success' : 'progress'"
+              [label]="store.live() ? 'Live' : 'Connecting'"
+            />
+          </ng-container>
+        }
+        <ng-container headerActions>
           @if (store.snapshot()?.projects?.length) {
-            <label class="flex items-center gap-2 text-xs">
-              <span class="text-muted-foreground">Project</span>
+            <span class="fl-select-wrap">
               <select
-                class="h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground"
+                class="fl-select fl-select--sm"
+                aria-label="Project"
                 [value]="store.state().project ?? ''"
-                (change)="store.update({ project: $any($event.target).value || null })"
+                (change)="pickProject($event)"
               >
                 <option value="">All projects</option>
                 @for (p of store.snapshot()!.projects; track p.id) {
@@ -85,37 +97,31 @@ import {
                   </option>
                 }
               </select>
-            </label>
+            </span>
           }
           <button
-            type="button"
-            class="h-8 rounded-md border px-3 text-xs font-medium"
-            [class.border-border]="!store.systemApps.shownOnMap()"
-            [class.bg-card]="!store.systemApps.shownOnMap()"
-            [class.text-muted-foreground]="!store.systemApps.shownOnMap()"
-            [style.border-color]="store.systemApps.shownOnMap() ? 'hsl(var(--brand))' : null"
-            [style.color]="store.systemApps.shownOnMap() ? 'hsl(var(--brand))' : null"
-            [attr.aria-pressed]="store.systemApps.shownOnMap()"
+            flChip
+            [pressed]="store.systemApps.shownOnMap()"
             title="The apps Flui itself runs. Shown to whoever sees every cluster."
             (click)="store.systemApps.toggleOnMap()"
           >
             System apps
           </button>
-          <app-topology-choice
+          <fl-segmented
             label="View"
-            [choices]="views"
+            [options]="views"
             [value]="store.state().view"
-            (changed)="store.update({ view: $any($event) })"
+            (valueChange)="pickView($event)"
           />
-          <app-topology-choice
+          <fl-segmented
             label="Show as"
-            [choices]="layouts"
+            [options]="layouts"
             [value]="store.state().list ? 'list' : 'map'"
-            (changed)="store.update({ list: $event === 'list' })"
+            (valueChange)="store.update({ list: $event === 'list' })"
           />
           <button
+            flButton="ghost"
             type="button"
-            class="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-50"
             [disabled]="!store.snapshot() || exporting() || !exportable()"
             [title]="
               exportable()
@@ -124,21 +130,21 @@ import {
             "
             (click)="exportImage()"
           >
+            <fl-icon name="lucideDownload" />
             {{ exporting() ? 'Exporting…' : 'Export image' }}
           </button>
-        </div>
-      </header>
+        </ng-container>
+      </fl-page-header>
 
       @if (store.error(); as error) {
-        <p class="card-surface p-4 text-sm status-error" role="alert">{{ error }}</p>
+        <fl-alert tone="error" title="Could not load the topology">{{ error }}</fl-alert>
       } @else if (store.loading()) {
-        <div class="grid flex-1 gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
-          <div class="skeleton h-96"></div>
-          <div class="skeleton h-96"></div>
-        </div>
+        <fl-panel>
+          <fl-loading-state [rows]="6" />
+        </fl-panel>
       } @else {
-        <div class="grid min-h-0 flex-1 gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
-          <main class="min-h-0 space-y-4 overflow-y-auto">
+        <div class="flex min-h-0 flex-1 flex-col gap-5 lg:flex-row">
+          <main class="fl-stack min-h-0 min-w-0 flex-1 overflow-y-auto">
             @if (drillView(); as d) {
               @if (d.kind === 'capacity') {
                 <app-topology-capacity
@@ -195,7 +201,7 @@ import {
             }
           </main>
           <app-topology-inspector
-            class="min-h-0 lg:sticky lg:top-0"
+            class="min-h-0 min-w-0 lg:sticky lg:top-0 lg:w-96 lg:max-w-full lg:flex-none"
             [snapshot]="store.snapshot()"
             [focus]="store.focus()"
             [destinations]="store.destinations()"
@@ -273,10 +279,8 @@ export class TopologyPageComponent implements OnInit, OnDestroy {
   private readonly servicesView = viewChild(TopologyServicesComponent);
   private readonly infrastructureView = viewChild(TopologyInfrastructureComponent);
 
-  /** Only a map can be exported: the list and the drill-downs have their own pages to print. */
   protected readonly exportable = computed(() => !this.store.state().list && !this.drillView());
 
-  /** The map exactly as it stands: lens, level, selection, project, mask. */
   protected async exportImage(): Promise<void> {
     const t = this.store.snapshot();
     if (!t) return;
@@ -293,7 +297,7 @@ export class TopologyPageComponent implements OnInit, OnDestroy {
           ];
     const header = {
       title: ['Topology', ...where, project].filter(Boolean).join(' · '),
-      subtitle: `${t.stats.totalClusters} clusters · ${t.stats.totalServers} servers · ${t.stats.totalApps} apps · ${new Date().toLocaleString()}`,
+      subtitle: `${t.stats.totalClusters} clusters · ${t.stats.totalServers} servers · ${t.stats.totalApps} apps · ${new Date().toLocaleString('en-GB')}`,
       masked: this.mask.enabled(),
     };
     const palette = paletteFromDocument();
@@ -308,6 +312,14 @@ export class TopologyPageComponent implements OnInit, OnDestroy {
     } finally {
       this.exporting.set(false);
     }
+  }
+
+  protected pickView(view: string): void {
+    this.store.update({ view: view as TopologyView });
+  }
+
+  protected pickProject(event: Event): void {
+    this.store.update({ project: (event.target as HTMLSelectElement).value || null });
   }
 
   protected clear(): void {

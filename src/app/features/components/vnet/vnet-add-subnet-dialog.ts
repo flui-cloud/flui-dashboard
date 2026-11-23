@@ -1,3 +1,4 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { Component, computed, input, linkedSignal, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { provideIcons } from '@ng-icons/core';
@@ -15,12 +16,15 @@ const EXAMPLE_SUBNET_RANGE = `${[10, 0, 1, 0].join('.')}/28`;
 
 @Component({
   selector: 'app-vnet-add-subnet-dialog',
-  imports: [FormsModule, FlField, FlButton, FlIcon, FlSpinner],
+  imports: [CdkTrapFocus, FormsModule, FlField, FlButton, FlIcon, FlSpinner],
   providers: [provideIcons({ lucideX })],
   template: `
     <div
       class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
       (click)="cancelled.emit()"
+      (keydown.escape)="cancelled.emit()"
     >
       <div
         class="fl-dialog"

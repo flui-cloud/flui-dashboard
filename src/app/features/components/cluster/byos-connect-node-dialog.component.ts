@@ -1,3 +1,4 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -33,6 +34,7 @@ interface IssuedToken {
 @Component({
   selector: 'app-byos-connect-node-dialog',
   imports: [
+    CdkTrapFocus,
     DatePipe,
     FormsModule,
     FlAlert,
@@ -49,7 +51,10 @@ interface IssuedToken {
   template: `
     <div
       class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
       (click)="closed.emit()"
+      (keydown.escape)="closed.emit()"
     >
       <div
         class="fl-dialog"

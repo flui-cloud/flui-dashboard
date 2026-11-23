@@ -1,3 +1,4 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { provideIcons } from '@ng-icons/core';
@@ -15,12 +16,14 @@ import { FlIcon } from '../../../ui/primitives/icon';
 
 @Component({
   selector: 'app-scaling-group-form',
-  imports: [FormsModule, GroupCostComponent, FlAlert, FlField, FlButton, FlIcon],
+  imports: [CdkTrapFocus, FormsModule, GroupCostComponent, FlAlert, FlField, FlButton, FlIcon],
   providers: [provideIcons({ lucideX })],
   host: { class: 'contents', '(document:keydown.escape)': 'close()' },
   template: `
     <div
       class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
       (click)="close()"
     >
       <div

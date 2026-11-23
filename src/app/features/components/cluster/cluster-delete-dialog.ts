@@ -1,3 +1,4 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { Component, input, model, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { provideIcons } from '@ng-icons/core';
@@ -8,12 +9,15 @@ import { FlSpinner } from '../../../ui/primitives/spinner';
 
 @Component({
   selector: 'app-cluster-delete-dialog',
-  imports: [FormsModule, FlButton, FlIcon, FlSpinner],
+  imports: [CdkTrapFocus, FormsModule, FlButton, FlIcon, FlSpinner],
   providers: [provideIcons({ lucideX })],
   template: `
     <div
       class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
       (click)="cancelled.emit()"
+      (keydown.escape)="!deleting() && cancelled.emit()"
     >
       <div
         class="fl-dialog"

@@ -75,7 +75,7 @@ function snapshotLabel(st: SnapshotStatus): string {
 export function formatStorageDate(iso: string): string {
   if (!iso) return '';
   const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? iso : d.toLocaleString();
+  return Number.isNaN(d.getTime()) ? iso : d.toLocaleString('en-GB');
 }
 
 export function storageSnapshotRow(snap: ApplicationSnapshot): StorageSnapshotRow {

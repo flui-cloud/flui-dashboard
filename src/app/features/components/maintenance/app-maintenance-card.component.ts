@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import {
   AppMaintenance,
   AppMaintenanceMode,
@@ -9,57 +9,57 @@ import {
 } from '../../service/maintenance.service';
 import { MaintenanceWindowEditorComponent } from './maintenance-window-editor.component';
 import { DeferredListComponent } from './deferred-list.component';
+import { FlKeyValue, FlKvItem, FlLoadingState, FlPanel } from '../../../ui/patterns';
 
 /** Which window governs an application, and the changes held for it. */
 @Component({
   selector: 'app-app-maintenance-card',
-  standalone: true,
-  imports: [MaintenanceWindowEditorComponent, DeferredListComponent],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    MaintenanceWindowEditorComponent,
+    DeferredListComponent,
+    FlPanel,
+    FlKeyValue,
+    FlKvItem,
+    FlLoadingState,
+  ],
+  host: { class: 'fl-stack' },
   template: `
-    <section class="rounded-lg border border-border p-4 space-y-3" data-testid="app-maintenance">
-      <div class="flex flex-wrap items-center justify-between gap-2">
-        <div class="min-w-0">
-          <h3 class="m-0 text-sm font-semibold text-foreground">Maintenance</h3>
-          <p class="m-0 mt-0.5 text-[13px] text-muted-foreground">
-            {{ reading()?.says ?? 'Reading…' }}
-            @if (reading()?.nextOpening && reading()?.mode !== 'anytime') {
-              · next {{ label(reading()!.nextOpening) }}
-            }
-          </p>
-        </div>
-        <div
-          class="inline-flex rounded-md border border-border p-0.5 text-[12px]"
-          role="group"
-          aria-label="Maintenance window"
-        >
-          @for (m of modes; track m.value) {
-            <button
-              type="button"
-              class="rounded px-2 py-0.5"
-              [class]="
-                reading()?.mode === m.value
-                  ? 'bg-muted font-medium text-foreground'
-                  : 'text-muted-foreground'
-              "
-              (click)="choose(m.value)"
-              [attr.data-testid]="'maintenance-mode-' + m.value"
-            >
-              {{ m.label }}
-            </button>
-          }
-        </div>
+    <fl-panel title="Maintenance" data-testid="app-maintenance">
+      <div panelActions class="fl-segmented" role="group" aria-label="Maintenance window">
+        @for (m of modes; track m.value) {
+          <button
+            type="button"
+            [attr.aria-pressed]="pressed() === m.value"
+            (click)="choose(m.value)"
+            [attr.data-testid]="'maintenance-mode-' + m.value"
+          >
+            {{ m.label }}
+          </button>
+        }
       </div>
-      @if (editingOwn()) {
-        <app-maintenance-window-editor
-          [value]="reading()?.window ?? null"
-          [saving]="saving()"
-          (saved)="saveOwn($event)"
-          (cancelled)="editingOwn.set(false)"
-        />
-      }
-      <app-deferred-list [rows]="held()" [cancellable]="true" (cancelAction)="cancel($event)" />
-    </section>
+      <div class="flex flex-col gap-4">
+        @if (reading(); as r) {
+          <fl-key-value>
+            <fl-kv-item key="Window">{{ r.says }}</fl-kv-item>
+            @if (r.nextOpening && r.mode !== 'anytime') {
+              <fl-kv-item key="Next opening">{{ label(r.nextOpening) }}</fl-kv-item>
+            }
+          </fl-key-value>
+        } @else {
+          <fl-loading-state [rows]="2" />
+        }
+        @if (editingOwn()) {
+          <app-maintenance-window-editor
+            class="border-t border-fl-border pt-4"
+            [value]="reading()?.window ?? null"
+            [saving]="saving()"
+            (saved)="saveOwn($event)"
+            (cancelled)="editingOwn.set(false)"
+          />
+        }
+      </div>
+    </fl-panel>
+    <app-deferred-list [rows]="held()" [cancellable]="true" (cancelAction)="cancel($event)" />
   `,
 })
 export class AppMaintenanceCardComponent {
@@ -75,6 +75,9 @@ export class AppMaintenanceCardComponent {
   protected readonly held = signal<DeferredAction[]>([]);
   protected readonly editingOwn = signal(false);
   protected readonly saving = signal(false);
+  protected readonly pressed = computed(() =>
+    this.editingOwn() ? 'own' : (this.reading()?.mode ?? null),
+  );
   protected label = openingLabel;
 
   constructor() {

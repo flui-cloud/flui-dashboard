@@ -136,6 +136,7 @@ const ENDPOINT_ACTIONS: MenuAction[] = [{ id: 'delete', label: 'Delete endpoint'
                         size="sm"
                         type="button"
                         title="Edit endpoint"
+                        [attr.aria-label]="'Edit ' + ep.fqdn"
                         (click)="editAction.emit(ep)"
                       >
                         Edit
@@ -145,6 +146,7 @@ const ENDPOINT_ACTIONS: MenuAction[] = [{ id: 'delete', label: 'Delete endpoint'
                         size="sm"
                         type="button"
                         title="Sync endpoint"
+                        [attr.aria-label]="'Sync ' + ep.fqdn"
                         [disabled]="reconcilingId() === ep.id"
                         (click)="reconcileAction.emit(ep)"
                       >

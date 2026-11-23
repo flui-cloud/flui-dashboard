@@ -1,0 +1,142 @@
+.grid {
+  stroke: var(--fl-border-subtle);
+  stroke-width: 1;
+}
+.axis {
+  stroke: var(--fl-border-button);
+  stroke-width: 1;
+}
+.tick {
+  fill: var(--fl-ink-muted);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+.cap {
+  stroke: var(--fl-danger);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+}
+.cap-label {
+  fill: var(--fl-danger);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+.zoom {
+  fill: var(--fl-accent-soft);
+  fill-opacity: 0.6;
+  stroke: var(--fl-accent);
+  stroke-width: 1;
+}
+.band {
+  stroke: none;
+}
+.edge {
+  fill: none;
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+.shape-0 {
+  fill: var(--fl-accent);
+  stroke: var(--fl-accent);
+  fill-opacity: 0.3;
+}
+.shape-1 {
+  fill: var(--fl-ink-secondary);
+  stroke: var(--fl-ink-secondary);
+  fill-opacity: 0.22;
+}
+.shape-2 {
+  fill: var(--fl-accent);
+  stroke: var(--fl-accent);
+  fill-opacity: 0.12;
+  stroke-dasharray: 5 3;
+}
+.shape-3 {
+  fill: var(--fl-ink-muted);
+  stroke: var(--fl-ink-muted);
+  fill-opacity: 0.18;
+}
+.shape-4 {
+  fill: var(--fl-accent-strong);
+  stroke: var(--fl-accent-strong);
+  fill-opacity: 0.22;
+  stroke-dasharray: 5 3;
+}
+.shape-5 {
+  fill: var(--fl-ink-secondary);
+  stroke: var(--fl-ink-secondary);
+  fill-opacity: 0.08;
+  stroke-dasharray: 2 2;
+}
+.mk-success {
+  fill: var(--fl-success);
+  stroke: var(--fl-success);
+}
+.mk-warning {
+  fill: var(--fl-warning);
+  stroke: var(--fl-warning);
+}
+.mk-danger {
+  fill: var(--fl-danger);
+  stroke: var(--fl-danger);
+}
+.mk-accent {
+  fill: var(--fl-accent);
+  stroke: var(--fl-accent);
+}
+.mk-muted {
+  fill: var(--fl-ink-muted);
+  stroke: var(--fl-ink-muted);
+}
+.marker {
+  stroke-width: 2;
+  fill-opacity: 0.16;
+}
+.marker.is-acted {
+  fill-opacity: 1;
+}
+.marker-hit {
+  cursor: pointer;
+  outline: none;
+}
+.marker-hit:focus-visible .marker {
+  stroke-width: 3;
+}
+.marker-hit:focus-visible .hit {
+  stroke: var(--fl-accent);
+  stroke-width: 2;
+}
+.hit {
+  fill: transparent;
+  stroke: none;
+}
+.rule {
+  fill: none;
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  stroke-opacity: 0.7;
+}
+.swatch-hollow {
+  fill: none;
+  stroke: var(--fl-ink-muted);
+  stroke-width: 2;
+}
+.swatch-solid {
+  fill: var(--fl-ink-muted);
+}
+.reserved {
+  fill: var(--fl-accent);
+  fill-opacity: 0.2;
+  stroke: none;
+}
+.reserved-line {
+  fill: none;
+  stroke: var(--fl-accent);
+  stroke-width: 1.5;
+}
+.capacity-line {
+  fill: none;
+  stroke: var(--fl-ink);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+}
