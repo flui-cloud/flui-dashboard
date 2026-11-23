@@ -1,4 +1,5 @@
 .fl-table-wrap {
+  position: relative;
   overflow-x: auto;
 }
 .fl-table {
@@ -15,6 +16,14 @@
   border-bottom: 1px solid var(--fl-border);
   background: var(--fl-surface-subtle);
   white-space: nowrap;
+}
+.fl-table tbody th {
+  font-weight: 500;
+  color: var(--fl-ink);
+  padding: 11px var(--fl-space-4);
+  border-bottom: 1px solid var(--fl-border-subtle);
+  background: none;
+  vertical-align: middle;
 }
 .fl-table td {
   padding: 11px var(--fl-space-4);

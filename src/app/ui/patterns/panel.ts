@@ -6,7 +6,7 @@ import { Component, input } from '@angular/core';
   template: `
     @if (title()) {
       <header class="fl-panel__header">
-        <h2 class="fl-panel__title">
+        <h2 class="fl-panel__title" [class.fl-panel__title--mono]="monoTitle()">
           {{ title() }}
           @if (count() !== null && count() !== undefined) {
             <span class="fl-panel__count">({{ count() }})</span>
@@ -23,4 +23,5 @@ export class FlPanel {
   readonly title = input<string>();
   readonly count = input<number | null>();
   readonly flush = input(false);
+  readonly monoTitle = input(false);
 }

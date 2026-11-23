@@ -31,3 +31,8 @@
 .fl-panel__body {
   padding: var(--fl-space-4);
 }
+
+.fl-panel__title--mono {
+  font-family: var(--fl-font-mono);
+  overflow-wrap: anywhere;
+}

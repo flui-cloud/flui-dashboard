@@ -7,7 +7,7 @@ export type MetricTone = 'default' | 'warning' | 'success';
 
 @Component({
   selector: 'fl-metric-strip',
-  host: { class: 'fl-metrics', role: 'list' },
+  host: { class: 'fl-metrics', role: 'group' },
   template: `<ng-content />`,
 })
 export class FlMetricStrip {}
@@ -18,7 +18,6 @@ export class FlMetricStrip {}
   providers: [provideIcons({ lucideTriangleAlert, lucideCircleCheck })],
   host: {
     class: 'fl-metric',
-    role: 'listitem',
     '[class.fl-metric--warning]': 'tone() === "warning"',
     '[class.fl-metric--success]': 'tone() === "success"',
   },

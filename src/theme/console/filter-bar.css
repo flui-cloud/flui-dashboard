@@ -83,12 +83,16 @@
 }
 .fl-segmented {
   display: inline-flex;
+  max-width: 100%;
   border: 1px solid var(--fl-border-button);
   border-radius: var(--fl-radius-md);
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
   background: var(--fl-surface);
 }
 .fl-segmented button {
+  flex: none;
   height: var(--fl-control-height-sm);
   padding: 0 var(--fl-space-3);
   border: 0;
