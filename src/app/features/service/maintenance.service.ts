@@ -150,7 +150,7 @@ export function openingLabel(iso: string | null): string {
   if (!iso) return '';
   const at = new Date(iso);
   if (Math.abs(at.getTime() - Date.now()) < 60_000) return 'open now';
-  return at.toLocaleString([], {
+  return at.toLocaleString('en-GB', {
     weekday: 'short',
     day: 'numeric',
     month: 'short',

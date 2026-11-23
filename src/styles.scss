@@ -339,7 +339,7 @@
   margin: 0.55em 0;
   border-radius: 8px;
   overflow: hidden;
-  border: 1px solid #30363d;
+  border: 1px solid var(--fl-topbar-field-border);
   font-family: ui-monospace, 'Cascadia Code', 'Fira Code', monospace;
 }
 
@@ -348,20 +348,20 @@
   align-items: center;
   justify-content: space-between;
   padding: 5px 12px;
-  background: #161b22;
-  border-bottom: 1px solid #30363d;
+  background: var(--fl-topbar-field);
+  border-bottom: 1px solid var(--fl-topbar-field-border);
 }
 
 .md-code-lang {
   font-size: 11px;
   font-weight: 500;
-  color: #7d8590;
+  color: var(--fl-topbar-muted);
   letter-spacing: 0.02em;
 }
 
 .md-copy-btn {
   font-size: 11px;
-  color: #7d8590;
+  color: var(--fl-topbar-muted);
   background: none;
   border: none;
   cursor: pointer;
@@ -373,24 +373,24 @@
   font-family: inherit;
 
   &:hover {
-    color: #c9d1d9;
-    background: #21262d;
+    color: var(--fl-topbar-fg);
+    background: var(--fl-topbar-field-border);
   }
   &.copied {
-    color: #3fb950;
+    color: var(--fl-green-300);
   }
 }
 
 .md-code-block pre {
   margin: 0;
   padding: 13px 16px;
-  background: #0d1117;
+  background: var(--fl-topbar-bg);
   overflow-x: auto;
 
   code {
     font-size: 13px;
     line-height: 1.55;
-    color: #e6edf3;
+    color: var(--fl-topbar-fg);
     background: none;
     padding: 0;
   }

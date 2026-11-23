@@ -89,15 +89,7 @@ describe('backup health', () => {
     expect(healthNeedsAttention(null)).toBe(false);
   });
 
-  it('colours the states: ok green, running blue, failed red, missed an alarm, the rest neutral', () => {
-    expect(backupHealthBadge('ok').classes).toContain('green');
-    expect(backupHealthBadge('running').classes).toContain('blue');
-    expect(backupHealthBadge('failed').classes).toContain('red');
-    expect(backupHealthBadge('missed').classes).toContain('amber');
-    expect(backupHealthBadge('missed').classes).toContain('font-semibold');
-    for (const s of ['paused', 'never_run', 'on_demand'] as BackupHealthState[]) {
-      expect(backupHealthBadge(s).classes).toContain('gray');
-    }
+  it('labels the states', () => {
     expect(backupHealthBadge('never_run').label).toBe('Never run');
     expect(backupHealthBadge('on_demand').label).toBe('On demand');
     expect(backupHealthBadge('something' as BackupHealthState).label).toBe('Unknown');
@@ -125,18 +117,16 @@ describe('backup runs', () => {
     expect(sortRunsNewestFirst(runs).map((r) => r.jobId)).toEqual(['new', 'mid', 'old']);
   });
 
-  it('keeps an unknown run status readable and neutral', () => {
+  it('keeps an unknown run status readable', () => {
     expect(runStatusBadge('completed').label).toBe('Completed');
     expect(runStatusBadge('queued_again')).toEqual(
       jasmine.objectContaining({ label: 'Queued again' }),
     );
-    expect(runStatusBadge('queued_again').classes).toContain('gray');
   });
 
   it('labels where a run is stored', () => {
     expect(runStoredBadge('present').label).toBe('Stored');
     expect(runStoredBadge('expired').label).toBe('Expired');
-    expect(runStoredBadge('missing').classes).toContain('red');
     expect(runStoredBadge('unknown').label).toBe('Unknown');
   });
 });

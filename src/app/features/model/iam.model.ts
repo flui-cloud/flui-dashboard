@@ -125,7 +125,7 @@ export function grantExpiry(
 }
 
 export function formatWhen(value: string | Date): string {
-  return new Date(value).toLocaleString(undefined, {
+  return new Date(value).toLocaleString('en-GB', {
     dateStyle: 'medium',
     timeStyle: 'short',
   });

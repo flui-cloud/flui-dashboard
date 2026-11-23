@@ -32,7 +32,7 @@ export function formatRelativeTime(
 export function formatLocalDateTime(iso: string | null | undefined): string {
   const t = parse(iso);
   if (t == null) return '—';
-  return new Date(t).toLocaleString(undefined, {
+  return new Date(t).toLocaleString('en-GB', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',

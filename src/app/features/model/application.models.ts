@@ -185,50 +185,6 @@ export function getReconciliationLabel(status: ReconciliationStatus): string {
   return labels[status] || status;
 }
 
-// ===== BADGE HELPER FUNCTIONS =====
-
-export function getStatusBadgeClass(status: ApplicationStatus): string {
-  const base = 'text-sm px-3 py-1 rounded-full font-medium';
-  switch (status) {
-    case ApplicationStatusEnum.Running:
-      return `${base} bg-green-100 text-green-800`;
-    case ApplicationStatusEnum.AwaitingBuild:
-    case ApplicationStatusEnum.Provisioning:
-    case ApplicationStatusEnum.Updating:
-      return `${base} bg-blue-100 text-blue-800`;
-    case ApplicationStatusEnum.Failed:
-      return `${base} bg-red-100 text-red-800`;
-    case ApplicationStatusEnum.Degraded:
-      return `${base} bg-orange-100 text-orange-800`;
-    case ApplicationStatusEnum.WaitingForRoom:
-      return `${base} bg-amber-100 text-amber-800`;
-    default:
-      return `${base} bg-gray-100 text-gray-800`;
-  }
-}
-
-export function getCategoryBadgeClass(category: string): string {
-  const base = 'text-xs px-2 py-0.5 rounded font-medium';
-  if (category === 'system') {
-    return `${base} bg-purple-100 text-purple-800`;
-  }
-  return `${base} bg-sky-100 text-sky-800`;
-}
-
-export function getReconciliationBadgeClass(status: string): string {
-  const base = 'text-xs px-2 py-0.5 rounded font-medium';
-  switch (status) {
-    case 'IN_SYNC':
-      return `${base} bg-green-100 text-green-800`;
-    case 'DRIFT':
-      return `${base} bg-orange-100 text-orange-800`;
-    case 'ERROR':
-      return `${base} bg-red-100 text-red-800`;
-    default:
-      return `${base} bg-gray-100 text-gray-800`;
-  }
-}
-
 // ===== LEGACY TYPES (kept for wizard/templates/repositories compatibility) =====
 
 export enum Framework {

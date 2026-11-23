@@ -1,5 +1,5 @@
 import { Component, computed, effect, input, output, signal } from '@angular/core';
-import { PROJECT_PRESET_COLORS, Project } from '../../model/project.model';
+import { Project, projectPresetColors } from '../../model/project.model';
 import { stripHyphenEdges } from '../../../shared/utils/slug';
 import { FlDialog } from '../../../ui/overlays/dialog-frame';
 import { FlField } from '../../../ui/patterns/field';
@@ -99,7 +99,7 @@ export class ProjectFormComponent {
   readonly cancelled = output<void>();
 
   protected readonly uid = `project-form-${nextId++}`;
-  protected readonly presetColors = PROJECT_PRESET_COLORS;
+  protected readonly presetColors = projectPresetColors();
 
   protected readonly name = signal('');
   protected readonly description = signal('');
@@ -137,7 +137,7 @@ export class ProjectFormComponent {
 
   protected colorOrDefault(): string {
     const c = this.color();
-    return HEX.test(c) ? c : PROJECT_PRESET_COLORS[8];
+    return HEX.test(c) ? c : (this.presetColors[8] ?? '');
   }
 
   protected submit(): void {

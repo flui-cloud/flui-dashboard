@@ -144,19 +144,6 @@ export class ClusterMonitoringService {
     await this.loadMetrics(true);
   }
 
-  getHealthBadgeClass(): string {
-    switch (this.healthStatus()) {
-      case 'HEALTHY':
-        return 'bg-green-100 text-green-800';
-      case 'DEGRADED':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'DOWN':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  }
-
   /** Health only adds a badge to the charts: without it they still stand. */
   private readHealth(clusterId: string): Promise<ClusterHealthResponseDto | null> {
     return firstValueFrom(this.healthApi.clusterHealthControllerGetClusterHealth(clusterId)).catch(
@@ -203,34 +190,36 @@ export class ClusterMonitoringService {
       console.error('Failed to load cluster metrics:', error);
       // A failure for the cluster we left must not pause polling on this one.
       if (this.pendingFor !== clusterId) return;
-
-      // No readings yet is a state of the cluster, not a failure of the API:
-      // the page says so and keeps asking.
-      if (error?.status === 404) {
-        this.serverMetrics.set([]);
-        this.loadedFor.set(clusterId);
-        this.consecutiveErrorCount.set(0);
-        this.errorSignal.set(null);
-        return;
-      }
-      const isHttpError = error?.status >= 400 && error?.status < 600;
-      if (isHttpError) {
-        const newCount = this.consecutiveErrorCount() + 1;
-        this.consecutiveErrorCount.set(newCount);
-
-        if (newCount >= this.MAX_CONSECUTIVE_ERRORS) {
-          this.isPollingPaused.set(true);
-          this.errorSignal.set(
-            `API failed multiple times. Auto-refresh paused. Click "Retry" to resume.`,
-          );
-        } else {
-          this.errorSignal.set('Failed to load metrics. Will retry automatically...');
-        }
-      } else {
-        this.errorSignal.set('Network error. Will retry automatically...');
-      }
+      this.handleLoadError(error, clusterId);
     } finally {
       this.isLoadingSignal.set(false);
+    }
+  }
+
+  private handleLoadError(error: any, clusterId: string): void {
+    // No readings yet is a state of the cluster, not a failure of the API:
+    // the page says so and keeps asking.
+    if (error?.status === 404) {
+      this.serverMetrics.set([]);
+      this.loadedFor.set(clusterId);
+      this.consecutiveErrorCount.set(0);
+      this.errorSignal.set(null);
+      return;
+    }
+    const isHttpError = error?.status >= 400 && error?.status < 600;
+    if (!isHttpError) {
+      this.errorSignal.set('Network error. Will retry automatically...');
+      return;
+    }
+    const newCount = this.consecutiveErrorCount() + 1;
+    this.consecutiveErrorCount.set(newCount);
+    if (newCount >= this.MAX_CONSECUTIVE_ERRORS) {
+      this.isPollingPaused.set(true);
+      this.errorSignal.set(
+        `API failed multiple times. Auto-refresh paused. Click "Retry" to resume.`,
+      );
+    } else {
+      this.errorSignal.set('Failed to load metrics. Will retry automatically...');
     }
   }
 

@@ -1,6 +1,9 @@
+import { registerLocaleData } from '@angular/common';
+import localeEnGb from '@angular/common/locales/en-GB';
 import {
   ApplicationConfig,
   inject,
+  LOCALE_ID,
   provideAppInitializer,
   provideZoneChangeDetection,
 } from '@angular/core';
@@ -23,8 +26,11 @@ import { maskModeInterceptor } from './core/interceptors/mask-mode.interceptor';
 import { sandboxFenceInterceptor } from './core/interceptors/sandbox-fence.interceptor';
 import { apiErrorMessageInterceptor } from './core/interceptors/api-error-message.interceptor';
 
+registerLocaleData(localeEnGb);
+
 export const appConfig: ApplicationConfig = {
   providers: [
+    { provide: LOCALE_ID, useValue: 'en-GB' },
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
     provideHttpClient(

@@ -89,20 +89,6 @@ export interface SetupOptions {
 /** MVP only supports 'single'. 'mirrored' returns when a 2nd GA destination is added. */
 export type QuickSetupProfile = 'single';
 
-export const STATUS_BANNER_TONE: Record<BackupOverallStatus, string> = {
-  ok: 'border-green-500/30 bg-green-500/5',
-  info: 'border-border bg-card',
-  warning: 'border-amber-500/30 bg-amber-500/5',
-  critical: 'border-red-500/30 bg-red-500/5',
-};
-
-export const STATUS_TEXT_TONE: Record<BackupOverallStatus, string> = {
-  ok: 'text-green-700',
-  info: 'text-muted-foreground',
-  warning: 'text-amber-700',
-  critical: 'text-red-700',
-};
-
 export function centsToEur(cents: number | null | undefined): string {
   if (cents == null || !Number.isFinite(cents)) return '—';
   return `€${(cents / 100).toFixed(2)}`;

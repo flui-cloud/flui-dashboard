@@ -84,29 +84,6 @@ export function isRecent(d: CrashDiagnosis, minutes = 30): boolean {
   return Date.now() - created < minutes * 60_000;
 }
 
-export function severityBadgeClass(s: CrashSeverity): string {
-  const base = 'text-xs px-2 py-0.5 rounded font-medium';
-  switch (s) {
-    case 'critical':
-      return `${base} bg-red-100 text-red-800`;
-    case 'warning':
-      return `${base} bg-yellow-100 text-yellow-800`;
-    default:
-      return `${base} bg-gray-100 text-gray-700`;
-  }
-}
-
-export function severityBannerClass(s: CrashSeverity): string {
-  switch (s) {
-    case 'critical':
-      return 'bg-red-50 border-red-200 text-red-700';
-    case 'warning':
-      return 'bg-yellow-50 border-yellow-200 text-yellow-800';
-    default:
-      return 'bg-gray-50 border-gray-200 text-gray-700';
-  }
-}
-
 export function categoryIcon(c: CrashCategory): string {
   const map: Record<CrashCategory, string> = {
     oom_killed: 'lucideMemoryStick',
