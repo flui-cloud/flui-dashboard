@@ -1,11 +1,11 @@
 {
-  "palette-color": 165,
+  "palette-color": 0,
   "gradient": 0,
   "shadow": 0,
   "large-radius": 0,
   "blur": 0,
   "hex": 0,
-  "arbitrary-value": 4,
+  "arbitrary-value": 1,
   "dark-variant": 0,
-  "attention-animation": 9
+  "attention-animation": 1
 }
