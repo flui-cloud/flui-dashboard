@@ -97,7 +97,7 @@ const MAX_ROWS = 6;
                       </td>
                     } @else {
                       <td colspan="2">
-                        <div class="flex min-w-[200px] flex-col gap-1.5">
+                        <div class="flex flex-col gap-1.5" style="min-width: 200px">
                           @if (progressFor(row); as progress) {
                             <span
                               class="fl-bar"

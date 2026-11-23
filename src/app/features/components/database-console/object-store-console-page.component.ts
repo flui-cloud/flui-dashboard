@@ -1,269 +1,176 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  inject,
-  signal,
-  viewChild,
-} from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  ConfirmationDialogComponent,
-  ConfirmationDialogVariant,
-} from '../../../shared/components/confirmation-dialog.component';
-import { InputDialogComponent } from '../../../shared/components/input-dialog.component';
-import {
-  lucideArrowLeft,
-  lucideBox,
-  lucideFolderPlus,
-  lucideGlobe,
-  lucideHardDrive,
-  lucideLoader,
-  lucideLock,
-  lucidePlus,
-  lucideRotateCcw,
-  lucideTriangleAlert,
-  lucideUpload,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideFolderPlus, lucidePlus, lucideRefreshCw, lucideUpload } from '@ng-icons/lucide';
 import { S3ObjectEntry, ShareRecord } from '../../model/object-store-console.models';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlStatus } from '../../../ui/primitives/status';
+import { ConfirmService } from '../../../ui/overlays/confirm';
+import { NamePromptService } from './name-prompt-dialog';
 import { ObjectStoreConsoleStateService } from './object-store-console-state.service';
 import { ObjectStoreObjectTableComponent } from './object-store-object-table.component';
 import { ObjectStoreSharesComponent } from './object-store-shares.component';
+import { folderName, objectName } from './object-store-format';
+import { StoreConsoleHeader } from './store-console-header';
 
 @Component({
   selector: 'app-object-store-console-page',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    NgIcon,
-    ConfirmationDialogComponent,
-    InputDialogComponent,
+    FlAlert,
+    FlButton,
+    FlEmptyState,
+    FlIcon,
+    FlLoadingState,
+    StoreConsoleHeader,
+    FlPanel,
+    FlStatus,
     ObjectStoreObjectTableComponent,
     ObjectStoreSharesComponent,
   ],
   providers: [
     ObjectStoreConsoleStateService,
-    provideIcons({
-      lucideArrowLeft,
-      lucideBox,
-      lucideFolderPlus,
-      lucideGlobe,
-      lucideHardDrive,
-      lucideLoader,
-      lucideLock,
-      lucidePlus,
-      lucideRotateCcw,
-      lucideTriangleAlert,
-      lucideUpload,
-    }),
+    provideIcons({ lucideFolderPlus, lucidePlus, lucideRefreshCw, lucideUpload }),
   ],
   template: `
-    <div class="p-4 md:p-6">
-      <div class="mb-4 flex items-center gap-3">
-        <button
-          type="button"
-          (click)="s.back()"
-          class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border text-muted-foreground hover:bg-muted"
-          title="Back"
-        >
-          <ng-icon name="lucideArrowLeft" class="h-4 w-4" />
-        </button>
-        <ng-icon name="lucideHardDrive" class="h-5 w-5 text-primary" />
-        <div class="min-w-0">
-          <h1 class="text-base font-semibold text-foreground">
-            Object Storage
-            @if (s.info(); as i) {
-              <span class="text-muted-foreground font-normal">· {{ i.label }}</span>
-            }
-          </h1>
-          <p class="truncate font-mono text-xs text-muted-foreground">
-            {{ applicationId() }}
-          </p>
-        </div>
-        <div class="ml-auto flex items-center gap-2">
+    <div class="fl-page">
+      <app-store-console-header
+        title="Object storage"
+        [appId]="applicationId()"
+        [conn]="s.conn()"
+        (retry)="s.connect()"
+      >
+        <ng-container consoleMeta>
+          @if (s.info(); as i) {
+            <span>{{ i.label }}</span>
+          }
+        </ng-container>
+        <ng-container consoleActions>
           <button
+            flButton
             type="button"
-            (click)="s.connect()"
-            class="inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-2.5 text-xs text-muted-foreground hover:bg-muted"
+            [iconOnly]="true"
+            aria-label="Refresh"
             title="Refresh"
+            (click)="s.connect()"
           >
-            <ng-icon name="lucideRotateCcw" class="h-3.5 w-3.5" />
-            Refresh
+            <fl-icon name="lucideRefreshCw" />
           </button>
-        </div>
-      </div>
+        </ng-container>
+      </app-store-console-header>
 
       @if (s.conn() === 'connecting') {
-        <div class="flex items-center gap-2 text-sm text-muted-foreground">
-          <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
-          Connecting…
-        </div>
+        <fl-panel><fl-loading-state [rows]="4" /></fl-panel>
       } @else if (s.conn() === 'error') {
-        <div
-          class="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
-        >
-          <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-4 w-4 shrink-0" />
-          <span>{{ s.errorMsg() || 'Failed to connect to the object store.' }}</span>
-        </div>
+        <fl-alert tone="error" title="Could not connect">
+          {{ s.errorMsg() || 'Failed to connect to the object store.' }}
+        </fl-alert>
       } @else {
-        <div class="mb-3 flex flex-wrap items-center gap-2">
-          <div class="flex items-center gap-2">
-            <ng-icon name="lucideBox" class="h-4 w-4 text-muted-foreground" />
-            <select
-              [value]="s.selectedBucket() ?? ''"
-              (change)="s.onBucketChange($any($event.target).value)"
-              class="h-8 rounded-md border border-border bg-background px-2 text-sm text-foreground"
-            >
-              @for (b of s.buckets(); track b.name) {
-                <option [value]="b.name">{{ b.name }}</option>
-              }
-            </select>
-            <button
-              type="button"
-              (click)="createBucket()"
-              class="inline-flex h-8 items-center gap-1 rounded-md border border-border px-2 text-xs text-muted-foreground hover:bg-muted"
-              title="New bucket"
-            >
-              <ng-icon name="lucidePlus" class="h-3.5 w-3.5" /> Bucket
+        <div class="flex flex-col items-start gap-5 lg:flex-row">
+          <fl-panel
+            class="w-full shrink-0 lg:w-64"
+            title="Buckets"
+            [count]="s.buckets().length"
+            [flush]="true"
+          >
+            <button panelActions flButton="ghost" size="sm" type="button" (click)="createBucket()">
+              <fl-icon name="lucidePlus" [size]="14" />
+              New
             </button>
-            @if (s.bucketPolicy(); as p) {
-              <button
-                type="button"
-                (click)="togglePublic()"
-                [disabled]="s.policyBusy()"
-                [title]="
-                  p.public
-                    ? 'Public: anyone can read objects anonymously. Click to make private.'
-                    : 'Private: key-only access. Click to make public.'
-                "
-                class="inline-flex h-8 items-center gap-1 rounded-md border px-2 text-xs disabled:opacity-50"
-                [class.border-amber-500]="p.public"
-                [class.text-amber-600]="p.public"
-                [class.border-border]="!p.public"
-                [class.text-muted-foreground]="!p.public"
-              >
-                <ng-icon [name]="p.public ? 'lucideGlobe' : 'lucideLock'" class="h-3.5 w-3.5" />
-                {{ p.public ? 'Public' : 'Private' }}
-              </button>
+            @if (s.buckets().length === 0) {
+              <fl-empty-state [compact]="true" title="No buckets yet" />
+            } @else {
+              <ul class="max-h-96 overflow-auto py-1">
+                @for (b of s.buckets(); track b.name) {
+                  <li>
+                    <button
+                      type="button"
+                      class="flex w-full items-center px-4 py-2 text-left text-fl-body-sm hover:bg-fl-surface-hover"
+                      [class.bg-fl-accent-soft]="s.selectedBucket() === b.name"
+                      [attr.aria-current]="s.selectedBucket() === b.name ? 'true' : null"
+                      (click)="s.onBucketChange(b.name)"
+                    >
+                      <span class="fl-mono min-w-0 flex-1 truncate">{{ b.name }}</span>
+                    </button>
+                  </li>
+                }
+              </ul>
             }
-          </div>
+          </fl-panel>
 
-          <div class="ml-auto flex items-center gap-2">
-            <label
-              class="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground hover:opacity-90"
-              [class.pointer-events-none]="!s.selectedBucket() || s.busy()"
-              [class.opacity-50]="!s.selectedBucket() || s.busy()"
+          <div class="flex w-full min-w-0 flex-1 flex-col gap-5">
+            <app-object-store-object-table
+              (deleteObjectRequest)="onDeleteObject($event)"
+              (deleteFolderRequest)="onDeleteFolder($event)"
+              (shareRequest)="s.openShare($event)"
             >
-              <ng-icon name="lucideUpload" class="h-3.5 w-3.5" /> Upload
-              <input type="file" multiple class="hidden" (change)="onFilesPicked($event)" />
-            </label>
-            <button
-              type="button"
-              (click)="createFolder()"
-              [disabled]="!s.selectedBucket() || s.busy()"
-              class="inline-flex h-8 items-center gap-1 rounded-md border border-border px-2.5 text-xs text-muted-foreground hover:bg-muted disabled:opacity-50"
-            >
-              <ng-icon name="lucideFolderPlus" class="h-3.5 w-3.5" /> Folder
-            </button>
+              <ng-container objectActions>
+                @if (s.bucketPolicy(); as p) {
+                  <fl-status
+                    [tone]="p.public ? 'warning' : 'neutral'"
+                    [label]="p.public ? 'Public' : 'Private'"
+                  />
+                  <button
+                    flButton="ghost"
+                    size="sm"
+                    type="button"
+                    [disabled]="s.policyBusy()"
+                    [title]="
+                      p.public
+                        ? 'Anyone can read objects anonymously.'
+                        : 'Only S3 keys can read objects.'
+                    "
+                    (click)="togglePublic()"
+                  >
+                    {{ p.public ? 'Make private' : 'Make public' }}
+                  </button>
+                }
+                <button
+                  flButton
+                  size="sm"
+                  type="button"
+                  [disabled]="!s.selectedBucket() || s.busy()"
+                  (click)="createFolder()"
+                >
+                  <fl-icon name="lucideFolderPlus" [size]="14" />
+                  Folder
+                </button>
+                <label
+                  class="fl-btn fl-btn--primary fl-btn--sm cursor-pointer"
+                  [class.pointer-events-none]="!s.selectedBucket() || s.busy()"
+                  [class.opacity-50]="!s.selectedBucket() || s.busy()"
+                >
+                  <fl-icon name="lucideUpload" [size]="14" />
+                  Upload
+                  <input type="file" multiple class="fl-sr" (change)="onFilesPicked($event)" />
+                </label>
+              </ng-container>
+            </app-object-store-object-table>
+            <app-object-store-shares (revokeRequest)="onRevoke($event)" />
           </div>
         </div>
-
-        <app-object-store-object-table
-          (deleteObjectRequest)="onDeleteObject($event)"
-          (deleteFolderRequest)="onDeleteFolder($event)"
-          (shareRequest)="s.openShare($event)"
-        />
-        <app-object-store-shares (revokeRequest)="onRevoke($event)" />
       }
     </div>
-
-    <app-confirmation-dialog
-      #confirmDialog
-      [variant]="confirmVariant()"
-      [confirmText]="confirmCta()"
-      [title]="confirmTitle()"
-      [message]="confirmMessage()"
-      (confirmed)="onConfirmed()"
-      (cancelled)="confirmDialog.close()"
-    />
-    <app-input-dialog
-      #inputDialog
-      confirmText="Create"
-      [title]="inputTitle()"
-      [message]="inputMessage()"
-      [placeholder]="inputPlaceholder()"
-      (confirmed)="onInputConfirmed($event)"
-    />
   `,
 })
 export class ObjectStoreConsolePageComponent implements OnInit {
   protected readonly s = inject(ObjectStoreConsoleStateService);
   private readonly route = inject(ActivatedRoute);
+  private readonly confirm = inject(ConfirmService);
+  private readonly prompt = inject(NamePromptService);
 
   readonly applicationId = toSignal(this.route.paramMap.pipe(map((p) => p.get('applicationId'))), {
     initialValue: this.route.snapshot.paramMap.get('applicationId'),
   });
 
-  private readonly confirmDialog = viewChild.required<ConfirmationDialogComponent>('confirmDialog');
-  private readonly inputDialog = viewChild.required<InputDialogComponent>('inputDialog');
-
-  protected readonly confirmTitle = signal('');
-  protected readonly confirmMessage = signal('');
-  protected readonly confirmVariant = signal<ConfirmationDialogVariant>('danger');
-  protected readonly confirmCta = signal('Delete');
-  protected readonly inputTitle = signal('');
-  protected readonly inputMessage = signal('');
-  protected readonly inputPlaceholder = signal('');
-  private pendingConfirm: (() => void) | null = null;
-  private pendingInput: ((value: string) => void) | null = null;
-
   ngOnInit(): void {
     this.s.appId.set(this.applicationId() ?? null);
     this.s.connect();
-  }
-
-  private askConfirm(
-    title: string,
-    message: string,
-    action: () => void,
-    opts: { variant?: ConfirmationDialogVariant; cta?: string } = {},
-  ): void {
-    this.confirmTitle.set(title);
-    this.confirmMessage.set(message);
-    this.confirmVariant.set(opts.variant ?? 'danger');
-    this.confirmCta.set(opts.cta ?? 'Delete');
-    this.pendingConfirm = action;
-    this.confirmDialog().open();
-  }
-
-  protected onConfirmed(): void {
-    const action = this.pendingConfirm;
-    this.pendingConfirm = null;
-    this.confirmDialog().close();
-    action?.();
-  }
-
-  private askInput(
-    title: string,
-    message: string,
-    placeholder: string,
-    action: (value: string) => void,
-  ): void {
-    this.inputTitle.set(title);
-    this.inputMessage.set(message);
-    this.inputPlaceholder.set(placeholder);
-    this.pendingInput = action;
-    this.inputDialog().open();
-  }
-
-  protected onInputConfirmed(value: string): void {
-    const action = this.pendingInput;
-    this.pendingInput = null;
-    this.inputDialog().close();
-    action?.(value);
   }
 
   protected onFilesPicked(event: Event): void {
@@ -273,51 +180,73 @@ export class ObjectStoreConsolePageComponent implements OnInit {
     this.s.uploadFiles(files);
   }
 
-  protected togglePublic(): void {
+  protected async togglePublic(): Promise<void> {
     const current = this.s.bucketPolicy();
     if (!current) return;
     if (current.public) {
       this.s.applyPolicy(false);
       return;
     }
-    this.askConfirm(
-      'Make bucket public',
-      'Anyone with the URL will be able to read objects in this bucket anonymously, without a Flui account or S3 key. Only do this for assets meant to be public.',
-      () => this.s.applyPolicy(true),
-      { variant: 'warning', cta: 'Make public' },
-    );
+    const ok = await this.confirm.confirm({
+      title: 'Make bucket public',
+      body: 'Anyone with the URL will be able to read objects in this bucket anonymously, without a Flui account or S3 key. Only do this for assets meant to be public.',
+      confirmLabel: 'Make public',
+    });
+    if (ok) this.s.applyPolicy(true);
   }
 
-  protected createBucket(): void {
-    this.askInput('New bucket', 'Lowercase letters, digits and hyphens.', 'my-bucket', (name) =>
-      this.s.createBucket(name),
-    );
+  protected async createBucket(): Promise<void> {
+    const name = await this.prompt.ask({
+      title: 'New bucket',
+      label: 'Bucket name',
+      hint: 'Lowercase letters, digits and hyphens.',
+      placeholder: 'my-bucket',
+      confirmLabel: 'Create',
+    });
+    if (name) this.s.createBucket(name);
   }
 
-  protected createFolder(): void {
-    this.askInput('New folder', '', 'folder-name', (name) => this.s.createFolder(name));
+  protected async createFolder(): Promise<void> {
+    const name = await this.prompt.ask({
+      title: 'New folder',
+      label: 'Folder name',
+      placeholder: 'folder-name',
+      confirmLabel: 'Create',
+    });
+    if (name) this.s.createFolder(name);
   }
 
-  protected onDeleteObject(o: S3ObjectEntry): void {
-    this.askConfirm('Delete object', `Delete "${o.key}"? This cannot be undone.`, () =>
-      this.s.deleteObject(o),
-    );
+  protected async onDeleteObject(o: S3ObjectEntry): Promise<void> {
+    const name = objectName(o.key, this.s.prefix());
+    const ok = await this.confirm.confirm({
+      title: `Delete ${name}`,
+      body: `This deletes ${o.key} from the bucket. It cannot be undone.`,
+      confirmLabel: 'Delete object',
+      destructive: true,
+      typeToConfirm: name,
+    });
+    if (ok) this.s.deleteObject(o);
   }
 
-  protected onDeleteFolder(prefix: string): void {
-    this.askConfirm(
-      'Delete folder',
-      `Delete folder "${prefix}" and everything in it? This cannot be undone.`,
-      () => this.s.deleteFolder(prefix),
-    );
+  protected async onDeleteFolder(prefix: string): Promise<void> {
+    const name = folderName(prefix, this.s.prefix());
+    const ok = await this.confirm.confirm({
+      title: `Delete folder ${name}`,
+      body: `This deletes ${prefix} and everything in it. It cannot be undone.`,
+      confirmLabel: 'Delete folder',
+      destructive: true,
+      typeToConfirm: name,
+    });
+    if (ok) this.s.deleteFolder(prefix);
   }
 
-  protected onRevoke(rec: ShareRecord): void {
-    this.askConfirm(
-      'Revoke share link',
-      `The link to "${rec.key}" will stop working immediately, for anyone who has it.`,
-      () => this.s.revokeShare(rec),
-      { variant: 'warning', cta: 'Revoke' },
-    );
+  protected async onRevoke(rec: ShareRecord): Promise<void> {
+    const ok = await this.confirm.confirm({
+      title: 'Revoke share link',
+      body: `The link to ${rec.key} stops working immediately, for anyone who has it.`,
+      confirmLabel: 'Revoke',
+      destructive: true,
+    });
+    if (ok) this.s.revokeShare(rec);
   }
 }

@@ -1,6 +1,5 @@
 import {
   AfterViewInit,
-  ChangeDetectionStrategy,
   Component,
   ElementRef,
   NgZone,
@@ -13,6 +12,13 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
+interface CmView {
+  state: { doc: { toString(): string; length: number } };
+  dispatch(tx: unknown): void;
+  focus(): void;
+  destroy(): void;
+}
+
 /**
  * The mongosh shell's input line: a CodeMirror editor (JS highlighting) that runs the
  * statement on Enter (Shift+Enter inserts a newline for multi-line statements) and recalls
@@ -21,17 +27,17 @@ import { FormsModule } from '@angular/forms';
  */
 @Component({
   selector: 'app-mongo-shell-input',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'contents' },
   imports: [FormsModule],
   template: `
     <div class="flex items-start gap-2">
-      <span class="shrink-0 select-none pt-1.5 font-mono text-xs text-primary">{{ prompt() }}</span>
+      <span class="shrink-0 select-none pt-1.5 font-mono text-fl-mono-sm text-fl-accent">{{
+        prompt()
+      }}</span>
       <div
         #host
         [hidden]="!ready()"
-        class="min-w-0 flex-1 overflow-x-auto rounded-md border border-border bg-background text-xs"
+        class="min-w-0 flex-1 overflow-x-auto rounded-fl-md border border-fl-border-input bg-fl-surface font-mono text-fl-mono-sm focus-within:border-fl-accent"
       ></div>
       @if (!ready()) {
         <input
@@ -41,7 +47,8 @@ import { FormsModule } from '@angular/forms';
           [disabled]="disabled()"
           spellcheck="false"
           placeholder="db.collection.find({ … })"
-          class="min-w-0 flex-1 rounded-md border border-border bg-background px-2 py-1.5 font-mono text-xs outline-none focus:border-primary disabled:opacity-50"
+          aria-label="Shell statement"
+          class="min-w-0 flex-1 rounded-fl-md border border-fl-border-input bg-fl-surface px-2 py-1.5 font-mono text-fl-mono-sm text-fl-ink outline-none focus:border-fl-accent disabled:opacity-50"
         />
       }
     </div>
@@ -61,10 +68,9 @@ export class MongoShellInputComponent implements AfterViewInit, OnDestroy {
   fallbackText = '';
 
   private readonly history: string[] = [];
-  private histIndex = -1; // -1 = current (not browsing history)
+  private histIndex = -1;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private view: any = null;
+  private view: CmView | null = null;
 
   setText(t: string): void {
     this.fallbackText = t;
@@ -108,7 +114,7 @@ export class MongoShellInputComponent implements AfterViewInit, OnDestroy {
   }
 
   private runCurrent(): void {
-    if (this.disabled()) return;
+    if (this.disabled() || !this.view) return;
     const text = String(this.view.state.doc.toString()).trim();
     if (!text) return;
     this.zone.run(() => this.emit(text));
@@ -116,8 +122,7 @@ export class MongoShellInputComponent implements AfterViewInit, OnDestroy {
   }
 
   private recall(dir: -1 | 1): boolean {
-    if (!this.history.length) return false;
-    // Only hijack ↑/↓ for history when the statement is a single line.
+    if (!this.history.length || !this.view) return false;
     if (String(this.view.state.doc.toString()).includes('\n')) return false;
     if (dir === -1) {
       this.histIndex =
@@ -196,7 +201,7 @@ export class MongoShellInputComponent implements AfterViewInit, OnDestroy {
         },
       );
 
-      this.view = new EditorView({
+      const ev = new EditorView({
         state: EditorState.create({
           doc: '',
           extensions: [
@@ -207,22 +212,28 @@ export class MongoShellInputComponent implements AfterViewInit, OnDestroy {
             keys,
             sync,
             EditorView.lineWrapping,
+            EditorView.contentAttributes.of({ 'aria-label': 'Shell statement' }),
             EditorView.theme({
-              '&': { backgroundColor: 'transparent', color: 'inherit' },
+              '&': { backgroundColor: 'transparent', color: 'var(--fl-ink)' },
               '&.cm-focused': { outline: 'none' },
+              '.cm-scroller': { fontFamily: 'var(--fl-font-mono)' },
               '.cm-content': {
                 padding: '6px 8px',
-                caretColor: 'hsl(var(--foreground))',
-                fontFamily: 'ui-monospace, monospace',
+                caretColor: 'var(--fl-ink)',
+                fontFamily: 'var(--fl-font-mono)',
               },
               '.cm-line': { padding: '0' },
-              '.cm-cursor, .cm-dropCursor': { borderLeftColor: 'hsl(var(--foreground))' },
-              '&.cm-focused .cm-cursor': { borderLeftColor: 'hsl(var(--foreground))' },
+              '.cm-cursor, .cm-dropCursor': { borderLeftColor: 'var(--fl-ink)' },
+              '&.cm-focused .cm-cursor': { borderLeftColor: 'var(--fl-ink)' },
+              '&.cm-focused .cm-selectionBackground, .cm-selectionBackground': {
+                backgroundColor: 'var(--fl-accent-soft)',
+              },
             }),
           ],
         }),
         parent: this.host().nativeElement,
       });
+      this.view = ev as unknown as CmView;
       this.ready.set(true);
     } catch {
       this.ready.set(false);

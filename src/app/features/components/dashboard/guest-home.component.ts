@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   DestroyRef,
   OnInit,
@@ -11,17 +10,7 @@ import {
 } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideArrowUpRight,
-  lucideExternalLink,
-  lucideKeyRound,
-  lucideServer,
-  lucideTerminal,
-} from '@ng-icons/lucide';
 import { catchError, forkJoin, of } from 'rxjs';
-import { StatTileComponent } from '../../../shared/components/charts';
-import { ExplainComponent } from '../../../shared/components/explain.component';
 import { StatTileData } from '../../../shared/components/charts/chart.models';
 import { AppConfigService } from '../../../core/services/app-config.service';
 import { SandboxService } from '../../../core/services/sandbox.service';
@@ -30,10 +19,18 @@ import { ApplicationService } from '../../service/application.service';
 import { ClusterService } from '../../service/cluster.service';
 import { FleetService } from '../../service/fleet.service';
 import { accessOf } from '../../model/app-access';
-import { AppGroupView } from '../../model/application.models';
+import { AppGroupView, getStatusLabel } from '../../model/application.models';
+import { FlLineChart } from '../../../ui/patterns/chart';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
+import { statusTone } from '../application/applications-list-rows';
 import { DashboardFleetTilesComponent } from './dashboard-fleet-tiles.component';
 import { DashboardClustersTableComponent } from './dashboard-clusters-table.component';
 import { GuestAppReading, appTiles, copiesOf, historyRange, primaryOf } from './guest-home';
+import { statusToneOf } from './home-state';
 import { CurrentSurfaceService } from '../../../core/services/current-surface.service';
 import { DashboardSurfaceRevision } from './dashboard-surface';
 import {
@@ -56,177 +53,157 @@ const REFRESH_MS = 60_000;
  */
 @Component({
   selector: 'app-guest-home',
-  standalone: true,
   imports: [
     RouterLink,
-    NgIcon,
-    ExplainComponent,
-    StatTileComponent,
+    FlLineChart,
+    FlKeyValue,
+    FlKvItem,
+    FlPanel,
+    FlTable,
+    FlButton,
+    FlStatus,
     DashboardFleetTilesComponent,
     DashboardClustersTableComponent,
   ],
-  providers: [
-    provideIcons({
-      lucideArrowUpRight,
-      lucideExternalLink,
-      lucideKeyRound,
-      lucideServer,
-      lucideTerminal,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'fl-stack' },
   template: `
-    <div class="flex flex-col gap-4 md:gap-5" data-testid="guest-home">
+    <div class="fl-stack" data-testid="guest-home">
       <app-dashboard-fleet-tiles />
 
-      <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-4 items-start">
-        <div class="flex flex-col gap-4 min-w-0">
+      <div class="grid grid-cols-1 items-start gap-5 lg:grid-cols-3">
+        <div class="fl-stack min-w-0 lg:col-span-2">
           @for (item of showcase(); track item.id) {
-            <section class="flex flex-col gap-4" data-testid="guest-showcase">
-              <div class="card-surface px-5 py-4 flex flex-wrap items-center justify-between gap-3">
-                <div class="min-w-0">
-                  <p class="text-label">In the showcase</p>
-                  <h2 class="font-semibold text-foreground">{{ item.name }}</h2>
-                  @if (item.note) {
-                    <p class="text-sm text-muted-foreground mt-0.5">{{ item.note }}</p>
-                  }
-                </div>
-                <div class="flex items-center gap-3">
-                  @if (copiesOf(item.id); as copies) {
-                    <span class="text-xs text-muted-foreground">{{ copies }} copies ready</span>
-                  }
-                  <a
-                    [routerLink]="['/apps/recap', item.groupId]"
-                    class="text-xs font-medium text-primary hover:underline"
-                    >How it is built</a
-                  >
-                  @if (item.url) {
-                    <a
-                      [href]="item.url"
-                      target="_blank"
-                      rel="noopener"
-                      class="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
-                    >
-                      Open it
-                      <ng-icon name="lucideExternalLink" class="h-3.5 w-3.5" />
-                    </a>
-                  }
-                </div>
-              </div>
-              <div class="grid grid-cols-2 xl:grid-cols-4 gap-4">
-                @for (tile of tilesOf(item.id); track tile.label) {
-                  <app-stat-tile [data]="tile" [sparkWidth]="140" />
+            <fl-panel [title]="item.name" data-testid="guest-showcase">
+              <ng-container panelActions>
+                @if (copiesOf(item.id); as copies) {
+                  <span class="fl-toolbar__info">{{ copies }} copies ready</span>
                 }
+                <a flButton="ghost" size="sm" [routerLink]="['/apps/recap', item.groupId]"
+                  >How it is built</a
+                >
+                @if (item.url) {
+                  <a flButton size="sm" [href]="item.url" target="_blank" rel="noopener">Open it</a>
+                }
+              </ng-container>
+              <div class="flex flex-col gap-4">
+                @if (item.note) {
+                  <p class="m-0 text-fl-body-sm text-fl-ink-muted">{{ item.note }}</p>
+                }
+                <div class="fl-util-grid">
+                  @for (tile of tilesOf(item.id); track tile.label) {
+                    <figure class="fl-util">
+                      <figcaption class="fl-util__head">
+                        <span class="fl-util__label">{{ tile.label }}</span>
+                        <span class="fl-util__value">{{ tile.value }}{{ tile.unit }}</span>
+                      </figcaption>
+                      @if (tile.spark && tile.spark.length > 1) {
+                        <fl-line-chart
+                          [compact]="true"
+                          [series]="[{ label: tile.label, points: tile.spark }]"
+                          [max]="scaleOf(tile)"
+                          [xLabels]="['−' + fleetWindow(), 'Now']"
+                          [reading]="tile.label + ' ' + tile.value + (tile.unit ?? '') + ' now'"
+                        />
+                      }
+                      <span class="fl-util__caption" [title]="tile.deltaHint ?? ''">
+                        {{ tile.footnote }}{{ tile.delta ? ' · ' + tile.delta : '' }}
+                      </span>
+                    </figure>
+                  }
+                </div>
               </div>
-            </section>
+            </fl-panel>
           }
           <app-dashboard-clusters-table />
         </div>
 
-        <div class="flex flex-col gap-4">
+        <div class="fl-stack">
           @if (sandbox.hasArea()) {
-            <section class="card-surface p-5 flex flex-col gap-3" data-testid="guest-space">
-              <p class="text-label">Your space</p>
-              <app-explain
-                [label]="
-                  ownApps().length === 1 ? '1 application' : ownApps().length + ' applications'
-                "
-                labelClass="font-semibold text-foreground"
-                floating
+            <fl-panel title="Your space" [count]="ownApps().length" data-testid="guest-space">
+              <div class="flex flex-col gap-3">
+                <p class="m-0 text-fl-body-sm text-fl-ink-muted">
+                  Your applications stay while you use them: they are removed after
+                  {{ sandbox.workloadTtlHours() ?? 24 }} hours without activity.
+                </p>
+                @if (ownApps().length > 0) {
+                  <div class="fl-table-wrap">
+                    <table flTable density="dense">
+                      <thead>
+                        <tr>
+                          <th scope="col">Application</th>
+                          <th scope="col" class="is-fit">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (own of ownApps(); track own.id) {
+                          <tr>
+                            <td class="fl-cell-name">
+                              <a class="fl-link" [routerLink]="['/apps/recap', own.groupId]">{{
+                                own.name
+                              }}</a>
+                            </td>
+                            <td class="is-fit">
+                              <fl-status
+                                [tone]="toneOf(own.status)"
+                                [label]="labelOf(own.status)"
+                              />
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                }
+                @if (sandbox.quota(); as q) {
+                  <fl-key-value>
+                    <fl-kv-item key="CPU">{{ q.cpu }}</fl-kv-item>
+                    <fl-kv-item key="Memory">{{ q.memory }}</fl-kv-item>
+                    <fl-kv-item key="Disk">{{ q.storage }}</fl-kv-item>
+                  </fl-key-value>
+                }
+              </div>
+            </fl-panel>
+          }
+
+          <fl-panel title="Explore the showcase" data-testid="guest-explore">
+            <p class="m-0 text-fl-body-sm text-fl-ink-muted" data-testid="sandbox-guide-text">
+              {{ exploreText }}
+            </p>
+          </fl-panel>
+
+          <fl-panel title="Run it yourself" data-testid="guest-install">
+            <div class="flex flex-col gap-3">
+              <p class="m-0 text-fl-body-sm text-fl-ink-muted">{{ installText }}</p>
+              <a
+                flButton="primary"
+                class="self-start"
+                [href]="installUrl"
+                target="_blank"
+                rel="noopener"
+                data-testid="guest-install-link"
+                >Install Flui</a
               >
-                They stay while you use them: removed after
-                {{ sandbox.workloadTtlHours() ?? 24 }} hours without activity.
-              </app-explain>
-              @if (ownApps().length > 0) {
-                <ul class="flex flex-col -mx-2">
-                  @for (own of ownApps(); track own.id) {
+              <div
+                class="flex flex-col gap-2 border-t border-fl-border pt-3"
+                data-testid="guest-ways"
+              >
+                <span class="text-fl-body-sm font-semibold">Three ways to install</span>
+                <ul class="m-0 flex list-none flex-col gap-1.5 p-0">
+                  @for (way of installWays; track way.label) {
                     <li>
-                      <a
-                        [routerLink]="['/apps/recap', own.groupId]"
-                        class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted/40"
-                      >
-                        <span class="flex-1 truncate text-foreground">{{ own.name }}</span>
-                        <span class="text-xs text-muted-foreground">{{ own.status }}</span>
-                      </a>
+                      <a class="fl-link" [href]="installUrl" target="_blank" rel="noopener">{{
+                        way.label
+                      }}</a>
                     </li>
                   }
                 </ul>
-              }
-              @if (sandbox.quota(); as q) {
-                <dl class="grid grid-cols-3 gap-2 pt-1 border-t border-border">
-                  <div class="pt-2">
-                    <dt class="text-label">CPU</dt>
-                    <dd class="text-sm font-semibold text-foreground">{{ q.cpu }}</dd>
-                  </div>
-                  <div class="pt-2">
-                    <dt class="text-label">Memory</dt>
-                    <dd class="text-sm font-semibold text-foreground">{{ q.memory }}</dd>
-                  </div>
-                  <div class="pt-2">
-                    <dt class="text-label">Disk</dt>
-                    <dd class="text-sm font-semibold text-foreground">{{ q.storage }}</dd>
-                  </div>
-                </dl>
-              }
-            </section>
-          }
-
-          <section class="card-surface p-5 flex flex-col gap-2" data-testid="guest-explore">
-            <p class="text-label">Look around</p>
-            <h2 class="font-semibold text-foreground">Explore the showcase</h2>
-            <p class="text-sm text-muted-foreground" data-testid="sandbox-guide-text">
-              {{ exploreText }}
-            </p>
-          </section>
-
-          <section class="card-surface p-5 flex flex-col gap-3" data-testid="guest-install">
-            <p class="text-label">Run it yourself</p>
-            <p class="text-sm text-muted-foreground">{{ installText }}</p>
-            <a
-              [href]="installUrl"
-              target="_blank"
-              rel="noopener"
-              class="inline-flex w-fit items-center gap-1.5 rounded-md bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
-              data-testid="guest-install-link"
-            >
-              Install Flui
-              <ng-icon name="lucideExternalLink" class="h-4 w-4" />
-            </a>
-            <div class="flex flex-col gap-1 pt-3 border-t border-border" data-testid="guest-ways">
-              <p class="text-label">Three ways to install</p>
-              @for (way of installWays; track way.label) {
-                <a [href]="installUrl" target="_blank" rel="noopener" class="guest-way">
-                  <ng-icon [name]="way.icon" class="h-4 w-4 text-muted-foreground" />
-                  {{ way.label }}
-                  <ng-icon
-                    name="lucideArrowUpRight"
-                    class="h-3.5 w-3.5 ml-auto text-muted-foreground"
-                  />
-                </a>
-              }
+              </div>
             </div>
-          </section>
+          </fl-panel>
         </div>
       </div>
     </div>
   `,
-  styles: [
-    `
-      .guest-way {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        border-radius: 0.375rem;
-        padding: 0.5rem 0.5rem;
-        margin: 0 -0.5rem;
-        font-size: 0.875rem;
-        color: var(--foreground);
-      }
-      .guest-way:hover {
-        background: color-mix(in oklab, var(--muted) 40%, transparent);
-      }
-    `,
-  ],
 })
 export class GuestHomeComponent implements OnInit {
   protected readonly sandbox = inject(SandboxService);
@@ -234,9 +211,9 @@ export class GuestHomeComponent implements OnInit {
   protected readonly exploreText = EXPLORE_TEXT;
   protected readonly installText = INSTALL_TEXT;
   protected readonly installWays = [
-    { icon: 'lucideKeyRound', label: 'Guided, with your provider API key' },
-    { icon: 'lucideServer', label: 'On a server you already have' },
-    { icon: 'lucideTerminal', label: 'From the command line' },
+    { label: 'Guided, with your provider API key' },
+    { label: 'On a server you already have' },
+    { label: 'From the command line' },
   ];
   private readonly applications = inject(ApplicationService);
   private readonly clusters = inject(ClusterService);
@@ -329,6 +306,22 @@ export class GuestHomeComponent implements OnInit {
       this.read();
     }, REFRESH_MS);
     inject(DestroyRef).onDestroy(() => clearInterval(timer));
+  }
+
+  protected readonly fleetWindow = computed(() => this.fleet.window());
+
+  protected scaleOf(tile: StatTileData): number {
+    if (tile.unit === '%') return 100;
+    const peak = Math.max(...(tile.spark ?? [0]));
+    return peak > 0 ? peak * 1.2 : 1;
+  }
+
+  protected toneOf(status: string): StatusTone {
+    return statusToneOf(statusTone(status));
+  }
+
+  protected labelOf(status: string): string {
+    return getStatusLabel(status as AppGroupView['status']);
   }
 
   protected tilesOf(appId: string): StatTileData[] {

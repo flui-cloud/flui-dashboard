@@ -48,14 +48,14 @@ import { hasPublicEndpoint } from '../../model/app-exposure';
             @if (pods().current.length || pods().older) {
               <ul class="flex flex-col gap-1 text-fl-caption" data-testid="replica-nodes">
                 @for (pod of pods().current; track pod.name) {
-                  <li class="flex min-w-0 items-center gap-1.5">
+                  <li class="flex min-w-0 flex-col items-start gap-0.5">
                     @if (pod.node) {
                       <fl-status
                         [tone]="pod.ready ? 'success' : 'warning'"
                         [label]="pod.node"
                         [attr.title]="pod.name"
                       />
-                      <span class="shrink-0 text-fl-ink-muted">{{ placement(pod) }}</span>
+                      <span class="text-fl-ink-muted">{{ placement(pod) }}</span>
                     } @else {
                       <fl-status
                         tone="warning"

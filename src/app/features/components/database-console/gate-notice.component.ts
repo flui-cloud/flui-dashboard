@@ -1,6 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideTriangleAlert } from '@ng-icons/lucide';
+import { Component, computed, input } from '@angular/core';
+import { FlAlert } from '../../../ui/patterns/alert';
 
 /**
  * Inline notice for consoles whose read-only gate is NOT enforced by the engine itself.
@@ -11,31 +10,21 @@ import { lucideTriangleAlert } from '@ng-icons/lucide';
  */
 @Component({
   selector: 'app-gate-notice',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgIcon],
-  providers: [provideIcons({ lucideTriangleAlert })],
+  imports: [FlAlert],
+  host: { class: 'block' },
   template: `
-    <div
-      class="flex items-start gap-1.5 rounded-md border border-amber-500/30 bg-amber-500/5 px-2.5 py-1.5 text-[11px] leading-snug text-amber-700"
-      [title]="tooltip()"
-    >
-      <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-3.5 w-3.5 shrink-0" />
-      <span>
-        Read-only here is a Flui safeguard (command check) —
-        <span class="font-semibold">not enforced by {{ engine() }}</span
-        >. Keep it on for safety; it's a guardrail, not a hard guarantee.
-      </span>
-    </div>
+    <fl-alert tone="warning" title="Read-only is a Flui safeguard" [attr.title]="tooltip()">
+      {{ engine() }} has no read-only mode, so Flui checks each command and blocks writes. Keep it
+      on: it is a guardrail, not a guarantee.
+    </fl-alert>
   `,
 })
 export class GateNoticeComponent {
   readonly engine = input('the engine');
   readonly tooltip = computed(
     () =>
-      `Unlike SQL — which runs in a real read-only transaction the database enforces — ` +
-      `${this.engine()} has no read-only connection mode. Flui inspects each command and ` +
-      `blocks writes while read-only is on, but a mis-classified command could still run. ` +
-      `Treat read-only as a guardrail, not a guarantee.`,
+      `SQL runs in a read-only transaction the database enforces. ` +
+      `${this.engine()} has no read-only connection mode: Flui inspects each command and ` +
+      `blocks writes while read-only is on, but a misclassified command could still run.`,
   );
 }

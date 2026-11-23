@@ -20,7 +20,7 @@ import {
   imports: [FlTable, FlActionsMenu, FlStatus, FlButton, FlSpinner],
   host: { class: 'block' },
   template: `
-    <div class="fl-table-wrap" data-testid="snapshot-table">
+    <div class="fl-table-wrap relative" data-testid="snapshot-table">
       <table flTable density="dense">
         <thead>
           <tr>

@@ -95,11 +95,11 @@ export class AppAlertsSectionComponent {
   }
 
   protected timing(alert: AlertEvent): string {
-    const started = new Date(alert.starts_at).toLocaleString();
+    const started = new Date(alert.starts_at).toLocaleString('en-GB');
     if (alert.status === 'firing') {
       return `Started ${started}`;
     }
-    const ended = alert.ends_at ? new Date(alert.ends_at).toLocaleString() : 'unknown';
+    const ended = alert.ends_at ? new Date(alert.ends_at).toLocaleString('en-GB') : 'unknown';
     if (alert.resolved_by === 'timeout') {
       return `${started} → ${ended} · stopped reporting, end time approximate`;
     }

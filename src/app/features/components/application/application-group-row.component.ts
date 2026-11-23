@@ -190,7 +190,7 @@ export class ApplicationGroupRowComponent {
     if (mins < 60) return `${mins}m ago`;
     if (hours < 24) return `${hours}h ago`;
     if (days < 7) return `${days}d ago`;
-    return new Date(date).toLocaleDateString();
+    return new Date(date).toLocaleDateString('en-GB');
   }
 
   statusLabel(status: ApplicationStatus): string {

@@ -1,120 +1,80 @@
-import {
-  Component,
-  signal,
-  inject,
-  OnInit,
-  OnDestroy,
-  output,
-  ChangeDetectionStrategy,
-} from '@angular/core';
-
+import { Component, signal, inject, OnInit, OnDestroy, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideSearch,
-  lucideLoader,
-  lucideStar,
-  lucideCircleAlert,
-  lucideGitBranch,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideSearch } from '@ng-icons/lucide';
 import { RepositoryService } from '../../service/repository.service';
 import { PublicRepoSearchResultDto } from '../../../core/api/model/publicRepoSearchResultDto';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlField } from '../../../ui/patterns/field';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlIcon } from '../../../ui/primitives/icon';
 
 @Component({
   selector: 'app-public-repo-picker',
-  standalone: true,
-  imports: [FormsModule, NgIconComponent],
-  providers: [
-    provideIcons({ lucideSearch, lucideLoader, lucideStar, lucideCircleAlert, lucideGitBranch }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FormsModule, FlAlert, FlField, FlEmptyState, FlLoadingState, FlTable, FlIcon],
+  providers: [provideIcons({ lucideSearch })],
+  host: { class: 'fl-stack' },
   template: `
-    <div class="space-y-3">
-      <!-- Search input -->
-      <div class="relative">
-        <ng-icon
-          name="lucideSearch"
-          class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none"
-        />
+    <fl-field
+      label="Public repository"
+      for="public-repo-search"
+      hint="Type at least 2 characters to search GitHub"
+    >
+      <span class="fl-input fl-input--lg">
+        <fl-icon name="lucideSearch" />
         <input
-          type="text"
-          [(ngModel)]="searchQuery"
+          id="public-repo-search"
+          type="search"
+          placeholder="Search public GitHub repositories"
+          [ngModel]="searchQuery()"
           (ngModelChange)="onQueryChange($event)"
-          placeholder="Search public GitHub repositories..."
-          class="w-full pl-9 pr-4 py-2 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
         />
+      </span>
+    </fl-field>
+
+    @if (searching()) {
+      <fl-loading-state />
+    } @else if (searchError()) {
+      <fl-alert tone="error" title="Search failed">{{ searchError() }}</fl-alert>
+    } @else if (results().length > 0) {
+      <div class="fl-table-wrap rounded-fl-md border border-fl-border">
+        <table flTable density="dense">
+          <thead>
+            <tr>
+              <th scope="col">Repository</th>
+              <th scope="col">Description</th>
+              <th scope="col">Language</th>
+              <th scope="col">Branch</th>
+              <th scope="col" class="is-num">Stars</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (repo of results(); track repo.full_name) {
+              <tr class="cursor-pointer" (click)="selectRepo(repo)">
+                <td>
+                  <button
+                    type="button"
+                    class="fl-link fl-mono"
+                    (click)="$event.stopPropagation(); selectRepo(repo)"
+                  >
+                    {{ repo.full_name }}
+                  </button>
+                </td>
+                <td class="is-wrap text-fl-ink-muted">{{ repo.description }}</td>
+                <td class="text-fl-ink-secondary">{{ repo.language }}</td>
+                <td class="fl-mono text-fl-ink-muted">{{ repo.default_branch }}</td>
+                <td class="is-num">{{ formatStars(repo.stars) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
       </div>
-
-      <!-- Loading -->
-      @if (searching()) {
-        <div class="flex items-center gap-2 py-4 text-muted-foreground text-sm justify-center">
-          <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
-          <span>Searching...</span>
-        </div>
-      }
-
-      <!-- Error -->
-      @if (searchError()) {
-        <div class="flex items-center gap-2 text-sm text-red-600 py-2">
-          <ng-icon name="lucideCircleAlert" class="h-4 w-4 shrink-0" />
-          <span>{{ searchError() }}</span>
-        </div>
-      }
-
-      <!-- Results -->
-      @if (!searching() && results().length > 0) {
-        <div class="border border-border rounded-md divide-y divide-border overflow-hidden">
-          @for (repo of results(); track repo.full_name) {
-            <button
-              type="button"
-              (click)="selectRepo(repo)"
-              class="w-full text-left px-4 py-3 hover:bg-accent/50 transition-colors"
-            >
-              <div class="flex items-start justify-between gap-3">
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-2 flex-wrap">
-                    <span class="font-medium text-sm">{{ repo.full_name }}</span>
-                    @if (repo.language) {
-                      <span class="text-xs px-2 py-0.5 rounded bg-muted text-muted-foreground">{{
-                        repo.language
-                      }}</span>
-                    }
-                    <span class="text-xs text-muted-foreground flex items-center gap-1">
-                      <ng-icon name="lucideGitBranch" class="h-3 w-3" />{{ repo.default_branch }}
-                    </span>
-                  </div>
-                  @if (repo.description) {
-                    <p class="text-xs text-muted-foreground mt-1 truncate">
-                      {{ repo.description }}
-                    </p>
-                  }
-                </div>
-                <div class="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
-                  <ng-icon name="lucideStar" class="h-3 w-3" />
-                  {{ formatStars(repo.stars) }}
-                </div>
-              </div>
-            </button>
-          }
-        </div>
-      }
-
-      <!-- Empty state after search -->
-      @if (!searching() && searchQuery.length > 1 && results().length === 0 && !searchError()) {
-        <p class="text-sm text-muted-foreground text-center py-4">
-          No repositories found for "{{ searchQuery }}"
-        </p>
-      }
-
-      <!-- Hint before search -->
-      @if (!searching() && searchQuery.length <= 1 && results().length === 0) {
-        <p class="text-sm text-muted-foreground text-center py-4">
-          Type at least 2 characters to search
-        </p>
-      }
-    </div>
+    } @else if (searchQuery().length > 1) {
+      <fl-empty-state [compact]="true" [title]="'No repositories match ' + searchQuery()" />
+    }
   `,
 })
 export class PublicRepoPickerComponent implements OnInit, OnDestroy {
@@ -122,7 +82,7 @@ export class PublicRepoPickerComponent implements OnInit, OnDestroy {
 
   private readonly repoService = inject(RepositoryService);
 
-  searchQuery = '';
+  readonly searchQuery = signal('');
   searching = signal(false);
   results = signal<PublicRepoSearchResultDto[]>([]);
   searchError = signal<string | null>(null);
@@ -140,6 +100,7 @@ export class PublicRepoPickerComponent implements OnInit, OnDestroy {
   }
 
   onQueryChange(value: string): void {
+    this.searchQuery.set(value);
     this.querySubject.next(value);
   }
 
@@ -154,7 +115,7 @@ export class PublicRepoPickerComponent implements OnInit, OnDestroy {
       const res = await this.repoService.searchPublicRepositories(query, 15);
       this.results.set(res);
     } catch {
-      this.searchError.set('Search failed. Please try again.');
+      this.searchError.set('GitHub did not answer. Try again in a moment.');
       this.results.set([]);
     } finally {
       this.searching.set(false);

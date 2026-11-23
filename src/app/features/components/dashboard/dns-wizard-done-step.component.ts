@@ -1,83 +1,76 @@
-import { Component, inject, input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideShieldCheck, lucideExternalLink, lucideArrowRight } from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideExternalLink } from '@ng-icons/lucide';
 import { DnsSetupWizardService } from './dns-setup-wizard.service';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlCopyId } from '../../../ui/patterns/copy-id';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlStatus } from '../../../ui/primitives/status';
 
 @Component({
   selector: 'app-dns-wizard-done-step',
-  standalone: true,
-  imports: [RouterLink, NgIconComponent],
-  providers: [provideIcons({ lucideShieldCheck, lucideExternalLink, lucideArrowRight })],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [RouterLink, FlAlert, FlCopyId, FlTable, FlButton, FlIcon, FlStatus],
+  providers: [provideIcons({ lucideExternalLink })],
+  host: { class: 'fl-stack' },
   template: `
-    <div class="flex-1 flex flex-col gap-4 py-2">
-      <div class="flex items-center gap-3">
-        <div
-          class="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0"
-        >
-          <ng-icon name="lucideShieldCheck" class="h-5 w-5 text-emerald-500" />
-        </div>
-        <div>
-          <p class="text-sm font-semibold text-foreground">You're all set!</p>
-          <p class="text-xs text-muted-foreground mt-0.5">
-            All apps are live with active certificates.
-          </p>
-        </div>
-      </div>
+    <fl-status tone="success" label="All apps are live with active certificates" />
 
-      <!-- App links -->
-      <div class="flex flex-col gap-0 rounded-lg border border-border overflow-hidden">
-        @for (app of wiz.appEndpoints(); track app.key) {
-          <div class="flex items-center gap-3 px-4 py-3 border-b border-border last:border-0">
-            <ng-icon name="lucideShieldCheck" class="h-4 w-4 text-emerald-500 flex-shrink-0" />
-            <div class="flex-1 min-w-0">
-              <p class="text-xs font-semibold text-foreground">{{ app.label }}</p>
-              <p class="text-xs text-muted-foreground font-mono truncate">https://{{ app.fqdn }}</p>
-            </div>
-            <a
-              href="https://{{ app.fqdn }}"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="flex-shrink-0 text-muted-foreground hover:text-primary transition-colors"
-              title="Open {{ app.fqdn }}"
-            >
-              <ng-icon name="lucideExternalLink" class="h-3.5 w-3.5" />
-            </a>
-          </div>
-        }
-      </div>
-
-      @if (wiz.requiresRelogin()) {
-        <div class="rounded-md bg-amber-50 border border-amber-200 px-4 py-3">
-          <p class="text-xs font-semibold text-amber-800">Session moved to new domain</p>
-          <p class="text-xs text-amber-700 mt-1">
-            The dashboard is now served from the custom domain. Continue there to log in.
-          </p>
-          @if (webUrl(); as url) {
-            <button
-              (click)="onRelogin()"
-              class="mt-2.5 inline-flex items-center gap-1.5 rounded-md bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium px-3 py-1.5 transition-colors"
-            >
-              Continue on new domain
-              <ng-icon name="lucideArrowRight" class="h-3.5 w-3.5" />
-            </button>
-            <p class="text-xs text-amber-700/80 mt-2 font-mono truncate">
-              {{ url }}
-            </p>
+    <div class="fl-table-wrap">
+      <table flTable density="dense">
+        <thead>
+          <tr>
+            <th scope="col">App</th>
+            <th scope="col">Address</th>
+            <th scope="col" class="is-fit"><span class="fl-sr">Open</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (app of wiz.appEndpoints(); track app.key) {
+            <tr>
+              <td>{{ app.label }}</td>
+              <td>
+                <fl-copy-id [value]="'https://' + app.fqdn" label="address" [display]="app.fqdn" />
+              </td>
+              <td class="is-fit">
+                <a
+                  flButton="ghost"
+                  size="sm"
+                  [iconOnly]="true"
+                  href="https://{{ app.fqdn }}"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  [attr.aria-label]="'Open ' + app.fqdn"
+                >
+                  <fl-icon name="lucideExternalLink" />
+                </a>
+              </td>
+            </tr>
           }
-        </div>
-      } @else {
-        <div class="rounded-md bg-muted/60 px-4 py-2.5">
-          <p class="text-xs text-muted-foreground">
-            Monitor and configure advanced options in the
-            <a [routerLink]="['/cluster', clusterId(), 'dns']" class="text-primary hover:underline"
-              >cluster DNS section</a
-            >.
-          </p>
-        </div>
-      }
+        </tbody>
+      </table>
     </div>
+
+    @if (wiz.requiresRelogin()) {
+      <fl-alert tone="warning" title="Session moved to the new domain">
+        The dashboard is now served from the custom domain. Continue there to sign in.
+        @if (webUrl(); as url) {
+          <span class="fl-mono block truncate">{{ url }}</span>
+        }
+        @if (webUrl()) {
+          <button alertActions flButton size="sm" type="button" (click)="onRelogin()">
+            Continue on the new domain
+          </button>
+        }
+      </fl-alert>
+    } @else {
+      <p class="m-0 text-fl-body-sm text-fl-ink-muted">
+        Monitor and configure advanced options in the
+        <a [routerLink]="['/cluster', clusterId(), 'dns']" class="fl-link">cluster DNS section</a>.
+      </p>
+    }
   `,
 })
 export class DnsWizardDoneStepComponent {

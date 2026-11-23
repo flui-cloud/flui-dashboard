@@ -22,5 +22,5 @@ export function diagnosisCategoryLabel(category: CrashCategory): string {
 }
 
 export function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString();
+  return new Date(iso).toLocaleString('en-GB');
 }

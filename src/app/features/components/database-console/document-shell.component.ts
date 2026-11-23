@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   ElementRef,
   effect,
@@ -9,37 +8,23 @@ import {
   viewChild,
   output,
 } from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideChevronDown, lucideEraser, lucideLoader, lucideTerminal } from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideChevronDown, lucideChevronUp, lucideEraser, lucideTerminal } from '@ng-icons/lucide';
 import { DocumentConsoleService } from '../../service/document-console.service';
-import { DocShellResult } from '../../model/document-console.models';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+import { FlStatus } from '../../../ui/primitives/status';
 import { JsonViewerComponent } from './json-viewer.component';
 import { MongoShellInputComponent } from './mongo-shell-input.component';
 import { GateNoticeComponent } from './gate-notice.component';
-
-interface ShellEntry {
-  input: string;
-  db: string;
-  status: 'ok' | 'error' | 'note';
-  error?: string;
-  note?: string;
-  header?: string;
-  durationMs?: number;
-  mutation?: boolean;
-  /** A single number/'null' shown as plain text (count, empty findOne). */
-  scalar?: string;
-  /** A list of documents/values, each rendered with the json-viewer. */
-  docs?: unknown[];
-  /** A single object/array rendered with the json-viewer. */
-  value?: unknown;
-  hasValue?: boolean;
-}
+import { ShellEntry, toShellEntry } from './document-shell-entry';
 
 const HELP_TEXT = [
   'mongosh-compatible shell. Examples:',
   '  db.users.find({ role: "admin" }).limit(10)',
   '  db.orders.aggregate([{ $group: { _id: "$status", n: { $sum: 1 } } }])',
-  '  db.users.updateOne({ _id: ObjectId("…") }, { $set: { … } })   (turn off Read-only)',
+  '  db.users.updateOne({ _id: ObjectId("…") }, { $set: { … } })   (clear Read-only)',
   'Helpers: show dbs · show collections · use <db> · clear · help',
   'Enter runs · Shift+Enter newline · ↑/↓ recalls history',
 ].join('\n');
@@ -53,120 +38,128 @@ const HELP_TEXT = [
  */
 @Component({
   selector: 'app-document-shell',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgIcon, JsonViewerComponent, MongoShellInputComponent, GateNoticeComponent],
-  providers: [provideIcons({ lucideChevronDown, lucideEraser, lucideLoader, lucideTerminal })],
+  host: { class: 'block' },
+  imports: [
+    FlButton,
+    FlIcon,
+    FlSpinner,
+    FlStatus,
+    JsonViewerComponent,
+    MongoShellInputComponent,
+    GateNoticeComponent,
+  ],
+  providers: [provideIcons({ lucideChevronDown, lucideChevronUp, lucideEraser, lucideTerminal })],
   template: `
     @if (!expanded()) {
       <button
         type="button"
         (click)="toggle()"
-        class="flex w-full items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
-        title="Open mongo shell"
+        class="fl-panel flex w-full items-center gap-2 px-4 py-2.5 text-left hover:bg-fl-surface-hover"
+        aria-label="Open mongo shell"
       >
-        <ng-icon name="lucideTerminal" class="h-4 w-4 text-primary" />
-        <span class="font-medium">Mongo shell</span>
-        <span class="font-mono text-[11px] opacity-70">mongosh</span>
-        <ng-icon name="lucideChevronDown" class="ml-auto h-4 w-4 -rotate-90" />
+        <fl-icon class="text-fl-ink-muted" name="lucideTerminal" />
+        <span class="text-fl-body-sm font-semibold">Mongo shell</span>
+        <span class="font-mono text-fl-mono-sm text-fl-ink-muted">mongosh</span>
+        <fl-icon class="ml-auto text-fl-ink-muted" name="lucideChevronUp" />
       </button>
     } @else {
-      <div class="flex h-72 flex-col overflow-hidden rounded-lg border border-border bg-card">
-        <div
-          class="flex shrink-0 items-center gap-2 border-b border-border bg-muted/40 px-3 py-1.5 text-xs"
-        >
-          <ng-icon name="lucideTerminal" class="h-4 w-4 text-primary" />
-          <span class="font-medium">Mongo shell</span>
-          <span
-            class="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground"
-            >{{ db() }}</span
-          >
-          <div class="ml-auto flex items-center gap-2">
+      <div class="fl-panel flex h-96 flex-col" role="region" aria-label="Mongo shell">
+        <header class="fl-panel__header">
+          <h2 class="fl-panel__title flex items-center gap-2">
+            Mongo shell
+            <span class="font-mono text-fl-mono-sm font-normal text-fl-ink-muted">{{ db() }}</span>
+          </h2>
+          <div class="fl-panel__actions">
             <label
-              class="flex items-center gap-1 text-[11px] text-muted-foreground"
-              [title]="readOnly() ? 'Reads only — writes are rejected' : 'Writes allowed'"
+              class="fl-check"
+              [title]="readOnly() ? 'Reads only, writes are rejected' : 'Writes allowed'"
             >
               <input type="checkbox" [checked]="readOnly()" (change)="toggleReadOnly()" /> Read-only
             </label>
             <button
+              flButton="ghost"
+              size="sm"
+              [iconOnly]="true"
               type="button"
               (click)="clear()"
-              class="inline-flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
+              aria-label="Clear"
               title="Clear"
             >
-              <ng-icon name="lucideEraser" class="h-3.5 w-3.5" />
+              <fl-icon name="lucideEraser" [size]="14" />
             </button>
             <button
+              flButton="ghost"
+              size="sm"
+              [iconOnly]="true"
               type="button"
               (click)="toggle()"
-              class="inline-flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
-              title="Collapse"
+              aria-label="Hide mongo shell"
+              title="Hide mongo shell"
             >
-              <ng-icon name="lucideChevronDown" class="h-4 w-4" />
+              <fl-icon name="lucideChevronDown" [size]="14" />
             </button>
           </div>
-        </div>
+        </header>
 
-        <div class="shrink-0 px-3 pt-2">
+        <div class="shrink-0 px-4 pt-3">
           <app-gate-notice engine="FerretDB / MongoDB" />
         </div>
 
-        <div #scroll class="min-h-0 flex-1 space-y-2 overflow-y-auto p-3 font-mono text-xs">
+        <div
+          #scroll
+          class="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-4 py-3 font-mono text-fl-mono-sm"
+        >
           @if (entries().length === 0) {
-            <p class="whitespace-pre-wrap text-muted-foreground">{{ help }}</p>
+            <p class="m-0 whitespace-pre-wrap text-fl-ink-muted">{{ help }}</p>
           }
           @for (e of entries(); track $index) {
             <div>
               <div class="flex gap-2">
-                <span class="shrink-0 select-none text-primary">{{ e.db }}&gt;</span>
+                <span class="shrink-0 select-none text-fl-accent">{{ e.db }}&gt;</span>
                 <span class="whitespace-pre-wrap break-all">{{ e.input }}</span>
               </div>
               @if (e.status === 'error') {
-                <div class="mt-0.5 flex gap-2 text-red-600">
-                  <span class="shrink-0 select-none opacity-0">&gt;</span>
+                <div class="mt-1 flex items-start gap-2 pl-4">
+                  <fl-status tone="error" label="Error" />
                   <span class="whitespace-pre-wrap break-all">{{ e.error }}</span>
                 </div>
               } @else if (e.status === 'note') {
-                <div class="mt-0.5 whitespace-pre-wrap pl-4 text-muted-foreground">
-                  {{ e.note }}
-                </div>
+                <div class="mt-1 whitespace-pre-wrap pl-4 text-fl-ink-muted">{{ e.note }}</div>
               } @else {
                 <div class="mt-1 pl-4">
                   @if (e.header) {
-                    <div class="mb-1 text-[11px] text-muted-foreground">
+                    <div class="fl-num mb-1 text-fl-caption text-fl-ink-muted">
                       {{ e.header }}
                       @if (e.durationMs !== undefined) {
-                        · {{ e.durationMs }}ms
+                        · {{ e.durationMs }} ms
                       }
                     </div>
                   }
                   @if (e.scalar !== undefined) {
-                    <span class="text-sky-600">{{ e.scalar }}</span>
+                    <span class="text-fl-accent-strong">{{ e.scalar }}</span>
                   } @else if (e.docs) {
                     @for (doc of e.docs; track $index) {
-                      <div class="mb-1 rounded border border-border/60 bg-muted/20 p-1.5">
+                      <div class="border-b border-fl-border-subtle py-1.5">
                         <app-json-viewer [value]="doc" [autoExpandDepth]="1" />
                       </div>
                     } @empty {
-                      <span class="text-muted-foreground">(none)</span>
+                      <span class="text-fl-ink-muted">(none)</span>
                     }
                   } @else if (e.hasValue) {
-                    <div class="rounded border border-border/60 bg-muted/20 p-1.5">
-                      <app-json-viewer [value]="e.value" [autoExpandDepth]="2" />
-                    </div>
+                    <app-json-viewer [value]="e.value" [autoExpandDepth]="2" />
                   }
                 </div>
               }
             </div>
           }
           @if (running()) {
-            <div class="flex items-center gap-2 text-muted-foreground">
-              <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" /> running…
+            <div class="flex items-center gap-2 text-fl-ink-muted">
+              <fl-spinner label="Running" /> Running
             </div>
           }
         </div>
 
-        <div class="shrink-0 border-t border-border p-2">
+        <div class="shrink-0 border-t border-fl-border px-4 py-3">
           <app-mongo-shell-input
             [prompt]="db() + '>'"
             [disabled]="running()"
@@ -181,10 +174,8 @@ export class DocumentShellComponent {
   private readonly docs = inject(DocumentConsoleService);
 
   readonly appId = input.required<string>();
-  /** Active database from the page (collection selection). The shell follows it; `use` overrides. */
   readonly database = input<string | null>(null);
 
-  /** Emitted after a write so the page can refresh the browse pane. */
   readonly changed = output<void>();
 
   private readonly scrollEl = viewChild<ElementRef<HTMLDivElement>>('scroll');
@@ -224,26 +215,16 @@ export class DocumentShellComponent {
     this.entries.set([]);
   }
 
-  /**
-   * Run a statement from outside (assistant "Run"). Typed commands and reads follow the
-   * Read-only toggle. A write the user already confirmed in the chat passes forceWrite: it
-   * runs once with writes allowed WITHOUT flipping the persistent toggle, so the shell never
-   * stays armed afterwards.
-   */
   runStatement(text: string, forceWrite = false): void {
     if (!this.expanded()) this.toggle();
     this.onRun(text, forceWrite);
   }
 
-  /** Place text in the input without running (assistant "Insert"). */
   insert(text: string): void {
     if (!this.expanded()) this.toggle();
     setTimeout(() => this.inputEl()?.setText(text));
   }
 
-  // Typed runs follow the Read-only toggle (backend gate authoritative: a write under read-only
-  // is rejected, never silently allowed). forceWrite is set only for an assistant write the user
-  // already confirmed in chat, and runs that one statement as a write without arming the toggle.
   onRun(text: string, forceWrite = false): void {
     const t = text.trim();
     if (!t || this.running()) return;
@@ -272,7 +253,7 @@ export class DocumentShellComponent {
       })
       .subscribe({
         next: (res) => {
-          this.push(this.toEntry(t, res));
+          this.push(toShellEntry(t, res));
           this.running.set(false);
           if (res.mutation) this.changed.emit();
         },
@@ -290,96 +271,6 @@ export class DocumentShellComponent {
 
   private push(entry: ShellEntry): void {
     this.entries.update((list) => [...list, entry].slice(-200));
-  }
-
-  // Shape the raw command reply into a mongosh-like transcript entry.
-  private toEntry(input: string, res: DocShellResult): ShellEntry {
-    const base: ShellEntry = {
-      input,
-      db: res.database,
-      status: 'ok',
-      durationMs: res.durationMs,
-      mutation: res.mutation,
-    };
-    const reply = res.reply as Record<string, unknown> | null;
-    switch (res.shape) {
-      case 'cursor': {
-        const docs = this.firstBatch(reply);
-        return { ...base, header: this.plural(docs.length, 'document'), docs };
-      }
-      case 'firstDoc': {
-        const doc = this.firstBatch(reply)[0];
-        return doc === undefined
-          ? { ...base, scalar: 'null' }
-          : { ...base, value: doc, hasValue: true };
-      }
-      case 'count':
-        return { ...base, scalar: String(this.num(reply?.['n'])) };
-      case 'distinct': {
-        const values = (reply?.['values'] as unknown[]) ?? [];
-        return { ...base, header: this.plural(values.length, 'value'), docs: values };
-      }
-      case 'databases': {
-        const dbs = (reply?.['databases'] as unknown[]) ?? [];
-        return { ...base, header: this.plural(dbs.length, 'database'), value: dbs, hasValue: true };
-      }
-      case 'collectionNames': {
-        const names = this.firstBatch(reply).map((c) =>
-          c && typeof c === 'object' ? (c as { name?: string }).name : c,
-        );
-        return {
-          ...base,
-          header: this.plural(names.length, 'collection'),
-          value: names,
-          hasValue: true,
-        };
-      }
-      case 'insert':
-        return {
-          ...base,
-          value: { acknowledged: true, insertedCount: this.num(reply?.['n']) },
-          hasValue: true,
-        };
-      case 'update':
-        return {
-          ...base,
-          value: {
-            acknowledged: true,
-            matchedCount: this.num(reply?.['n']),
-            modifiedCount: this.num(reply?.['nModified']),
-            upsertedId: (reply?.['upserted'] as { _id?: unknown }[] | undefined)?.[0]?._id,
-          },
-          hasValue: true,
-        };
-      case 'delete':
-        return {
-          ...base,
-          value: { acknowledged: true, deletedCount: this.num(reply?.['n']) },
-          hasValue: true,
-        };
-      default:
-        return { ...base, value: reply, hasValue: true };
-    }
-  }
-
-  private firstBatch(reply: Record<string, unknown> | null): unknown[] {
-    const cursor = reply?.['cursor'] as { firstBatch?: unknown[] } | undefined;
-    return cursor?.firstBatch ?? [];
-  }
-
-  // Reply numbers are canonical EJSON ({ $numberInt: "5" }, …) or plain.
-  private num(v: unknown): number {
-    if (typeof v === 'number') return v;
-    if (v && typeof v === 'object') {
-      const o = v as Record<string, string>;
-      const raw = o['$numberInt'] ?? o['$numberLong'] ?? o['$numberDouble'] ?? o['$numberDecimal'];
-      if (raw !== undefined) return Number(raw);
-    }
-    return 0;
-  }
-
-  private plural(n: number, noun: string): string {
-    return `${n} ${noun}${n === 1 ? '' : 's'}`;
   }
 
   private messageFrom(err: unknown): string {
@@ -400,7 +291,7 @@ export class DocumentShellComponent {
     try {
       localStorage.setItem(key, JSON.stringify(value));
     } catch {
-      /* ignore */
+      return;
     }
   }
 }

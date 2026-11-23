@@ -1,26 +1,11 @@
-import {
-  Component,
-  OnInit,
-  computed,
-  inject,
-  signal,
-  viewChild,
-  ChangeDetectionStrategy,
-} from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
+import { SlicePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideArrowLeft,
-  lucideDatabase,
-  lucideLoader,
-  lucidePlay,
-  lucideRotateCcw,
-  lucideTriangleAlert,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideDatabase, lucidePlay } from '@ng-icons/lucide';
 import { DbConsoleService } from '../../service/db-console.service';
 import { ApplicationService } from '../../service/application.service';
 import { accessOf } from '../../model/app-access';
@@ -30,6 +15,11 @@ import { DbEngine, engineDescriptor } from '../../model/db-engine';
 import { DbSchemaTreeComponent } from './db-schema-tree.component';
 import { SqlEditorComponent } from './sql-editor.component';
 import { SqlResultGridComponent } from './sql-result-grid.component';
+import { StoreConsoleHeader } from './store-console-header';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
 
 const DEFAULT_LIMIT = 1000;
 
@@ -37,90 +27,46 @@ type ConnState = 'connecting' | 'connected' | 'error';
 
 @Component({
   selector: 'app-db-console-page',
-  standalone: true,
   imports: [
-    CommonModule,
+    SlicePipe,
     FormsModule,
-    NgIcon,
     DbSchemaTreeComponent,
     SqlEditorComponent,
     SqlResultGridComponent,
     DbAssistantChatComponent,
+    StoreConsoleHeader,
+    FlAlert,
+    FlPanel,
+    FlButton,
+    FlIcon,
   ],
-  providers: [
-    provideIcons({
-      lucideArrowLeft,
-      lucideDatabase,
-      lucideLoader,
-      lucidePlay,
-      lucideRotateCcw,
-      lucideTriangleAlert,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  providers: [provideIcons({ lucideDatabase, lucidePlay })],
   template: `
-    <div class="p-4 md:p-6">
-      <div class="mb-4 flex items-center gap-3">
-        <button
-          type="button"
-          (click)="back()"
-          class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border text-muted-foreground hover:bg-muted"
-          title="Back"
-        >
-          <ng-icon name="lucideArrowLeft" class="h-4 w-4" />
-        </button>
-        <ng-icon name="lucideDatabase" class="h-5 w-5 text-primary" />
-        <div class="min-w-0">
-          <h1 class="text-base font-semibold text-foreground">SQL Console</h1>
-          <p class="truncate font-mono text-xs text-muted-foreground">
-            {{ applicationId() }}
-          </p>
-        </div>
-        <div class="ml-auto flex items-center gap-2 text-xs">
-          @switch (conn()) {
-            @case ('connecting') {
-              <span class="inline-flex items-center gap-1 text-muted-foreground">
-                <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
-                Connecting…
-              </span>
-            }
-            @case ('connected') {
-              <span class="inline-flex items-center gap-1 text-emerald-700"> Connected </span>
-            }
-            @case ('error') {
-              <button
-                type="button"
-                (click)="connect()"
-                class="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 hover:bg-muted"
-              >
-                <ng-icon name="lucideRotateCcw" class="h-3.5 w-3.5" /> Retry
-              </button>
-            }
-          }
-        </div>
-      </div>
+    <div class="fl-page">
+      <app-store-console-header
+        title="SQL console"
+        [appId]="applicationId()"
+        [conn]="conn()"
+        (retry)="connect()"
+      />
 
       @if (conn() === 'error' && connError(); as e) {
-        <div
-          class="mb-4 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
-        >
-          <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-4 w-4 shrink-0" />
-          <div>
-            <div class="font-medium">Couldn't reach the database.</div>
-            <div class="mt-0.5 whitespace-pre-wrap text-xs">{{ e }}</div>
-          </div>
-        </div>
+        <fl-alert tone="error" title="Could not reach the database">
+          <span class="whitespace-pre-wrap">{{ e }}</span>
+        </fl-alert>
       }
 
-      <div class="flex h-[calc(100vh-180px)] gap-4">
+      <div class="flex flex-col gap-5 xl:flex-row xl:items-start">
         @if (!showSchema()) {
           <button
+            flButton
+            [iconOnly]="true"
             type="button"
             (click)="toggleSchema()"
+            aria-label="Show schema"
             title="Show schema"
-            class="flex h-8 w-8 shrink-0 self-start items-center justify-center rounded-lg border border-border bg-card text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
-            <ng-icon name="lucideDatabase" class="h-4 w-4" />
+            <fl-icon name="lucideDatabase" />
           </button>
         } @else {
           <app-db-schema-tree
@@ -132,63 +78,75 @@ type ConnState = 'connecting' | 'connected' | 'error';
           />
         }
 
-        <section class="flex min-w-0 flex-1 flex-col gap-3">
-          <app-sql-editor [engine]="engine()" (run)="run()" />
-
-          <div class="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              (click)="run()"
-              [disabled]="running()"
-              title="Runs the selected text, or the whole editor if nothing is selected"
-              class="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-            >
-              <ng-icon name="lucidePlay" class="h-4 w-4" />
-              {{ running() ? 'Running…' : 'Run' }}
-              <span class="text-xs opacity-70">{{ runShortcut }}</span>
-            </button>
-
-            @if (reader()) {
-              <span class="text-sm text-muted-foreground" data-testid="db-console-reader"
-                >Read-only · the showcase's own data</span
-              >
-            } @else {
-              <label class="flex items-center gap-2 text-sm">
-                <input type="checkbox" [(ngModel)]="readOnly" /> Read-only
+        <section class="fl-stack min-w-0 flex-1" aria-label="Query and results">
+          <fl-panel title="Query">
+            <div panelActions class="fl-row">
+              @if (reader()) {
+                <span class="fl-toolbar__info" data-testid="db-console-reader"
+                  >Read-only, the showcase's own data</span
+                >
+              } @else {
+                <label class="fl-check">
+                  <input
+                    type="checkbox"
+                    [ngModel]="readOnly()"
+                    (ngModelChange)="readOnly.set($event)"
+                  />
+                  Read-only
+                </label>
+              }
+              <label class="fl-check">
+                Limit
+                <span class="fl-input w-24">
+                  <input
+                    type="number"
+                    class="fl-num"
+                    [ngModel]="limit()"
+                    (ngModelChange)="limit.set($event)"
+                    min="1"
+                    max="10000"
+                    aria-label="Row limit"
+                  />
+                </span>
               </label>
-            }
-
-            <label class="flex items-center gap-2 text-sm">
-              Limit
-              <input
-                type="number"
-                [(ngModel)]="limit"
-                min="1"
-                max="10000"
-                class="w-20 rounded border border-border bg-transparent px-2 py-1"
-              />
-            </label>
-
-            @if (history().length > 0) {
-              <select
-                (change)="onHistoryPick($event)"
-                class="rounded border border-border bg-transparent px-2 py-1 text-sm"
+              @if (history().length > 0) {
+                <span class="fl-select-wrap">
+                  <select
+                    class="fl-select fl-select--sm"
+                    aria-label="History"
+                    (change)="onHistoryPick($event)"
+                  >
+                    <option value="">History</option>
+                    @for (h of history(); track $index) {
+                      <option [value]="$index">{{ h | slice: 0 : 60 }}</option>
+                    }
+                  </select>
+                </span>
+              }
+              <button
+                flButton="primary"
+                size="sm"
+                type="button"
+                (click)="run()"
+                [disabled]="running()"
+                [title]="'Runs the selected text, or the whole editor (' + runShortcut + ')'"
+                [attr.aria-keyshortcuts]="isMac ? 'Meta+Enter' : 'Control+Enter'"
               >
-                <option value="">History…</option>
-                @for (h of history(); track $index) {
-                  <option [value]="$index">{{ h | slice: 0 : 60 }}</option>
-                }
-              </select>
-            }
-          </div>
+                <fl-icon name="lucidePlay" [size]="14" />
+                {{ running() ? 'Running' : 'Run' }}
+              </button>
+            </div>
+            <app-sql-editor [engine]="engine()" (run)="run()" />
+            <p class="mb-0 mt-2 text-fl-caption text-fl-ink-muted">
+              {{ runShortcut }} runs the selected text, or the whole editor when nothing is
+              selected.
+            </p>
+          </fl-panel>
 
           @if (queryError(); as e) {
-            <div
-              class="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
-            >
-              <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-4 w-4 shrink-0" />
+            <fl-alert tone="error" title="Query failed">
               <span class="whitespace-pre-wrap">{{ e }}</span>
-            </div>
+            </fl-alert>
           }
 
           <app-sql-result-grid [result]="result()" />
@@ -201,8 +159,8 @@ type ConnState = 'connecting' | 'connected' | 'error';
           [assist]="sqlAssist"
           [showInsert]="true"
           dataBlindBadge="schema only"
-          dataBlindTooltip="The assistant receives your schema and your question — never result data."
-          emptyHint="Describe what you need in plain language — e.g. “list every table and its row count”. The assistant proposes SQL; you review and run it."
+          dataBlindTooltip="The assistant receives your schema and your question, never result data."
+          emptyHint="Describe what you need in plain language, for example “list every table and its row count”. The assistant proposes SQL; you review and run it."
           codeNoun="query"
           (insert)="onChatInsert($event)"
           (run)="onChatRun($event)"
@@ -244,14 +202,13 @@ export class DbConsolePageComponent implements OnInit {
       .pipe(map((r) => ({ text: r.explanation, code: r.sql || undefined, mutation: r.mutation })));
   };
 
-  /** An application shown read-only — the showcase: the API runs every statement as a role that can only read. */
   readonly reader = computed(() => {
     const id = this.applicationId();
     return !!accessOf(this.applications.applications().find((app) => app.id === id))?.readOnly;
   });
 
-  readOnly = true;
-  limit = DEFAULT_LIMIT;
+  readonly readOnly = signal(true);
+  readonly limit = signal(DEFAULT_LIMIT);
 
   constructor() {
     this.showSchema.set(this.readStore<boolean>('flui.dbconsole.showSchema') ?? true);
@@ -292,8 +249,8 @@ export class DbConsolePageComponent implements OnInit {
     this.dbConsole
       .runQuery(id, {
         sql: sqlText,
-        readOnly: this.reader() || (forceWrite ? false : this.readOnly),
-        limit: this.limit,
+        readOnly: this.reader() || (forceWrite ? false : this.readOnly()),
+        limit: this.limit(),
       })
       .subscribe({
         next: (res) => {
@@ -335,7 +292,6 @@ export class DbConsolePageComponent implements OnInit {
 
   onChatRun(e: { code: string; mutation: boolean }): void {
     this.editor()?.setText(e.code);
-    // Confirmed-in-chat write runs once as a one-off; the read-only toggle stays as the user left it.
     this.run(e.mutation);
   }
 

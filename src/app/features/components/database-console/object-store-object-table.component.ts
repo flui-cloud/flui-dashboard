@@ -1,218 +1,169 @@
-import { ChangeDetectionStrategy, Component, inject, output } from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideCheck,
-  lucideChevronRight,
-  lucideCopy,
-  lucideDownload,
-  lucideFile,
-  lucideFolder,
-  lucideLoader,
-  lucideShare2,
-  lucideTrash2,
-  lucideTriangleAlert,
-  lucideUpload,
-} from '@ng-icons/lucide';
+import { Component, inject, output } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideFile, lucideFolder, lucideUpload } from '@ng-icons/lucide';
 import { S3ObjectEntry } from '../../model/object-store-console.models';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlCopyId } from '../../../ui/patterns/copy-id';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlActionsMenu, MenuAction } from '../../../ui/overlays/actions-menu';
 import { ObjectStoreConsoleStateService } from './object-store-console-state.service';
 import { folderName, formatDate, formatSize, objectName } from './object-store-format';
 
+const FOLDER_ACTIONS: readonly MenuAction[] = [
+  { id: 'delete', label: 'Delete folder', danger: true },
+];
+
+const OBJECT_ACTIONS: readonly MenuAction[] = [
+  { id: 'download', label: 'Download' },
+  { id: 'share', label: 'Share link' },
+  { id: 'delete', label: 'Delete', danger: true, separatorBefore: true },
+];
+
 @Component({
   selector: 'app-object-store-object-table',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgIcon],
-  providers: [
-    provideIcons({
-      lucideCheck,
-      lucideChevronRight,
-      lucideCopy,
-      lucideDownload,
-      lucideFile,
-      lucideFolder,
-      lucideLoader,
-      lucideShare2,
-      lucideTrash2,
-      lucideTriangleAlert,
-      lucideUpload,
-    }),
+  imports: [
+    FlActionsMenu,
+    FlAlert,
+    FlButton,
+    FlCopyId,
+    FlEmptyState,
+    FlIcon,
+    FlLoadingState,
+    FlPanel,
+    FlTable,
   ],
+  providers: [provideIcons({ lucideFile, lucideFolder, lucideUpload })],
+  host: { class: 'block' },
   template: `
-    <div class="mb-2 flex flex-wrap items-center gap-1 text-sm">
-      <button
-        type="button"
-        (click)="s.navigate('')"
-        class="rounded px-1.5 py-0.5 font-medium text-foreground hover:bg-muted"
-      >
-        {{ s.selectedBucket() }}
-      </button>
-      @for (seg of s.breadcrumb(); track seg.prefix) {
-        <ng-icon name="lucideChevronRight" class="h-3.5 w-3.5 text-muted-foreground" />
-        <button
-          type="button"
-          (click)="s.navigate(seg.prefix)"
-          class="rounded px-1.5 py-0.5 text-muted-foreground hover:bg-muted"
-        >
-          {{ seg.name }}
-        </button>
-      }
-    </div>
-
-    @if (s.actionError(); as e) {
-      <div
-        class="mb-2 flex items-center gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive"
-      >
-        <ng-icon name="lucideTriangleAlert" class="h-3.5 w-3.5" />
-        {{ e }}
+    <fl-panel [title]="s.selectedBucket() ?? 'Objects'" [flush]="true">
+      <div panelActions class="fl-row">
+        <ng-content select="[objectActions]" />
       </div>
-    }
 
-    <div
-      class="relative overflow-hidden rounded-md border border-border"
-      [class.ring-2]="s.dragging()"
-      [class.ring-primary]="s.dragging()"
-      (dragover)="onDragOver($event)"
-      (dragleave)="onDragLeave($event)"
-      (drop)="onDrop($event)"
-    >
-      @if (s.dragging()) {
-        <div
-          class="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-primary/10 text-sm font-medium text-primary backdrop-blur-[1px]"
-        >
-          <ng-icon name="lucideUpload" class="h-6 w-6" />
-          Drop to upload to
-          {{ s.prefix() ? s.prefix() : s.selectedBucket() }}
+      <div panelToolbar class="fl-toolbar">
+        <nav class="fl-toolbar__group text-fl-body-sm" aria-label="Folder path">
+          <button type="button" class="fl-link fl-mono" (click)="s.navigate('')">
+            {{ s.selectedBucket() }}
+          </button>
+          @for (seg of s.breadcrumb(); track seg.prefix; let last = $last) {
+            <span class="text-fl-ink-muted" aria-hidden="true">/</span>
+            <button
+              type="button"
+              class="fl-link fl-mono"
+              [attr.aria-current]="last ? 'page' : null"
+              (click)="s.navigate(seg.prefix)"
+            >
+              {{ seg.name }}
+            </button>
+          }
+        </nav>
+        <span class="fl-toolbar__info">Drop files on the list to upload them here.</span>
+      </div>
+
+      @if (s.actionError(); as e) {
+        <div class="p-4">
+          <fl-alert tone="error" title="Action failed">{{ e }}</fl-alert>
         </div>
       }
-      <table class="w-full text-sm">
-        <thead class="bg-muted/50 text-left text-xs text-muted-foreground">
-          <tr>
-            <th class="px-3 py-2 font-medium">Name</th>
-            <th class="w-28 px-3 py-2 font-medium">Size</th>
-            <th class="w-44 px-3 py-2 font-medium">Modified</th>
-            <th class="w-40 px-3 py-2"></th>
-          </tr>
-        </thead>
-        <tbody>
-          @if (s.loading()) {
-            <tr>
-              <td colspan="4" class="px-3 py-6 text-center text-muted-foreground">
-                <ng-icon name="lucideLoader" class="inline h-4 w-4 animate-spin" />
-              </td>
-            </tr>
-          } @else {
-            @for (p of s.listing()?.prefixes ?? []; track p) {
-              <tr class="border-t border-border hover:bg-muted/40">
-                <td class="px-3 py-2">
-                  <button
-                    type="button"
-                    (click)="s.navigate(p)"
-                    class="flex items-center gap-2 text-foreground"
-                  >
-                    <ng-icon name="lucideFolder" class="h-4 w-4 text-primary" />
-                    {{ folderLabel(p) }}
-                  </button>
-                </td>
-                <td class="px-3 py-2 text-muted-foreground">—</td>
-                <td class="px-3 py-2 text-muted-foreground">—</td>
-                <td class="px-3 py-2 text-right">
-                  <button
-                    type="button"
-                    (click)="deleteFolderRequest.emit(p)"
-                    class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-destructive"
-                    title="Delete folder"
-                  >
-                    <ng-icon name="lucideTrash2" class="h-4 w-4" />
-                  </button>
-                </td>
-              </tr>
-            }
-            @for (o of s.listing()?.objects ?? []; track o.key) {
-              <tr class="border-t border-border hover:bg-muted/40">
-                <td class="px-3 py-2">
-                  <span class="flex items-center gap-2 text-foreground">
-                    <ng-icon name="lucideFile" class="h-4 w-4 text-muted-foreground" />
-                    {{ objectLabel(o) }}
-                  </span>
-                </td>
-                <td class="px-3 py-2 font-mono text-xs text-muted-foreground">
-                  {{ size(o.size) }}
-                </td>
-                <td class="px-3 py-2 text-xs text-muted-foreground">
-                  {{ date(o.lastModified) }}
-                </td>
-                <td class="px-3 py-2">
-                  <div class="flex items-center justify-end gap-1">
-                    <button
-                      type="button"
-                      (click)="s.download(o)"
-                      class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-                      title="Download"
-                    >
-                      <ng-icon name="lucideDownload" class="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      (click)="shareRequest.emit(o)"
-                      class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-                      title="Share link"
-                    >
-                      <ng-icon name="lucideShare2" class="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      (click)="s.copyKey(o.key)"
-                      class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-                      title="Copy key"
-                    >
-                      <ng-icon
-                        [name]="s.copiedKey() === o.key ? 'lucideCheck' : 'lucideCopy'"
-                        class="h-4 w-4"
+
+      <div
+        class="relative"
+        [class.bg-fl-accent-row]="s.dragging()"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave($event)"
+        (drop)="onDrop($event)"
+      >
+        @if (s.dragging()) {
+          <div
+            class="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 border border-fl-accent bg-fl-accent-soft text-fl-body-sm text-fl-accent"
+          >
+            <fl-icon name="lucideUpload" [size]="20" />
+            Drop to upload to
+            <span class="fl-mono">{{ s.prefix() ? s.prefix() : s.selectedBucket() }}</span>
+          </div>
+        }
+
+        @if (s.loading()) {
+          <fl-loading-state [rows]="4" />
+        } @else if (isEmpty()) {
+          <fl-empty-state
+            [compact]="true"
+            icon="lucideFolder"
+            title="This folder is empty"
+            body="Drag files here, or use Upload."
+          />
+        } @else {
+          <div class="fl-table-wrap relative">
+            <table flTable density="dense">
+              <thead>
+                <tr>
+                  <th scope="col">Name</th>
+                  <th scope="col" class="is-num">Size</th>
+                  <th scope="col">Modified</th>
+                  <th scope="col" class="is-fit"><span class="fl-sr">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (p of s.listing()?.prefixes ?? []; track p) {
+                  <tr>
+                    <td class="fl-cell-name">
+                      <button
+                        type="button"
+                        class="fl-link inline-flex items-center gap-2"
+                        (click)="s.navigate(p)"
+                      >
+                        <fl-icon name="lucideFolder" [size]="14" />
+                        <span class="fl-mono">{{ folderLabel(p) }}/</span>
+                      </button>
+                    </td>
+                    <td class="is-num text-fl-ink-muted">—</td>
+                    <td class="text-fl-ink-muted">—</td>
+                    <td class="is-fit">
+                      <fl-actions-menu
+                        [compact]="true"
+                        [items]="folderActions"
+                        [label]="'Actions for ' + folderLabel(p)"
+                        (action)="deleteFolderRequest.emit(p)"
                       />
-                    </button>
-                    <button
-                      type="button"
-                      (click)="deleteObjectRequest.emit(o)"
-                      class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-destructive"
-                      title="Delete"
-                    >
-                      <ng-icon name="lucideTrash2" class="h-4 w-4" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            }
-            @if (
-              (s.listing()?.prefixes?.length ?? 0) === 0 &&
-              (s.listing()?.objects?.length ?? 0) === 0
-            ) {
-              <tr>
-                <td colspan="4" class="px-3 py-10 text-center text-sm text-muted-foreground">
-                  This folder is empty. Drag files here, or use Upload.
-                </td>
-              </tr>
-            }
-          }
-        </tbody>
-      </table>
-    </div>
-
-    <p class="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-      <ng-icon name="lucideUpload" class="h-3 w-3" />
-      Drag files anywhere on the list to upload to this folder.
-    </p>
-
-    @if (s.listing()?.isTruncated) {
-      <div class="mt-2 text-center">
-        <button
-          type="button"
-          (click)="s.loadMore()"
-          class="rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted"
-        >
-          Load more
-        </button>
+                    </td>
+                  </tr>
+                }
+                @for (o of s.listing()?.objects ?? []; track o.key) {
+                  <tr>
+                    <td class="fl-cell-name">
+                      <span class="inline-flex items-center gap-2">
+                        <fl-icon class="text-fl-ink-muted" name="lucideFile" [size]="14" />
+                        <fl-copy-id [value]="o.key" [display]="objectLabel(o)" label="key" />
+                      </span>
+                    </td>
+                    <td class="is-num fl-mono">{{ size(o.size) }}</td>
+                    <td class="fl-mono text-fl-ink-muted">{{ date(o.lastModified) }}</td>
+                    <td class="is-fit">
+                      <fl-actions-menu
+                        [compact]="true"
+                        [items]="objectActions"
+                        [label]="'Actions for ' + objectLabel(o)"
+                        (action)="onObjectAction($event, o)"
+                      />
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
       </div>
-    }
+
+      @if (s.listing()?.isTruncated) {
+        <div class="flex justify-center border-t border-fl-border p-3">
+          <button flButton="ghost" size="sm" type="button" (click)="s.loadMore()">Load more</button>
+        </div>
+      }
+    </fl-panel>
   `,
 })
 export class ObjectStoreObjectTableComponent {
@@ -221,6 +172,14 @@ export class ObjectStoreObjectTableComponent {
   readonly deleteObjectRequest = output<S3ObjectEntry>();
   readonly deleteFolderRequest = output<string>();
   readonly shareRequest = output<S3ObjectEntry>();
+
+  protected readonly folderActions = FOLDER_ACTIONS;
+  protected readonly objectActions = OBJECT_ACTIONS;
+
+  protected isEmpty(): boolean {
+    const listing = this.s.listing();
+    return (listing?.prefixes?.length ?? 0) === 0 && (listing?.objects?.length ?? 0) === 0;
+  }
 
   protected folderLabel(prefix: string): string {
     return folderName(prefix, this.s.prefix());
@@ -236,6 +195,12 @@ export class ObjectStoreObjectTableComponent {
 
   protected date(iso?: string): string {
     return formatDate(iso);
+  }
+
+  protected onObjectAction(action: string, o: S3ObjectEntry): void {
+    if (action === 'download') this.s.download(o);
+    else if (action === 'share') this.shareRequest.emit(o);
+    else if (action === 'delete') this.deleteObjectRequest.emit(o);
   }
 
   onDragOver(event: DragEvent): void {

@@ -1,343 +1,249 @@
-import { Component, signal, inject, output, ChangeDetectionStrategy } from '@angular/core';
-
+import { Component, signal, inject, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom, Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
+import { provideIcons } from '@ng-icons/core';
 import {
-  lucideSearch,
-  lucideLoader,
+  lucideArrowLeft,
   lucideChevronLeft,
   lucideChevronRight,
-  lucideStar,
-  lucideShield,
-  lucidePackage,
-  lucideCheck,
-  lucideAlertCircle,
-  lucideArrowLeft,
-  lucideTag,
-  lucideRefreshCw,
-  lucideTriangleAlert,
-  lucideInfo,
+  lucideSearch,
 } from '@ng-icons/lucide';
 import { ImagesService } from '../../../core/api/api/images.service';
 import { DockerHubSearchResultDto } from '../../../core/api/model/dockerHubSearchResultDto';
 import { DockerHubTagDto } from '../../../core/api/model/dockerHubTagDto';
 import { ImageVerifyResponseDto } from '../../../core/api/model/imageVerifyResponseDto';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlField } from '../../../ui/patterns/field';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlStatus } from '../../../ui/primitives/status';
+import { FlTag } from '../../../ui/primitives/tag';
+import {
+  deployHintLabel,
+  deployHintTone,
+  formatCount,
+  formatDate,
+  formatSize,
+} from './docker-image-format';
 
 type PickerPhase = 'search' | 'tags' | 'verify';
 
 @Component({
   selector: 'app-docker-image-picker',
-  standalone: true,
-  imports: [FormsModule, NgIconComponent],
-  providers: [
-    provideIcons({
-      lucideSearch,
-      lucideLoader,
-      lucideChevronLeft,
-      lucideChevronRight,
-      lucideStar,
-      lucideShield,
-      lucidePackage,
-      lucideCheck,
-      lucideAlertCircle,
-      lucideArrowLeft,
-      lucideTag,
-      lucideRefreshCw,
-      lucideTriangleAlert,
-      lucideInfo,
-    }),
+  imports: [
+    FormsModule,
+    FlAlert,
+    FlEmptyState,
+    FlLoadingState,
+    FlField,
+    FlKeyValue,
+    FlKvItem,
+    FlTable,
+    FlButton,
+    FlIcon,
+    FlStatus,
+    FlTag,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  providers: [
+    provideIcons({ lucideArrowLeft, lucideChevronLeft, lucideChevronRight, lucideSearch }),
+  ],
+  host: { class: 'fl-stack' },
   template: `
-    <div class="flex flex-col gap-4">
-      <!-- Phase: Search -->
-      @if (phase() === 'search') {
-        <div class="flex flex-col gap-3">
-          <div class="relative">
-            <ng-icon
-              name="lucideSearch"
-              class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4"
-            />
-            <input
-              type="text"
-              class="w-full pl-9 pr-4 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="Search image (e.g. nginx, postgres, node…)"
-              [(ngModel)]="searchQuery"
-              (ngModelChange)="onQueryChange($event)"
-            />
-          </div>
+    @if (phase() === 'search') {
+      <fl-field label="Image" for="docker-image-search">
+        <span class="fl-input fl-input--lg">
+          <fl-icon name="lucideSearch" />
+          <input
+            id="docker-image-search"
+            type="search"
+            placeholder="Search Docker Hub, for example nginx or postgres"
+            [ngModel]="searchQuery()"
+            (ngModelChange)="onQueryChange($event)"
+          />
+        </span>
+      </fl-field>
 
-          @if (searching()) {
-            <div class="flex items-center gap-2 text-sm text-muted-foreground py-4 justify-center">
-              <ng-icon name="lucideLoader" class="w-4 h-4 animate-spin" />
-              <span>Searching…</span>
-            </div>
-          }
-
-          @if (!searching() && searchResults().length > 0) {
-            <div
-              class="flex flex-col divide-y divide-border rounded-md border border-border overflow-hidden"
-            >
+      @if (searching()) {
+        <fl-loading-state />
+      } @else if (searchError()) {
+        <fl-alert tone="error" title="Search failed">{{ searchError() }}</fl-alert>
+      } @else if (searchResults().length > 0) {
+        <div class="fl-table-wrap rounded-fl-md border border-fl-border">
+          <table flTable density="dense">
+            <thead>
+              <tr>
+                <th scope="col">Image</th>
+                <th scope="col">Description</th>
+                <th scope="col" class="is-num">Stars</th>
+                <th scope="col" class="is-num">Pulls</th>
+              </tr>
+            </thead>
+            <tbody>
               @for (result of searchResults(); track result.name) {
-                <button
-                  type="button"
-                  class="flex items-start gap-3 px-4 py-3 hover:bg-accent text-left transition-colors"
-                  (click)="selectImage(result)"
-                >
-                  <ng-icon
-                    name="lucidePackage"
-                    class="w-5 h-5 text-muted-foreground mt-0.5 shrink-0"
-                  />
-                  <div class="flex flex-col gap-0.5 min-w-0">
-                    <div class="flex items-center gap-2">
-                      <span class="text-sm font-medium">{{ result.name }}</span>
-                      @if (result.isOfficial) {
-                        <span
-                          class="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 font-medium"
-                          >Official</span
-                        >
-                      }
-                    </div>
-                    @if (result.description) {
-                      <span class="text-xs text-muted-foreground truncate">{{
-                        result.description
-                      }}</span>
+                <tr class="cursor-pointer" (click)="selectImage(result)">
+                  <td>
+                    <button
+                      type="button"
+                      class="fl-link fl-mono"
+                      (click)="$event.stopPropagation(); selectImage(result)"
+                    >
+                      {{ result.name }}
+                    </button>
+                    @if (result.isOfficial) {
+                      <fl-tag class="ml-2">Official</fl-tag>
                     }
-                    <div class="flex items-center gap-3 mt-1">
-                      <span class="flex items-center gap-1 text-xs text-muted-foreground">
-                        <ng-icon name="lucideStar" class="w-3 h-3" />
-                        {{ formatCount(result.starCount) }}
-                      </span>
-                      <span class="text-xs text-muted-foreground">
-                        {{ formatCount(result.pullCount) }} pull
-                      </span>
-                    </div>
-                  </div>
-                </button>
+                  </td>
+                  <td class="is-wrap text-fl-ink-muted">{{ result.description }}</td>
+                  <td class="is-num">{{ fmtCount(result.starCount) }}</td>
+                  <td class="is-num">{{ fmtCount(result.pullCount) }}</td>
+                </tr>
               }
-            </div>
-          }
-
-          @if (
-            !searching() && searchQuery.length > 1 && searchResults().length === 0 && !searchError()
-          ) {
-            <p class="text-sm text-muted-foreground text-center py-4">
-              No results for "{{ searchQuery }}"
-            </p>
-          }
-
-          @if (searchError()) {
-            <div class="flex items-center gap-2 text-sm text-destructive py-2">
-              <ng-icon name="lucideAlertCircle" class="w-4 h-4 shrink-0" />
-              <span>{{ searchError() }}</span>
-            </div>
-          }
+            </tbody>
+          </table>
         </div>
+      } @else if (searchQuery().length > 1) {
+        <fl-empty-state [compact]="true" [title]="'No images match ' + searchQuery()" />
       }
+    }
 
-      <!-- Phase: Tags -->
-      @if (phase() === 'tags') {
-        <div class="flex flex-col gap-3">
-          <div class="flex items-center gap-2">
-            <button
-              type="button"
-              (click)="backToSearch()"
-              class="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ng-icon name="lucideArrowLeft" class="w-4 h-4" />
-              Back
-            </button>
-            <span class="text-sm font-medium text-foreground">{{ selectedImageName() }}</span>
-          </div>
+    @if (phase() === 'tags') {
+      <div class="fl-row">
+        <button flButton="ghost" size="sm" type="button" (click)="backToSearch()">
+          <fl-icon name="lucideArrowLeft" />
+          Back
+        </button>
+        <span class="fl-mono font-medium">{{ selectedImageName() }}</span>
+      </div>
 
-          @if (loadingTags()) {
-            <div class="flex items-center gap-2 text-sm text-muted-foreground py-4 justify-center">
-              <ng-icon name="lucideLoader" class="w-4 h-4 animate-spin" />
-              <span>Loading tags…</span>
-            </div>
-          }
-
-          @if (!loadingTags() && tags().length > 0) {
-            <div
-              class="flex flex-col divide-y divide-border rounded-md border border-border overflow-hidden"
-            >
+      @if (loadingTags()) {
+        <fl-loading-state />
+      } @else if (tagsError()) {
+        <fl-alert tone="error" title="Could not load tags">{{ tagsError() }}</fl-alert>
+      } @else if (tags().length > 0) {
+        <div class="fl-table-wrap rounded-fl-md border border-fl-border">
+          <table flTable density="dense">
+            <thead>
+              <tr>
+                <th scope="col">Tag</th>
+                <th scope="col">Architecture</th>
+                <th scope="col">Deployability</th>
+                <th scope="col" class="is-num">Size</th>
+                <th scope="col">Updated</th>
+              </tr>
+            </thead>
+            <tbody>
               @for (tag of tags(); track tag.name) {
-                <button
-                  type="button"
-                  class="flex items-center justify-between px-4 py-2.5 hover:bg-accent text-left transition-colors"
-                  (click)="selectTag(tag)"
-                >
-                  <div class="flex flex-col gap-1 min-w-0">
-                    <div class="flex items-center gap-2 flex-wrap">
-                      <ng-icon name="lucideTag" class="w-4 h-4 text-muted-foreground shrink-0" />
-                      <span class="text-sm font-mono font-medium">{{ tag.name }}</span>
-                      <span class="text-xs text-muted-foreground">{{ tag.architecture }}</span>
-                      @if (tag.deployHint !== 'deployable') {
-                        <span
-                          class="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded font-medium"
-                          [class]="getDeployHintBadgeClass(tag.deployHint)"
-                          [title]="tag.deployHintReason ?? ''"
-                        >
-                          <ng-icon
-                            [name]="
-                              tag.deployHint === 'needs-sidecar'
-                                ? 'lucideTriangleAlert'
-                                : 'lucideInfo'
-                            "
-                            class="w-3 h-3"
-                          />
-                          {{ getDeployHintLabel(tag.deployHint) }}
-                        </span>
-                      }
-                    </div>
+                <tr class="cursor-pointer" (click)="selectTag(tag)">
+                  <td>
+                    <button
+                      type="button"
+                      class="fl-link fl-mono"
+                      (click)="$event.stopPropagation(); selectTag(tag)"
+                    >
+                      {{ tag.name }}
+                    </button>
+                  </td>
+                  <td class="fl-mono text-fl-ink-muted">{{ tag.architecture }}</td>
+                  <td class="is-wrap">
+                    @if (tag.deployHint !== 'deployable') {
+                      <fl-status
+                        [tone]="hintTone(tag.deployHint)"
+                        [label]="hintLabel(tag.deployHint)"
+                      />
+                    }
                     @if (tag.deployHintReason) {
-                      <span class="text-xs text-muted-foreground pl-6 truncate max-w-xs">{{
+                      <span class="block text-fl-caption text-fl-ink-muted">{{
                         tag.deployHintReason
                       }}</span>
                     }
-                  </div>
-                  <div class="flex flex-col items-end gap-0.5 shrink-0 ml-2">
-                    <span class="text-xs text-muted-foreground">{{ formatSize(tag.size) }}</span>
-                    <span class="text-xs text-muted-foreground">{{
-                      formatDate(tag.lastUpdated)
-                    }}</span>
-                  </div>
-                </button>
+                  </td>
+                  <td class="is-num">{{ fmtSize(tag.size) }}</td>
+                  <td class="text-fl-ink-muted">{{ fmtDate(tag.lastUpdated) }}</td>
+                </tr>
               }
-            </div>
-
-            <!-- Pagination -->
-            @if (tagsCount() > tagsPerPage) {
-              <div class="flex items-center justify-between text-sm text-muted-foreground">
-                <span>{{ tags().length }} of {{ tagsCount() }} tags</span>
-                <div class="flex items-center gap-2">
-                  <button
-                    type="button"
-                    [disabled]="currentTagPage() <= 1"
-                    (click)="loadTagsPage(currentTagPage() - 1)"
-                    class="p-1 rounded hover:bg-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                  >
-                    <ng-icon name="lucideChevronLeft" class="w-4 h-4" />
-                  </button>
-                  <span>Page {{ currentTagPage() }}</span>
-                  <button
-                    type="button"
-                    [disabled]="!hasNextTagPage()"
-                    (click)="loadTagsPage(currentTagPage() + 1)"
-                    class="p-1 rounded hover:bg-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                  >
-                    <ng-icon name="lucideChevronRight" class="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            }
-          }
-
-          @if (tagsError()) {
-            <div class="flex items-center gap-2 text-sm text-destructive py-2">
-              <ng-icon name="lucideAlertCircle" class="w-4 h-4 shrink-0" />
-              <span>{{ tagsError() }}</span>
-            </div>
-          }
+            </tbody>
+          </table>
         </div>
-      }
 
-      <!-- Phase: Verify -->
-      @if (phase() === 'verify') {
-        <div class="flex flex-col gap-3">
-          <div class="flex items-center gap-2">
-            <button
-              type="button"
-              (click)="backToTags()"
-              class="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ng-icon name="lucideArrowLeft" class="w-4 h-4" />
-              Back
+        @if (tagsCount() > tagsPerPage) {
+          <div class="flex items-center justify-between">
+            <span class="fl-toolbar__info">{{ tags().length }} of {{ tagsCount() }} tags</span>
+            <div class="fl-row">
+              <button
+                flButton
+                size="sm"
+                type="button"
+                [iconOnly]="true"
+                aria-label="Previous page"
+                [disabled]="currentTagPage() <= 1"
+                (click)="loadTagsPage(currentTagPage() - 1)"
+              >
+                <fl-icon name="lucideChevronLeft" />
+              </button>
+              <span class="fl-toolbar__info">Page {{ currentTagPage() }}</span>
+              <button
+                flButton
+                size="sm"
+                type="button"
+                [iconOnly]="true"
+                aria-label="Next page"
+                [disabled]="!hasNextTagPage()"
+                (click)="loadTagsPage(currentTagPage() + 1)"
+              >
+                <fl-icon name="lucideChevronRight" />
+              </button>
+            </div>
+          </div>
+        }
+      }
+    }
+
+    @if (phase() === 'verify') {
+      <div class="fl-row">
+        <button flButton="ghost" size="sm" type="button" (click)="backToTags()">
+          <fl-icon name="lucideArrowLeft" />
+          Back
+        </button>
+      </div>
+
+      @if (verifying()) {
+        <fl-loading-state />
+      } @else if (verifyError()) {
+        <fl-alert tone="error" title="Verification failed">{{ verifyError() }}</fl-alert>
+      } @else if (verifyResult(); as result) {
+        @if (result.exists) {
+          <fl-status tone="success" label="Image verified" />
+          <fl-key-value>
+            <fl-kv-item key="Reference" [mono]="true">{{ pendingImageRef() }}</fl-kv-item>
+            @if (result.digest) {
+              <fl-kv-item key="Digest" [mono]="true">{{ result.digest }}</fl-kv-item>
+            }
+            @if (result.size) {
+              <fl-kv-item key="Size">{{ fmtSize(result.size) }}</fl-kv-item>
+            }
+            @if (result.lastUpdated) {
+              <fl-kv-item key="Last updated">{{ fmtDate(result.lastUpdated) }}</fl-kv-item>
+            }
+          </fl-key-value>
+          <div class="fl-row">
+            <button flButton="primary" type="button" (click)="confirmSelection()">
+              Use this image
             </button>
           </div>
-
-          @if (verifying()) {
-            <div class="flex items-center gap-2 text-sm text-muted-foreground py-4 justify-center">
-              <ng-icon name="lucideLoader" class="w-4 h-4 animate-spin" />
-              <span>Verifying image on DockerHub…</span>
-            </div>
-          }
-
-          @if (!verifying() && verifyResult()) {
-            @if (verifyResult()!.exists) {
-              <div class="flex flex-col gap-3 p-4 rounded-md border border-green-200 bg-green-50">
-                <div class="flex items-center gap-2 text-green-700">
-                  <ng-icon name="lucideCheck" class="w-5 h-5" />
-                  <span class="font-medium text-sm">Image verified</span>
-                </div>
-                <div class="flex flex-col gap-1 text-sm">
-                  <div class="flex items-center justify-between">
-                    <span class="text-muted-foreground">Reference</span>
-                    <span class="font-mono font-medium">{{ pendingImageRef() }}</span>
-                  </div>
-                  @if (verifyResult()!.digest) {
-                    <div class="flex items-center justify-between">
-                      <span class="text-muted-foreground">Digest</span>
-                      <span class="font-mono text-xs truncate max-w-48">{{
-                        verifyResult()!.digest
-                      }}</span>
-                    </div>
-                  }
-                  @if (verifyResult()!.size) {
-                    <div class="flex items-center justify-between">
-                      <span class="text-muted-foreground">Size</span>
-                      <span>{{ formatSize(verifyResult()!.size!) }}</span>
-                    </div>
-                  }
-                  @if (verifyResult()!.lastUpdated) {
-                    <div class="flex items-center justify-between">
-                      <span class="text-muted-foreground">Last updated</span>
-                      <span>{{ formatDate(verifyResult()!.lastUpdated!) }}</span>
-                    </div>
-                  }
-                </div>
-                <button
-                  type="button"
-                  class="w-full mt-1 py-2 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
-                  (click)="confirmSelection()"
-                >
-                  Use this image
-                </button>
-              </div>
-            } @else {
-              <div
-                class="flex flex-col gap-2 p-4 rounded-md border border-destructive/30 bg-destructive/5"
-              >
-                <div class="flex items-center gap-2 text-destructive">
-                  <ng-icon name="lucideAlertCircle" class="w-5 h-5" />
-                  <span class="font-medium text-sm">Image not found</span>
-                </div>
-                <p class="text-sm text-muted-foreground">
-                  The image <span class="font-mono">{{ pendingImageRef() }}</span> does not exist on
-                  DockerHub.
-                </p>
-                <button
-                  type="button"
-                  class="text-sm text-muted-foreground hover:text-foreground underline"
-                  (click)="backToTags()"
-                >
-                  Choose a different tag
-                </button>
-              </div>
-            }
-          }
-
-          @if (verifyError()) {
-            <div class="flex items-center gap-2 text-sm text-destructive py-2">
-              <ng-icon name="lucideAlertCircle" class="w-4 h-4 shrink-0" />
-              <span>{{ verifyError() }}</span>
-            </div>
-          }
-        </div>
+        } @else {
+          <fl-alert tone="error" title="Image not found">
+            <span class="fl-mono">{{ pendingImageRef() }}</span> does not exist on Docker Hub.
+            <button alertActions flButton size="sm" type="button" (click)="backToTags()">
+              Choose another tag
+            </button>
+          </fl-alert>
+        }
       }
-    </div>
+    }
   `,
 })
 export class DockerImagePickerComponent {
@@ -347,7 +253,7 @@ export class DockerImagePickerComponent {
 
   readonly tagsPerPage = 25;
 
-  searchQuery = '';
+  readonly searchQuery = signal('');
   phase = signal<PickerPhase>('search');
   searching = signal(false);
   searchResults = signal<DockerHubSearchResultDto[]>([]);
@@ -376,6 +282,7 @@ export class DockerImagePickerComponent {
   }
 
   onQueryChange(q: string): void {
+    this.searchQuery.set(q);
     this.searchSubject.next(q);
   }
 
@@ -386,7 +293,7 @@ export class DockerImagePickerComponent {
       const res = await firstValueFrom(this.imagesApi.imagesControllerSearch(q, 15));
       this.searchResults.set(res.results);
     } catch {
-      this.searchError.set('Search failed. Please try again.');
+      this.searchError.set('Docker Hub did not answer. Try again in a moment.');
     } finally {
       this.searching.set(false);
     }
@@ -413,7 +320,7 @@ export class DockerImagePickerComponent {
       this.currentTagPage.set(page);
       this.hasNextTagPage.set(!!res.nextPage);
     } catch {
-      this.tagsError.set('Failed to load tags. Please try again.');
+      this.tagsError.set('Docker Hub did not answer. Try again in a moment.');
     } finally {
       this.loadingTags.set(false);
     }
@@ -435,7 +342,7 @@ export class DockerImagePickerComponent {
       const res = await firstValueFrom(this.imagesApi.imagesControllerVerify(imageRef));
       this.verifyResult.set(res);
     } catch {
-      this.verifyError.set('Verification failed. Please try again.');
+      this.verifyError.set('Docker Hub did not answer. Try again in a moment.');
     } finally {
       this.verifying.set(false);
     }
@@ -454,46 +361,9 @@ export class DockerImagePickerComponent {
     this.verifyResult.set(null);
   }
 
-  formatCount(n: number): string {
-    if (n >= 1_000_000_000) return (n / 1_000_000_000).toFixed(1) + 'B';
-    if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
-    if (n >= 1_000) return (n / 1_000).toFixed(1) + 'K';
-    return n.toString();
-  }
-
-  formatSize(bytes: number): string {
-    if (bytes >= 1_073_741_824) return (bytes / 1_073_741_824).toFixed(1) + ' GB';
-    if (bytes >= 1_048_576) return (bytes / 1_048_576).toFixed(1) + ' MB';
-    return (bytes / 1_024).toFixed(1) + ' KB';
-  }
-
-  formatDate(iso: string): string {
-    return new Date(iso).toLocaleDateString('en-US', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    });
-  }
-
-  getDeployHintLabel(hint: DockerHubTagDto['deployHint']): string {
-    switch (hint) {
-      case 'needs-sidecar':
-        return 'Requires reverse proxy';
-      case 'cli-tool':
-        return 'CLI tool only';
-      case 'build-image':
-        return 'Build image only';
-      case 'base-os':
-        return 'Base image';
-      default:
-        return hint;
-    }
-  }
-
-  getDeployHintBadgeClass(hint: DockerHubTagDto['deployHint']): string {
-    if (hint === 'needs-sidecar') {
-      return 'bg-amber-100 text-amber-700';
-    }
-    return 'bg-red-100 text-red-700';
-  }
+  protected readonly fmtCount = formatCount;
+  protected readonly fmtSize = formatSize;
+  protected readonly fmtDate = formatDate;
+  protected readonly hintLabel = deployHintLabel;
+  protected readonly hintTone = deployHintTone;
 }

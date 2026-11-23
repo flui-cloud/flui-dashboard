@@ -135,7 +135,7 @@ import { AppReleaseDeleteDialog } from './app-release-delete-dialog';
         } @else if (versioning.versions().length === 0 && !versioning.error()) {
           <fl-empty-state title="No versions yet" />
         } @else if (shownVersions().length > 0) {
-          <div class="fl-table-wrap">
+          <div class="fl-table-wrap relative">
             <table flTable density="dense">
               <thead>
                 <tr>

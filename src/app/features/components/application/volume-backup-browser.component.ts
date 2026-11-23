@@ -203,7 +203,13 @@ export interface VolumeRestoreStarted {
             }
             Restore selected ({{ selection().length }})
           </button>
-          <button flButton="ghost" size="sm" type="button" (click)="showHelp.set(!showHelp())">
+          <button
+            flButton="ghost"
+            size="sm"
+            type="button"
+            [attr.aria-expanded]="showHelp()"
+            (click)="showHelp.set(!showHelp())"
+          >
             {{ showHelp() ? 'Hide details' : 'Details' }}
           </button>
         </div>

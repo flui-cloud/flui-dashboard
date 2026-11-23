@@ -12,11 +12,12 @@ import { FlAlert } from '../../../ui/patterns/alert';
 import { FlButton } from '../../../ui/primitives/button';
 import { FlIcon } from '../../../ui/primitives/icon';
 import { FlSpinner } from '../../../ui/primitives/spinner';
+import { FlDialogFocus } from '../../../ui/overlays/dialog-focus';
 
 @Component({
   selector: 'app-delete-dialog',
   host: { class: 'contents' },
-  imports: [FormsModule, FlPanel, FlAlert, FlButton, FlIcon, FlSpinner],
+  imports: [FlDialogFocus, FormsModule, FlPanel, FlAlert, FlButton, FlIcon, FlSpinner],
   providers: [provideIcons({ lucideX })],
   template: `
     @if (canDelete() && compact()) {
@@ -63,6 +64,8 @@ import { FlSpinner } from '../../../ui/primitives/spinner';
           role="alertdialog"
           aria-modal="true"
           aria-labelledby="app-delete-title"
+          flDialogFocus
+          (dismissed)="isDeleting() || closeDelete()"
           (click)="$event.stopPropagation()"
         >
           <header class="fl-dialog__header">

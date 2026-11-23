@@ -1,14 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
+import { Component, computed, input, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideChevronRight,
-  lucideCopy,
-  lucideDatabase,
-  lucideServer,
-  lucideTerminal,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideDatabase, lucideServer, lucideTerminal } from '@ng-icons/lucide';
 import { ApplicationResponseDto } from '../../../core/api/model/models';
 import { DbConnectionInfo } from '../../model/db-console.models';
 import {
@@ -17,220 +11,135 @@ import {
   databaseEngineOf,
   engineDescriptor,
 } from '../../model/db-engine';
+import { FlCopyId } from '../../../ui/patterns/copy-id';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
 
 @Component({
   selector: 'app-db-connect-card',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, NgIcon, NgTemplateOutlet],
-  providers: [
-    provideIcons({
-      lucideChevronRight,
-      lucideCopy,
-      lucideDatabase,
-      lucideServer,
-      lucideTerminal,
-    }),
-  ],
+  imports: [RouterLink, NgTemplateOutlet, FlCopyId, FlKeyValue, FlKvItem, FlButton, FlIcon],
+  providers: [provideIcons({ lucideDatabase, lucideServer, lucideTerminal })],
+  host: { class: 'fl-stack' },
   template: `
     @let a = app();
-    @if (variant() === 'block') {
-      <div class="space-y-3">
-        <div class="flex flex-wrap items-center gap-2">
-          <a
-            [routerLink]="[consoleRoute(), a.id]"
-            class="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-          >
-            <ng-icon name="lucideDatabase" class="h-4 w-4" />
-            {{ openLabel() }}
-          </a>
-          <button
-            type="button"
-            (click)="toggle('external')"
-            [attr.aria-expanded]="showExternal()"
-            class="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted"
-          >
-            <ng-icon name="lucideTerminal" class="h-4 w-4" />
-            External client
-          </button>
-          <button
-            type="button"
-            (click)="toggle('internal')"
-            [attr.aria-expanded]="showInternal()"
-            class="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted"
-          >
-            <ng-icon name="lucideServer" class="h-4 w-4" />
-            Use from another app
-          </button>
-        </div>
-        @if (showExternal()) {
-          <div class="rounded-md border border-border bg-background">
-            <p class="px-3 pt-2.5 text-xs font-medium text-foreground">
-              Connect with an external client ({{ engineUi().externalClients }})
-            </p>
-            <ng-container *ngTemplateOutlet="externalPanel" />
-          </div>
-        }
-        @if (showInternal()) {
-          <div class="rounded-md border border-border bg-background">
-            <ng-container *ngTemplateOutlet="internalPanel" />
-          </div>
-        }
+    @if (variant() === 'card') {
+      <div class="flex flex-col gap-1">
+        <p class="text-fl-body-sm font-semibold text-fl-ink">Connect to this database</p>
+        <p class="text-fl-body-sm text-fl-ink-muted">
+          This database is not exposed outside the cluster. Use the built-in console, or open a
+          local tunnel to connect a native client.
+        </p>
       </div>
-    } @else {
-      <div class="mt-6 space-y-4 rounded-lg border border-border bg-muted/30 p-4">
-        <div class="flex items-start gap-3">
-          <ng-icon name="lucideDatabase" class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-          <div class="min-w-0 flex-1">
-            <p class="text-sm font-semibold text-foreground">Connect to this database</p>
-            <p class="mt-0.5 text-xs text-muted-foreground">
-              This database isn't exposed outside the cluster. Use the built-in console, or open a
-              local tunnel to connect a native client.
-            </p>
-          </div>
-        </div>
-
-        <a
-          [routerLink]="[consoleRoute(), a.id]"
-          class="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-        >
-          <ng-icon name="lucideDatabase" class="h-4 w-4" />
-          {{ openLabel() }}
-        </a>
-
-        <div class="rounded-md border border-border bg-background">
-          <button
-            type="button"
-            (click)="showExternal.set(!showExternal())"
-            class="flex w-full items-center gap-1.5 px-3 py-2 text-xs font-medium text-foreground"
-          >
-            <ng-icon name="lucideTerminal" class="h-3.5 w-3.5" />
-            Connect with an external client ({{ engineUi().externalClients }})
-            <ng-icon
-              name="lucideChevronRight"
-              class="ml-auto h-3.5 w-3.5 text-muted-foreground transition-transform"
-              [class.rotate-90]="showExternal()"
-            />
-          </button>
-          @if (showExternal()) {
-            <ng-container *ngTemplateOutlet="externalPanel" />
-          }
-        </div>
-
-        <div class="rounded-md border border-border bg-background">
-          <button
-            type="button"
-            (click)="showInternal.set(!showInternal())"
-            class="flex w-full items-center gap-1.5 px-3 py-2 text-xs font-medium text-foreground"
-          >
-            <ng-icon name="lucideServer" class="h-3.5 w-3.5" />
-            Use from another app on Flui
-            <ng-icon
-              name="lucideChevronRight"
-              class="ml-auto h-3.5 w-3.5 text-muted-foreground transition-transform"
-              [class.rotate-90]="showInternal()"
-            />
-          </button>
-          @if (showInternal()) {
-            <ng-container *ngTemplateOutlet="internalPanel" />
-          }
-        </div>
-      </div>
+    }
+    <div class="fl-row">
+      <a flButton="primary" [routerLink]="[consoleRoute(), a.id]">
+        <fl-icon name="lucideDatabase" />
+        {{ openLabel() }}
+      </a>
+      <button
+        flButton
+        type="button"
+        [attr.aria-expanded]="showExternal()"
+        (click)="toggle('external')"
+      >
+        <fl-icon name="lucideTerminal" />
+        External client
+      </button>
+      <button
+        flButton
+        type="button"
+        [attr.aria-expanded]="showInternal()"
+        (click)="toggle('internal')"
+      >
+        <fl-icon name="lucideServer" />
+        Use from another app
+      </button>
+    </div>
+    @if (showExternal()) {
+      <ng-container *ngTemplateOutlet="externalPanel" />
+    }
+    @if (showInternal()) {
+      <ng-container *ngTemplateOutlet="internalPanel" />
     }
 
     <ng-template #externalPanel>
-      <div class="space-y-2 border-t border-border px-3 py-2.5">
-        <p class="text-xs text-muted-foreground">
-          1 — open a local tunnel (requires the flui CLI):
+      <section class="flex flex-col gap-3 border-t border-fl-border pt-4">
+        <p class="text-fl-body-sm font-semibold text-fl-ink">
+          Connect with an external client ({{ engineUi().externalClients }})
         </p>
-        <div class="flex items-center gap-2">
-          <code class="min-w-0 flex-1 truncate rounded bg-muted px-2 py-1 font-mono text-xs">{{
-            tunnelCommand(a.slug)
-          }}</code>
-          <button
-            type="button"
-            (click)="copyText(tunnelCommand(a.slug))"
-            class="shrink-0 rounded border border-border p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-            title="Copy"
-          >
-            <ng-icon name="lucideCopy" class="h-3.5 w-3.5" />
-          </button>
+        <div class="flex flex-col gap-1">
+          <p class="text-fl-body-sm text-fl-ink-muted">
+            1. Open a local tunnel (requires the flui CLI)
+          </p>
+          <fl-copy-id [value]="tunnelCommand(a.slug)" label="tunnel command" />
         </div>
-        <p class="text-xs text-muted-foreground">2 — connect your client to:</p>
+        <p class="text-fl-body-sm text-fl-ink-muted">2. Connect your client to</p>
         @let ci = connInfo();
-        <div class="grid grid-cols-[5rem_1fr] gap-x-3 gap-y-1 font-mono text-xs">
-          <span class="text-muted-foreground">Host</span><span>127.0.0.1</span>
-          <span class="text-muted-foreground">Port</span><span>{{ localPort() }}</span>
-          <span class="text-muted-foreground">Database</span><span>{{ ci?.database ?? '…' }}</span>
-          <span class="text-muted-foreground">User</span><span>{{ ci?.user ?? '…' }}</span>
-          <span class="text-muted-foreground">Password</span>
-          <span class="text-muted-foreground">printed by the command above</span>
-        </div>
-        <p class="text-[11px] text-muted-foreground">
-          The command prints the password locally (read from the cluster Secret over SSH). The
-          dashboard never displays or exposes it.
+        <fl-key-value>
+          <fl-kv-item key="Host"><fl-copy-id value="127.0.0.1" label="host" /></fl-kv-item>
+          <fl-kv-item key="Port" [mono]="true">{{ localPort() }}</fl-kv-item>
+          <fl-kv-item key="Database" [mono]="true">{{ ci?.database ?? '…' }}</fl-kv-item>
+          <fl-kv-item key="User">
+            @if (ci?.user; as user) {
+              <fl-copy-id [value]="user" label="user" />
+            } @else {
+              <span class="fl-mono">…</span>
+            }
+          </fl-kv-item>
+          <fl-kv-item key="Password">
+            <span class="text-fl-ink-muted">Printed by the tunnel command</span>
+          </fl-kv-item>
+        </fl-key-value>
+        <p class="text-fl-caption text-fl-ink-muted">
+          The command reads the password from the cluster Secret over SSH and prints it locally. The
+          dashboard never displays it.
         </p>
-      </div>
+      </section>
     </ng-template>
 
     <ng-template #internalPanel>
-      <div class="space-y-2 border-t border-border px-3 py-2.5">
-        <p class="text-xs text-muted-foreground">
-          An app running on Flui (same cluster) connects directly to the internal service — no
-          tunnel. Wire these into its environment.
+      <section class="flex flex-col gap-3 border-t border-fl-border pt-4">
+        <p class="text-fl-body-sm font-semibold text-fl-ink">Use from another app on Flui</p>
+        <p class="text-fl-body-sm text-fl-ink-muted">
+          An app on the same cluster connects to the internal service directly, without a tunnel.
+          Add these values to its environment.
         </p>
         @let ci2 = connInfo();
-        <div class="grid grid-cols-[5rem_1fr] gap-x-3 gap-y-1 font-mono text-xs">
-          <span class="text-muted-foreground">Host</span>
-          <span class="flex min-w-0 items-center gap-2">
-            <span class="min-w-0 truncate">{{ internalHost() }}</span>
-            <button
-              type="button"
-              (click)="copyText(internalHost())"
-              class="shrink-0 rounded border border-border p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-              title="Copy"
-            >
-              <ng-icon name="lucideCopy" class="h-3 w-3" />
-            </button>
-          </span>
-          <span class="text-muted-foreground">Port</span
-          ><span>{{ ci2?.remotePort ?? engineUi().defaultPort }}</span>
-          <span class="text-muted-foreground">Database</span><span>{{ ci2?.database ?? '…' }}</span>
-          <span class="text-muted-foreground">User</span><span>{{ ci2?.user ?? '…' }}</span>
-          <span class="text-muted-foreground">Password</span>
-          <span class="flex min-w-0 items-center gap-2">
-            <code class="min-w-0 truncate rounded bg-muted px-1.5 py-0.5">{{
-              credentialsCommand(a.slug)
-            }}</code>
-            <button
-              type="button"
-              (click)="copyText(credentialsCommand(a.slug))"
-              class="shrink-0 rounded border border-border p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-              title="Copy"
-            >
-              <ng-icon name="lucideCopy" class="h-3 w-3" />
-            </button>
-          </span>
-        </div>
-        <p class="text-xs text-muted-foreground">Connection string (DATABASE_URL):</p>
-        <div class="flex items-center gap-2">
-          <code class="min-w-0 flex-1 truncate rounded bg-muted px-2 py-1 font-mono text-xs">{{
-            internalUrl()
-          }}</code>
-          <button
-            type="button"
-            (click)="copyText(internalUrl())"
-            class="shrink-0 rounded border border-border p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-            title="Copy"
-          >
-            <ng-icon name="lucideCopy" class="h-3.5 w-3.5" />
-          </button>
-        </div>
-        <p class="text-[11px] text-muted-foreground">
-          Same-cluster apps reach it at this internal address. Get the password with the command
-          above (CLI only — the dashboard never shows it).
+        <fl-key-value>
+          <fl-kv-item key="Host">
+            @if (internalHost()) {
+              <fl-copy-id [value]="internalHost()" label="host" />
+            } @else {
+              <span class="fl-mono">…</span>
+            }
+          </fl-kv-item>
+          <fl-kv-item key="Port" [mono]="true">{{
+            ci2?.remotePort ?? engineUi().defaultPort
+          }}</fl-kv-item>
+          <fl-kv-item key="Database" [mono]="true">{{ ci2?.database ?? '…' }}</fl-kv-item>
+          <fl-kv-item key="User">
+            @if (ci2?.user; as user) {
+              <fl-copy-id [value]="user" label="user" />
+            } @else {
+              <span class="fl-mono">…</span>
+            }
+          </fl-kv-item>
+          <fl-kv-item key="Password">
+            <fl-copy-id [value]="credentialsCommand(a.slug)" label="credentials command" />
+          </fl-kv-item>
+          <fl-kv-item key="Connection string (DATABASE_URL)">
+            @if (internalUrl()) {
+              <fl-copy-id [value]="internalUrl()" label="connection string" />
+            } @else {
+              <span class="fl-mono">…</span>
+            }
+          </fl-kv-item>
+        </fl-key-value>
+        <p class="text-fl-caption text-fl-ink-muted">
+          Get the password with the credentials command. Only the CLI shows it, never the dashboard.
         </p>
-      </div>
+      </section>
     </ng-template>
   `,
 })
@@ -303,9 +212,5 @@ export class AppDbConnectCardComponent {
     const open = which === 'external' ? !this.showExternal() : !this.showInternal();
     this.showExternal.set(which === 'external' && open);
     this.showInternal.set(which === 'internal' && open);
-  }
-
-  protected copyText(text: string): void {
-    void navigator.clipboard?.writeText(text);
   }
 }

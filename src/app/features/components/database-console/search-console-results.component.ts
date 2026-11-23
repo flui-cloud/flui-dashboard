@@ -1,194 +1,178 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideCode,
-  lucideLayers,
-  lucideLoader,
-  lucidePlay,
-  lucideSearch,
-  lucideTriangleAlert,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucidePlay, lucideSearch } from '@ng-icons/lucide';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlField } from '../../../ui/patterns/field';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
 import { SearchConsoleStateService } from './search-console-state.service';
 import { pretty } from './search-format';
 
 @Component({
   selector: 'app-search-console-results',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgIcon, FormsModule, DecimalPipe],
-  providers: [
-    provideIcons({
-      lucideCode,
-      lucideLayers,
-      lucideLoader,
-      lucidePlay,
-      lucideSearch,
-      lucideTriangleAlert,
-    }),
+  imports: [
+    FormsModule,
+    DecimalPipe,
+    FlAlert,
+    FlButton,
+    FlEmptyState,
+    FlField,
+    FlIcon,
+    FlLoadingState,
+    FlPanel,
   ],
+  providers: [provideIcons({ lucidePlay, lucideSearch })],
+  host: { class: 'flex min-w-0 flex-1 flex-col gap-5 xl:flex-row xl:items-start' },
   template: `
-    <!-- Index list -->
-    <aside class="flex w-56 shrink-0 flex-col overflow-hidden rounded-md border border-border">
-      <div
-        class="flex items-center gap-2 border-b border-border px-3 py-2 text-xs font-medium text-muted-foreground"
-      >
-        <ng-icon name="lucideLayers" class="h-3.5 w-3.5" /> Indices
-      </div>
-      <ul class="flex-1 overflow-auto py-1">
-        @for (idx of state.indices(); track idx.name) {
-          <li>
-            <button
-              type="button"
-              (click)="state.selectIndex(idx.name)"
-              class="flex w-full items-center justify-between gap-2 px-3 py-1.5 text-left text-sm hover:bg-muted"
-              [class.bg-muted]="state.selectedIndex() === idx.name"
-            >
-              <span class="truncate text-foreground">{{ idx.name }}</span>
-              <span class="shrink-0 font-mono text-xs text-muted-foreground">
-                {{ idx.docsCount ?? 0 }}
-              </span>
-            </button>
-          </li>
-        }
-        @if (state.indices().length === 0) {
-          <li class="px-3 py-4 text-center text-xs text-muted-foreground">No indices yet.</li>
-        }
-      </ul>
-    </aside>
-
-    <!-- Query + results -->
-    <section class="flex min-w-0 flex-1 flex-col overflow-auto">
-      @if (!state.selectedIndex()) {
-        <div
-          class="rounded-md border border-dashed border-border p-10 text-center text-sm text-muted-foreground"
-        >
-          Select an index to search.
-        </div>
+    <fl-panel
+      class="w-full shrink-0 xl:w-60"
+      title="Indices"
+      [count]="state.indices().length"
+      [flush]="true"
+    >
+      @if (state.indices().length === 0) {
+        <fl-empty-state [compact]="true" title="No indices yet" />
       } @else {
-        <!-- Mode toggle -->
-        <div class="mb-2 flex items-center gap-2">
-          <div class="inline-flex overflow-hidden rounded-md border border-border">
+        <ul class="max-h-96 overflow-auto py-1">
+          @for (idx of state.indices(); track idx.name) {
+            <li>
+              <button
+                type="button"
+                class="flex w-full items-center gap-2 px-4 py-2 text-left text-fl-body-sm hover:bg-fl-surface-hover"
+                [class.bg-fl-accent-soft]="state.selectedIndex() === idx.name"
+                [attr.aria-current]="state.selectedIndex() === idx.name ? 'true' : null"
+                (click)="state.selectIndex(idx.name)"
+              >
+                <span class="fl-mono min-w-0 flex-1 truncate">{{ idx.name }}</span>
+                <span class="fl-num text-fl-caption text-fl-ink-muted">{{
+                  idx.docsCount ?? 0
+                }}</span>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </fl-panel>
+
+    <div class="flex min-w-0 flex-1 flex-col gap-5">
+      @if (!state.selectedIndex()) {
+        <fl-panel>
+          <fl-empty-state [compact]="true" icon="lucideSearch" title="Select an index to search" />
+        </fl-panel>
+      } @else {
+        <fl-panel [title]="'Search ' + state.selectedIndex()">
+          <div panelActions class="fl-segmented" role="group" aria-label="Query mode">
             <button
               type="button"
+              [attr.aria-pressed]="state.mode() === 'simple'"
               (click)="state.mode.set('simple')"
-              class="px-2.5 py-1 text-xs"
-              [class.bg-muted]="state.mode() === 'simple'"
-              [class.text-foreground]="state.mode() === 'simple'"
-              [class.text-muted-foreground]="state.mode() !== 'simple'"
             >
-              <ng-icon name="lucideSearch" class="mr-1 inline h-3 w-3" />
               Search
             </button>
             <button
               type="button"
+              [attr.aria-pressed]="state.mode() === 'dsl'"
               (click)="state.mode.set('dsl')"
-              class="border-l border-border px-2.5 py-1 text-xs"
-              [class.bg-muted]="state.mode() === 'dsl'"
-              [class.text-foreground]="state.mode() === 'dsl'"
-              [class.text-muted-foreground]="state.mode() !== 'dsl'"
             >
-              <ng-icon name="lucideCode" class="mr-1 inline h-3 w-3" />
               Query DSL
             </button>
           </div>
-          <span class="font-mono text-xs text-muted-foreground">{{ state.selectedIndex() }}</span>
-        </div>
 
-        @if (state.mode() === 'simple') {
-          <div class="flex items-center gap-2">
-            <input
-              type="text"
-              [(ngModel)]="state.simpleQuery"
-              (keydown.enter)="state.run()"
-              placeholder="Full-text search (e.g. blue widget, name:red, price:>10)"
-              class="h-9 flex-1 rounded-md border border-border bg-background px-3 text-sm text-foreground"
-            />
-            <button
-              type="button"
-              (click)="state.run()"
-              [disabled]="state.loading()"
-              class="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
-            >
-              <ng-icon name="lucidePlay" class="h-3.5 w-3.5" /> Search
-            </button>
-          </div>
-        } @else {
-          <textarea
-            [(ngModel)]="state.dslText"
-            rows="8"
-            spellcheck="false"
-            class="min-h-[12rem] w-full shrink-0 resize-y rounded-md border border-border bg-muted px-3 py-2 font-mono text-xs leading-relaxed text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
-          ></textarea>
-          <div class="mt-2 flex justify-end">
-            <button
-              type="button"
-              (click)="state.run()"
-              [disabled]="state.loading()"
-              class="inline-flex h-8 items-center gap-1.5 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
-            >
-              <ng-icon name="lucidePlay" class="h-3.5 w-3.5" /> Run query
-            </button>
-          </div>
-        }
-
-        @if (state.queryError(); as e) {
-          <div
-            class="mt-2 flex items-center gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive"
-          >
-            <ng-icon name="lucideTriangleAlert" class="h-3.5 w-3.5" />
-            {{ e }}
-          </div>
-        }
-
-        <!-- Results -->
-        @if (state.result(); as r) {
-          <div class="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
-            <span>
-              <strong class="text-foreground">{{ r.total }}</strong>
-              {{ r.totalRelation === 'gte' ? '+ ' : ' ' }}hits
-            </span>
-            <span>· {{ r.tookMs }} ms</span>
-            @if (r.maxScore !== null) {
-              <span>· max score {{ r.maxScore | number: '1.0-3' }}</span>
-            }
-          </div>
-
-          <div class="mt-2 space-y-2">
-            @for (h of r.hits; track h.id) {
-              <div class="rounded-md border border-border">
-                <div
-                  class="flex items-center gap-2 border-b border-border bg-muted/40 px-3 py-1.5 text-xs"
+          <div class="flex flex-col gap-4">
+            @if (state.mode() === 'simple') {
+              <div class="flex items-end gap-2">
+                <fl-field class="min-w-0 flex-1" label="Full-text search" for="search-simple">
+                  <div class="fl-input fl-input--lg">
+                    <input
+                      id="search-simple"
+                      type="text"
+                      placeholder="blue widget, name:red, price:>10"
+                      [(ngModel)]="state.simpleQuery"
+                      (keydown.enter)="state.run()"
+                    />
+                  </div>
+                </fl-field>
+                <button
+                  flButton="primary"
+                  type="button"
+                  [disabled]="state.loading()"
+                  (click)="state.run()"
                 >
-                  <span class="font-mono text-foreground">_id: {{ h.id }}</span>
-                  @if (h.score !== null) {
-                    <span class="ml-auto text-muted-foreground">
-                      score {{ h.score | number: '1.0-3' }}
-                    </span>
-                  }
-                </div>
-                <pre class="overflow-auto px-3 py-2 font-mono text-xs text-foreground">{{
-                  format(h.source)
-                }}</pre>
+                  <fl-icon name="lucidePlay" [size]="14" />
+                  Search
+                </button>
+              </div>
+            } @else {
+              <fl-field label="Query DSL" for="search-dsl">
+                <textarea
+                  id="search-dsl"
+                  class="fl-textarea font-mono"
+                  rows="10"
+                  spellcheck="false"
+                  [(ngModel)]="state.dslText"
+                ></textarea>
+              </fl-field>
+              <div class="fl-row justify-end">
+                <button
+                  flButton="primary"
+                  type="button"
+                  [disabled]="state.loading()"
+                  (click)="state.run()"
+                >
+                  <fl-icon name="lucidePlay" [size]="14" />
+                  Run query
+                </button>
               </div>
             }
+
+            @if (state.queryError(); as e) {
+              <fl-alert tone="error" title="Query failed">{{ e }}</fl-alert>
+            }
+          </div>
+        </fl-panel>
+
+        @if (state.result(); as r) {
+          <fl-panel title="Hits" [count]="r.total" [flush]="true">
+            <span panelActions class="fl-num text-fl-caption text-fl-ink-muted">
+              @if (r.totalRelation === 'gte') {
+                At least {{ r.total }} hits ·
+              }
+              {{ r.tookMs }} ms
+              @if (r.maxScore !== null) {
+                · max score {{ r.maxScore | number: '1.0-3' }}
+              }
+            </span>
             @if (r.hits.length === 0) {
-              <div
-                class="rounded-md border border-dashed border-border p-8 text-center text-sm text-muted-foreground"
-              >
-                No documents matched.
-              </div>
+              <fl-empty-state [compact]="true" title="No documents matched" />
+            } @else {
+              <ul class="flex flex-col">
+                @for (h of r.hits; track h.id) {
+                  <li class="border-b border-fl-border-subtle last:border-b-0">
+                    <div
+                      class="flex items-center gap-2 px-4 pt-3 text-fl-caption text-fl-ink-muted"
+                    >
+                      <span class="fl-mono text-fl-ink">_id {{ h.id }}</span>
+                      @if (h.score !== null) {
+                        <span class="fl-num ml-auto">Score {{ h.score | number: '1.0-3' }}</span>
+                      }
+                    </div>
+                    <pre class="fl-mono m-0 overflow-auto px-4 pb-3 pt-2">{{
+                      format(h.source)
+                    }}</pre>
+                  </li>
+                }
+              </ul>
             }
-          </div>
+          </fl-panel>
         } @else if (state.loading()) {
-          <div class="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-            <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
-            Searching…
-          </div>
+          <fl-panel title="Hits"><fl-loading-state [rows]="3" /></fl-panel>
         }
       }
-    </section>
+    </div>
   `,
 })
 export class SearchConsoleResultsComponent {

@@ -154,7 +154,9 @@ export class AppMonitoringTabComponent implements OnInit, OnDestroy {
   readonly cpuConfig = sizedPair({ unit: '%', thresholds: { warning: 70, danger: 90 } });
   readonly memoryConfig = sizedPair({ unit: '%', thresholds: { warning: 75, danger: 90 } });
   readonly networkConfig = sizedPair({ valueFormatter: (v: number) => formatRate(v) });
-  readonly replicasConfig = sizedPair({ valueFormatter: (v: number) => v.toFixed(0) });
+  readonly replicasConfig = sizedPair({
+    valueFormatter: (v: number) => (Number.isInteger(v) ? v.toFixed(0) : v.toFixed(2)),
+  });
 
   protected readonly liveTone = computed<StatusTone>(() => {
     if (this.pollingPaused()) return 'neutral';

@@ -6,12 +6,13 @@ import { FlField } from '../../../ui/patterns/field';
 import { FlButton } from '../../../ui/primitives/button';
 import { FlIcon } from '../../../ui/primitives/icon';
 import { FlTag } from '../../../ui/primitives/tag';
+import { FlDialogFocus } from '../../../ui/overlays/dialog-focus';
 
 let nextId = 0;
 
 @Component({
   selector: 'app-variable-value-dialog',
-  imports: [FormsModule, FlField, FlButton, FlIcon, FlTag],
+  imports: [FlDialogFocus, FormsModule, FlField, FlButton, FlIcon, FlTag],
   providers: [provideIcons({ lucideEye, lucideEyeOff, lucideX })],
   template: `
     <div
@@ -24,7 +25,8 @@ let nextId = 0;
         aria-modal="true"
         [attr.aria-labelledby]="titleId"
         (click)="$event.stopPropagation()"
-        (keydown.escape)="closed.emit()"
+        flDialogFocus
+        (dismissed)="closed.emit()"
       >
         <header class="fl-dialog__header">
           <div class="flex min-w-0 items-center gap-2">

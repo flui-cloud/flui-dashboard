@@ -165,7 +165,7 @@ const INDENT = ['', 'pl-8', 'pl-12', 'pl-16'];
               data-testid="sessions-empty"
             />
           } @else {
-            <div class="fl-table-wrap">
+            <div class="fl-table-wrap relative">
               <table flTable density="dense">
                 <thead>
                   <tr>
@@ -189,7 +189,14 @@ const INDENT = ['', 'pl-8', 'pl-12', 'pl-16'];
                         @if (row.depth) {
                           <span class="mr-1 text-fl-ink-muted" aria-hidden="true">└</span>
                         }
-                        {{ who(s) }}
+                        <button
+                          type="button"
+                          class="fl-link text-left"
+                          [attr.aria-expanded]="expanded() === s.pid"
+                          (click)="$event.stopPropagation(); toggle(s.pid)"
+                        >
+                          {{ who(s) }}
+                        </button>
                         @if (s.blocks) {
                           <fl-status
                             class="ml-2"

@@ -33,7 +33,7 @@ import { AppAvailability } from '../../service/fleet.service';
           }
         </div>
       }
-      <div class="fl-table-wrap">
+      <div class="fl-table-wrap relative">
         <table flTable density="dense">
           <thead>
             <tr>

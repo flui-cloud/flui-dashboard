@@ -10,10 +10,11 @@ import { FlSpinner } from '../../../ui/primitives/spinner';
 import { VolumeBackup } from '../../model/volume-backup.models';
 import { RestoreTarget } from './volume-backup-browser.component';
 import { formatDate } from './snapshot-format';
+import { FlDialogFocus } from '../../../ui/overlays/dialog-focus';
 
 @Component({
   selector: 'app-volume-backup-restore-dialog',
-  imports: [FormsModule, FlAlert, FlField, FlButton, FlIcon, FlSpinner],
+  imports: [FlDialogFocus, FormsModule, FlAlert, FlField, FlButton, FlIcon, FlSpinner],
   providers: [provideIcons({ lucideX })],
   template: `
     <div
@@ -25,6 +26,8 @@ import { formatDate } from './snapshot-format';
         role="dialog"
         aria-modal="true"
         aria-labelledby="volume-backup-restore-title"
+        flDialogFocus
+        (dismissed)="dismissed.emit()"
         (click)="$event.stopPropagation()"
       >
         <header class="fl-dialog__header">

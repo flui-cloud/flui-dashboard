@@ -129,7 +129,7 @@ interface ProjectRow {
             />
           }
         } @else {
-          <div class="fl-table-wrap">
+          <div class="fl-table-wrap relative">
             <table flTable density="dense" data-testid="projects-table">
               <thead>
                 <tr>

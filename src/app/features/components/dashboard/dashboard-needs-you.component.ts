@@ -70,7 +70,7 @@ const SEVERITY: Record<NeedsYouLevel, { tone: StatusTone; label: string }> = {
             data-testid="needs-you-empty"
           />
         } @else {
-          <div class="fl-table-wrap">
+          <div class="fl-table-wrap relative">
             <table flTable>
               <thead>
                 <tr>

@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
+import { Component, input, output } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
 import {
   lucideChevronLeft,
   lucideChevronRight,
@@ -9,6 +9,10 @@ import {
   lucideRefreshCw,
 } from '@ng-icons/lucide';
 import { DocumentCollection, DocumentDatabase } from '../../model/document-console.models';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlTag } from '../../../ui/primitives/tag';
 
 /**
  * Compass-style left tree: databases → collections. Collections load lazily for
@@ -17,10 +21,8 @@ import { DocumentCollection, DocumentDatabase } from '../../model/document-conso
  */
 @Component({
   selector: 'app-document-collection-tree',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'contents' },
-  imports: [NgIcon],
+  imports: [FlEmptyState, FlLoadingState, FlButton, FlIcon, FlTag],
   providers: [
     provideIcons({
       lucideChevronLeft,
@@ -32,99 +34,115 @@ import { DocumentCollection, DocumentDatabase } from '../../model/document-conso
     }),
   ],
   template: `
-    <aside class="w-64 shrink-0 overflow-auto rounded-lg border border-border bg-card">
-      <div
-        class="sticky top-0 flex items-center gap-2 border-b border-border bg-muted/40 px-3 py-2 text-sm font-medium"
-      >
-        <ng-icon name="lucideDatabase" class="h-4 w-4" /> Databases
-        <div class="ml-auto flex items-center gap-0.5">
+    <aside
+      class="fl-panel flex max-h-screen w-full shrink-0 xl:sticky xl:top-0 xl:w-64 flex-col self-stretch"
+      aria-label="Databases"
+    >
+      <header class="fl-panel__header">
+        <h2 class="fl-panel__title">Databases</h2>
+        <div class="fl-panel__actions">
           <button
+            flButton="ghost"
+            size="sm"
+            [iconOnly]="true"
             type="button"
             (click)="refresh.emit()"
             [disabled]="loading()"
-            class="inline-flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
-            title="Refresh"
+            aria-label="Refresh databases"
+            title="Refresh databases"
           >
-            <ng-icon name="lucideRefreshCw" class="h-3.5 w-3.5" [class.animate-spin]="loading()" />
+            <fl-icon name="lucideRefreshCw" [size]="14" />
           </button>
           <button
+            flButton="ghost"
+            size="sm"
+            [iconOnly]="true"
             type="button"
             (click)="collapse.emit()"
-            class="inline-flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
-            title="Collapse"
+            aria-label="Hide databases"
+            title="Hide databases"
           >
-            <ng-icon name="lucideChevronLeft" class="h-3.5 w-3.5" />
+            <fl-icon name="lucideChevronLeft" [size]="14" />
           </button>
         </div>
-      </div>
+      </header>
 
-      @if (loading()) {
-        <div class="p-3 text-sm text-muted-foreground">Loading…</div>
-      } @else if (databases().length === 0) {
-        <div class="p-3 text-sm text-muted-foreground">No databases.</div>
-      } @else {
-        <div class="px-2 py-1">
-          @for (db of databases(); track db.name) {
-            <div>
-              <button
-                type="button"
-                (click)="selectDb.emit(db.name)"
-                class="group flex w-full items-center gap-1.5 rounded px-1 py-1 text-left hover:bg-muted"
-                [class.bg-muted]="selectedDb() === db.name"
-                [title]="db.name"
-              >
-                <ng-icon
-                  name="lucideChevronRight"
-                  class="h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform"
-                  [class.rotate-90]="selectedDb() === db.name"
-                />
-                <ng-icon name="lucideDatabase" class="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                <span class="min-w-0 flex-1 truncate text-sm">{{ db.name }}</span>
-              </button>
+      <div class="min-h-0 flex-1 overflow-y-auto">
+        @if (loading()) {
+          <fl-loading-state [rows]="6" />
+        } @else if (databases().length === 0) {
+          <fl-empty-state [compact]="true" icon="lucideDatabase" title="No databases" />
+        } @else {
+          <ul class="m-0 list-none py-1 pl-0">
+            @for (db of databases(); track db.name) {
+              <li>
+                <button
+                  type="button"
+                  (click)="selectDb.emit(db.name)"
+                  class="flex w-full items-center gap-1.5 px-3 py-1.5 text-left font-mono text-fl-mono-sm hover:bg-fl-surface-hover"
+                  [attr.aria-expanded]="selectedDb() === db.name"
+                  [title]="db.name"
+                >
+                  <fl-icon
+                    class="text-fl-ink-muted"
+                    name="lucideChevronRight"
+                    [size]="14"
+                    [class.rotate-90]="selectedDb() === db.name"
+                  />
+                  <fl-icon class="text-fl-ink-muted" name="lucideDatabase" [size]="14" />
+                  <span
+                    class="min-w-0 flex-1 truncate"
+                    [class.font-semibold]="selectedDb() === db.name"
+                    >{{ db.name }}</span
+                  >
+                </button>
 
-              @if (selectedDb() === db.name) {
-                @if (loadingCollections()) {
-                  <div class="ml-6 py-1 text-xs text-muted-foreground">Loading…</div>
-                } @else if (collections().length === 0) {
-                  <div class="ml-6 py-1 text-xs text-muted-foreground">No collections.</div>
-                } @else {
-                  <ul class="ml-3 border-l border-border/60 pl-2">
-                    @for (c of collections(); track c.name) {
-                      <li>
-                        <button
-                          type="button"
-                          (click)="selectCollection.emit(c.name)"
-                          class="flex w-full items-center gap-1.5 rounded px-1 py-1 text-left hover:bg-muted/70"
-                          [class.bg-muted]="selectedCollection() === c.name"
-                          [title]="c.name"
-                        >
-                          <ng-icon
-                            [name]="c.type === 'view' ? 'lucideEye' : 'lucideFileText'"
-                            class="h-3.5 w-3.5 shrink-0 text-muted-foreground"
-                          />
-                          <span class="min-w-0 flex-1 truncate text-xs">{{ c.name }}</span>
-                          @if (c.type === 'view') {
-                            <span
-                              class="shrink-0 rounded bg-muted px-1 text-[10px] uppercase text-muted-foreground"
-                              >view</span
-                            >
-                          }
-                          @if (c.estimatedCount !== undefined) {
-                            <span
-                              class="shrink-0 text-[10px] tabular-nums text-muted-foreground/70"
-                              >{{ formatCount(c.estimatedCount) }}</span
-                            >
-                          }
-                        </button>
-                      </li>
-                    }
-                  </ul>
+                @if (selectedDb() === db.name) {
+                  @if (loadingCollections()) {
+                    <p class="m-0 py-1.5 pl-10 text-fl-caption text-fl-ink-muted">
+                      Loading collections
+                    </p>
+                  } @else if (collections().length === 0) {
+                    <p class="m-0 py-1.5 pl-10 text-fl-caption text-fl-ink-muted">No collections</p>
+                  } @else {
+                    <ul class="m-0 list-none py-0.5 pl-0">
+                      @for (c of collections(); track c.name) {
+                        <li>
+                          <button
+                            type="button"
+                            (click)="selectCollection.emit(c.name)"
+                            class="flex w-full items-center gap-1.5 py-1.5 pl-8 pr-3 text-left font-mono text-fl-mono-sm hover:bg-fl-surface-hover"
+                            [class.bg-fl-accent-soft]="selectedCollection() === c.name"
+                            [class.text-fl-accent]="selectedCollection() === c.name"
+                            [attr.aria-current]="selectedCollection() === c.name ? 'true' : null"
+                            [title]="c.name"
+                          >
+                            <fl-icon
+                              class="text-fl-ink-muted"
+                              [name]="c.type === 'view' ? 'lucideEye' : 'lucideFileText'"
+                              [size]="14"
+                            />
+                            <span class="min-w-0 flex-1 truncate">{{ c.name }}</span>
+                            @if (c.type === 'view') {
+                              <fl-tag>view</fl-tag>
+                            }
+                            @if (c.estimatedCount !== undefined) {
+                              <span
+                                class="fl-num shrink-0 font-sans text-fl-caption text-fl-ink-muted"
+                                >{{ formatCount(c.estimatedCount) }}</span
+                              >
+                            }
+                          </button>
+                        </li>
+                      }
+                    </ul>
+                  }
                 }
-              }
-            </div>
-          }
-        </div>
-      }
+              </li>
+            }
+          </ul>
+        }
+      </div>
     </aside>
   `,
 })

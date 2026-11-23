@@ -1,26 +1,24 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { map } from 'rxjs';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideArrowLeft,
-  lucideCirclePlay,
-  lucideDatabase,
-  lucideLayers,
-  lucideLoader,
-  lucideLock,
-  lucideLockOpen,
-  lucideRotateCcw,
-  lucideServer,
-  lucideTriangleAlert,
-  lucideUsers,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideLock, lucideLockOpen, lucidePlay, lucideRefreshCw } from '@ng-icons/lucide';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlCopyId } from '../../../ui/patterns/copy-id';
+import { FlField } from '../../../ui/patterns/field';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlStatus } from '../../../ui/primitives/status';
+import { FlTag } from '../../../ui/primitives/tag';
 import { DbAssistantChatComponent } from './db-assistant-chat.component';
 import { GateNoticeComponent } from './gate-notice.component';
 import { KafkaConsoleStateService } from './kafka-console-state.service';
 import { KafkaResultComponent } from './kafka-result.component';
+import { StoreConsoleHeader } from './store-console-header';
 
 /**
  * Kafka console: a topic/cluster overview on top, a kafka-shell command runner
@@ -30,247 +28,197 @@ import { KafkaResultComponent } from './kafka-result.component';
  */
 @Component({
   selector: 'app-kafka-console-page',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    NgIcon,
     FormsModule,
+    FlAlert,
+    FlButton,
+    FlCopyId,
+    FlEmptyState,
+    FlField,
+    FlIcon,
+    FlLoadingState,
+    StoreConsoleHeader,
+    FlPanel,
+    FlStatus,
+    FlTag,
     DbAssistantChatComponent,
     GateNoticeComponent,
     KafkaResultComponent,
   ],
   providers: [
     KafkaConsoleStateService,
-    provideIcons({
-      lucideArrowLeft,
-      lucideCirclePlay,
-      lucideDatabase,
-      lucideLayers,
-      lucideLoader,
-      lucideLock,
-      lucideLockOpen,
-      lucideRotateCcw,
-      lucideServer,
-      lucideTriangleAlert,
-      lucideUsers,
-    }),
+    provideIcons({ lucideLock, lucideLockOpen, lucidePlay, lucideRefreshCw }),
   ],
   template: `
-    <div class="p-4 md:p-6">
-      <!-- Header -->
-      <div class="mb-4 flex items-center gap-3">
-        <button
-          type="button"
-          (click)="state.back()"
-          class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border text-muted-foreground hover:bg-muted"
-          title="Back"
-        >
-          <ng-icon name="lucideArrowLeft" class="h-4 w-4" />
-        </button>
-        <ng-icon name="lucideServer" class="h-5 w-5 text-primary" />
-        <div class="min-w-0">
-          <h1 class="text-base font-semibold text-foreground">
-            Kafka Console
-            @if (state.cluster(); as c) {
-              <span class="font-normal text-muted-foreground">
-                · {{ c.brokers.length }} broker{{ c.brokers.length === 1 ? '' : 's' }}
-                @if (c.clusterId) {
-                  · {{ c.clusterId }}
-                }
-              </span>
+    <div class="fl-page">
+      <app-store-console-header
+        title="Kafka console"
+        [appId]="applicationId()"
+        [conn]="state.conn()"
+        (retry)="state.connect()"
+      >
+        <ng-container consoleMeta>
+          @if (state.conn() === 'connected') {
+            <fl-status
+              [tone]="state.readOnly() ? 'neutral' : 'warning'"
+              [label]="state.readOnly() ? 'Read-only' : 'Writes on'"
+            />
+          }
+          @if (state.cluster(); as c) {
+            <span>{{ c.brokers.length }} broker{{ c.brokers.length === 1 ? '' : 's' }}</span>
+            @if (c.clusterId) {
+              <fl-copy-id [value]="c.clusterId" label="cluster ID" />
             }
-          </h1>
-          <p class="truncate font-mono text-xs text-muted-foreground">
-            {{ applicationId() }}
-          </p>
-        </div>
-        <button
-          type="button"
-          (click)="state.connect()"
-          class="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-2.5 text-xs text-muted-foreground hover:bg-muted"
-        >
-          <ng-icon name="lucideRotateCcw" class="h-3.5 w-3.5" /> Refresh
-        </button>
-      </div>
+          }
+        </ng-container>
+        <ng-container consoleActions>
+          <button
+            flButton
+            type="button"
+            [iconOnly]="true"
+            aria-label="Refresh"
+            title="Refresh"
+            (click)="state.connect()"
+          >
+            <fl-icon name="lucideRefreshCw" />
+          </button>
+        </ng-container>
+      </app-store-console-header>
 
       @if (state.conn() === 'connecting') {
-        <div class="flex items-center gap-2 text-sm text-muted-foreground">
-          <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" /> Connecting…
-        </div>
+        <fl-panel><fl-loading-state [rows]="4" /></fl-panel>
       } @else if (state.conn() === 'error') {
-        <div
-          class="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
-        >
-          <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-4 w-4 shrink-0" />
-          <span>{{ state.errorMsg() || 'Failed to connect.' }}</span>
-        </div>
+        <fl-alert tone="error" title="Could not connect">
+          {{ state.errorMsg() || 'Failed to connect.' }}
+        </fl-alert>
       } @else {
-        <div class="flex gap-4">
-          <div class="flex min-w-0 flex-1 flex-col gap-4">
-            <!-- Topic visualization -->
-            <section class="grid grid-cols-1 gap-4 lg:grid-cols-3">
-              <div class="rounded-md border border-border lg:col-span-2">
-                <div
-                  class="flex items-center gap-2 border-b border-border px-3 py-2 text-xs font-medium text-muted-foreground"
-                >
-                  <ng-icon name="lucideLayers" class="h-3.5 w-3.5" /> Topics
-                  <span class="ml-auto font-mono">{{ state.topics().length }}</span>
-                </div>
-                <div class="max-h-56 overflow-auto">
-                  <table class="w-full text-sm">
-                    <thead class="sticky top-0 bg-muted/60 text-xs text-muted-foreground">
-                      <tr>
-                        <th class="px-3 py-1.5 text-left font-medium">Topic</th>
-                        <th class="px-3 py-1.5 text-right font-medium">Partitions</th>
-                        <th class="px-3 py-1.5 text-right font-medium">Replication</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      @for (t of state.topics(); track t.name) {
-                        <tr
-                          (click)="state.describeTopic(t.name)"
-                          class="cursor-pointer border-t border-border hover:bg-muted"
-                          title="Describe this topic"
-                        >
-                          <td class="px-3 py-1.5">
-                            <span class="text-foreground">{{ t.name }}</span>
-                            @if (t.internal) {
-                              <span
-                                class="ml-1.5 rounded bg-muted px-1 py-0.5 text-[10px] text-muted-foreground"
-                                >internal</span
-                              >
-                            }
-                          </td>
-                          <td class="px-3 py-1.5 text-right font-mono text-muted-foreground">
-                            {{ t.partitions }}
-                          </td>
-                          <td class="px-3 py-1.5 text-right font-mono text-muted-foreground">
-                            {{ t.replicationFactor }}
-                          </td>
-                        </tr>
-                      }
-                      @if (state.topics().length === 0) {
-                        <tr>
-                          <td
-                            colspan="3"
-                            class="px-3 py-6 text-center text-xs text-muted-foreground"
-                          >
-                            No topics yet — create one or produce to auto-create.
-                          </td>
-                        </tr>
-                      }
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div class="rounded-md border border-border">
-                <div
-                  class="flex items-center gap-2 border-b border-border px-3 py-2 text-xs font-medium text-muted-foreground"
-                >
-                  <ng-icon name="lucideUsers" class="h-3.5 w-3.5" /> Consumer groups
-                  <span class="ml-auto font-mono">{{ state.groups().length }}</span>
-                </div>
-                <ul class="max-h-56 overflow-auto py-1">
-                  @for (g of state.groups(); track g.groupId) {
+        <div class="flex flex-col gap-5 xl:flex-row xl:items-start">
+          <div class="flex w-full shrink-0 flex-col gap-5 xl:w-64">
+            <fl-panel title="Topics" [count]="state.topics().length" [flush]="true">
+              @if (state.topics().length === 0) {
+                <fl-empty-state
+                  [compact]="true"
+                  title="No topics yet"
+                  body="Create one, or produce to a topic to create it."
+                />
+              } @else {
+                <ul class="max-h-80 overflow-auto py-1">
+                  @for (t of state.topics(); track t.name) {
                     <li>
                       <button
                         type="button"
-                        (click)="state.groupLag(g.groupId)"
-                        class="flex w-full items-center justify-between gap-2 px-3 py-1.5 text-left text-sm hover:bg-muted"
-                        title="Show lag for this group"
+                        class="flex w-full items-center gap-2 px-4 py-2 text-left text-fl-body-sm hover:bg-fl-surface-hover"
+                        [class.bg-fl-accent-soft]="selectedTopic() === t.name"
+                        [attr.aria-current]="selectedTopic() === t.name ? 'true' : null"
+                        [title]="t.partitions + ' partitions, replication ' + t.replicationFactor"
+                        (click)="describe(t.name)"
                       >
-                        <span class="truncate text-foreground">{{ g.groupId }}</span>
-                        <span class="shrink-0 font-mono text-[10px] text-muted-foreground"
-                          >lag →</span
+                        <span class="fl-mono min-w-0 flex-1 truncate">{{ t.name }}</span>
+                        @if (t.internal) {
+                          <fl-tag>internal</fl-tag>
+                        }
+                        <span class="fl-num text-fl-caption text-fl-ink-muted"
+                          >{{ t.partitions }} × {{ t.replicationFactor }}</span
                         >
                       </button>
                     </li>
                   }
-                  @if (state.groups().length === 0) {
-                    <li class="px-3 py-6 text-center text-xs text-muted-foreground">
-                      No consumer groups.
+                </ul>
+              }
+            </fl-panel>
+
+            <fl-panel title="Consumer groups" [count]="state.groups().length" [flush]="true">
+              @if (state.groups().length === 0) {
+                <fl-empty-state [compact]="true" title="No consumer groups" />
+              } @else {
+                <ul class="max-h-64 overflow-auto py-1">
+                  @for (g of state.groups(); track g.groupId) {
+                    <li>
+                      <button
+                        type="button"
+                        class="flex w-full items-center gap-2 px-4 py-2 text-left text-fl-body-sm hover:bg-fl-surface-hover"
+                        [class.bg-fl-accent-soft]="selectedGroup() === g.groupId"
+                        [attr.aria-current]="selectedGroup() === g.groupId ? 'true' : null"
+                        title="Show lag for this group"
+                        (click)="lag(g.groupId)"
+                      >
+                        <span class="fl-mono min-w-0 flex-1 truncate">{{ g.groupId }}</span>
+                        <span class="text-fl-caption text-fl-ink-muted">Lag</span>
+                      </button>
                     </li>
                   }
                 </ul>
-              </div>
-            </section>
+              }
+            </fl-panel>
+          </div>
 
-            <!-- Command runner -->
-            <section class="flex flex-col rounded-md border border-border">
-              <div class="flex items-center gap-2 border-b border-border bg-muted/40 px-3 py-2">
-                <ng-icon name="lucideDatabase" class="h-4 w-4 text-primary" />
-                <span class="text-sm font-medium text-foreground">kafka-shell</span>
-                <button
-                  type="button"
-                  (click)="state.readOnly.set(!state.readOnly())"
-                  class="ml-auto inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs"
-                  [class.border-amber-500]="!state.readOnly()"
-                  [class.text-amber-600]="!state.readOnly()"
-                  [class.border-border]="state.readOnly()"
-                  [class.text-muted-foreground]="state.readOnly()"
-                  [title]="state.readOnly() ? 'Read-only: writes are blocked' : 'Writes enabled'"
-                >
-                  <ng-icon
-                    [name]="state.readOnly() ? 'lucideLock' : 'lucideLockOpen'"
-                    class="h-3.5 w-3.5"
-                  />
-                  {{ state.readOnly() ? 'Read-only' : 'Writes on' }}
-                </button>
-              </div>
+          <div class="flex min-w-0 flex-1 flex-col gap-5">
+            <fl-panel title="kafka-shell">
+              <button
+                panelActions
+                flButton="ghost"
+                size="sm"
+                type="button"
+                [attr.aria-pressed]="!state.readOnly()"
+                [title]="state.readOnly() ? 'Read-only: writes are blocked' : 'Writes enabled'"
+                (click)="state.readOnly.set(!state.readOnly())"
+              >
+                <fl-icon [name]="state.readOnly() ? 'lucideLock' : 'lucideLockOpen'" [size]="14" />
+                {{ state.readOnly() ? 'Allow writes' : 'Block writes' }}
+              </button>
 
-              <div class="px-3 pt-3">
+              <div class="flex flex-col gap-4">
                 <app-gate-notice engine="Kafka" />
-              </div>
 
-              <div class="p-3">
-                <textarea
-                  [(ngModel)]="state.commandText"
-                  (keydown.meta.enter)="state.runCommand()"
-                  (keydown.control.enter)="state.runCommand()"
-                  rows="2"
-                  spellcheck="false"
-                  placeholder="e.g. topics list   ·   topic describe orders   ·   group lag billing"
-                  class="w-full rounded-md border border-border bg-muted px-3 py-2 font-mono text-xs text-foreground"
-                ></textarea>
-                <div class="mt-2 flex flex-wrap items-center gap-1.5">
+                <fl-field
+                  label="Command"
+                  for="kafka-command"
+                  hint="Cmd or Ctrl + Enter runs the command."
+                >
+                  <textarea
+                    id="kafka-command"
+                    class="fl-textarea font-mono"
+                    rows="2"
+                    spellcheck="false"
+                    placeholder="topics list, topic describe orders, group lag billing"
+                    [(ngModel)]="state.commandText"
+                    (keydown.meta.enter)="state.runCommand()"
+                    (keydown.control.enter)="state.runCommand()"
+                  ></textarea>
+                </fl-field>
+
+                <div class="fl-row">
                   <button
+                    flButton="primary"
                     type="button"
-                    (click)="state.runCommand()"
                     [disabled]="state.running()"
-                    class="inline-flex h-8 items-center gap-1.5 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                    (click)="state.runCommand()"
                   >
-                    <ng-icon name="lucideCirclePlay" class="h-3.5 w-3.5" /> Run
-                    <span class="opacity-70">⌘↵</span>
+                    <fl-icon name="lucidePlay" [size]="14" />
+                    Run
                   </button>
                   @for (ex of state.examples; track ex.label) {
                     <button
+                      flButton="ghost"
+                      size="sm"
                       type="button"
                       (click)="state.loadExample(ex)"
-                      class="inline-flex h-8 items-center gap-1 rounded-md border border-border px-2 text-xs text-muted-foreground hover:bg-muted"
                     >
-                      {{ ex.label }}
+                      <span class="fl-mono">{{ ex.label }}</span>
                       @if (ex.write) {
-                        <span class="rounded bg-amber-500/15 px-1 text-[10px] text-amber-600"
-                          >write</span
-                        >
+                        <fl-tag>write</fl-tag>
                       }
                     </button>
                   }
                 </div>
 
                 @if (state.runError(); as e) {
-                  <div
-                    class="mt-3 flex items-center gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive"
-                  >
-                    <ng-icon name="lucideTriangleAlert" class="h-3.5 w-3.5" />
-                    {{ e }}
-                  </div>
+                  <fl-alert tone="error" title="Command failed">{{ e }}</fl-alert>
                 }
-
-                <app-kafka-result />
               </div>
-            </section>
+            </fl-panel>
+
+            <app-kafka-result />
           </div>
 
           <app-db-assistant-chat
@@ -279,8 +227,8 @@ import { KafkaResultComponent } from './kafka-result.component';
             identity="Flui Kafka assistant"
             [assist]="state.chatAssist"
             dataBlindBadge="metadata only"
-            dataBlindTooltip="The assistant sees topic and consumer-group names — never message payloads."
-            emptyHint="Describe what to do — e.g. “show lag for the billing group”, “create a 3-partition orders topic”, or “read the last 20 messages from orders”. The assistant writes a kafka-shell command into the runner; review it, allow writes if needed, then run."
+            dataBlindTooltip="The assistant sees topic and consumer-group names, never message payloads."
+            emptyHint="Describe what to do, for example “show lag for the billing group”, “create a 3-partition orders topic” or “read the last 20 messages from orders”. The assistant writes a kafka-shell command into the runner; review it, allow writes if needed, then run."
             codeNoun="command"
             [showInsert]="true"
             (run)="state.onChatRun($event)"
@@ -299,8 +247,23 @@ export class KafkaConsolePageComponent implements OnInit {
     initialValue: this.route.snapshot.paramMap.get('applicationId'),
   });
 
+  protected readonly selectedTopic = signal<string | null>(null);
+  protected readonly selectedGroup = signal<string | null>(null);
+
   ngOnInit(): void {
     this.state.appId.set(this.applicationId() ?? null);
     this.state.connect();
+  }
+
+  protected describe(topic: string): void {
+    this.selectedTopic.set(topic);
+    this.selectedGroup.set(null);
+    this.state.describeTopic(topic);
+  }
+
+  protected lag(groupId: string): void {
+    this.selectedGroup.set(groupId);
+    this.selectedTopic.set(null);
+    this.state.groupLag(groupId);
   }
 }

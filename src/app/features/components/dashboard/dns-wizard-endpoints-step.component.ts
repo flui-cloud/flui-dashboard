@@ -1,18 +1,17 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideCheckCircle,
-  lucideLoader,
-  lucideAlertCircle,
-  lucideRefreshCw,
-  lucideFileText,
-  lucideInfo,
-} from '@ng-icons/lucide';
+import { Component, inject } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideFileText, lucideRefreshCw } from '@ng-icons/lucide';
 import {
   DnsSetupWizardService,
   AppEndpointStatus,
   AppEndpointPhase,
 } from './dns-setup-wizard.service';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlCopyId } from '../../../ui/patterns/copy-id';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
 
 const PHASE_LABELS: Record<AppEndpointPhase, string> = {
   idle: '',
@@ -32,152 +31,132 @@ const PHASE_LABELS: Record<AppEndpointPhase, string> = {
   error: '',
 };
 
+const STATUS_TONES: Record<AppEndpointStatus['status'], StatusTone> = {
+  pending: 'neutral',
+  running: 'progress',
+  done: 'success',
+  error: 'error',
+};
+
 @Component({
   selector: 'app-dns-wizard-endpoints-step',
-  standalone: true,
-  imports: [NgIconComponent],
-  providers: [
-    provideIcons({
-      lucideCheckCircle,
-      lucideLoader,
-      lucideAlertCircle,
-      lucideRefreshCw,
-      lucideFileText,
-      lucideInfo,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FlAlert, FlCopyId, FlTable, FlButton, FlIcon, FlStatus],
+  providers: [provideIcons({ lucideFileText, lucideRefreshCw })],
+  host: { class: 'fl-stack' },
   template: `
-    <div class="flex items-start justify-between mb-1">
-      <h3 class="text-sm font-semibold text-foreground">
-        @if (wiz.endpointPhase() === 'done' && wiz.hasFailedEndpoint()) {
-          Some steps failed
-        } @else if (wiz.endpointPhase() === 'done') {
-          Endpoints configured
-        } @else {
-          Configuring app endpoints…
-        }
-      </h3>
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      @if (wiz.endpointPhase() === 'done' && wiz.hasFailedEndpoint()) {
+        <fl-status tone="error" label="Some steps failed. Check the details and retry." />
+      } @else if (wiz.endpointPhase() === 'done') {
+        <fl-status tone="success" label="All apps are reachable and certificates are active" />
+      } @else {
+        <fl-status tone="progress" label="Setting up DNS, certificates and app configuration…" />
+      }
       @if (wiz.hasFailedEndpoint()) {
-        <button
-          type="button"
-          (click)="retryEndpoints()"
-          [disabled]="wiz.endpointPhase() === 'configuring' || wiz.endpointPhase() === 'polling'"
-          title="Retry failed endpoints"
-          class="h-6 w-6 flex items-center justify-center rounded text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
-        >
-          <ng-icon
-            name="lucideRefreshCw"
-            class="h-3.5 w-3.5"
-            [class.animate-spin]="
-              wiz.endpointPhase() === 'configuring' || wiz.endpointPhase() === 'polling'
-            "
-          />
+        <button flButton size="sm" type="button" (click)="retryEndpoints()" [disabled]="running()">
+          <fl-icon name="lucideRefreshCw" />
+          Retry failed
         </button>
       }
     </div>
-    <p class="text-xs text-muted-foreground mb-4">
-      @if (wiz.endpointPhase() === 'done' && wiz.hasFailedEndpoint()) {
-        Check the details below and retry.
-      } @else if (wiz.endpointPhase() === 'done') {
-        All apps are reachable and certificates are active.
-      } @else {
-        Setting up DNS, certificates, and syncing app configurations.
-      }
-    </p>
 
-    <div class="flex flex-col gap-0 rounded-lg border border-border overflow-hidden flex-1">
-      @for (app of wiz.appEndpoints(); track app.key) {
-        <div class="flex items-center gap-2 px-4 py-3 border-b border-border last:border-0">
-          <!-- Status icon -->
-          @if (app.status === 'done') {
-            <ng-icon name="lucideCheckCircle" class="h-4 w-4 text-emerald-500 flex-shrink-0" />
-          } @else if (app.status === 'running') {
-            <ng-icon name="lucideLoader" class="h-4 w-4 text-primary animate-spin flex-shrink-0" />
-          } @else if (app.status === 'error') {
-            <ng-icon name="lucideAlertCircle" class="h-4 w-4 text-destructive flex-shrink-0" />
-          } @else {
-            <div
-              class="h-4 w-4 rounded-full border-2 border-muted-foreground/30 flex-shrink-0"
-            ></div>
-          }
-
-          <!-- Label + current phase text -->
-          <div class="flex-1 min-w-0">
-            <p class="text-xs font-semibold text-foreground">{{ app.label }}</p>
-            <p class="text-xs font-mono text-muted-foreground truncate">{{ app.fqdn }}</p>
-            @if (app.status === 'running' && phaseLabel(app)) {
-              <p class="text-xs text-primary mt-0.5">
-                {{ phaseLabel(app) }}
-                @if (isRolloutPhase(app.phase) && app.rolloutProgress !== null) {
-                  <span class="text-muted-foreground">({{ app.rolloutProgress }}%)</span>
+    <div class="fl-table-wrap">
+      <table flTable density="dense">
+        <thead>
+          <tr>
+            <th scope="col">App</th>
+            <th scope="col">Address</th>
+            <th scope="col">Progress</th>
+            <th scope="col">Certificate</th>
+            <th scope="col" class="is-fit"><span class="fl-sr">Details</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (app of wiz.appEndpoints(); track app.key) {
+            <tr>
+              <td>{{ app.label }}</td>
+              <td>
+                @if (app.fqdn) {
+                  <fl-copy-id [value]="app.fqdn" label="address" />
+                } @else {
+                  <span class="text-fl-ink-muted">—</span>
                 }
-              </p>
-            } @else if (app.status === 'error' && app.errorMessage) {
-              <p class="text-xs text-destructive mt-0.5 truncate">{{ app.errorMessage }}</p>
-            }
-          </div>
-
-          <!-- Cert status badge (when settled) -->
-          @if ((app.status === 'done' || app.status === 'error') && app.certStatus) {
-            <span
-              [class]="certBadgeClass(app.certStatus)"
-              class="text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0"
-            >
-              {{ certBadgeLabel(app.certStatus) }}
-            </span>
+              </td>
+              <td class="whitespace-normal">
+                <fl-status [tone]="statusTone(app)" [label]="progressLabel(app)" />
+                @if (app.status === 'error' && app.errorMessage) {
+                  <span class="block truncate text-fl-caption text-fl-ink-muted">{{
+                    app.errorMessage
+                  }}</span>
+                }
+              </td>
+              <td>
+                @if ((app.status === 'done' || app.status === 'error') && app.certStatus) {
+                  <fl-status
+                    [tone]="certTone(app.certStatus)"
+                    [label]="certLabel(app.certStatus)"
+                  />
+                } @else {
+                  <span class="text-fl-ink-muted">—</span>
+                }
+              </td>
+              <td class="is-fit">
+                @if (app.certMessage || (app.status === 'error' && app.errorMessage)) {
+                  <button
+                    flButton="ghost"
+                    size="sm"
+                    [iconOnly]="true"
+                    type="button"
+                    aria-label="View details"
+                    title="View details"
+                    (click)="$event.stopPropagation(); wiz.openAppError(app)"
+                  >
+                    <fl-icon name="lucideFileText" />
+                  </button>
+                }
+              </td>
+            </tr>
           }
-
-          <!-- Detail button -->
-          @if (app.certMessage || (app.status === 'error' && app.errorMessage)) {
-            <button
-              type="button"
-              (click)="$event.stopPropagation(); wiz.openAppError(app)"
-              title="View details"
-              class="p-1 rounded flex-shrink-0 transition-colors"
-              [class]="
-                app.status === 'error'
-                  ? 'text-destructive hover:text-destructive/80'
-                  : 'text-muted-foreground hover:text-foreground'
-              "
-            >
-              <ng-icon name="lucideFileText" class="h-3.5 w-3.5" />
-            </button>
-          }
-        </div>
-      }
+        </tbody>
+      </table>
     </div>
 
     @if (wiz.endpointPhase() !== 'done') {
-      <div
-        class="mt-2 rounded-md bg-blue-50 border border-blue-200 px-3 py-2 flex items-start gap-2"
-      >
-        <ng-icon name="lucideInfo" class="h-3.5 w-3.5 text-blue-500 flex-shrink-0 mt-0.5" />
-        <p class="text-xs text-blue-700">
-          The first run can take a few minutes — DNS propagation and certificate issuance are
-          slowest the first time. Subsequent runs are much faster.
-        </p>
-      </div>
+      <fl-alert tone="info" title="The first run takes a few minutes">
+        DNS propagation and certificate issuance are slowest the first time. Later runs are much
+        faster.
+      </fl-alert>
     }
 
     @if (wiz.endpointError()) {
-      <div class="mt-2 rounded-md bg-muted border border-border px-3 py-2">
-        <p class="text-xs text-muted-foreground">{{ wiz.endpointError() }}</p>
-      </div>
-    }
-
-    @if (wiz.endpointPhase() === 'done' && !wiz.hasFailedEndpoint()) {
-      <div
-        class="mt-2 rounded-md bg-emerald-50 border border-emerald-200 px-3 py-2 flex items-center gap-2"
-      >
-        <ng-icon name="lucideCheckCircle" class="h-4 w-4 text-emerald-500 flex-shrink-0" />
-        <p class="text-xs text-emerald-700">All endpoints configured and certificates are valid.</p>
-      </div>
+      <fl-alert tone="warning" title="Endpoint setup reported a problem">
+        {{ wiz.endpointError() }}
+      </fl-alert>
     }
   `,
 })
 export class DnsWizardEndpointsStepComponent {
   protected wiz = inject(DnsSetupWizardService);
+
+  protected running(): boolean {
+    const phase = this.wiz.endpointPhase();
+    return phase === 'configuring' || phase === 'polling';
+  }
+
+  protected statusTone(app: AppEndpointStatus): StatusTone {
+    return STATUS_TONES[app.status] ?? 'neutral';
+  }
+
+  protected progressLabel(app: AppEndpointStatus): string {
+    if (app.status === 'done') return 'Done';
+    if (app.status === 'error') return 'Failed';
+    if (app.status === 'pending') return 'Waiting';
+    const label = this.phaseLabel(app) || 'Working…';
+    if (this.isRolloutPhase(app.phase) && app.rolloutProgress !== null) {
+      return `${label} (${app.rolloutProgress}%)`;
+    }
+    return label;
+  }
 
   protected phaseLabel(app: AppEndpointStatus): string {
     return PHASE_LABELS[app.phase] ?? '';
@@ -195,23 +174,23 @@ export class DnsWizardEndpointsStepComponent {
     }
   }
 
-  protected certBadgeClass(status: AppEndpointStatus['certStatus']): string {
+  protected certTone(status: AppEndpointStatus['certStatus']): StatusTone {
     switch (status) {
       case 'valid':
-        return 'bg-emerald-100 text-emerald-700';
+        return 'success';
       case 'issuing':
-        return 'bg-blue-100 text-blue-700';
+        return 'progress';
       case 'pending':
-        return 'bg-yellow-100 text-yellow-700';
+        return 'warning';
       case 'expired':
       case 'failed':
-        return 'bg-red-100 text-red-700';
+        return 'error';
       default:
-        return 'bg-muted text-muted-foreground';
+        return 'neutral';
     }
   }
 
-  protected certBadgeLabel(status: AppEndpointStatus['certStatus']): string {
+  protected certLabel(status: AppEndpointStatus['certStatus']): string {
     switch (status) {
       case 'valid':
         return 'Valid';

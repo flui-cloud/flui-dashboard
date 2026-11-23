@@ -1,77 +1,87 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideLoader, lucideRotateCcw } from '@ng-icons/lucide';
+import { Component, inject } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideRotateCcw } from '@ng-icons/lucide';
 import {
   DnsSetupWizardService,
   SYSTEM_APP_TITLES,
   SystemNameRow,
 } from './dns-setup-wizard.service';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
 
 @Component({
   selector: 'app-dns-wizard-names-step',
-  standalone: true,
-  imports: [NgIconComponent],
-  providers: [provideIcons({ lucideLoader, lucideRotateCcw })],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FlAlert, FlButton, FlIcon, FlSpinner],
+  providers: [provideIcons({ lucideRotateCcw })],
+  host: { class: 'fl-stack' },
   template: `
-    <h3 class="text-sm font-semibold text-foreground mb-1">Choose the addresses</h3>
-    <p class="text-xs text-muted-foreground mb-4">Keep the suggested names or change them.</p>
+    <p class="m-0 text-fl-body-sm text-fl-ink-muted">
+      Choose the addresses of the platform. Keep the suggested names or change them.
+    </p>
 
     @if (wiz.loadingNames()) {
-      <div class="flex-1 flex items-center justify-center py-6" data-testid="names-loading">
-        <ng-icon name="lucideLoader" class="h-5 w-5 animate-spin text-muted-foreground" />
+      <div
+        class="flex items-center gap-2 text-fl-body-sm text-fl-ink-muted"
+        data-testid="names-loading"
+      >
+        <fl-spinner label="Loading names" />
+        Loading the suggested names…
       </div>
     } @else {
-      <div class="flex flex-col gap-3 p-2">
+      <div class="flex flex-col gap-4">
         @for (row of wiz.systemNames(); track row.app) {
-          <div [attr.data-testid]="'name-row-' + row.app">
-            <label
-              class="text-xs font-medium text-foreground block mb-1"
-              [attr.for]="'name-' + row.app"
-              >{{ title(row) }}</label
-            >
-            <div class="flex items-stretch">
-              <input
-                type="text"
-                [id]="'name-' + row.app"
-                [value]="row.label"
-                (input)="wiz.setSystemName(row.app, $any($event.target).value)"
-                [disabled]="wiz.checkingNames()"
-                autocomplete="off"
-                spellcheck="false"
-                [attr.data-testid]="'name-input-' + row.app"
-                class="flex-1 min-w-0 px-3 py-1.5 border rounded-l-md bg-background text-sm text-foreground font-mono focus:outline-none focus:ring-1 focus:ring-primary"
-                [class.border-destructive]="row.error"
-              />
-              <span
-                class="inline-flex items-center px-2 py-1.5 border border-l-0 rounded-r-md bg-muted text-sm text-muted-foreground font-mono whitespace-nowrap select-none"
-              >
-                .{{ wiz.namesZoneName() }}
-              </span>
+          <div
+            class="fl-field"
+            [class.is-invalid]="!!row.error"
+            [attr.data-testid]="'name-row-' + row.app"
+          >
+            <label class="fl-field__label" [attr.for]="'name-' + row.app">{{ title(row) }}</label>
+            <div class="flex items-center gap-2">
+              <div class="fl-input fl-input--lg fl-mono flex-1">
+                <input
+                  type="text"
+                  [id]="'name-' + row.app"
+                  [value]="row.label"
+                  (input)="wiz.setSystemName(row.app, $any($event.target).value)"
+                  [disabled]="wiz.checkingNames()"
+                  autocomplete="off"
+                  spellcheck="false"
+                  [attr.aria-invalid]="!!row.error"
+                  [attr.data-testid]="'name-input-' + row.app"
+                />
+                <span class="whitespace-nowrap">.{{ wiz.namesZoneName() }}</span>
+              </div>
               @if (row.label !== row.defaultLabel) {
                 <button
+                  flButton="ghost"
+                  size="sm"
+                  [iconOnly]="true"
                   type="button"
                   (click)="wiz.setSystemName(row.app, row.defaultLabel)"
+                  [attr.aria-label]="'Back to ' + row.defaultLabel"
                   [title]="'Back to ' + row.defaultLabel"
                   [attr.data-testid]="'name-reset-' + row.app"
-                  class="ml-1 px-1.5 rounded text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  <ng-icon name="lucideRotateCcw" class="h-3.5 w-3.5" />
+                  <fl-icon name="lucideRotateCcw" />
                 </button>
               }
             </div>
             @if (row.error) {
-              <p class="mt-1 text-xs text-destructive" [attr.data-testid]="'name-error-' + row.app">
+              <span class="fl-field__error" [attr.data-testid]="'name-error-' + row.app">
                 {{ row.error }}
-              </p>
+              </span>
             }
           </div>
         }
-
-        @if (wiz.namesError()) {
-          <p class="text-xs text-destructive" data-testid="names-error">{{ wiz.namesError() }}</p>
-        }
       </div>
+
+      @if (wiz.namesError()) {
+        <fl-alert tone="error" title="Addresses not available" data-testid="names-error">
+          {{ wiz.namesError() }}
+        </fl-alert>
+      }
     }
   `,
 })

@@ -20,7 +20,7 @@ import { formatDate } from './snapshot-format';
   providers: [provideIcons({ lucideLock })],
   host: { class: 'block' },
   template: `
-    <div class="fl-table-wrap">
+    <div class="fl-table-wrap relative">
       <table flTable density="dense">
         <thead>
           <tr>

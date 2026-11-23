@@ -1,22 +1,12 @@
-import {
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
-  Component,
-  computed,
-  inject,
-  input,
-  signal,
-} from '@angular/core';
-import { NgClass } from '@angular/common';
+import { ChangeDetectorRef, Component, computed, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Observable } from 'rxjs';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideLockKeyhole,
-  lucideLockKeyholeOpen,
-  lucidePlay,
-  lucideTriangleAlert,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucidePencil, lucidePlay } from '@ng-icons/lucide';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlStatus } from '../../../ui/primitives/status';
 import { GateNoticeComponent } from './gate-notice.component';
 
 /**
@@ -49,117 +39,84 @@ const METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'PATCH'];
 
 @Component({
   selector: 'app-rest-console',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgIcon, NgClass, FormsModule, GateNoticeComponent],
-  providers: [
-    provideIcons({
-      lucideLockKeyhole,
-      lucideLockKeyholeOpen,
-      lucidePlay,
-      lucideTriangleAlert,
-    }),
-  ],
+  imports: [FormsModule, FlAlert, FlButton, FlIcon, FlStatus, GateNoticeComponent],
+  providers: [provideIcons({ lucidePencil, lucidePlay })],
   template: `
-    <div class="flex h-full min-w-0 flex-col gap-2">
-      <!-- Toolbar -->
-      <div class="flex flex-wrap items-center gap-2">
-        <span class="text-sm font-medium text-foreground">{{ title() }}</span>
-        <span class="font-mono text-xs text-muted-foreground">{{ syntaxHint() }}</span>
-
-        <button
-          type="button"
-          (click)="readOnly.set(!readOnly())"
-          class="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-xs"
-          [ngClass]="
-            readOnly()
-              ? 'border-border text-muted-foreground'
-              : 'border-amber-500/50 bg-amber-500/10 text-amber-700'
-          "
-          [title]="
-            readOnly()
-              ? 'Read-only is on — mutating requests are blocked. Click to allow writes.'
-              : 'Writes ALLOWED — create/delete/update will run. Click to lock.'
-          "
-        >
-          <ng-icon
-            [name]="readOnly() ? 'lucideLockKeyhole' : 'lucideLockKeyholeOpen'"
-            class="h-3.5 w-3.5"
-          />
-          {{ readOnly() ? 'Read-only' : 'Writes allowed' }}
-        </button>
-
-        <button
-          type="button"
-          (click)="run()"
-          [disabled]="running()"
-          class="inline-flex h-8 items-center gap-1.5 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
-        >
-          <ng-icon name="lucidePlay" class="h-3.5 w-3.5" />
-          {{ running() ? 'Running…' : 'Run' }}
-        </button>
+    <div class="flex h-full min-w-0 flex-col gap-3">
+      <div class="flex flex-wrap items-center gap-3">
+        <span class="text-fl-body font-semibold text-fl-ink">{{ title() }}</span>
+        <span class="font-mono text-fl-mono-sm text-fl-ink-muted">{{ syntaxHint() }}</span>
+        <span class="ml-auto fl-row">
+          @if (!readOnly()) {
+            <fl-status tone="warning" label="Writes allowed" />
+          }
+          <label
+            class="fl-check"
+            [title]="
+              readOnly()
+                ? 'Mutating requests are blocked. Clear to allow writes.'
+                : 'Create, update and delete requests will run.'
+            "
+          >
+            <input type="checkbox" [checked]="readOnly()" (change)="readOnly.set(!readOnly())" />
+            Read-only
+          </label>
+          <button flButton="primary" size="sm" type="button" (click)="run()" [disabled]="running()">
+            <fl-icon name="lucidePlay" [size]="14" />
+            {{ running() ? 'Running' : 'Run' }}
+          </button>
+        </span>
       </div>
 
       <app-gate-notice [engine]="engineLabel()" />
 
-      <!-- Examples -->
       @if (examples().length) {
-        <div class="flex flex-wrap items-center gap-1.5">
+        <div class="fl-row" role="group" aria-label="Examples">
           @for (ex of examples(); track ex.label) {
             <button
               type="button"
+              class="fl-chip"
               (click)="load(ex)"
-              class="rounded border border-border px-2 py-0.5 text-[11px] text-muted-foreground hover:bg-muted"
               [title]="ex.write ? 'Needs writes allowed' : 'Read-only'"
             >
               {{ ex.label }}
               @if (ex.write) {
-                <span class="ml-1 text-amber-600">✎</span>
+                <fl-icon class="text-fl-ink-muted" name="lucidePencil" [size]="13" />
               }
             </button>
           }
         </div>
       }
 
-      <!-- Request editor -->
       <textarea
         [(ngModel)]="text"
         (keydown.control.enter)="run()"
         (keydown.meta.enter)="run()"
         rows="6"
         spellcheck="false"
+        aria-label="Request"
         [placeholder]="placeholder()"
-        class="w-full shrink-0 rounded-md border border-border bg-muted px-3 py-2 font-mono text-xs text-foreground outline-none focus:border-primary"
+        class="fl-textarea shrink-0 font-mono text-fl-mono-sm"
       ></textarea>
 
       @if (error(); as e) {
-        <div
-          class="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive"
-        >
-          <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-3.5 w-3.5 shrink-0" />
+        <fl-alert tone="error" title="Request failed">
           <span class="whitespace-pre-wrap">{{ e }}</span>
-        </div>
+        </fl-alert>
       }
 
-      <!-- Response -->
       @if (response(); as r) {
-        <div class="flex min-h-0 flex-1 flex-col rounded-md border border-border">
-          <div
-            class="flex items-center gap-2 border-b border-border bg-muted/40 px-3 py-1.5 text-xs"
-          >
-            <span
-              class="rounded px-1.5 py-0.5 font-mono font-semibold"
-              [ngClass]="
-                r.status >= 400 ? 'bg-red-500/15 text-red-700' : 'bg-green-500/15 text-green-700'
-              "
-            >
-              {{ r.status }}
-            </span>
-            <span class="text-muted-foreground">{{ r.durationMs }} ms</span>
-          </div>
-          <pre class="flex-1 overflow-auto px-3 py-2 font-mono text-xs text-foreground">{{
-            pretty(r.body)
-          }}</pre>
+        <div class="fl-panel flex min-h-0 flex-1 flex-col" role="region" aria-label="Response">
+          <header class="fl-panel__header">
+            <h2 class="fl-panel__title">Response</h2>
+            <div class="fl-panel__actions">
+              <fl-status [tone]="r.status >= 400 ? 'error' : 'success'" [label]="'' + r.status" />
+              <span class="fl-toolbar__info fl-num">{{ r.durationMs }} ms</span>
+            </div>
+          </header>
+          <pre
+            class="m-0 min-h-0 flex-1 overflow-auto px-4 py-3 font-mono text-fl-mono-sm text-fl-ink"
+            >{{ pretty(r.body) }}</pre>
         </div>
       }
     </div>
@@ -173,7 +130,6 @@ export class RestConsoleComponent {
   readonly placeholder = input(
     'GET /_cat/indices?v\n\n# or with a body:\n# PUT /my-index\n# { "mappings": { "properties": { "name": { "type": "text" } } } }',
   );
-  /** Engine name for the read-only guardrail notice (gate is Flui-side, not engine-enforced). */
   readonly engineLabel = input('the engine');
 
   private readonly cdr = inject(ChangeDetectorRef);
@@ -184,28 +140,19 @@ export class RestConsoleComponent {
   readonly response = signal<RawConsoleResponse | null>(null);
   readonly error = signal('');
 
-  // Surface the editor's first line so the page could react if needed.
   readonly parsed = computed(() => this.text.trim().split('\n')[0]?.trim() ?? '');
 
   load(ex: RawConsoleExample): void {
-    // Populate the editor only — never enable write mode here. The write toggle is the single
-    // explicit, user-driven gate; the example's ✎ badge flags that it needs writes turned on.
     this.text = ex.text;
     this.error.set('');
   }
 
-  /** Populate the editor (used by the chat copilot to drop a generated request in). */
   setText(t: string): void {
     this.text = t;
     this.error.set('');
     this.cdr.markForCheck();
   }
 
-  /**
-   * Populate and run — the chat's "Run" executes through the console. `forceWrite` runs
-   * this single request with writes allowed (used after the copilot's confirm-write) without
-   * arming the persistent read-only toggle; reads pass forceWrite=false and honor the toggle.
-   */
   runText(t: string, forceWrite = false): void {
     this.setText(t);
     this.run(forceWrite);
@@ -234,7 +181,6 @@ export class RestConsoleComponent {
       this.error.set('Type a request, e.g. GET /_cat/indices');
       return null;
     }
-    // Skip leading comment/blank lines so the placeholder hints can be pasted as-is.
     const lines = raw.split('\n');
     let i = 0;
     while (i < lines.length && (!lines[i].trim() || lines[i].trim().startsWith('#'))) i++;

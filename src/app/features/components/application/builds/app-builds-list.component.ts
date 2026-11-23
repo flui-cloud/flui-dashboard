@@ -68,7 +68,7 @@ import { AppBuildRowComponent } from './app-build-row.component';
       </ng-container>
 
       @if (builds().length > 0) {
-        <div class="fl-table-wrap">
+        <div class="fl-table-wrap relative">
           <table flTable density="dense">
             <thead>
               <tr>

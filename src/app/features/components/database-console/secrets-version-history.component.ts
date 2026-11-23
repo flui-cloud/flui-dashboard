@@ -1,54 +1,71 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideClock, lucideUndo2 } from '@ng-icons/lucide';
+import { Component, inject } from '@angular/core';
 import { SecretRead } from '../../model/secrets-console.models';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
 import { SecretsConsoleStateService } from './secrets-console-state.service';
+
+type SecretVersion = SecretRead['versions'][number];
+
+function latest(sec: SecretRead): number {
+  return Math.max(...sec.versions.map((v) => v.version));
+}
 
 @Component({
   selector: 'app-secrets-version-history',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgIcon],
-  providers: [provideIcons({ lucideClock, lucideUndo2 })],
+  imports: [FlButton, FlPanel, FlStatus, FlTable],
+  host: { class: 'block' },
   template: `
     @if (!s.isNew() && s.selected(); as sec) {
       @if (sec.versions.length) {
-        <div class="border-t border-border px-4 py-3">
-          <div class="mb-2 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-            <ng-icon name="lucideClock" class="h-3.5 w-3.5" /> Version history
-          </div>
-          <div class="space-y-1">
-            @for (v of reversed(sec.versions); track v.version) {
-              <div class="flex items-center gap-2 rounded-md px-2 py-1 text-xs hover:bg-muted/50">
-                <button
-                  type="button"
-                  (click)="s.changeVersion(v.version)"
-                  class="font-mono"
-                  [class.font-semibold]="s.viewVersion() === v.version"
-                  [class.text-foreground]="s.viewVersion() === v.version"
-                  [class.text-muted-foreground]="s.viewVersion() !== v.version"
-                >
-                  v{{ v.version }}
-                </button>
-                <span class="truncate text-muted-foreground">{{ v.createdTime }}</span>
-                @if (v.destroyed) {
-                  <span class="text-destructive">destroyed</span>
-                } @else if (v.deleted) {
-                  <span class="text-amber-600">deleted</span>
-                  <button
-                    type="button"
-                    (click)="s.undelete(v.version)"
-                    [disabled]="s.readOnly()"
-                    class="ml-auto inline-flex items-center gap-1 text-muted-foreground hover:text-foreground disabled:opacity-40"
-                  >
-                    <ng-icon name="lucideUndo2" class="h-3.5 w-3.5" />
-                    Undelete
-                  </button>
+        <fl-panel title="Version history" [count]="sec.versions.length" [flush]="true">
+          <div class="fl-table-wrap relative">
+            <table flTable density="dense">
+              <thead>
+                <tr>
+                  <th scope="col">Version</th>
+                  <th scope="col">Created</th>
+                  <th scope="col">State</th>
+                  <th scope="col" class="is-fit"><span class="fl-sr">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (v of reversed(sec.versions); track v.version) {
+                  <tr [class.is-selected]="s.viewVersion() === v.version">
+                    <td>
+                      <button
+                        type="button"
+                        class="fl-link fl-mono"
+                        [attr.aria-current]="s.viewVersion() === v.version ? 'true' : null"
+                        (click)="s.changeVersion(v.version)"
+                      >
+                        v{{ v.version }}
+                      </button>
+                    </td>
+                    <td class="fl-mono text-fl-ink-muted">{{ v.createdTime }}</td>
+                    <td>
+                      <fl-status [tone]="tone(v, sec)" [label]="label(v, sec)" />
+                    </td>
+                    <td class="is-fit">
+                      @if (!v.destroyed && v.deleted) {
+                        <button
+                          flButton="ghost"
+                          size="sm"
+                          type="button"
+                          [disabled]="s.readOnly()"
+                          (click)="s.undelete(v.version)"
+                        >
+                          Undelete
+                        </button>
+                      }
+                    </td>
+                  </tr>
                 }
-              </div>
-            }
+              </tbody>
+            </table>
           </div>
-        </div>
+        </fl-panel>
       }
     }
   `,
@@ -58,5 +75,17 @@ export class SecretsVersionHistoryComponent {
 
   reversed(versions: SecretRead['versions']): SecretRead['versions'] {
     return [...versions].reverse();
+  }
+
+  protected tone(v: SecretVersion, sec: SecretRead): StatusTone {
+    if (v.destroyed) return 'error';
+    if (v.deleted) return 'warning';
+    return v.version === latest(sec) ? 'success' : 'neutral';
+  }
+
+  protected label(v: SecretVersion, sec: SecretRead): string {
+    if (v.destroyed) return 'Destroyed';
+    if (v.deleted) return 'Deleted';
+    return v.version === latest(sec) ? 'Latest' : 'Older';
   }
 }

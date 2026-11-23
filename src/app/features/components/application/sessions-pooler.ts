@@ -28,7 +28,7 @@ import { formatAge, pooledClientWho } from './app-sessions-view';
       </p>
       @if (open()) {
         <div class="flex flex-col border-t border-fl-border" data-testid="sessions-pooler">
-          <div class="fl-table-wrap">
+          <div class="fl-table-wrap relative">
             <table flTable density="dense">
               <thead>
                 <tr>

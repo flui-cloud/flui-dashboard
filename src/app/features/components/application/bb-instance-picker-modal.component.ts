@@ -1,89 +1,83 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnChanges,
-  computed,
-  inject,
-  input,
-  signal,
-  output,
-} from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideCircleAlert,
-  lucideCircleCheck,
-  lucideDatabase,
-  lucideLoader,
-  lucideTriangleAlert,
-  lucideX,
-} from '@ng-icons/lucide';
+import { Component, OnChanges, computed, inject, input, signal, output } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideX } from '@ng-icons/lucide';
 import { CatalogReusableInstanceDto } from '../../../core/api/model/catalogReusableInstanceDto';
 import { CatalogService } from '../../service/catalog.service';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlLoadingState } from '../../../ui/patterns/states';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
+import { FlDialogFocus } from '../../../ui/overlays/dialog-focus';
+
+const STATUS_TONES: Partial<Record<CatalogReusableInstanceDto.StatusEnum, StatusTone>> = {
+  running: 'success',
+  degraded: 'warning',
+  failed: 'error',
+  pending: 'progress',
+  awaiting_build: 'progress',
+  provisioning: 'progress',
+  waiting_for_room: 'progress',
+  updating: 'progress',
+  rolling_back: 'progress',
+  deleting: 'progress',
+};
 
 @Component({
   selector: 'app-bb-instance-picker-modal',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgIcon],
-  providers: [
-    provideIcons({
-      lucideCircleAlert,
-      lucideCircleCheck,
-      lucideDatabase,
-      lucideLoader,
-      lucideTriangleAlert,
-      lucideX,
-    }),
-  ],
+  imports: [FlDialogFocus, FlAlert, FlLoadingState, FlTable, FlButton, FlIcon, FlSpinner, FlStatus],
+  providers: [provideIcons({ lucideX })],
   template: `
     <div
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
       (click)="onBackdropClick($event)"
     >
       <div
-        class="w-full max-w-lg rounded-fl-lg border border-border bg-card p-6"
+        class="fl-dialog fl-dialog--wide"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="bb-picker-title"
+        flDialogFocus
+        (dismissed)="cancelled.emit()"
         (click)="$event.stopPropagation()"
       >
-        <div class="flex items-start justify-between gap-3">
-          <div>
-            <h3 class="text-base font-semibold text-foreground">
-              {{ title() }}
-            </h3>
-            <p class="mt-1 text-sm text-muted-foreground">
-              @if (bbSlugs().length > 1) {
-                Pick a target install — this client connects to {{ slugList() }}. Credentials are
-                wired automatically.
-              } @else {
-                Pick the {{ bbLabel() }} install to connect to. Credentials are wired automatically
-                — no passwords required.
-              }
-            </p>
-          </div>
+        <header class="fl-dialog__header">
+          <h2 class="fl-dialog__title" id="bb-picker-title">{{ title() }}</h2>
           <button
             type="button"
+            class="fl-dialog__close"
+            aria-label="Close"
             (click)="cancelled.emit()"
-            class="rounded p-1 text-muted-foreground transition hover:bg-muted hover:text-foreground"
-            title="Close"
           >
-            <ng-icon name="lucideX" class="h-4 w-4" />
+            <fl-icon name="lucideX" />
           </button>
-        </div>
-
-        <div class="mt-5 space-y-3">
+        </header>
+        <div class="fl-dialog__body">
+          <p class="text-fl-ink-secondary">
+            @if (bbSlugs().length > 1) {
+              Pick the install this client connects to ({{ slugList() }}). Credentials are wired
+              automatically.
+            } @else {
+              Pick the {{ bbLabel() }} install to connect to. Credentials are wired automatically,
+              no password needed.
+            }
+          </p>
           @if (bbSlugs().length > 1 && !loading() && allInstances().length > 0) {
-            <div class="flex flex-wrap items-center gap-1.5">
+            <div class="fl-segmented self-start" role="group" aria-label="Filter by type">
               <button
                 type="button"
+                [attr.aria-pressed]="slugFilter() === null"
                 (click)="setSlugFilter(null)"
-                [class]="slugChipClass(slugFilter() === null)"
               >
                 All
               </button>
               @for (s of bbSlugs(); track s) {
                 <button
                   type="button"
+                  [attr.aria-pressed]="slugFilter() === s"
                   (click)="setSlugFilter(s)"
-                  [class]="slugChipClass(slugFilter() === s)"
                 >
                   {{ s }}
                 </button>
@@ -91,114 +85,96 @@ import { CatalogService } from '../../service/catalog.service';
             </div>
           }
           @if (loading()) {
-            <div class="flex items-center gap-2 text-sm text-muted-foreground">
-              <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
-              Loading running {{ bbLabel() }} instances…
-            </div>
+            <fl-loading-state />
           } @else if (error()) {
-            <div
-              class="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive"
-            >
-              <ng-icon name="lucideCircleAlert" class="h-4 w-4 mt-0.5" />
-              <div>{{ error() }}</div>
-            </div>
+            <fl-alert tone="error" title="Could not load instances">{{ error() }}</fl-alert>
           } @else if (instances().length === 0) {
-            <div class="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4">
-              <ng-icon name="lucideTriangleAlert" class="h-5 w-5 shrink-0 text-amber-600" />
-              <div class="text-sm">
-                <p class="font-medium text-amber-800">
-                  No running {{ bbLabel() }} found on this cluster
-                </p>
-                <p class="mt-1 text-xs text-amber-700">
-                  @if (bbSlugs().length > 1) {
-                    Install one of {{ slugList() }} first, then come back here to connect.
-                  } @else {
-                    Install a {{ bbLabel() }} first, then come back here to connect.
-                  }
-                </p>
-              </div>
-            </div>
-          } @else {
-            <ul class="space-y-2">
-              @for (
-                instance of instances();
-                track instance.catalogInstallId || instance.applicationId
-              ) {
-                <li>
-                  <button
-                    type="button"
-                    (click)="select(instance)"
-                    [disabled]="!canPick(instance)"
-                    [class]="cardClass(isSelected(instance), !canPick(instance))"
-                  >
-                    <div class="flex items-start gap-3">
-                      <ng-icon name="lucideDatabase" class="h-5 w-5 text-primary mt-0.5" />
-                      <div class="min-w-0 flex-1 text-left">
-                        <div class="flex flex-wrap items-center gap-2">
-                          <span class="text-sm font-semibold text-foreground">
-                            {{ instance.displayName }}
-                          </span>
-                          <span [class]="statusBadgeClass(instance.status)">
-                            {{ instance.status }}
-                          </span>
-                          @if (bbSlugs().length > 1 && instance.catalogSlug) {
-                            <span
-                              class="rounded-fl-sm border border-fl-border bg-fl-surface px-1.5 py-0.5 text-[10px] font-medium text-sky-800"
-                            >
-                              {{ instance.catalogSlug }}
-                            </span>
-                          }
-                          @if (
-                            instance.catalogInstallId &&
-                            instance.catalogInstallId === currentConnectedInstallId()
-                          ) {
-                            <span
-                              class="rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground"
-                            >
-                              Current
-                            </span>
-                          }
-                        </div>
-                        <div class="mt-0.5 text-xs text-muted-foreground">
-                          {{ instance.applicationName }}
-                        </div>
-                        @if (!instance.catalogInstallId) {
-                          <div class="mt-1 text-[11px] text-amber-700">
-                            Not installed via catalog — can't be linked.
-                          </div>
-                        }
-                      </div>
-                      @if (isSelected(instance)) {
-                        <ng-icon name="lucideCircleCheck" class="h-5 w-5 text-primary" />
-                      }
-                    </div>
-                  </button>
-                </li>
+            <fl-alert tone="warning" [title]="'No running ' + bbLabel() + ' on this cluster'">
+              @if (bbSlugs().length > 1) {
+                Install one of {{ slugList() }} first, then come back to connect.
+              } @else {
+                Install a {{ bbLabel() }} first, then come back to connect.
               }
-            </ul>
+            </fl-alert>
+          } @else {
+            <div class="fl-table-wrap rounded-fl-md border border-fl-border">
+              <table flTable density="dense">
+                <thead>
+                  <tr>
+                    <th scope="col" class="is-fit"><span class="fl-sr">Select</span></th>
+                    <th scope="col">Install</th>
+                    <th scope="col">Application</th>
+                    @if (bbSlugs().length > 1) {
+                      <th scope="col">Type</th>
+                    }
+                    <th scope="col">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (
+                    instance of instances();
+                    track instance.catalogInstallId || instance.applicationId
+                  ) {
+                    <tr
+                      [class.is-selected]="isSelected(instance)"
+                      [class.cursor-pointer]="canPick(instance)"
+                      (click)="select(instance)"
+                    >
+                      <td class="is-fit">
+                        <input
+                          type="radio"
+                          name="bb-instance"
+                          [attr.aria-label]="'Select ' + instance.displayName"
+                          [checked]="isSelected(instance)"
+                          [disabled]="!canPick(instance)"
+                          (click)="$event.stopPropagation(); select(instance)"
+                        />
+                      </td>
+                      <td class="whitespace-normal">
+                        <span class="font-medium">{{ instance.displayName }}</span>
+                        @if (
+                          instance.catalogInstallId &&
+                          instance.catalogInstallId === currentConnectedInstallId()
+                        ) {
+                          <span class="text-fl-ink-muted"> (current)</span>
+                        }
+                        @if (!instance.catalogInstallId) {
+                          <span class="block text-fl-caption text-fl-ink-muted">
+                            Not installed from the catalog, cannot be linked
+                          </span>
+                        }
+                      </td>
+                      <td class="fl-mono">{{ instance.applicationName }}</td>
+                      @if (bbSlugs().length > 1) {
+                        <td class="fl-mono">{{ instance.catalogSlug ?? '' }}</td>
+                      }
+                      <td>
+                        <fl-status
+                          [tone]="statusTone(instance.status)"
+                          [label]="statusLabel(instance.status)"
+                        />
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
           }
         </div>
-
-        <div class="mt-6 flex items-center justify-end gap-2">
+        <footer class="fl-dialog__footer">
+          <button flButton="ghost" type="button" (click)="cancelled.emit()">Cancel</button>
           <button
+            flButton="primary"
             type="button"
-            (click)="cancelled.emit()"
-            class="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition hover:bg-muted"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            (click)="confirmPick()"
             [disabled]="!selectedId() || submitting()"
-            class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+            (click)="confirmPick()"
           >
             @if (submitting()) {
-              <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
+              <fl-spinner [label]="confirmLabel()" />
             }
             {{ confirmLabel() }}
           </button>
-        </div>
+        </footer>
       </div>
     </div>
   `,
@@ -269,19 +245,8 @@ export class BbInstancePickerModalComponent implements OnChanges {
     this.slugFilter.set(slug);
   }
 
-  protected slugChipClass(active: boolean): string {
-    const base = 'rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition';
-    return active
-      ? `${base} border-primary bg-primary text-primary-foreground`
-      : `${base} border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground`;
-  }
-
   protected canPick(instance: CatalogReusableInstanceDto): boolean {
-    if (!instance.catalogInstallId) return false;
-    // Allow re-picking the current one (Change DB with same target = no-op) but
-    // visually nothing will happen — the confirm button stays enabled only when
-    // the selection differs from current.
-    return true;
+    return !!instance.catalogInstallId;
   }
 
   protected isSelected(instance: CatalogReusableInstanceDto): boolean {
@@ -302,26 +267,12 @@ export class BbInstancePickerModalComponent implements OnChanges {
     if (event.target === event.currentTarget) this.cancelled.emit();
   }
 
-  protected cardClass(selected: boolean, disabled: boolean): string {
-    const base = 'flex w-full items-start rounded-lg border p-4 text-left transition';
-    if (disabled) return `${base} border-border bg-muted/20 opacity-60 cursor-not-allowed`;
-    return selected
-      ? `${base} border-primary bg-primary/5`
-      : `${base} border-border hover:bg-accent/40`;
+  protected statusTone(status: CatalogReusableInstanceDto.StatusEnum): StatusTone {
+    return STATUS_TONES[status] ?? 'neutral';
   }
 
-  protected statusBadgeClass(status: CatalogReusableInstanceDto.StatusEnum): string {
-    const base =
-      'inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium capitalize';
-    switch (status) {
-      case CatalogReusableInstanceDto.StatusEnum.Running:
-        return `${base} bg-emerald-100 text-emerald-700`;
-      case CatalogReusableInstanceDto.StatusEnum.Degraded:
-        return `${base} bg-amber-100 text-amber-700`;
-      case CatalogReusableInstanceDto.StatusEnum.Failed:
-        return `${base} bg-rose-100 text-rose-700`;
-      default:
-        return `${base} bg-muted text-muted-foreground`;
-    }
+  protected statusLabel(status: CatalogReusableInstanceDto.StatusEnum): string {
+    const text = status.replaceAll('_', ' ');
+    return text.charAt(0).toUpperCase() + text.slice(1);
   }
 }

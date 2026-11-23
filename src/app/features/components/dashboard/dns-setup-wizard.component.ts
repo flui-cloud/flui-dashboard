@@ -1,27 +1,8 @@
-import {
-  Component,
-  inject,
-  output,
-  OnInit,
-  signal,
-  computed,
-  ChangeDetectionStrategy,
-} from '@angular/core';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideX,
-  lucideArrowRight,
-  lucideArrowLeft,
-  lucideShieldCheck,
-  lucideLoader,
-  lucideFileText,
-  lucideCopy,
-  lucideCheck,
-  lucideExternalLink,
-  lucideSettings,
-} from '@ng-icons/lucide';
+import { Component, inject, output, OnInit, signal, computed } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideExternalLink, lucideX } from '@ng-icons/lucide';
 import { DashboardDnsService } from '../../service/dashboard-dns.service';
-import { DnsSetupWizardService } from './dns-setup-wizard.service';
+import { DnsSetupWizardService, WizardStep as DnsStep } from './dns-setup-wizard.service';
 import { DnsWizardModeStepComponent } from './dns-wizard-mode-step.component';
 import { DnsWizardZoneStepComponent } from './dns-wizard-zone-step.component';
 import { DnsWizardNamesStepComponent } from './dns-wizard-names-step.component';
@@ -29,12 +10,38 @@ import { DnsWizardIssuerStepComponent } from './dns-wizard-issuer-step.component
 import { DnsWizardEndpointsStepComponent } from './dns-wizard-endpoints-step.component';
 import { DnsWizardEndpointsConfigStepComponent } from './dns-wizard-endpoints-config-step.component';
 import { DnsWizardDoneStepComponent } from './dns-wizard-done-step.component';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlCopyId } from '../../../ui/patterns/copy-id';
+import { FlWizardSteps, WizardStep } from '../../../ui/patterns/wizard-steps';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+import { FlStatus } from '../../../ui/primitives/status';
+import { FlDialogFocus } from '../../../ui/overlays/dialog-focus';
+
+const STEP_NAMES: Record<DnsStep, string> = {
+  mode: 'Certificate method',
+  zone: 'Domain',
+  names: 'Addresses',
+  issuer: 'Certificate issuer',
+  'endpoints-config': 'App addresses',
+  endpoints: 'Publish',
+  done: 'Done',
+};
 
 @Component({
   selector: 'app-dns-setup-wizard',
-  standalone: true,
   imports: [
-    NgIconComponent,
+    FlDialogFocus,
+    FlPanel,
+    FlTable,
+    FlCopyId,
+    FlWizardSteps,
+    FlButton,
+    FlIcon,
+    FlSpinner,
+    FlStatus,
     DnsWizardModeStepComponent,
     DnsWizardZoneStepComponent,
     DnsWizardNamesStepComponent,
@@ -43,299 +50,204 @@ import { DnsWizardDoneStepComponent } from './dns-wizard-done-step.component';
     DnsWizardEndpointsConfigStepComponent,
     DnsWizardDoneStepComponent,
   ],
-  providers: [
-    DnsSetupWizardService,
-    provideIcons({
-      lucideX,
-      lucideArrowRight,
-      lucideArrowLeft,
-      lucideShieldCheck,
-      lucideLoader,
-      lucideFileText,
-      lucideCopy,
-      lucideCheck,
-      lucideExternalLink,
-      lucideSettings,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  providers: [DnsSetupWizardService, provideIcons({ lucideX, lucideExternalLink })],
   template: `
-    <!-- Modal backdrop -->
     <div
-      class="fixed inset-0 z-50 flex items-center justify-center p-4"
+      class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
       (click)="onBackdropClick($event)"
     >
-      <div class="absolute inset-0 bg-black/50"></div>
-
-      <!-- Dialog -->
       <div
-        class="relative z-10 bg-card border border-border rounded-fl-lg w-full max-w-2xl"
+        class="fl-dialog fl-dialog--wide"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="dns-wizard-title"
+        flDialogFocus
+        (dismissed)="close()"
         (click)="$event.stopPropagation()"
       >
+        <header class="fl-dialog__header">
+          <h2 class="fl-dialog__title" id="dns-wizard-title">
+            {{ showingRecap() ? 'DNS and certificates' : 'Set up public access' }}
+          </h2>
+          <button type="button" class="fl-dialog__close" aria-label="Close" (click)="close()">
+            <fl-icon name="lucideX" />
+          </button>
+        </header>
+
         @if (showingRecap()) {
-          <!-- ── RECAP MODE ── -->
-          <!-- Header -->
-          <div class="flex items-center justify-between px-6 py-4 border-b border-border">
-            <div class="flex items-center gap-2.5">
-              <div class="h-8 w-8 rounded-lg bg-emerald-100 flex items-center justify-center">
-                <ng-icon name="lucideShieldCheck" class="h-4 w-4 text-emerald-500" />
-              </div>
-              <div>
-                <h2 class="font-semibold text-foreground text-sm">DNS & Certificates</h2>
-                <p class="text-xs text-muted-foreground">All services configured</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              (click)="close()"
-              class="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            >
-              <ng-icon name="lucideX" class="h-4 w-4" />
-            </button>
-          </div>
-
-          <!-- Full green progress bar -->
-          <div class="h-1 bg-emerald-500"></div>
-
-          <!-- Recap content -->
-          <div class="px-6 py-5 min-h-[180px] max-h-[420px] flex flex-col overflow-y-auto gap-4">
-            <!-- Success header -->
-            <div class="flex items-center gap-3">
-              <div
-                class="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0"
-              >
-                <ng-icon name="lucideShieldCheck" class="h-5 w-5 text-emerald-500" />
-              </div>
-              <div>
-                <p class="text-sm font-semibold text-foreground">Everything is live</p>
-                <p class="text-xs text-muted-foreground mt-0.5">
-                  All apps are publicly accessible with active TLS certificates.
-                </p>
-              </div>
-            </div>
-
-            <!-- App list -->
-            <div class="flex flex-col gap-0 rounded-lg border border-border overflow-hidden">
-              @for (app of recapApps(); track app.label) {
-                <div class="flex items-center gap-3 px-4 py-3 border-b border-border last:border-0">
-                  <ng-icon
-                    name="lucideShieldCheck"
-                    class="h-4 w-4 text-emerald-500 flex-shrink-0"
-                  />
-                  <div class="flex-1 min-w-0">
-                    <p class="text-xs font-semibold text-foreground">{{ app.label }}</p>
-                    <p class="text-xs text-muted-foreground font-mono truncate">
-                      https://{{ app.domain }}
-                    </p>
-                  </div>
-                  <a
-                    href="https://{{ app.domain }}"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="flex-shrink-0 text-muted-foreground hover:text-primary transition-colors"
-                    title="Open {{ app.domain }}"
-                    (click)="$event.stopPropagation()"
-                  >
-                    <ng-icon name="lucideExternalLink" class="h-3.5 w-3.5" />
-                  </a>
-                </div>
-              }
-            </div>
-
-            <div class="rounded-md bg-muted/60 px-4 py-2.5">
-              <p class="text-xs text-muted-foreground">
-                Use <span class="font-medium text-foreground">Reconfigure</span> to change domains,
-                certificate providers, or add new endpoints.
-              </p>
-            </div>
-          </div>
-
-          <!-- Recap footer -->
-          <div class="flex items-center justify-between px-6 py-4 border-t border-border">
-            <button
-              type="button"
-              (click)="startReconfigure()"
-              class="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ng-icon name="lucideSettings" class="h-3.5 w-3.5" />
-              Reconfigure
-            </button>
-            <button
-              type="button"
-              (click)="close()"
-              class="flex items-center gap-1.5 rounded-md bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-            >
-              Close
-            </button>
-          </div>
-        } @else {
-          <!-- ── WIZARD MODE ── -->
-          <!-- Header -->
-          <div class="flex items-center justify-between px-6 py-4 border-b border-border">
-            <div class="flex items-center gap-2.5">
-              <div class="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                <ng-icon name="lucideShieldCheck" class="h-4 w-4 text-primary" />
-              </div>
-              <div>
-                <h2 class="font-semibold text-foreground text-sm">Set up public access</h2>
-                <p class="text-xs text-muted-foreground">
-                  Step {{ wiz.stepIndex() + 1 }} of {{ wiz.totalSteps() }}
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              (click)="close()"
-              class="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            >
-              <ng-icon name="lucideX" class="h-4 w-4" />
-            </button>
-          </div>
-
-          <!-- Progress bar -->
-          <div class="h-1 bg-muted">
-            <div
-              class="h-full bg-primary transition-all duration-300"
-              [style.width.%]="((wiz.stepIndex() + 1) / wiz.totalSteps()) * 100"
-            ></div>
-          </div>
-
-          <!-- Content area -->
-          <div class="px-6 py-5 min-h-[180px] max-h-[420px] flex flex-col">
-            <div class="flex flex-col flex-1 overflow-y-auto">
-              @switch (wiz.currentStep()) {
-                @case ('mode') {
-                  <app-dns-wizard-mode-step />
-                }
-                @case ('zone') {
-                  <app-dns-wizard-zone-step />
-                }
-                @case ('names') {
-                  <app-dns-wizard-names-step />
-                }
-                @case ('issuer') {
-                  <app-dns-wizard-issuer-step />
-                }
-                @case ('endpoints-config') {
-                  <app-dns-wizard-endpoints-config-step />
-                }
-                @case ('endpoints') {
-                  <app-dns-wizard-endpoints-step />
-                }
-                @case ('done') {
-                  <app-dns-wizard-done-step [clusterId]="clusterId() ?? ''" />
-                }
-              }
-            </div>
-          </div>
-
-          <!-- Error detail popup (Step 4) -->
-          @if (wiz.activeAppError()) {
-            <div
-              class="absolute inset-0 z-20 bg-black/40 flex items-center justify-center p-6 rounded-fl-lg"
-              (click)="wiz.closeAppError()"
-            >
-              <div
-                class="bg-card border border-border rounded-lg w-full max-w-md flex flex-col max-h-80"
-                (click)="$event.stopPropagation()"
-              >
-                <!-- Popup header -->
-                <div
-                  class="flex items-center justify-between px-4 py-3 border-b border-border flex-shrink-0"
-                >
-                  <div class="flex items-center gap-2">
-                    <ng-icon name="lucideFileText" class="h-4 w-4 text-destructive" />
-                    <span class="text-sm font-semibold text-foreground"
-                      >{{ wiz.activeAppError()!.label }} — Details</span
-                    >
-                  </div>
-                  <div class="flex items-center gap-1">
-                    @if (wiz.activeAppError()!.certMessage || wiz.activeAppError()!.errorMessage) {
-                      <button
-                        type="button"
-                        (click)="wiz.copyAppErrorMessage()"
-                        title="Copy message"
-                        class="p-1.5 rounded text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        <ng-icon
-                          [name]="wiz.appErrorCopied() ? 'lucideCheck' : 'lucideCopy'"
-                          class="h-3.5 w-3.5"
+          <div class="fl-dialog__body">
+            <fl-status tone="success" label="Everything is live" />
+            <p class="m-0 text-fl-body-sm text-fl-ink-muted">
+              All apps are publicly reachable with active TLS certificates. Use Reconfigure to
+              change domains, certificate providers or endpoints.
+            </p>
+            <div class="fl-table-wrap">
+              <table flTable density="dense">
+                <thead>
+                  <tr>
+                    <th scope="col">App</th>
+                    <th scope="col">Address</th>
+                    <th scope="col" class="is-fit"><span class="fl-sr">Open</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (app of recapApps(); track app.label) {
+                    <tr>
+                      <td>{{ app.label }}</td>
+                      <td>
+                        <fl-copy-id
+                          [value]="'https://' + app.domain"
+                          label="address"
+                          [display]="app.domain"
                         />
-                      </button>
-                    }
-                    <button
-                      type="button"
-                      (click)="wiz.closeAppError()"
-                      class="p-1.5 rounded text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      <ng-icon name="lucideX" class="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-                <!-- Popup body -->
-                <div class="overflow-y-auto p-4 flex-1">
-                  @let msg =
-                    wiz.activeAppError()!.certMessage || wiz.activeAppError()!.errorMessage;
-                  @if (msg) {
-                    <div class="rounded-md border border-red-200 bg-red-50 px-3 py-2">
-                      <p class="text-xs text-red-700 font-mono leading-relaxed break-all">
-                        {{ msg }}
-                      </p>
-                    </div>
+                      </td>
+                      <td class="is-fit">
+                        <a
+                          flButton="ghost"
+                          size="sm"
+                          [iconOnly]="true"
+                          href="https://{{ app.domain }}"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          [attr.aria-label]="'Open ' + app.domain"
+                          (click)="$event.stopPropagation()"
+                        >
+                          <fl-icon name="lucideExternalLink" />
+                        </a>
+                      </td>
+                    </tr>
                   }
-                </div>
-              </div>
+                </tbody>
+              </table>
             </div>
-          }
+          </div>
+          <footer class="fl-dialog__footer">
+            <button flButton type="button" (click)="startReconfigure()">Reconfigure</button>
+            <button flButton="primary" type="button" (click)="close()">Close</button>
+          </footer>
+        } @else {
+          <div class="fl-dialog__body">
+            <div class="fl-wizard">
+              <nav aria-label="Steps">
+                <fl-wizard-steps [steps]="wizardSteps()" [current]="wiz.stepIndex()" />
+              </nav>
 
-          <!-- Footer -->
-          <div class="flex items-center justify-between px-6 py-4 border-t border-border">
+              <fl-panel [title]="stepName()">
+                @switch (wiz.currentStep()) {
+                  @case ('mode') {
+                    <app-dns-wizard-mode-step />
+                  }
+                  @case ('zone') {
+                    <app-dns-wizard-zone-step />
+                  }
+                  @case ('names') {
+                    <app-dns-wizard-names-step />
+                  }
+                  @case ('issuer') {
+                    <app-dns-wizard-issuer-step />
+                  }
+                  @case ('endpoints-config') {
+                    <app-dns-wizard-endpoints-config-step />
+                  }
+                  @case ('endpoints') {
+                    <app-dns-wizard-endpoints-step />
+                  }
+                  @case ('done') {
+                    <app-dns-wizard-done-step [clusterId]="clusterId() ?? ''" />
+                  }
+                }
+              </fl-panel>
+            </div>
+          </div>
+
+          <footer class="fl-dialog__footer">
+            @if (wiz.currentStep() !== 'done') {
+              <button flButton="ghost" type="button" (click)="close()">Cancel</button>
+            }
             <button
+              flButton
               type="button"
               (click)="back()"
               [disabled]="wiz.stepIndex() === 0 || wiz.saving() || wiz.isAutoRunning()"
-              class="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <ng-icon name="lucideArrowLeft" class="h-3.5 w-3.5" />
-              Back
+              Previous
             </button>
-
-            <div class="flex items-center gap-2">
-              @if (wiz.currentStep() !== 'done') {
-                <button
-                  type="button"
-                  (click)="next()"
-                  [disabled]="!wiz.canProceed() || wiz.saving() || wiz.isAutoRunning()"
-                  class="flex items-center gap-1.5 rounded-md bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  @if (wiz.saving()) {
-                    <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
-                    Configuring…
-                  } @else if (wiz.registeringZone()) {
-                    <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
-                    Adding domain…
-                  } @else if (wiz.checkingNames() || wiz.checkingDirect()) {
-                    <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
-                    Checking…
-                  } @else {
-                    Next
-                    <ng-icon name="lucideArrowRight" class="h-3.5 w-3.5" />
-                  }
-                </button>
-              } @else {
-                <button
-                  type="button"
-                  (click)="close()"
-                  class="flex items-center gap-1.5 rounded-md bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-                >
-                  Close
-                </button>
-              }
-            </div>
-          </div>
+            @if (wiz.currentStep() !== 'done') {
+              <button
+                flButton="primary"
+                type="button"
+                (click)="next()"
+                [disabled]="!wiz.canProceed() || wiz.saving() || wiz.isAutoRunning()"
+              >
+                @if (wiz.saving()) {
+                  <fl-spinner label="Configuring" />
+                  Configuring…
+                } @else if (wiz.registeringZone()) {
+                  <fl-spinner label="Adding domain" />
+                  Adding domain…
+                } @else if (wiz.checkingNames() || wiz.checkingDirect()) {
+                  <fl-spinner label="Checking" />
+                  Checking…
+                } @else {
+                  Next
+                }
+              </button>
+            } @else {
+              <button flButton="primary" type="button" (click)="close()">Close</button>
+            }
+          </footer>
         }
       </div>
     </div>
+
+    @if (wiz.activeAppError(); as appError) {
+      <div
+        class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+        (click)="wiz.closeAppError()"
+      >
+        <div
+          class="fl-dialog"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="dns-wizard-error-title"
+          flDialogFocus
+          (dismissed)="wiz.closeAppError()"
+          (click)="$event.stopPropagation()"
+        >
+          <header class="fl-dialog__header">
+            <h2 class="fl-dialog__title" id="dns-wizard-error-title">
+              {{ appError.label }} details
+            </h2>
+            <button
+              type="button"
+              class="fl-dialog__close"
+              aria-label="Close"
+              (click)="wiz.closeAppError()"
+            >
+              <fl-icon name="lucideX" />
+            </button>
+          </header>
+          <div class="fl-dialog__body">
+            @let msg = appError.certMessage || appError.errorMessage;
+            @if (msg) {
+              <pre
+                class="fl-mono m-0 whitespace-pre-wrap break-all rounded-fl-md border border-fl-border bg-fl-surface-subtle p-3"
+                >{{ msg }}</pre>
+            } @else {
+              <p class="m-0 text-fl-ink-muted">No details reported.</p>
+            }
+          </div>
+          <footer class="fl-dialog__footer">
+            @if (appError.certMessage || appError.errorMessage) {
+              <button flButton type="button" (click)="wiz.copyAppErrorMessage()">
+                {{ wiz.appErrorCopied() ? 'Copied' : 'Copy message' }}
+              </button>
+            }
+            <button flButton="primary" type="button" (click)="wiz.closeAppError()">Close</button>
+          </footer>
+        </div>
+      </div>
+    }
   `,
 })
 export class DnsSetupWizardComponent implements OnInit {
@@ -346,6 +258,12 @@ export class DnsSetupWizardComponent implements OnInit {
 
   protected clusterId = this.dashboardDnsService.targetClusterId;
   protected showingRecap = signal(false);
+
+  protected readonly wizardSteps = computed<WizardStep[]>(() =>
+    this.wiz.steps().map((step) => ({ name: STEP_NAMES[step] })),
+  );
+
+  protected readonly stepName = computed(() => STEP_NAMES[this.wiz.currentStep()] ?? '');
 
   protected recapApps = computed(() => {
     const status = this.dashboardDnsService.status();
@@ -384,7 +302,6 @@ export class DnsSetupWizardComponent implements OnInit {
 
   private nextFromMode(): void {
     this.wiz.advance();
-    // In direct mode: entering issuer step — load existing HTTP-01 issuer if any
     if (this.wiz.currentStep() === 'issuer' && this.wiz.certMode() === 'direct') {
       const clusterId = this.clusterId();
       if (clusterId) this.wiz.loadHttpIssuer(clusterId);
@@ -410,14 +327,13 @@ export class DnsSetupWizardComponent implements OnInit {
     if (this.wiz.certMode() === 'direct') {
       const phase = this.wiz.issuerPhase();
       if (phase === 'idle' || phase === 'error') {
-        // Run HTTP-01 issuer setup first, then advance when done
         if (clusterId) await this.wiz.runSetup(clusterId);
-        if (this.wiz.issuerPhase() !== 'done') return; // error — stay on step
+        if (this.wiz.issuerPhase() !== 'done') return;
       }
-      this.wiz.advance(); // → endpoints-config
+      this.wiz.advance();
       if (clusterId) this.wiz.loadDirectConfig(clusterId);
     } else {
-      this.wiz.advance(); // → endpoints (wildcard)
+      this.wiz.advance();
       if (clusterId) this.wiz.runEndpointSetup(clusterId);
     }
   }

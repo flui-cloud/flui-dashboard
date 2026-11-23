@@ -1,265 +1,126 @@
-import { ChangeDetectionStrategy, Component, inject, signal, viewChild } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideChevronDown,
-  lucideChevronRight,
-  lucideLayers,
-  lucideLoader,
-  lucidePlus,
-  lucideTrash2,
-  lucideUsers,
-  lucideX,
-} from '@ng-icons/lucide';
-import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog.component';
+import { provideIcons } from '@ng-icons/core';
+import { lucidePlus } from '@ng-icons/lucide';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlField } from '../../../ui/patterns/field';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlEmptyState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
 import { MessagingConsoleStateService } from './messaging-console-state.service';
-import { bytes } from './messaging-format';
 
 @Component({
   selector: 'app-messaging-stream-list',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgIcon, FormsModule, ConfirmationDialogComponent],
-  providers: [
-    provideIcons({
-      lucideChevronDown,
-      lucideChevronRight,
-      lucideLayers,
-      lucideLoader,
-      lucidePlus,
-      lucideTrash2,
-      lucideUsers,
-      lucideX,
-    }),
-  ],
+  imports: [FormsModule, FlAlert, FlButton, FlEmptyState, FlField, FlIcon, FlPanel, FlSpinner],
+  providers: [provideIcons({ lucidePlus })],
+  host: { class: 'block' },
   template: `
-    <div class="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
-      <ng-icon name="lucideLayers" class="h-4 w-4 text-muted-foreground" />
-      {{ s.nouns().collection }}
+    <fl-panel [title]="s.nouns().collection" [count]="s.streams().length" [flush]="true">
       <button
+        panelActions
+        flButton="ghost"
+        size="sm"
         type="button"
+        [attr.aria-expanded]="showCreate()"
         (click)="showCreate.set(!showCreate())"
-        class="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-2.5 text-xs font-normal text-muted-foreground hover:bg-muted"
       >
-        <ng-icon [name]="showCreate() ? 'lucideX' : 'lucidePlus'" class="h-3.5 w-3.5" />
+        @if (!showCreate()) {
+          <fl-icon name="lucidePlus" [size]="14" />
+        }
         {{ showCreate() ? 'Cancel' : 'New ' + s.nouns().item }}
       </button>
-    </div>
 
-    @if (showCreate()) {
-      <div class="mb-3 rounded-md border border-border p-3">
-        <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <input
-            type="text"
-            [(ngModel)]="newName"
-            [placeholder]="s.nouns().item + ' name (e.g. ORDERS)'"
-            class="h-9 w-full rounded-md border border-border bg-background px-3 font-mono text-xs text-foreground"
-          />
-          <input
-            type="text"
-            [(ngModel)]="newSubjects"
-            [placeholder]="
-              s.nouns().routing.toLowerCase() +
-              ', comma-separated (e.g. ' +
-              s.nouns().subjectEg +
-              ')'
-            "
-            class="h-9 w-full rounded-md border border-border bg-background px-3 font-mono text-xs text-foreground"
-          />
+      @if (showCreate()) {
+        <div class="flex flex-col gap-3 border-b border-fl-border p-4">
+          <fl-field [label]="s.nouns().itemTitle + ' name'" for="msg-new-name">
+            <div class="fl-input fl-input--lg font-mono">
+              <input id="msg-new-name" type="text" placeholder="ORDERS" [(ngModel)]="newName" />
+            </div>
+          </fl-field>
+          <fl-field
+            [label]="s.nouns().routing"
+            for="msg-new-subjects"
+            [hint]="'Comma-separated, for example ' + s.nouns().subjectEg"
+          >
+            <div class="fl-input fl-input--lg font-mono">
+              <input
+                id="msg-new-subjects"
+                type="text"
+                [placeholder]="s.nouns().subjectEg"
+                [(ngModel)]="newSubjects"
+              />
+            </div>
+          </fl-field>
           @if (s.nouns().storageChoice) {
-            <select
-              [(ngModel)]="newStorage"
-              class="h-9 w-full rounded-md border border-border bg-background px-2 text-xs text-foreground"
-            >
-              <option value="file">{{ s.nouns().storeFile }}</option>
-              <option value="memory">{{ s.nouns().storeMem }}</option>
-            </select>
+            <fl-field label="Storage" for="msg-new-storage">
+              <span class="fl-select-wrap">
+                <select id="msg-new-storage" class="fl-select" [(ngModel)]="newStorage">
+                  <option value="file">{{ s.nouns().storeFile }}</option>
+                  <option value="memory">{{ s.nouns().storeMem }}</option>
+                </select>
+              </span>
+            </fl-field>
           }
-          <div class="flex items-center gap-2">
+          @if (s.createError()) {
+            <fl-alert tone="error" [title]="'Could not create the ' + s.nouns().item">
+              {{ s.createError() }}
+            </fl-alert>
+          }
+          <div class="fl-row">
             <button
+              flButton
+              size="sm"
               type="button"
-              (click)="createStream()"
               [disabled]="s.creating() || !newName.trim() || !newSubjects.trim()"
-              class="inline-flex h-8 items-center gap-1 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground disabled:opacity-50"
+              (click)="createStream()"
             >
               @if (s.creating()) {
-                <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
+                <fl-spinner label="Creating" />
               }
-              Create stream
+              Create {{ s.nouns().item }}
             </button>
-            @if (s.createError()) {
-              <span class="text-xs text-destructive">{{ s.createError() }}</span>
-            }
           </div>
         </div>
-      </div>
-    }
+      }
 
-    @if (s.streams().length === 0) {
-      <div
-        class="rounded-md border border-dashed border-border p-10 text-center text-sm text-muted-foreground"
-      >
-        No {{ s.nouns().collection.toLowerCase() }} yet. Create one above so producers can publish
-        to its {{ s.nouns().routing.toLowerCase() }}.
-      </div>
-    } @else {
-      <div class="overflow-hidden rounded-md border border-border">
-        <table class="w-full text-sm">
-          <thead class="bg-muted/50 text-left text-xs text-muted-foreground">
-            <tr>
-              <th class="w-8 px-2 py-2"></th>
-              <th class="px-3 py-2 font-medium">{{ s.nouns().itemTitle }}</th>
-              <th class="px-3 py-2 font-medium">{{ s.nouns().routing }}</th>
-              <th class="w-24 px-3 py-2 font-medium">Messages</th>
-              <th class="w-24 px-3 py-2 font-medium">Size</th>
-              <th class="w-28 px-3 py-2 font-medium">Consumers</th>
-              <th class="w-10 px-2 py-2"></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (st of s.streams(); track st.name) {
-              <tr
-                class="cursor-pointer border-t border-border hover:bg-muted/40"
+      @if (s.streams().length === 0) {
+        <fl-empty-state
+          [compact]="true"
+          [title]="'No ' + s.nouns().collection.toLowerCase() + ' yet'"
+          [body]="
+            'Create one so producers can publish to its ' + s.nouns().routing.toLowerCase() + '.'
+          "
+        />
+      } @else {
+        <ul class="max-h-96 overflow-auto py-1">
+          @for (st of s.streams(); track st.name) {
+            <li>
+              <button
+                type="button"
+                class="flex w-full items-center gap-2 px-4 py-2 text-left text-fl-body-sm hover:bg-fl-surface-hover"
+                [class.bg-fl-accent-soft]="s.expanded() === st.name"
+                [attr.aria-expanded]="s.expanded() === st.name"
                 (click)="s.toggle(st.name)"
               >
-                <td class="px-2 py-2 text-muted-foreground">
-                  <ng-icon
-                    [name]="s.expanded() === st.name ? 'lucideChevronDown' : 'lucideChevronRight'"
-                    class="h-4 w-4"
-                  />
-                </td>
-                <td class="px-3 py-2 font-medium text-foreground">
-                  {{ st.name }}
-                </td>
-                <td class="px-3 py-2 font-mono text-xs text-muted-foreground">
-                  {{ st.subjects.join(', ') }}
-                </td>
-                <td class="px-3 py-2 font-mono text-xs text-foreground">
-                  {{ st.messages }}
-                </td>
-                <td class="px-3 py-2 font-mono text-xs text-muted-foreground">
-                  {{ size(st.bytes) }}
-                </td>
-                <td class="px-3 py-2 text-muted-foreground">
-                  <span class="inline-flex items-center gap-1">
-                    <ng-icon name="lucideUsers" class="h-3.5 w-3.5" />
-                    {{ st.consumerCount }}
-                  </span>
-                </td>
-                <td class="px-2 py-2 text-right">
-                  <button
-                    type="button"
-                    (click)="askDelete(st.name); $event.stopPropagation()"
-                    title="Delete stream"
-                    class="inline-flex h-7 w-7 items-center justify-center rounded text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                  >
-                    <ng-icon name="lucideTrash2" class="h-3.5 w-3.5" />
-                  </button>
-                </td>
-              </tr>
-              @if (s.expanded() === st.name) {
-                <tr class="border-t border-border bg-muted/20">
-                  <td colspan="7" class="px-3 py-2">
-                    <div class="mb-2 flex flex-wrap gap-3 text-xs text-muted-foreground">
-                      <span
-                        >retention:
-                        <span class="text-foreground">{{ st.retention || '—' }}</span></span
-                      >
-                      <span
-                        >storage: <span class="text-foreground">{{ st.storage || '—' }}</span></span
-                      >
-                      @if (st.lastSeq > 0) {
-                        <span
-                          >seq:
-                          <span class="text-foreground"
-                            >{{ st.firstSeq }}–{{ st.lastSeq }}</span
-                          ></span
-                        >
-                      }
-                    </div>
-                    @if (st.consumers.length === 0) {
-                      <p class="text-xs text-muted-foreground">No consumers.</p>
-                    } @else {
-                      <table class="w-full text-xs">
-                        <thead class="text-left text-muted-foreground">
-                          <tr>
-                            <th class="py-1 pr-3 font-medium">Consumer</th>
-                            <th class="py-1 pr-3 font-medium">Pending</th>
-                            <th class="py-1 pr-3 font-medium">Ack pending</th>
-                            <th class="py-1 pr-3 font-medium">Redelivered</th>
-                            <th class="py-1 pr-3 font-medium">Ack policy</th>
-                            <th class="py-1 pr-3 font-medium">Type</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          @for (c of st.consumers; track c.name) {
-                            <tr class="border-t border-border/60">
-                              <td class="py-1 pr-3 font-mono text-foreground">
-                                {{ c.name }}
-                              </td>
-                              <td class="py-1 pr-3 text-foreground">
-                                {{ c.numPending }}
-                              </td>
-                              <td class="py-1 pr-3 text-muted-foreground">
-                                {{ c.numAckPending }}
-                              </td>
-                              <td class="py-1 pr-3 text-muted-foreground">
-                                {{ c.numRedelivered }}
-                              </td>
-                              <td class="py-1 pr-3 text-muted-foreground">
-                                {{ c.ackPolicy || '—' }}
-                              </td>
-                              <td class="py-1 pr-3 text-muted-foreground">
-                                {{ c.durable ? 'durable' : 'ephemeral' }}
-                              </td>
-                            </tr>
-                          }
-                        </tbody>
-                      </table>
-                    }
-                  </td>
-                </tr>
-              }
-            }
-          </tbody>
-        </table>
-      </div>
-    }
-
-    <app-confirmation-dialog
-      #deleteDialog
-      [title]="'Delete ' + s.nouns().item"
-      [message]="
-        'Delete ' +
-        s.nouns().item +
-        ' “' +
-        (s.pendingDelete() ?? '') +
-        '”? Its stored messages are lost. This cannot be undone.'
-      "
-      confirmText="Delete"
-      variant="danger"
-      (confirmed)="s.confirmDelete(deleteDialog)"
-      (cancelled)="s.pendingDelete.set(null)"
-    />
+                <span class="fl-mono min-w-0 flex-1 truncate">{{ st.name }}</span>
+                <span class="fl-num text-fl-caption text-fl-ink-muted">{{ st.messages }}</span>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </fl-panel>
   `,
 })
 export class MessagingStreamListComponent {
   protected readonly s = inject(MessagingConsoleStateService);
 
-  private readonly deleteDialog = viewChild<ConfirmationDialogComponent>('deleteDialog');
-
   readonly showCreate = signal(false);
   newName = '';
   newSubjects = '';
   newStorage: 'file' | 'memory' = 'file';
-
-  protected size(n: number): string {
-    return bytes(n);
-  }
-
-  askDelete(name: string): void {
-    this.s.askDelete(name, this.deleteDialog());
-  }
 
   createStream(): void {
     const name = this.newName.trim();

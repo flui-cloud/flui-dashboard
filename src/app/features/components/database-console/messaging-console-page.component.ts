@@ -1,19 +1,21 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideActivity,
-  lucideArrowLeft,
-  lucideLoader,
-  lucideRotateCcw,
-  lucideTriangleAlert,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideRefreshCw } from '@ng-icons/lucide';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlMetric, FlMetricStrip } from '../../../ui/patterns/metric-strip';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlLoadingState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
 import { MessagingConsoleStateService } from './messaging-console-state.service';
 import { MessagingProducePanelComponent } from './messaging-produce-panel.component';
 import { MessagingPeekPanelComponent } from './messaging-peek-panel.component';
+import { MessagingStreamDetail } from './messaging-stream-detail';
 import { MessagingStreamListComponent } from './messaging-stream-list.component';
+import { StoreConsoleHeader } from './store-console-header';
 import { bytes } from './messaging-format';
 
 /**
@@ -24,118 +26,82 @@ import { bytes } from './messaging-format';
  */
 @Component({
   selector: 'app-messaging-console-page',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    NgIcon,
+    FlAlert,
+    FlButton,
+    FlIcon,
+    FlLoadingState,
+    FlMetric,
+    FlMetricStrip,
+    StoreConsoleHeader,
+    FlPanel,
     MessagingProducePanelComponent,
     MessagingPeekPanelComponent,
+    MessagingStreamDetail,
     MessagingStreamListComponent,
   ],
-  providers: [
-    MessagingConsoleStateService,
-    provideIcons({
-      lucideActivity,
-      lucideArrowLeft,
-      lucideLoader,
-      lucideRotateCcw,
-      lucideTriangleAlert,
-    }),
-  ],
+  providers: [MessagingConsoleStateService, provideIcons({ lucideRefreshCw })],
   template: `
-    <div class="p-4 md:p-6">
-      <div class="mb-4 flex items-center gap-3">
-        <button
-          type="button"
-          (click)="s.back()"
-          class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border text-muted-foreground hover:bg-muted"
-          title="Back"
-        >
-          <ng-icon name="lucideArrowLeft" class="h-4 w-4" />
-        </button>
-        <ng-icon name="lucideActivity" class="h-5 w-5 text-primary" />
-        <div class="min-w-0">
-          <h1 class="text-base font-semibold text-foreground">
-            Messaging Monitor
-            @if (s.server(); as info) {
-              <span class="font-normal text-muted-foreground"
-                >· {{ s.engineLabel() }} {{ info.version }}</span
-              >
-            }
-          </h1>
-          <p class="truncate font-mono text-xs text-muted-foreground">
-            {{ applicationId() }}
-          </p>
-        </div>
-        <button
-          type="button"
-          (click)="s.connect()"
-          class="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-2.5 text-xs text-muted-foreground hover:bg-muted"
-        >
-          <ng-icon name="lucideRotateCcw" class="h-3.5 w-3.5" /> Refresh
-        </button>
-      </div>
+    <div class="fl-page">
+      <app-store-console-header
+        title="Messaging console"
+        [appId]="applicationId()"
+        [conn]="s.conn()"
+        (retry)="s.connect()"
+      >
+        <ng-container consoleMeta>
+          @if (s.server(); as info) {
+            <span>{{ s.engineLabel() }} {{ info.version }}</span>
+          }
+        </ng-container>
+        <ng-container consoleActions>
+          <button
+            flButton
+            type="button"
+            [iconOnly]="true"
+            aria-label="Refresh"
+            title="Refresh"
+            (click)="s.connect()"
+          >
+            <fl-icon name="lucideRefreshCw" />
+          </button>
+        </ng-container>
+      </app-store-console-header>
 
       @if (s.conn() === 'connecting') {
-        <div class="flex items-center gap-2 text-sm text-muted-foreground">
-          <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
-          Connecting…
-        </div>
+        <fl-panel><fl-loading-state [rows]="4" /></fl-panel>
       } @else if (s.conn() === 'error') {
-        <div
-          class="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
-        >
-          <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-4 w-4 shrink-0" />
-          <span>{{ s.errorMsg() || 'Failed to connect.' }}</span>
-        </div>
+        <fl-alert tone="error" title="Could not connect">
+          {{ s.errorMsg() || 'Failed to connect.' }}
+        </fl-alert>
       } @else {
         @if (s.server(); as info) {
-          <div class="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-            <div class="rounded-md border border-border p-3">
-              <div class="text-xs text-muted-foreground">Uptime</div>
-              <div class="truncate text-sm font-semibold text-foreground">
-                {{ info.uptime || '—' }}
-              </div>
-            </div>
-            <div class="rounded-md border border-border p-3">
-              <div class="text-xs text-muted-foreground">Connections</div>
-              <div class="text-sm font-semibold text-foreground">
-                {{ info.connections }}
-              </div>
-            </div>
-            <div class="rounded-md border border-border p-3">
-              <div class="text-xs text-muted-foreground">Msgs in / out</div>
-              <div class="text-sm font-semibold text-foreground">
-                {{ info.inMsgs }} / {{ info.outMsgs }}
-              </div>
-            </div>
-            <div class="rounded-md border border-border p-3">
-              <div class="text-xs text-muted-foreground">Data in / out</div>
-              <div class="text-sm font-semibold text-foreground">
-                {{ size(info.inBytes) }} / {{ size(info.outBytes) }}
-              </div>
-            </div>
-            <div class="rounded-md border border-border p-3">
-              <div class="text-xs text-muted-foreground">Memory</div>
-              <div class="text-sm font-semibold text-foreground">
-                {{ size(info.memBytes) }}
-              </div>
-            </div>
-            <div class="rounded-md border border-border p-3">
-              <div class="text-xs text-muted-foreground">Storage</div>
-              <div class="text-sm font-semibold text-foreground">
-                {{ info.jetStream.enabled ? size(info.jetStream.storageBytes) + ' stored' : 'off' }}
-              </div>
-            </div>
-          </div>
+          <fl-metric-strip>
+            <fl-metric label="Uptime" [value]="info.uptime || '—'" />
+            <fl-metric label="Connections" [value]="info.connections" />
+            <fl-metric label="Messages in / out" [value]="info.inMsgs + ' / ' + info.outMsgs" />
+            <fl-metric
+              label="Data in / out"
+              [value]="size(info.inBytes) + ' / ' + size(info.outBytes)"
+            />
+            <fl-metric label="Memory" [value]="size(info.memBytes)" />
+            <fl-metric
+              label="Storage"
+              [value]="info.jetStream.enabled ? size(info.jetStream.storageBytes) : 'Off'"
+            />
+          </fl-metric-strip>
         }
 
-        <div class="mb-4 grid grid-cols-1 items-start gap-4 md:grid-cols-2">
-          <app-messaging-produce-panel />
-          <app-messaging-peek-panel />
+        <div class="flex flex-col items-start gap-5 lg:flex-row">
+          <app-messaging-stream-list class="w-full shrink-0 lg:w-72" />
+          <div class="flex w-full min-w-0 flex-1 flex-col gap-5">
+            <app-messaging-stream-detail />
+            <div class="fl-grid-2 items-start">
+              <app-messaging-produce-panel />
+              <app-messaging-peek-panel />
+            </div>
+          </div>
         </div>
-
-        <app-messaging-stream-list />
       }
     </div>
   `,

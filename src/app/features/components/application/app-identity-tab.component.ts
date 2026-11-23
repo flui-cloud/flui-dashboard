@@ -106,7 +106,7 @@ const USER_STATE: Record<IdentityUser['state'], string> = {
             body="People invited here can sign in to the apps connected to this identity install."
           />
         } @else {
-          <div class="fl-table-wrap">
+          <div class="fl-table-wrap relative">
             <table flTable density="dense">
               <thead>
                 <tr>

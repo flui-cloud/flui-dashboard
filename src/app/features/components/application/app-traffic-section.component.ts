@@ -50,7 +50,7 @@ interface TrafficMetric {
   providers: [provideIcons({ lucideActivity, lucideInfo })],
   host: { class: 'fl-stack' },
   template: `
-    <fl-panel title="Traffic">
+    <fl-panel title="Traffic" [flush]="true">
       <a
         panelActions
         class="fl-link text-fl-body-sm"
@@ -59,27 +59,31 @@ interface TrafficMetric {
         >View logs</a
       >
       @if (traffic.error(); as err) {
-        <fl-alert tone="error" title="Traffic could not be read">{{ err }}</fl-alert>
+        <div class="p-4">
+          <fl-alert tone="error" title="Traffic could not be read">{{ err }}</fl-alert>
+        </div>
       } @else if (current() && !current()!.is_routable) {
-        <fl-empty-state
-          icon="lucideActivity"
-          title="Not exposed through the ingress"
-          body="This application has no public HTTP route, so there is no edge traffic to measure."
-          [compact]="true"
-        />
+        <div class="p-4">
+          <fl-empty-state
+            icon="lucideActivity"
+            title="Not exposed through the ingress"
+            body="This application has no public HTTP route, so there is no edge traffic to measure."
+            [compact]="true"
+          />
+        </div>
       } @else {
         <div class="flex flex-col gap-3">
-          <p class="m-0 fl-muted text-fl-body-sm">
+          <p class="m-0 px-4 pt-3 fl-muted text-fl-body-sm">
             HTTP requests measured at the ingress, no instrumentation required.
           </p>
-          <fl-metric-strip data-testid="traffic-summary">
+          <fl-metric-strip class="rounded-none border-x-0 border-b-0" data-testid="traffic-summary">
             @for (metric of metrics(); track metric.label) {
               <fl-metric [label]="metric.label" [value]="metric.value" />
             }
           </fl-metric-strip>
           @if (latencyIsCoarse()) {
             <p
-              class="m-0 fl-row fl-muted text-fl-body-sm"
+              class="m-0 fl-row fl-muted px-4 pb-3 text-fl-body-sm"
               data-testid="latency-coarse"
               [title]="coarseHint()"
             >
@@ -214,7 +218,7 @@ export class AppTrafficSectionComponent {
     showGrid: true,
     showLegend: false,
     showTitle: false,
-    valueFormatter: (v: number) => this.formatRate(v),
+    valueFormatter: (v: number) => this.formatAxisRate(v),
   };
 
   readonly errorConfig: TimeSeriesChartConfig = {
@@ -350,6 +354,11 @@ export class AppTrafficSectionComponent {
     if (value === 0) return '0 req/s';
     if (value < 0.01) return '<0.01 req/s';
     return `${value.toFixed(2)} req/s`;
+  }
+
+  protected formatAxisRate(value: number): string {
+    if (value > 0 && value < 0.01) return `${Number(value.toPrecision(2))} req/s`;
+    return this.formatRate(value);
   }
 
   protected formatDuration(value: number | null): string {

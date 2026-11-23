@@ -21,7 +21,7 @@ export function formatSize(bytes: number): string {
 export function formatDate(iso?: string): string {
   if (!iso) return '—';
   const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString();
+  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString('en-GB');
 }
 
 export function saveBlob(blob: Blob, filename: string): void {

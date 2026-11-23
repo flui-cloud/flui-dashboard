@@ -5,10 +5,11 @@ import { AvailableVersionDto } from '../../../core/api/model/availableVersionDto
 import { FlButton } from '../../../ui/primitives/button';
 import { FlIcon } from '../../../ui/primitives/icon';
 import { FlSpinner } from '../../../ui/primitives/spinner';
+import { FlDialogFocus } from '../../../ui/overlays/dialog-focus';
 
 @Component({
   selector: 'app-release-deploy-dialog',
-  imports: [FlButton, FlIcon, FlSpinner],
+  imports: [FlDialogFocus, FlButton, FlIcon, FlSpinner],
   providers: [provideIcons({ lucideX })],
   host: { class: 'contents' },
   template: `
@@ -21,6 +22,8 @@ import { FlSpinner } from '../../../ui/primitives/spinner';
         role="dialog"
         aria-modal="true"
         aria-labelledby="release-deploy-title"
+        flDialogFocus
+        (dismissed)="busy() || cancelled.emit()"
         (click)="$event.stopPropagation()"
       >
         <header class="fl-dialog__header">

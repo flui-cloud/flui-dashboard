@@ -1,187 +1,120 @@
-import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
-
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideLoader,
-  lucideX,
-  lucideTriangleAlert,
-  lucideInfo,
-  lucideLock,
-  lucideEye,
-  lucideRefreshCw,
-} from '@ng-icons/lucide';
+import { Component, input, output } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideRefreshCw, lucideX } from '@ng-icons/lucide';
 import { EnvVarDetectionResultDto } from '../../../core/api/model/envVarDetectionResultDto';
 import { EnvVarCandidateDto } from '../../../core/api/model/envVarCandidateDto';
 import { DetectedEnvVarDto } from '../../../core/api/model/detectedEnvVarDto';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlStatus } from '../../../ui/primitives/status';
 
 @Component({
   selector: 'app-env-suggestions-panel',
-  standalone: true,
-  imports: [NgIcon],
-  providers: [
-    provideIcons({
-      lucideLoader,
-      lucideX,
-      lucideTriangleAlert,
-      lucideInfo,
-      lucideLock,
-      lucideEye,
-      lucideRefreshCw,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FlAlert, FlTable, FlButton, FlIcon, FlStatus],
+  providers: [provideIcons({ lucideRefreshCw, lucideX })],
+  host: { class: 'flex flex-col gap-3' },
   template: `
-    <!-- Loading state -->
     @if (loading()) {
-      <div
-        class="flex items-center justify-between p-3 rounded-md border border-border bg-muted/30"
-      >
-        <div class="flex items-center gap-2 text-sm text-muted-foreground">
-          <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin shrink-0" />
-          <span>Analyzing repository for environment variables...</span>
-        </div>
-        <button
-          type="button"
-          (click)="cancelDetection.emit()"
-          class="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors ml-4 shrink-0"
-        >
-          <ng-icon name="lucideX" class="h-3.5 w-3.5" />
+      <div class="flex items-center justify-between gap-3">
+        <fl-status tone="progress" label="Analyzing the repository for environment variables" />
+        <button flButton="ghost" size="sm" type="button" (click)="cancelDetection.emit()">
+          <fl-icon name="lucideX" />
           Stop
         </button>
       </div>
-    }
-
-    <!-- Error state -->
-    @if (!loading() && error()) {
-      <div
-        class="flex items-start justify-between gap-2 p-3 rounded-md border border-yellow-200 bg-yellow-50 text-sm text-yellow-800"
-      >
-        <div class="flex items-start gap-2">
-          <ng-icon name="lucideInfo" class="h-4 w-4 shrink-0 mt-0.5" />
-          <span>{{ error() }} Configure variables manually below.</span>
-        </div>
-        <button
-          type="button"
-          (click)="reanalyze.emit()"
-          class="inline-flex items-center gap-1 text-xs shrink-0 hover:opacity-80 transition-opacity"
-        >
-          <ng-icon name="lucideRefreshCw" class="h-3.5 w-3.5" />
+    } @else if (error()) {
+      <fl-alert tone="warning" title="Variables were not detected">
+        {{ error() }} Add variables manually below.
+        <button alertActions flButton size="sm" type="button" (click)="reanalyze.emit()">
+          <fl-icon name="lucideRefreshCw" />
           Retry
         </button>
-      </div>
-    }
-
-    <!-- Results -->
-    @if (!loading() && !error() && result()) {
-      @let r = result()!;
-
-      <!-- Re-analyze button -->
-      <div class="flex justify-end">
-        <button
-          type="button"
-          (click)="reanalyze.emit()"
-          class="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ng-icon name="lucideRefreshCw" class="h-3.5 w-3.5" />
-          Re-analyze
+      </fl-alert>
+    } @else if (result(); as r) {
+      <div class="flex items-center justify-between gap-3">
+        <span class="text-fl-body-sm font-semibold">Detected variables</span>
+        <button flButton size="sm" type="button" (click)="reanalyze.emit()">
+          <fl-icon name="lucideRefreshCw" />
+          Analyze again
         </button>
       </div>
 
-      <!-- Fallback warning -->
       @if (r.isFallback) {
-        <div
-          class="flex items-start gap-2 p-3 rounded-md border border-yellow-200 bg-yellow-50 text-sm text-yellow-800"
-        >
-          <ng-icon name="lucideTriangleAlert" class="h-4 w-4 shrink-0 mt-0.5" />
-          <span
-            >List detected automatically from base configuration — may be incomplete. Verify before
-            proceeding.</span
-          >
-        </div>
+        <fl-alert tone="warning" title="List may be incomplete">
+          Detected from the base configuration. Check it before you continue.
+        </fl-alert>
       }
 
-      <!-- No candidates -->
       @if (r.candidates.length === 0 && !r.isFallback) {
-        <div
-          class="flex items-center gap-2 p-3 rounded-md border border-border bg-muted/20 text-sm text-muted-foreground"
-        >
-          <ng-icon name="lucideInfo" class="h-4 w-4 shrink-0" />
-          <span>No environment variable files detected. Add variables manually below.</span>
+        <fl-alert tone="info" title="No variable files found">
+          Add variables manually below.
+        </fl-alert>
+      }
+
+      @if (r.candidates.length > 0) {
+        <div class="fl-table-wrap rounded-fl-md border border-fl-border">
+          <table flTable density="dense">
+            <thead>
+              <tr>
+                <th scope="col">Source</th>
+                <th scope="col">Pattern</th>
+                <th scope="col">Framework</th>
+                <th scope="col" class="is-num">Variables</th>
+                <th scope="col" class="is-fit"><span class="fl-sr">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (candidate of r.candidates; track candidate.sourceFile; let i = $index) {
+                <tr [class.is-selected]="i === selectedIndex()">
+                  <td class="fl-mono">
+                    {{ candidate.sourceFile }}
+                    @if (i === 0 && r.candidates.length > 1) {
+                      <span class="font-sans text-fl-ink-muted"> (recommended)</span>
+                    }
+                  </td>
+                  <td class="fl-mono text-fl-ink-muted">{{ candidate.detectedPattern ?? '' }}</td>
+                  <td class="text-fl-ink-secondary">{{ candidate.sourceFrameworkHint ?? '' }}</td>
+                  <td class="is-num">{{ candidate.vars.length }}</td>
+                  <td class="is-fit">
+                    @if (i === selectedIndex()) {
+                      <fl-status tone="success" label="Applied" />
+                    } @else {
+                      <button flButton size="sm" type="button" (click)="candidateSelected.emit(i)">
+                        Use these
+                      </button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
         </div>
       }
 
-      <!-- Source selector (>1 candidates) -->
-      @if (r.candidates.length > 1) {
-        <div class="space-y-2">
-          <label class="text-sm font-medium block">Detected source</label>
-          <div class="flex flex-wrap gap-2">
-            @for (candidate of r.candidates; track candidate.sourceFile; let i = $index) {
-              <button
-                type="button"
-                (click)="candidateSelected.emit(i)"
-                [class]="getCandidateButtonClass(i)"
-              >
-                <span class="font-mono text-xs">{{ candidate.sourceFile }}</span>
-                @if (i === 0) {
-                  <span class="ml-1.5 text-xs opacity-60">(recommended)</span>
-                }
-                @if (candidate.sourceFrameworkHint) {
-                  <span class="ml-1.5 px-1 py-0.5 rounded text-xs bg-amber-100 text-amber-700">
-                    {{ candidate.sourceFrameworkHint }}
-                  </span>
-                }
-              </button>
-            }
-          </div>
-        </div>
-      }
-
-      <!-- Single candidate: show source label -->
-      @if (r.candidates.length === 1) {
-        @let c = r.candidates[0];
-        <div class="flex items-center gap-2 text-xs text-muted-foreground">
-          <ng-icon name="lucideInfo" class="h-3.5 w-3.5 shrink-0" />
-          <span>
-            Variables pre-filled from
-            <span class="font-mono">{{ c.sourceFile }}</span>
-            @if (c.detectedPattern) {
-              <span class="ml-1"
-                >(pattern: <span class="font-mono">{{ c.detectedPattern }}</span>)</span
-              >
-            }
-          </span>
-          @if (c.sourceFrameworkHint) {
-            <span class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-mono">
-              {{ c.sourceFrameworkHint }}
-            </span>
-          }
-        </div>
-      }
-
-      <!-- ReadOnly vars (Dockerfile hardcoded) -->
       @let readOnlyVars = getReadOnlyVars(r.candidates[selectedIndex()]);
       @if (readOnlyVars.length > 0) {
-        <div class="space-y-2">
-          <div class="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-            <ng-icon name="lucideEye" class="h-3.5 w-3.5" />
-            Hardcoded in Dockerfile (read-only)
-          </div>
-          <div class="rounded-md border border-border bg-muted/20 divide-y divide-border">
-            @for (v of readOnlyVars; track v.name) {
-              <div class="flex items-center gap-3 px-3 py-2 text-sm opacity-70">
-                <span class="font-mono text-xs w-1/3 shrink-0 truncate">{{ v.name }}</span>
-                <span class="flex-1 font-mono text-xs text-muted-foreground truncate">
-                  {{ v.defaultValue ?? '(not set)' }}
-                </span>
-                @if (v.sensitive) {
-                  <ng-icon name="lucideLock" class="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                }
-                <span class="shrink-0 text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground"
-                  >Fixed</span
-                >
-              </div>
-            }
-          </div>
+        <span class="text-fl-body-sm font-semibold">Fixed in the Dockerfile</span>
+        <div class="fl-table-wrap rounded-fl-md border border-fl-border">
+          <table flTable density="dense">
+            <thead>
+              <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Value</th>
+                <th scope="col">Secret</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (v of readOnlyVars; track v.name) {
+                <tr>
+                  <td class="fl-mono">{{ v.name }}</td>
+                  <td class="fl-mono text-fl-ink-muted">{{ v.defaultValue ?? 'Not set' }}</td>
+                  <td class="text-fl-ink-muted">{{ v.sensitive ? 'Yes' : 'No' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
         </div>
       }
     }
@@ -200,12 +133,5 @@ export class EnvSuggestionsPanelComponent {
   getReadOnlyVars(candidate: EnvVarCandidateDto | undefined): DetectedEnvVarDto[] {
     if (!candidate) return [];
     return candidate.vars.filter((v) => v.readOnly);
-  }
-
-  getCandidateButtonClass(index: number): string {
-    const base = 'flex items-center px-3 py-1.5 rounded-md border text-sm transition-colors';
-    return index === this.selectedIndex()
-      ? `${base} border-primary bg-primary/10 text-foreground`
-      : `${base} border-border bg-background text-muted-foreground hover:bg-accent/50 hover:text-foreground`;
   }
 }

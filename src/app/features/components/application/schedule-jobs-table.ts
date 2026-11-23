@@ -31,7 +31,7 @@ function nextRunLabel(job: ScheduledJob, next: Date | null, now: number): string
 export function localTime(value?: string | null): string {
   if (!value) return '—';
   const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString();
+  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString('en-GB');
 }
 
 @Component({
@@ -39,7 +39,7 @@ export function localTime(value?: string | null): string {
   imports: [FlTable, FlActionsMenu, FlStatus, FlButton],
   host: { class: 'block' },
   template: `
-    <div class="fl-table-wrap" data-testid="schedules-table">
+    <div class="fl-table-wrap relative" data-testid="schedules-table">
       <table flTable density="dense">
         <thead>
           <tr>
@@ -150,7 +150,7 @@ export class ScheduleJobsTable {
         last: lastRunState(job),
         lastAt: localTime(job.lastScheduleTime),
         next: nextRunLabel(job, next, now),
-        nextTitle: next ? next.toLocaleString() : '',
+        nextTitle: next ? next.toLocaleString('en-GB') : '',
         menu,
       };
     });

@@ -77,7 +77,7 @@ const ROUTE_ACTIONS: MenuAction[] = [{ id: 'remove', label: 'Remove route', dang
           body="Add a route to expose this application on a hostname with SSO, rate limit and IP filter policies."
         />
       } @else {
-        <div class="fl-table-wrap">
+        <div class="fl-table-wrap relative">
           <table flTable density="dense">
             <thead>
               <tr>

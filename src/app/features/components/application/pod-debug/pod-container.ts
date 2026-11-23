@@ -7,7 +7,7 @@ import { ContainerDebugInfo, Probe } from '../../../model/pod-debug.models';
 export function containerStateSummary(c: ContainerDebugInfo): string {
   if (c.state.running) {
     const since = c.state.running.startedAt
-      ? ' since ' + new Date(c.state.running.startedAt).toLocaleString()
+      ? ' since ' + new Date(c.state.running.startedAt).toLocaleString('en-GB')
       : '';
     return `Running${since}`;
   }

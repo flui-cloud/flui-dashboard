@@ -1,15 +1,15 @@
-import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideX,
-  lucideHammer,
-  lucideRocket,
-  lucideArrowRight,
-  lucideCircleCheck,
-  lucideCircleAlert,
-} from '@ng-icons/lucide';
+import { Component, input, output } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideArrowRight, lucideHammer, lucideX } from '@ng-icons/lucide';
 import { ApplicationResponseDto } from '../../../core/api/model/applicationResponseDto';
+import { getStatusLabel } from '../../model/application.models';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
+import { statusToneOf } from '../dashboard/home-state';
+import { statusTone } from './applications-list-rows';
+import { FlDialogFocus } from '../../../ui/overlays/dialog-focus';
 
 export interface RepoDeployChoiceRepo {
   id: string;
@@ -18,94 +18,79 @@ export interface RepoDeployChoiceRepo {
 
 @Component({
   selector: 'app-repo-deploy-choice-modal',
-  standalone: true,
-  imports: [CommonModule, NgIcon],
-  providers: [
-    provideIcons({
-      lucideX,
-      lucideHammer,
-      lucideRocket,
-      lucideArrowRight,
-      lucideCircleCheck,
-      lucideCircleAlert,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FlDialogFocus, FlTable, FlButton, FlIcon, FlStatus],
+  providers: [provideIcons({ lucideArrowRight, lucideHammer, lucideX })],
   template: `
     <div
-      class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-      (click)="closed.emit()"
+      class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+      flDialogFocus
+      (dismissed)="closed.emit()"
+      (click)="$event.target === $event.currentTarget && closed.emit()"
     >
       <div
-        class="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-hidden"
+        class="fl-dialog fl-dialog--wide"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="repo-choice-title"
         (click)="$event.stopPropagation()"
       >
-        <div class="flex items-start justify-between p-6 border-b border-gray-200">
-          <div class="min-w-0 pr-4">
-            <h3 class="text-xl font-semibold text-gray-900">
-              This repository already has an application
-            </h3>
-            <p class="text-sm text-gray-600 mt-1 truncate">
-              {{ repo()?.fullName }}
-            </p>
-            <p class="text-sm text-gray-600 mt-2">
-              We recommend triggering a new build on the existing application instead of deploying a
-              new one.
-            </p>
-          </div>
-          <button (click)="closed.emit()" class="text-gray-400 hover:text-gray-600 flex-shrink-0">
-            <ng-icon name="lucideX" class="h-5 w-5" />
+        <header class="fl-dialog__header">
+          <h2 class="fl-dialog__title" id="repo-choice-title">
+            This repository already has an application
+          </h2>
+          <button type="button" class="fl-dialog__close" aria-label="Close" (click)="closed.emit()">
+            <fl-icon name="lucideX" />
           </button>
-        </div>
-
-        <div class="p-6 overflow-y-auto max-h-[50vh] space-y-3">
-          @for (app of matchedApps(); track app.id) {
-            <div
-              class="flex items-center justify-between gap-4 p-4 border border-gray-200 rounded-lg hover:border-blue-400 transition-colors"
-            >
-              <div class="min-w-0 flex-1">
-                <div class="flex items-center gap-2">
-                  <span class="font-medium text-gray-900 truncate">{{ app.name }}</span>
-                  <span
-                    class="text-xs px-2 py-0.5 rounded-full"
-                    [ngClass]="
-                      app.status === 'running'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-gray-100 text-gray-700'
-                    "
-                  >
-                    {{ app.status }}
-                  </span>
-                </div>
-                @if (app.lastDeployedAt) {
-                  <p class="text-xs text-gray-500 mt-1">
-                    Last deployed {{ formatDate(app.lastDeployedAt) }}
-                  </p>
+        </header>
+        <div class="fl-dialog__body">
+          <p class="fl-mono truncate">{{ repo()?.fullName }}</p>
+          <p class="text-fl-ink-secondary">
+            Trigger a new build on the existing application instead of deploying a new one.
+          </p>
+          <div class="fl-table-wrap rounded-fl-md border border-fl-border">
+            <table flTable density="dense">
+              <thead>
+                <tr>
+                  <th scope="col">Application</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Last deployed</th>
+                  <th scope="col" class="is-fit"><span class="fl-sr">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (app of matchedApps(); track app.id) {
+                  <tr>
+                    <td class="fl-mono">{{ app.name }}</td>
+                    <td><fl-status [tone]="tone(app.status)" [label]="label(app.status)" /></td>
+                    <td class="text-fl-ink-muted">
+                      {{ app.lastDeployedAt ? formatDate(app.lastDeployedAt) : 'Never' }}
+                    </td>
+                    <td class="is-fit">
+                      <button
+                        [flButton]="matchedApps().length === 1 ? 'primary' : 'secondary'"
+                        size="sm"
+                        type="button"
+                        (click)="triggerBuild.emit(app.id)"
+                      >
+                        <fl-icon name="lucideHammer" />
+                        Trigger new build
+                      </button>
+                    </td>
+                  </tr>
                 }
-              </div>
-              <button
-                (click)="triggerBuild.emit(app.id)"
-                class="inline-flex items-center gap-2 px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex-shrink-0"
-              >
-                <ng-icon name="lucideHammer" class="h-4 w-4" />
-                Trigger new build
-              </button>
-            </div>
-          }
+              </tbody>
+            </table>
+          </div>
         </div>
-
-        <div
-          class="px-6 py-4 border-t border-gray-200 flex items-center justify-between gap-4 bg-gray-50"
-        >
-          <p class="text-xs text-gray-500">Need a separate environment from the same repo?</p>
-          <button
-            (click)="createNewApp.emit()"
-            class="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-blue-600 underline underline-offset-2"
-          >
+        <footer class="fl-dialog__footer items-center">
+          <span class="mr-auto text-fl-caption text-fl-ink-muted">
+            Need a separate environment from the same repository?
+          </span>
+          <button flButton="ghost" type="button" (click)="createNewApp.emit()">
             Deploy as a new application
-            <ng-icon name="lucideArrowRight" class="h-3.5 w-3.5" />
+            <fl-icon name="lucideArrowRight" />
           </button>
-        </div>
+        </footer>
       </div>
     </div>
   `,
@@ -116,6 +101,14 @@ export class RepoDeployChoiceModalComponent {
   readonly closed = output<void>();
   readonly triggerBuild = output<string>();
   readonly createNewApp = output<void>();
+
+  protected tone(status: string): StatusTone {
+    return statusToneOf(statusTone(status));
+  }
+
+  protected label(status: string): string {
+    return getStatusLabel(status as Parameters<typeof getStatusLabel>[0]);
+  }
 
   formatDate(date: string): string {
     const normalized = /Z$|[+-]\d{2}:\d{2}$/.test(date) ? date : date + 'Z';
@@ -129,6 +122,6 @@ export class RepoDeployChoiceModalComponent {
     if (diffMins < 60) return rtf.format(-diffMins, 'minute');
     if (diffHours < 24) return rtf.format(-diffHours, 'hour');
     if (diffDays < 7) return rtf.format(-diffDays, 'day');
-    return then.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+    return then.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' });
   }
 }

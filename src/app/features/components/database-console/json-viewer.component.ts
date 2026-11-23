@@ -1,21 +1,16 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, input, signal } from '@angular/core';
+import { Component, OnInit, computed, input, signal } from '@angular/core';
 
 type JsonKind = 'object' | 'array' | 'primitive' | 'bson';
 
-const BSON_CLS = 'text-amber-600';
-const NUM_CLS = 'text-sky-600';
+const BSON_CLS = 'text-fl-warning-text';
+const NUM_CLS = 'text-fl-accent-strong';
+const MUTED_CLS = 'text-fl-ink-muted italic';
+const STRING_CLS = 'text-fl-success';
 
-/** EJSON leaf values are strings/numbers; stringify only those (never objects). */
 function leaf(v: unknown): string {
   return typeof v === 'string' || typeof v === 'number' ? String(v) : '';
 }
 
-/**
- * Render canonical-EJSON wrappers (from the document console) as MongoDB-tool
- * tokens — ObjectId('…'), ISODate('…'), Long('…'), Decimal128('…'), etc. — so the
- * browser looks like Compass/mongosh. Int32/Double show as plain numbers. Returns
- * null for plain JSON (SQL/KV data passes through unchanged).
- */
 function detectBsonToken(v: unknown): { text: string; cls: string } | null {
   if (v === null || typeof v !== 'object' || Array.isArray(v)) return null;
   const o = v as Record<string, unknown>;
@@ -27,7 +22,6 @@ function detectBsonToken(v: unknown): { text: string; cls: string } | null {
       case '$oid':
         return { text: `ObjectId('${leaf(val)}')`, cls: BSON_CLS };
       case '$date': {
-        // Relaxed gives an ISO string; canonical gives { $numberLong: <epoch ms> }.
         let iso = '';
         if (typeof val === 'string') {
           iso = val;
@@ -61,9 +55,9 @@ function detectBsonToken(v: unknown): { text: string; cls: string } | null {
       case '$maxKey':
         return { text: 'MaxKey()', cls: BSON_CLS };
       case '$undefined':
-        return { text: 'undefined', cls: 'text-muted-foreground italic' };
+        return { text: 'undefined', cls: MUTED_CLS };
       case '$symbol':
-        return { text: `'${leaf(val)}'`, cls: 'text-emerald-600' };
+        return { text: `'${leaf(val)}'`, cls: STRING_CLS };
     }
   }
   if (Object.hasOwn(o, '$code')) {
@@ -74,38 +68,39 @@ function detectBsonToken(v: unknown): { text: string; cls: string } | null {
 
 @Component({
   selector: 'app-json-viewer',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @switch (kind()) {
       @case ('primitive') {
-        <span class="inline-flex gap-1 font-mono text-xs leading-5">
+        <span class="inline-flex gap-1 font-mono text-fl-mono-sm">
           @if (name() !== undefined) {
-            <span class="text-muted-foreground">{{ name() }}:</span>
+            <span class="text-fl-ink-secondary">{{ name() }}:</span>
           }
           <span [class]="primClass()">{{ primDisplay() }}</span>
         </span>
       }
       @case ('bson') {
-        <span class="inline-flex gap-1 font-mono text-xs leading-5">
+        <span class="inline-flex gap-1 font-mono text-fl-mono-sm">
           @if (name() !== undefined) {
-            <span class="text-muted-foreground">{{ name() }}:</span>
+            <span class="text-fl-ink-secondary">{{ name() }}:</span>
           }
           <span [class]="bson()!.cls">{{ bson()!.text }}</span>
         </span>
       }
       @default {
-        <div class="font-mono text-xs leading-5">
+        <div class="font-mono text-fl-mono-sm">
           <button
             type="button"
             (click)="toggle()"
-            class="flex items-center gap-1 text-left hover:bg-muted/50 rounded px-0.5"
+            [attr.aria-expanded]="expanded()"
+            class="flex items-center gap-1 rounded-fl-sm px-0.5 text-left hover:bg-fl-surface-hover"
           >
-            <span class="w-3 shrink-0 text-muted-foreground">{{ expanded() ? '▾' : '▸' }}</span>
+            <span class="w-3 shrink-0 text-fl-ink-muted" aria-hidden="true">{{
+              expanded() ? '▾' : '▸'
+            }}</span>
             @if (name() !== undefined) {
-              <span class="text-muted-foreground">{{ name() }}:</span>
+              <span class="text-fl-ink-secondary">{{ name() }}:</span>
             }
-            <span class="text-muted-foreground">
+            <span class="text-fl-ink-muted">
               @if (expanded()) {
                 {{ openBrace() }}
               } @else {
@@ -114,7 +109,7 @@ function detectBsonToken(v: unknown): { text: string; cls: string } | null {
             </span>
           </button>
           @if (expanded()) {
-            <div class="border-l border-border/60 pl-3 ml-1.5">
+            <div class="ml-1.5 border-l border-fl-border-subtle pl-3">
               @for (e of entries(); track e.key) {
                 <div>
                   <app-json-viewer
@@ -126,7 +121,7 @@ function detectBsonToken(v: unknown): { text: string; cls: string } | null {
                 </div>
               }
             </div>
-            <span class="ml-1.5 pl-3 text-muted-foreground">{{ closeBrace() }}</span>
+            <span class="ml-1.5 pl-3 text-fl-ink-muted">{{ closeBrace() }}</span>
           }
         </div>
       }
@@ -185,14 +180,14 @@ export class JsonViewerComponent implements OnInit {
 
   primClass(): string {
     const v = this.value();
-    if (v === null) return 'text-muted-foreground italic';
+    if (v === null) return MUTED_CLS;
     switch (typeof v) {
       case 'string':
-        return 'text-emerald-600';
+        return STRING_CLS;
       case 'number':
-        return 'text-sky-600';
+        return NUM_CLS;
       case 'boolean':
-        return 'text-violet-600';
+        return BSON_CLS;
       default:
         return '';
     }

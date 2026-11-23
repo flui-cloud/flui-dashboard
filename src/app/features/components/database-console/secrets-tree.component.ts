@@ -1,13 +1,6 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  effect,
-  inject,
-  signal,
-} from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgIcon, provideIcons } from '@ng-icons/core';
+import { provideIcons } from '@ng-icons/core';
 import {
   lucideChevronRight,
   lucideFolder,
@@ -15,106 +8,102 @@ import {
   lucidePlus,
   lucideSearch,
 } from '@ng-icons/lucide';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
 import { SecretsConsoleStateService } from './secrets-console-state.service';
 import { joinPath } from './secrets-format';
 
 @Component({
   selector: 'app-secrets-tree',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgIcon, FormsModule],
+  imports: [FormsModule, FlButton, FlEmptyState, FlIcon, FlLoadingState, FlPanel],
   providers: [
-    provideIcons({
-      lucideChevronRight,
-      lucideFolder,
-      lucideKeyRound,
-      lucidePlus,
-      lucideSearch,
-    }),
+    provideIcons({ lucideChevronRight, lucideFolder, lucideKeyRound, lucidePlus, lucideSearch }),
   ],
+  host: { class: 'block' },
   template: `
-    <div class="w-full shrink-0 rounded-fl-lg border border-border bg-card lg:w-80">
-      <div class="flex items-center gap-2 border-b border-border px-3 py-2.5">
-        <ng-icon name="lucideSearch" class="h-4 w-4 shrink-0 text-muted-foreground" />
-        <input
-          type="text"
-          [(ngModel)]="filter"
-          (ngModelChange)="filterValue.set($event)"
-          placeholder="Filter this folder…"
-          class="h-7 w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
-        />
-        <button
-          type="button"
-          (click)="s.startNew()"
-          [disabled]="s.readOnly()"
-          title="New secret (use a path like team/db to nest into folders)"
-          class="inline-flex h-7 items-center gap-1 rounded-md bg-primary px-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-40"
-        >
-          <ng-icon name="lucidePlus" class="h-3.5 w-3.5" /> Secret
-        </button>
-      </div>
-      <div class="flex flex-wrap items-center gap-1 border-b border-border px-3 py-2 text-xs">
-        <button
-          type="button"
-          (click)="goTo('')"
-          class="font-medium text-muted-foreground hover:text-foreground"
-        >
-          {{ s.server()?.mount || 'secret' }}
-        </button>
-        @for (seg of crumbs(); track $index) {
-          <ng-icon name="lucideChevronRight" class="h-3 w-3 text-muted-foreground" />
-          <button
-            type="button"
-            (click)="goTo(crumbPrefix($index))"
-            class="truncate text-muted-foreground hover:text-foreground"
-          >
-            {{ seg }}
+    <fl-panel title="Secrets" [count]="s.entries().length" [flush]="true">
+      <button
+        panelActions
+        flButton="ghost"
+        size="sm"
+        type="button"
+        [disabled]="s.readOnly()"
+        title="Use a path like team/db to nest into folders"
+        (click)="s.startNew()"
+      >
+        <fl-icon name="lucidePlus" [size]="14" />
+        New
+      </button>
+
+      <div panelToolbar class="flex flex-col gap-2 border-b border-fl-border px-4 py-3">
+        <label class="fl-input">
+          <fl-icon name="lucideSearch" [size]="14" />
+          <span class="fl-sr">Filter this folder</span>
+          <input
+            type="text"
+            placeholder="Filter this folder"
+            [(ngModel)]="filter"
+            (ngModelChange)="filterValue.set($event)"
+          />
+        </label>
+        <nav class="fl-row text-fl-caption" aria-label="Secret path">
+          <button type="button" class="fl-link fl-mono" (click)="goTo('')">
+            {{ s.server()?.mount || 'secret' }}
           </button>
-        }
-      </div>
-      <div class="max-h-[60vh] overflow-auto p-1.5">
-        @if (s.listing() && s.entries().length === 0) {
-          @for (i of skel; track i) {
-            <div class="mx-1 my-1.5 h-8 rounded-lg bg-muted/60"></div>
+          @for (seg of crumbs(); track $index; let last = $last) {
+            <span class="text-fl-ink-muted" aria-hidden="true">/</span>
+            <button
+              type="button"
+              class="fl-link fl-mono"
+              [attr.aria-current]="last ? 'page' : null"
+              (click)="goTo(crumbPrefix($index))"
+            >
+              {{ seg }}
+            </button>
           }
-        } @else if (filteredEntries().length === 0) {
-          <p class="px-2 py-3 text-sm text-muted-foreground">
-            {{ s.entries().length ? 'No match.' : 'Empty.' }}
-          </p>
-        } @else {
-          <div class="transition-opacity" [class.opacity-50]="s.listing()">
-            @for (e of filteredEntries(); track e.name) {
+        </nav>
+      </div>
+
+      @if (s.listing() && s.entries().length === 0) {
+        <fl-loading-state [rows]="5" />
+      } @else if (filteredEntries().length === 0) {
+        <fl-empty-state
+          [compact]="true"
+          [title]="s.entries().length ? 'No match' : 'This folder is empty'"
+        />
+      } @else {
+        <ul class="max-h-screen overflow-auto py-1" [attr.aria-busy]="s.listing()">
+          @for (e of filteredEntries(); track e.name) {
+            <li>
               <button
                 type="button"
+                class="flex w-full items-center gap-2 px-4 py-2 text-left text-fl-body-sm hover:bg-fl-surface-hover"
+                [class.bg-fl-accent-soft]="isSelected(e)"
+                [attr.aria-current]="isSelected(e) ? 'true' : null"
                 (click)="e.isFolder ? s.enterFolder(e.name) : s.openSecret(e.name)"
-                class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm hover:bg-muted"
-                [class.bg-muted]="!e.isFolder && s.selectedPath() === join(s.prefix(), e.name)"
               >
-                <ng-icon
+                <fl-icon
+                  class="text-fl-ink-muted"
                   [name]="e.isFolder ? 'lucideFolder' : 'lucideKeyRound'"
-                  class="h-4 w-4 shrink-0"
-                  [class.text-amber-500]="e.isFolder"
-                  [class.text-muted-foreground]="!e.isFolder"
+                  [size]="14"
                 />
-                <span class="truncate font-mono text-foreground">{{ e.name }}</span>
+                <span class="fl-mono min-w-0 flex-1 truncate">{{ e.name }}</span>
                 @if (e.isFolder) {
-                  <ng-icon
-                    name="lucideChevronRight"
-                    class="ml-auto h-3.5 w-3.5 text-muted-foreground"
-                  />
+                  <fl-icon class="text-fl-ink-muted" name="lucideChevronRight" [size]="14" />
                 }
               </button>
-            }
-          </div>
-        }
-      </div>
-    </div>
+            </li>
+          }
+        </ul>
+      }
+    </fl-panel>
   `,
 })
 export class SecretsTreeComponent {
   protected readonly s = inject(SecretsConsoleStateService);
 
-  readonly skel = [0, 1, 2, 3, 4];
   filter = '';
   protected readonly filterValue = signal('');
 
@@ -132,7 +121,9 @@ export class SecretsTreeComponent {
     return f ? es.filter((e) => e.name.toLowerCase().includes(f)) : es;
   });
 
-  protected readonly join = joinPath;
+  protected isSelected(e: { name: string; isFolder: boolean }): boolean {
+    return !e.isFolder && this.s.selectedPath() === joinPath(this.s.prefix(), e.name);
+  }
 
   crumbs(): string[] {
     return this.s.prefix().split('/').filter(Boolean);

@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   ElementRef,
   OnInit,
@@ -15,20 +14,26 @@ import {
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
-import { NgIcon, provideIcons } from '@ng-icons/core';
+import { provideIcons } from '@ng-icons/core';
 import {
   lucideChevronRight,
   lucideHistory,
-  lucideLoader,
+  lucideLock,
   lucidePlay,
   lucidePlus,
   lucideSend,
   lucideSparkles,
-  lucideTriangleAlert,
+  lucideX,
 } from '@ng-icons/lucide';
 import { InferenceSettingsService } from '../../service/inference-settings.service';
 import { AssistantModelSelectionService } from '../../service/assistant-model-selection.service';
 import { AssistantModelPickerComponent } from '../assistant/assistant-model-picker.component';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlEmptyState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+import { FlStatus } from '../../../ui/primitives/status';
 
 export type ChatModelOpts = {
   model?: string;
@@ -71,267 +76,30 @@ interface StoredChat {
 }
 @Component({
   selector: 'app-db-assistant-chat',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'contents' },
-  imports: [FormsModule, NgIcon, AssistantModelPickerComponent],
+  imports: [
+    FormsModule,
+    AssistantModelPickerComponent,
+    FlAlert,
+    FlEmptyState,
+    FlButton,
+    FlIcon,
+    FlSpinner,
+    FlStatus,
+  ],
   viewProviders: [
     provideIcons({
       lucideChevronRight,
       lucideHistory,
-      lucideLoader,
+      lucideLock,
       lucidePlay,
       lucidePlus,
       lucideSend,
       lucideSparkles,
-      lucideTriangleAlert,
+      lucideX,
     }),
   ],
-  template: `
-    @if (!expanded()) {
-      <button
-        type="button"
-        (click)="toggle()"
-        title="Show assistant"
-        class="flex h-8 w-8 shrink-0 self-start items-center justify-center rounded-lg border border-border bg-card text-primary transition-colors hover:bg-muted"
-      >
-        <ng-icon name="lucideSparkles" class="h-4 w-4" />
-      </button>
-    } @else {
-      <aside
-        class="flex w-80 shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-card"
-      >
-        <div class="border-b border-border bg-muted/40">
-          <div class="flex items-center gap-2 px-3 py-2 text-sm font-medium">
-            @if (imgOk()) {
-              <img
-                src="icons/assistant.svg"
-                class="h-4 w-4 object-contain"
-                alt=""
-                (error)="imgOk.set(false)"
-              />
-            } @else {
-              <ng-icon name="lucideSparkles" class="h-4 w-4 text-primary" />
-            }
-            {{ identity() }}
-            <div class="ml-auto flex items-center gap-0.5">
-              <button
-                type="button"
-                (click)="newChat()"
-                title="New chat"
-                class="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-              >
-                <ng-icon name="lucidePlus" class="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                (click)="toggleHistory()"
-                title="History"
-                [class.bg-muted]="showHistory()"
-                class="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-              >
-                <ng-icon name="lucideHistory" class="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                (click)="toggle()"
-                title="Collapse"
-                class="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-              >
-                <ng-icon name="lucideChevronRight" class="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-
-          @if (showHistory()) {
-            <div class="max-h-48 overflow-auto border-t border-border py-1">
-              @if (sessions().length === 0) {
-                <p class="px-3 py-1.5 text-xs text-muted-foreground">
-                  No past chats yet. “New chat” archives the current one here.
-                </p>
-              } @else {
-                @for (s of sessions(); track s.id) {
-                  <div class="group flex items-center gap-1 px-2 py-1 hover:bg-muted">
-                    <button
-                      type="button"
-                      (click)="openSession(s.id)"
-                      class="min-w-0 flex-1 truncate text-left text-xs"
-                      [title]="s.title"
-                    >
-                      {{ s.title }}
-                    </button>
-                    <button
-                      type="button"
-                      (click)="deleteSession(s.id, $event)"
-                      class="shrink-0 px-1 text-xs text-muted-foreground/60 opacity-0 hover:text-foreground group-hover:opacity-100"
-                      title="Delete"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                }
-              }
-            </div>
-          }
-        </div>
-
-        <div #scroll class="flex-1 space-y-3 overflow-auto p-3">
-          @if (noInference()) {
-            <div class="space-y-3 text-center">
-              <p class="text-sm font-medium text-foreground">Connect a model to get started</p>
-              <p class="text-xs text-muted-foreground">
-                The assistant uses your configured inference provider — the same one the Flui
-                assistant uses.
-              </p>
-              <button
-                type="button"
-                (click)="goConnectModel()"
-                class="rounded-fl-lg bg-fl-accent px-4 py-2 text-sm font-medium text-white"
-              >
-                Connect a model
-              </button>
-            </div>
-          } @else if (messages().length === 0) {
-            <p class="text-xs text-muted-foreground">{{ emptyHint() }}</p>
-          }
-          @for (m of messages(); track $index) {
-            @if (m.role === 'user') {
-              <div class="ml-6 rounded-lg bg-primary/10 px-3 py-2 text-sm">{{ m.text }}</div>
-            } @else {
-              <div class="mr-2 space-y-2">
-                <div class="flex items-start gap-2 text-sm text-muted-foreground">
-                  @if (imgOk()) {
-                    <img
-                      src="icons/assistant.svg"
-                      class="mt-0.5 h-4 w-4 shrink-0 object-contain"
-                      alt=""
-                      (error)="imgOk.set(false)"
-                    />
-                  } @else {
-                    <ng-icon name="lucideSparkles" class="mt-0.5 h-4 w-4 shrink-0" />
-                  }
-                  <span class="whitespace-pre-wrap">{{ m.text }}</span>
-                </div>
-                @if (m.code) {
-                  <pre
-                    class="overflow-auto rounded-md border border-border bg-muted/40 p-2 text-xs"
-                  ><code>{{ m.code }}</code></pre>
-                  @if (m.mutation) {
-                    <div class="flex items-center gap-1 text-[11px] text-amber-600">
-                      <ng-icon name="lucideTriangleAlert" class="h-3 w-3" /> Changes data — runs as
-                      a write after confirmation.
-                    </div>
-                  }
-                  <div class="flex gap-2">
-                    @if (showInsert()) {
-                      <button
-                        type="button"
-                        (click)="insert.emit(m.code!)"
-                        class="rounded border border-border px-2 py-1 text-xs hover:bg-muted"
-                      >
-                        Insert
-                      </button>
-                    }
-                    <button
-                      type="button"
-                      (click)="onRun(m.code!, m.mutation ?? false)"
-                      class="inline-flex items-center gap-1 rounded bg-primary px-2 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90"
-                    >
-                      <ng-icon name="lucidePlay" class="h-3 w-3" /> Run
-                    </button>
-                  </div>
-                }
-              </div>
-            }
-          }
-          @if (pendingRun(); as p) {
-            <div
-              class="overflow-hidden rounded-fl-lg border border-amber-500/30 bg-amber-500/5 text-sm"
-            >
-              <div
-                class="flex items-center gap-2 border-b border-amber-500/20 bg-amber-500/10 px-3 py-2"
-              >
-                <ng-icon name="lucideTriangleAlert" class="h-3.5 w-3.5 shrink-0 text-amber-600" />
-                <p class="text-xs font-semibold text-amber-700">Confirm write</p>
-              </div>
-              <div class="space-y-2 p-3">
-                <p class="text-xs text-muted-foreground">
-                  This {{ codeNoun() }} changes data or structure. It runs as a WRITE (read-only
-                  disabled).
-                </p>
-                <pre
-                  class="overflow-auto rounded-md border border-border bg-muted/40 p-2 text-[11px]"
-                ><code>{{ p }}</code></pre>
-                <div class="flex gap-2 pt-0.5">
-                  <button
-                    type="button"
-                    (click)="cancelRun()"
-                    class="flex-1 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    (click)="confirmRun()"
-                    class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-fl-warning-fill px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90"
-                  >
-                    <ng-icon name="lucidePlay" class="h-3 w-3" /> Run write
-                  </button>
-                </div>
-              </div>
-            </div>
-          }
-          @if (thinking()) {
-            <div class="flex items-center gap-2 text-xs text-muted-foreground">
-              <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" /> Thinking…
-            </div>
-          }
-          @if (error(); as e) {
-            <div
-              class="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 px-2 py-1.5 text-xs text-red-700"
-            >
-              <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-3.5 w-3.5 shrink-0" />
-              <span class="whitespace-pre-wrap">{{ e }}</span>
-            </div>
-          }
-        </div>
-
-        <div class="border-t border-border p-2">
-          <div
-            class="rounded-md border border-border bg-background focus-within:ring-1 focus-within:ring-ring"
-          >
-            <textarea
-              [(ngModel)]="prompt"
-              (keydown)="onKey($event)"
-              [disabled]="noInference()"
-              rows="2"
-              [placeholder]="noInference() ? 'Connect a model first…' : 'Ask in natural language…'"
-              class="w-full resize-none bg-transparent px-2 py-1.5 text-sm outline-none disabled:opacity-60"
-            ></textarea>
-            <div class="flex items-center justify-between gap-2 px-1.5 pb-1.5">
-              <div class="flex min-w-0 items-center gap-1.5">
-                <app-assistant-model-picker />
-                <span
-                  class="inline-flex shrink-0 items-center gap-1 text-[10px] text-muted-foreground"
-                  [title]="dataBlindTooltip()"
-                >
-                  🔒 {{ dataBlindBadge() }}
-                </span>
-              </div>
-              <button
-                type="button"
-                (click)="ask()"
-                [disabled]="thinking() || noInference()"
-                class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-              >
-                <ng-icon name="lucideSend" class="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </aside>
-    }
-  `,
+  templateUrl: './db-assistant-chat.component.html',
 })
 export class DbAssistantChatComponent implements OnInit {
   private readonly inference = inject(InferenceSettingsService);
@@ -344,7 +112,7 @@ export class DbAssistantChatComponent implements OnInit {
   readonly assist = input.required<AssistFn>();
   readonly dataBlindBadge = input('schema only');
   readonly dataBlindTooltip = input(
-    'The assistant receives your schema and your question — never your data.',
+    'The assistant receives your schema and your question, never your data.',
   );
   readonly emptyHint = input('Describe what you need in plain language.');
   readonly codeNoun = input('query');

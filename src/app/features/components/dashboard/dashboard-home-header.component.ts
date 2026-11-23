@@ -104,7 +104,9 @@ export class DashboardHomeHeaderComponent {
   readonly canDeploy = computed(() => this.permissions.hasSection('deploy'));
 
   protected readonly refreshedAt = computed(() =>
-    this.dashboard.lastRefreshedAt().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    this.dashboard
+      .lastRefreshedAt()
+      .toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
   );
 
   protected plural(n: number, word: string): string {

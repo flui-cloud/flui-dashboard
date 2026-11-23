@@ -1,53 +1,55 @@
-import { ChangeDetectionStrategy, Component, inject, output } from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
+import { Component, inject, output } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
 import { lucideTrash2 } from '@ng-icons/lucide';
 import { CacheEntry } from '../../model/cache-console.models';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlTag } from '../../../ui/primitives/tag';
 import { CacheConsoleStateService } from './cache-console-state.service';
 import { bytes, formatValue, isJson } from './cache-format';
 
 @Component({
   selector: 'app-cache-lookup-result',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgIcon],
+  imports: [FlButton, FlIcon, FlTag],
   providers: [provideIcons({ lucideTrash2 })],
   template: `
     @if (s.looked()) {
       @if (s.entry(); as e) {
-        <div class="rounded-md border border-border">
+        <div class="rounded-fl-md border border-fl-border">
           <div
-            class="flex items-center justify-between gap-2 border-b border-border px-2 py-1.5 text-xs text-muted-foreground"
+            class="flex items-center justify-between gap-2 border-b border-fl-border bg-fl-surface-subtle px-3 py-1.5"
           >
-            <span class="truncate font-mono text-foreground">{{ e.key }}</span>
-            <span class="flex shrink-0 items-center gap-1.5">
+            <span class="truncate font-mono text-fl-mono-sm text-fl-ink">{{ e.key }}</span>
+            <span class="flex shrink-0 items-center gap-2 text-fl-caption text-fl-ink-muted">
               @if (json(e)) {
-                <span class="rounded bg-muted px-1 py-0.5 text-[10px] font-medium uppercase"
-                  >JSON</span
-                >
+                <fl-tag>JSON</fl-tag>
               }
-              <span>{{ size(e.sizeBytes) }} · flags {{ e.flags }}</span>
+              <span class="fl-num">{{ size(e.sizeBytes) }} · flags {{ e.flags }}</span>
               <button
+                flButton="ghost"
+                size="sm"
+                [iconOnly]="true"
                 type="button"
                 (click)="removeRequest.emit(e.key)"
                 [disabled]="s.readOnly() || s.deleting()"
+                aria-label="Delete key"
                 title="Delete key"
-                class="inline-flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:opacity-40"
               >
-                <ng-icon name="lucideTrash2" class="h-3.5 w-3.5" />
+                <fl-icon name="lucideTrash2" [size]="14" />
               </button>
             </span>
           </div>
           <pre
-            class="max-h-72 overflow-auto whitespace-pre-wrap break-words p-2 font-mono text-xs text-foreground"
+            class="m-0 max-h-72 overflow-auto whitespace-pre-wrap break-words p-3 font-mono text-fl-mono-sm text-fl-ink"
             >{{ value(e) }}</pre>
           @if (e.encoding === 'base64') {
-            <span class="block px-2 pb-1.5 text-[10px] text-muted-foreground"
-              >(base64 — binary value)</span
-            >
+            <p class="m-0 px-3 pb-2 text-fl-caption text-fl-ink-muted">
+              Binary value, base64 encoded
+            </p>
           }
         </div>
       } @else {
-        <p class="text-xs text-muted-foreground">No value stored for that key.</p>
+        <p class="m-0 text-fl-body-sm text-fl-ink-muted">No value stored for that key.</p>
       }
     }
   `,

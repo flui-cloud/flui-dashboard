@@ -7,6 +7,9 @@ import {
   output,
   inject,
   effect,
+  ElementRef,
+  Injector,
+  afterNextRender,
   ChangeDetectionStrategy,
 } from '@angular/core';
 
@@ -82,6 +85,7 @@ let nextId = 0;
             flButton
             size="sm"
             type="button"
+            [id]="uid + '-add'"
             [disabled]="showAddForm()"
             (click)="startAddRow()"
           >
@@ -221,6 +225,34 @@ export class AppVariablesEditorComponent implements OnChanges {
 
   protected readonly maskMode = inject(MaskModeService);
   protected readonly uid = `variables-${nextId++}`;
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly injector = inject(Injector);
+
+  private focusAfterRender(find: () => HTMLElement | null | undefined): void {
+    afterNextRender(() => find()?.focus(), { injector: this.injector });
+  }
+
+  private byId(id: string): HTMLElement | null {
+    return this.host.nativeElement.querySelector<HTMLElement>(`[id="${id}"]`);
+  }
+
+  private byLabel(label: string): HTMLElement | null {
+    return (
+      [...this.host.nativeElement.querySelectorAll<HTMLElement>('[aria-label]')].find(
+        (el) => el.getAttribute('aria-label') === label,
+      ) ?? null
+    );
+  }
+
+  private focusRowEditor(key: string): void {
+    this.focusAfterRender(
+      () => this.byLabel(`Value of ${key}`) ?? this.byLabel(`New value for ${key}`),
+    );
+  }
+
+  private focusRowEditButton(key: string): void {
+    this.focusAfterRender(() => this.byLabel(`Edit ${key}`) ?? this.byId(`${this.uid}-add`));
+  }
 
   constructor() {
     effect(() => {
@@ -302,7 +334,9 @@ export class AppVariablesEditorComponent implements OnChanges {
   }
 
   protected closeExpandModal(): void {
+    const modal = this.expandModal();
     this.expandModal.set(null);
+    if (modal) this.focusRowEditor(modal.key);
   }
 
   protected confirmExpandModal(editValue: string): void {
@@ -314,6 +348,7 @@ export class AppVariablesEditorComponent implements OnChanges {
         : { value: editValue, newPlainValue: editValue, editingPlain: false },
     );
     this.expandModal.set(null);
+    this.focusRowEditButton(modal.key);
   }
 
   protected toggleJsonMode(): void {
@@ -363,9 +398,11 @@ export class AppVariablesEditorComponent implements OnChanges {
         ? { editingSecret: true, newSecretValue: '' }
         : { editingPlain: true, newPlainValue: r.value },
     );
+    this.focusRowEditor(this.rows()[index].key);
   }
 
   protected cancelEdit(index: number): void {
+    this.focusRowEditButton(this.rows()[index].key);
     this.patch(index, (r) =>
       r.editingSecret
         ? { editingSecret: false, newSecretValue: '' }
@@ -374,6 +411,7 @@ export class AppVariablesEditorComponent implements OnChanges {
   }
 
   protected finishEdit(index: number): void {
+    this.focusRowEditButton(this.rows()[index].key);
     this.patch(index, (r) =>
       r.editingSecret
         ? { value: r.newSecretValue, editingSecret: false, newSecretValue: '' }
@@ -385,10 +423,12 @@ export class AppVariablesEditorComponent implements OnChanges {
     this.newKey = '';
     this.newValue = '';
     this.showAddForm.set(true);
+    this.focusAfterRender(() => this.byId(`${this.uid}-key`));
   }
 
   protected cancelAddRow(): void {
     this.showAddForm.set(false);
+    this.focusAfterRender(() => this.byId(`${this.uid}-add`));
   }
 
   protected confirmAddRow(): void {
@@ -398,6 +438,7 @@ export class AppVariablesEditorComponent implements OnChanges {
       varRow(this.newKey.trim(), this.newValue, { isNew: true }),
     ]);
     this.showAddForm.set(false);
+    this.focusAfterRender(() => this.byId(`${this.uid}-add`));
   }
 
   protected removeRow(index: number): void {
@@ -406,6 +447,7 @@ export class AppVariablesEditorComponent implements OnChanges {
       this.deletedKeys.update((s) => new Set([...s, row.key]));
     }
     this.rows.update((rows) => rows.filter((_, i) => i !== index));
+    this.focusAfterRender(() => this.byId(`${this.uid}-add`));
   }
 
   protected toggleValues(): void {

@@ -17,10 +17,12 @@ import { FlIcon } from '../../../ui/primitives/icon';
 import { ScheduleJobsTable } from './schedule-jobs-table';
 import { ScheduleEditor } from './schedule-editor';
 import { RunLogs, ScheduleRuns } from './schedule-runs';
+import { FlDialogFocus } from '../../../ui/overlays/dialog-focus';
 
 @Component({
   selector: 'app-schedules-tab',
   imports: [
+    FlDialogFocus,
     FlPanel,
     FlAlert,
     FlEmptyState,
@@ -119,6 +121,8 @@ import { RunLogs, ScheduleRuns } from './schedule-runs';
           role="alertdialog"
           aria-modal="true"
           aria-labelledby="schedule-delete-title"
+          flDialogFocus
+          (dismissed)="pendingDelete.set(null)"
         >
           <header class="fl-dialog__header">
             <h2 class="fl-dialog__title" id="schedule-delete-title">Delete schedule</h2>

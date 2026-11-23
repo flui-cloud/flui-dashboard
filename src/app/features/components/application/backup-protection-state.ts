@@ -1,4 +1,5 @@
 import { StatusTone } from '../../../ui/primitives/status';
+import { formatDate } from './snapshot-format';
 
 export interface ProtectionState {
   tone: StatusTone;
@@ -81,5 +82,5 @@ export function runText(status: string): string {
 }
 
 export function shortStamp(iso: string | null | undefined): string {
-  return iso ? iso.slice(0, 16).replace('T', ' ') : '—';
+  return iso ? formatDate(iso) : '—';
 }

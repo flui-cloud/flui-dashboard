@@ -1,166 +1,150 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideLoader, lucideGlobe, lucideExternalLink, lucideMail } from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideGlobe } from '@ng-icons/lucide';
 import { DnsSetupWizardService } from './dns-setup-wizard.service';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlField } from '../../../ui/patterns/field';
+import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
+import { FlEmptyState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+import { FlStatus } from '../../../ui/primitives/status';
 
 @Component({
   selector: 'app-dns-wizard-zone-step',
-  standalone: true,
-  imports: [FormsModule, RouterLink, NgIconComponent],
-  providers: [provideIcons({ lucideLoader, lucideGlobe, lucideExternalLink, lucideMail })],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [
+    FormsModule,
+    RouterLink,
+    FlAlert,
+    FlField,
+    FlKeyValue,
+    FlKvItem,
+    FlEmptyState,
+    FlButton,
+    FlSpinner,
+    FlStatus,
+  ],
+  providers: [provideIcons({ lucideGlobe })],
+  host: { class: 'fl-stack' },
   template: `
-    <h3 class="text-sm font-semibold text-foreground mb-1">Which domain do you want to use?</h3>
-
     @if (wiz.loadingExisting() || wiz.loadingZoneOptions()) {
       <div
-        class="flex-1 flex flex-col items-center justify-center gap-2 py-6"
+        class="flex items-center gap-2 text-fl-body-sm text-fl-ink-muted"
         data-testid="zone-loading"
       >
-        <ng-icon name="lucideLoader" class="h-5 w-5 animate-spin text-muted-foreground" />
-        <p class="text-xs text-muted-foreground">Loading your domains…</p>
+        <fl-spinner label="Loading domains" />
+        Loading your domains…
       </div>
     } @else if (wiz.zoneOptions().length === 0 && wiz.configuredDnsProviders().length === 0) {
-      <div
-        class="flex-1 flex flex-col items-center justify-center gap-3 py-4"
+      <fl-empty-state
         data-testid="zone-no-provider"
+        icon="lucideGlobe"
+        [compact]="true"
+        title="No DNS provider configured"
+        body="Set up a DNS provider first to use a domain."
       >
-        <ng-icon name="lucideGlobe" class="h-8 w-8 text-muted-foreground/40" />
-        <div class="text-center">
-          <p class="text-sm font-medium text-foreground">No DNS provider configured</p>
-          <p class="text-xs text-muted-foreground mt-0.5">
-            Set up a DNS provider first to use a domain.
+        <a flButton size="sm" routerLink="/infrastructure/domains">Go to domains</a>
+      </fl-empty-state>
+    } @else {
+      @if (wiz.zoneOptions().length > 0) {
+        <fieldset class="fl-fieldset">
+          <legend>Which domain do you want to use?</legend>
+          <div class="flex max-h-72 flex-col gap-2 overflow-y-auto" data-testid="zone-options">
+            @for (zone of wiz.zoneOptions(); track zone.key) {
+              <label class="fl-radiocard" [attr.data-testid]="'zone-option-' + zone.zoneName">
+                <input
+                  type="radio"
+                  name="zoneChoice"
+                  [value]="zone.key"
+                  [ngModel]="wiz.selectedZoneKey()"
+                  (ngModelChange)="wiz.selectZone($event)"
+                  [disabled]="wiz.registeringZone()"
+                />
+                <span class="fl-radiocard__text min-w-0 flex-1">
+                  <span class="fl-radiocard__title fl-mono truncate">{{ zone.zoneName }}</span>
+                  <span class="fl-radiocard__desc">{{ zone.provider }}</span>
+                </span>
+                @if (!zone.registeredId) {
+                  <fl-status tone="neutral" label="Not added yet" data-testid="zone-not-added" />
+                }
+              </label>
+            }
+          </div>
+        </fieldset>
+      } @else {
+        <fl-alert
+          tone="warning"
+          data-testid="zone-none-found"
+          [title]="'No domains found in ' + wiz.configuredDnsProviders().join(', ')"
+        />
+      }
+
+      @if (wiz.unreadableZoneProviders().length > 0) {
+        <p class="m-0 text-fl-body-sm text-fl-ink-muted" data-testid="zone-unreadable">
+          Could not read the domains of {{ wiz.unreadableZoneProviders().join(', ') }}.
+        </p>
+      }
+
+      @if (wiz.existingZone()) {
+        <div class="flex flex-col gap-2">
+          <fl-key-value>
+            <fl-kv-item key="Contact email">
+              <span data-testid="zone-email-fixed">{{ wiz.acmeEmail() }}</span>
+            </fl-kv-item>
+          </fl-key-value>
+          <p class="m-0 text-fl-caption text-fl-ink-muted">
+            Fixed after the first setup.
+            <a routerLink="/infrastructure/domains" class="fl-link">Manage DNS zones</a>
           </p>
         </div>
-        <a
-          routerLink="/infrastructure/domains"
-          class="text-xs text-primary hover:underline flex items-center gap-1"
+      } @else {
+        <fl-field
+          label="Contact email"
+          for="zone-email"
+          hint="Let's Encrypt writes here about expiring certificates."
         >
-          Go to DNS section
-          <ng-icon name="lucideExternalLink" class="h-3 w-3" />
-        </a>
-      </div>
-    } @else {
-      <div class="flex flex-col gap-3 flex-1 p-2">
-        @if (wiz.zoneOptions().length > 0) {
-          <div>
-            <label class="text-xs font-medium text-foreground block mb-1.5">Domain</label>
-            <div
-              class="space-y-1 max-h-36 overflow-y-auto rounded-md border border-input p-1.5"
-              data-testid="zone-options"
-            >
-              @for (zone of wiz.zoneOptions(); track zone.key) {
-                <label
-                  class="flex items-center gap-2.5 px-2.5 py-1.5 rounded cursor-pointer hover:bg-muted/60 transition-colors"
-                  [attr.data-testid]="'zone-option-' + zone.zoneName"
-                >
-                  <input
-                    type="radio"
-                    name="zoneChoice"
-                    [value]="zone.key"
-                    [ngModel]="wiz.selectedZoneKey()"
-                    (ngModelChange)="wiz.selectZone($event)"
-                    [disabled]="wiz.registeringZone()"
-                    class="text-primary"
-                  />
-                  <span class="text-sm font-mono text-foreground flex-1 truncate">{{
-                    zone.zoneName
-                  }}</span>
-                  @if (!zone.registeredId) {
-                    <span
-                      class="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground"
-                      data-testid="zone-not-added"
-                      >Not added yet</span
-                    >
-                  }
-                  <span class="text-[11px] text-muted-foreground">{{ zone.provider }}</span>
-                </label>
-              }
-            </div>
-          </div>
-        } @else {
-          <div
-            class="rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5"
-            data-testid="zone-none-found"
-          >
-            <p class="text-xs font-medium text-amber-800">
-              No domains found in {{ wiz.configuredDnsProviders().join(', ') }}
-            </p>
-          </div>
-        }
-
-        @if (wiz.unreadableZoneProviders().length > 0) {
-          <p class="text-xs text-muted-foreground" data-testid="zone-unreadable">
-            Could not read the domains of {{ wiz.unreadableZoneProviders().join(', ') }}.
-          </p>
-        }
-
-        <div>
-          <label class="text-xs font-medium text-foreground block mb-1.5">Contact email</label>
-          @if (wiz.existingZone()) {
-            <div
-              class="w-full rounded-md border border-input bg-muted/40 px-3 py-2 text-sm text-foreground flex items-center gap-2"
-              data-testid="zone-email-fixed"
-            >
-              <ng-icon name="lucideMail" class="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-              {{ wiz.acmeEmail() }}
-            </div>
-            <p class="text-xs text-muted-foreground mt-1">
-              Fixed after the first setup.
-              <a routerLink="/infrastructure/domains" class="text-primary hover:underline"
-                >Manage DNS zones</a
-              >
-            </p>
-          } @else {
+          <div class="fl-input fl-input--lg">
             <input
+              id="zone-email"
               type="email"
               [ngModel]="wiz.acmeEmail()"
               (ngModelChange)="wiz.acmeEmail.set($event)"
-              placeholder="your@email.com"
+              placeholder="you@example.com"
               data-testid="zone-email"
-              class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
             />
-            <p class="text-xs text-muted-foreground mt-1">
-              Let's Encrypt writes here about expiring certificates.
-            </p>
-          }
-        </div>
+          </div>
+        </fl-field>
+      }
 
-        @if (wiz.zoneError()) {
-          <p class="text-xs text-destructive" data-testid="zone-error">{{ wiz.zoneError() }}</p>
+      @if (wiz.zoneError()) {
+        <fl-alert tone="error" title="Domain not added" data-testid="zone-error">
+          {{ wiz.zoneError() }}
+        </fl-alert>
+      }
+
+      <fl-alert tone="info" title="Don't see your domain?" data-testid="zone-hint">
+        @if (wiz.configuredDnsProviders().length > 0) {
+          Buy it on {{ wiz.configuredDnsProviders()[0] }}, or point its nameservers there from your
+          registrar. It then shows up here.
+        } @else {
+          No DNS provider is configured yet.
+          <a routerLink="/infrastructure/domains" class="fl-link">Set one up</a>.
         }
-
-        <div
-          class="rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5 space-y-1"
-          data-testid="zone-hint"
-        >
-          <p class="text-xs font-medium text-amber-800">Don't see your domain?</p>
-          @if (wiz.configuredDnsProviders().length > 0) {
-            <p class="text-xs text-amber-700">
-              Buy it on <span class="font-semibold">{{ wiz.configuredDnsProviders()[0] }}</span>, or
-              point its nameservers there from your registrar. It then shows up here.
-            </p>
-            @if (firstProviderDelegation; as delegation) {
-              <a
-                [href]="delegation.delegationGuideUrl"
-                target="_blank"
-                rel="noopener"
-                class="inline-flex items-center gap-1 text-xs text-amber-700 hover:text-amber-900 underline"
-              >
-                How to point the nameservers
-                <ng-icon name="lucideExternalLink" class="h-3 w-3" />
-              </a>
-            }
-          } @else {
-            <p class="text-xs text-amber-700">
-              No DNS provider is configured yet.
-              <a routerLink="/infrastructure/domains" class="underline">Set one up</a>.
-            </p>
-          }
-        </div>
-      </div>
+        @if (wiz.configuredDnsProviders().length > 0 && firstProviderDelegation; as delegation) {
+          <a
+            alertActions
+            flButton
+            size="sm"
+            [href]="delegation.delegationGuideUrl"
+            target="_blank"
+            rel="noopener"
+          >
+            How to point the nameservers
+          </a>
+        }
+      </fl-alert>
     }
   `,
 })

@@ -1,333 +1,247 @@
-import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, DestroyRef, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import {
-  lucideEdit2,
-  lucidePlus,
-  lucideX,
-  lucideLoader,
-  lucideCheckCircle,
-  lucideAlertCircle,
-  lucideRefreshCw,
-  lucideZap,
-  lucideGlobe,
-} from '@ng-icons/lucide';
 import { firstValueFrom } from 'rxjs';
 import { DnsSetupWizardService, DirectEndpointRow } from './dns-setup-wizard.service';
 import { DNSZonesService } from '../../../core/api/api/dNSZones.service';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlCopyId } from '../../../ui/patterns/copy-id';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+import { FlStatus } from '../../../ui/primitives/status';
+import {
+  HostnameMode,
+  RowForm,
+  canSaveRowForm,
+  emptyRowForm,
+  initialRowForm,
+  validateDomain,
+  validatePrefix,
+} from './dns-wizard-endpoints-config-form';
 
-type HostnameMode = 'ip' | 'domain';
-
-interface RowForm {
-  hostnameMode: HostnameMode;
-  /** Subdomain prefix — used by both nip.io mode (prepended to the IP) and custom-domain mode
-   *  (prepended to the user's domain). Defaults to the app slug. */
-  prefix: string;
-  prefixError: string | null;
-  /** User's domain (e.g. `example.com`). Only used when hostnameMode === 'domain'. */
-  domain: string;
-  domainError: string | null;
-  dnsChecking: boolean;
-  dnsOk: boolean | null;
-  dnsResolved: string[];
-  timer: ReturnType<typeof setTimeout> | null;
-}
-
-function validateDomain(value: string): string | null {
-  const labelRe = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/;
-  const labels = value.split('.');
-  if (labels.length < 2) return 'Must contain at least one dot (e.g. example.com)';
-  for (const label of labels) {
-    if (!label) return 'Cannot have empty parts';
-    if (!labelRe.test(label)) {
-      return `"${label}" is invalid — letters, numbers and hyphens only`;
-    }
-  }
-  return null;
-}
-
-export function validatePrefix(value: string): string | null {
-  const labelRe = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/;
-  for (const label of value.split('.')) {
-    if (!label) return 'Cannot have empty parts';
-    if (label.length > 63) return 'Each part must be 63 characters or fewer';
-    if (!labelRe.test(label)) return 'Letters, numbers, hyphens and dots only';
-  }
-  return null;
-}
+export { validatePrefix } from './dns-wizard-endpoints-config-form';
 
 @Component({
   selector: 'app-dns-wizard-endpoints-config-step',
-  standalone: true,
-  imports: [FormsModule, NgIconComponent],
-  providers: [
-    provideIcons({
-      lucideEdit2,
-      lucidePlus,
-      lucideX,
-      lucideLoader,
-      lucideCheckCircle,
-      lucideAlertCircle,
-      lucideRefreshCw,
-      lucideZap,
-      lucideGlobe,
-    }),
-  ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [FormsModule, FlAlert, FlCopyId, FlTable, FlButton, FlSpinner, FlStatus],
+  host: { class: 'fl-stack' },
   template: `
-    <div class="flex items-start justify-between mb-1">
-      <h3 class="text-sm font-semibold text-foreground">Configure app endpoints</h3>
-      @if (wiz.loadingDirectConfig()) {
-        <ng-icon
-          name="lucideLoader"
-          class="h-4 w-4 text-muted-foreground animate-spin flex-shrink-0"
-        />
-      }
-    </div>
-    <p class="text-xs text-muted-foreground mb-4">
-      Pick a public address for each app. Use <strong>Test address</strong> for instant access
-      without DNS setup, or <strong>Your domain</strong> if you have one. One certificate covers
-      them all.
+    <p class="m-0 text-fl-body-sm text-fl-ink-muted">
+      Pick a public address for each app. A test address works right away without DNS setup; use
+      your domain if you have one. One certificate covers them all.
     </p>
 
-    <div class="flex flex-col gap-2">
-      @for (row of wiz.directEndpoints(); track row.key) {
-        <div class="rounded-lg border border-border overflow-hidden">
-          <!-- Row header -->
-          <div class="flex items-center gap-3 px-4 py-3">
-            <!-- Status dot -->
-            @if (row.configured || row.endpoint?.id) {
-              <ng-icon name="lucideCheckCircle" class="h-4 w-4 text-emerald-500 flex-shrink-0" />
-            } @else {
-              <div
-                class="h-4 w-4 rounded-full border-2 border-muted-foreground/30 flex-shrink-0"
-              ></div>
-            }
+    @if (wiz.loadingDirectConfig()) {
+      <div class="flex items-center gap-2 text-fl-body-sm text-fl-ink-muted">
+        <fl-spinner label="Loading addresses" />
+        Loading the current addresses…
+      </div>
+    }
 
-            <!-- Label + fqdn -->
-            <div class="flex-1 min-w-0">
-              <p class="text-xs font-semibold text-foreground">{{ row.label }}</p>
-              @if (rowDisplayFqdn(row); as displayFqdn) {
-                <div class="flex items-center gap-1.5">
+    <div class="fl-table-wrap">
+      <table flTable density="dense">
+        <thead>
+          <tr>
+            <th scope="col">App</th>
+            <th scope="col">Address</th>
+            <th scope="col">Source</th>
+            <th scope="col">Status</th>
+            <th scope="col" class="is-fit"><span class="fl-sr">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of wiz.directEndpoints(); track row.key) {
+            @let displayFqdn = rowDisplayFqdn(row);
+            <tr>
+              <td>{{ row.label }}</td>
+              <td class="whitespace-normal">
+                @if (displayFqdn) {
+                  <fl-copy-id [value]="displayFqdn" label="address" />
+                } @else {
+                  <span class="text-fl-ink-muted">Not configured</span>
+                }
+                @if (row.error && activeFormKey() !== row.key) {
                   <span
-                    class="text-[10px] px-1.5 py-0.5 rounded font-medium"
-                    [class]="
-                      row.draftHostnameMode === 'ip'
-                        ? 'bg-gray-100 text-gray-700'
-                        : 'bg-blue-100 text-blue-700'
-                    "
+                    class="block text-fl-caption text-fl-danger"
+                    [attr.data-testid]="'direct-row-error-' + row.key"
                   >
-                    {{ row.draftHostnameMode === 'ip' ? 'Test' : 'Domain' }}
+                    {{ row.error }}
                   </span>
-                  <p class="text-xs font-mono text-muted-foreground truncate">{{ displayFqdn }}</p>
-                </div>
-              } @else {
-                <p class="text-xs text-muted-foreground italic">No endpoint configured</p>
-              }
-              @if (row.error && activeFormKey() !== row.key) {
-                <p
-                  class="text-xs text-destructive mt-0.5"
-                  [attr.data-testid]="'direct-row-error-' + row.key"
-                >
-                  {{ row.error }}
-                </p>
-              }
-            </div>
+                }
+              </td>
+              <td>
+                @if (displayFqdn) {
+                  {{ row.draftHostnameMode === 'ip' ? 'Test address' : 'Your domain' }}
+                } @else {
+                  <span class="text-fl-ink-muted">—</span>
+                }
+              </td>
+              <td>
+                @if (row.configured || row.endpoint?.id) {
+                  <fl-status tone="success" label="Ready" />
+                } @else {
+                  <fl-status tone="neutral" label="To set" />
+                }
+              </td>
+              <td class="is-fit">
+                @if (activeFormKey() !== row.key) {
+                  <button flButton size="sm" type="button" (click)="openForm(row)">
+                    {{ row.configured || row.endpoint?.id ? 'Edit' : 'Add' }}
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
 
-            <!-- Edit / Add button -->
-            @if (activeFormKey() !== row.key) {
-              @if (row.configured || row.endpoint?.id) {
-                <button
-                  type="button"
-                  (click)="openForm(row)"
-                  title="Edit hostname"
-                  class="p-1.5 rounded text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
-                >
-                  <ng-icon name="lucideEdit2" class="h-3.5 w-3.5" />
-                </button>
-              } @else {
-                <button
-                  type="button"
-                  (click)="openForm(row)"
-                  class="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors flex-shrink-0"
-                >
-                  <ng-icon name="lucidePlus" class="h-3.5 w-3.5" />
-                  Add
-                </button>
+    @if (activeRow(); as row) {
+      @let f = getForm(row.key);
+      <section
+        class="flex flex-col gap-3 rounded-fl-md border border-fl-border bg-fl-surface-subtle p-3"
+        [attr.aria-label]="'Address of ' + row.label"
+      >
+        <span class="text-fl-body-sm font-semibold">Address of {{ row.label }}</span>
+
+        <div class="fl-segmented self-start" role="group" aria-label="Hostname source">
+          <button
+            type="button"
+            [attr.aria-pressed]="f.hostnameMode === 'ip'"
+            [disabled]="!wiz.masterIp()"
+            [title]="
+              !wiz.masterIp() ? 'Cluster IP not available yet' : 'Auto-generated test address'
+            "
+            (click)="setMode(row.key, 'ip')"
+          >
+            Test address
+          </button>
+          <button
+            type="button"
+            [attr.aria-pressed]="f.hostnameMode === 'domain'"
+            (click)="setMode(row.key, 'domain')"
+          >
+            Your domain
+          </button>
+        </div>
+
+        <div class="fl-field" [class.is-invalid]="!!f.prefixError || !!f.domainError">
+          <label class="fl-field__label" [attr.for]="'direct-prefix-' + row.key">Address</label>
+          <div class="fl-input fl-input--lg fl-mono">
+            <input
+              type="text"
+              [id]="'direct-prefix-' + row.key"
+              [ngModel]="f.prefix"
+              (ngModelChange)="onPrefixChange(row.key, $event)"
+              [placeholder]="row.slug || 'api'"
+              autocomplete="off"
+              spellcheck="false"
+            />
+            @if (f.hostnameMode === 'ip') {
+              <span class="whitespace-nowrap">.{{ ipDashed() }}.nip.io</span>
+            } @else {
+              <span>.</span>
+              <input
+                type="text"
+                [ngModel]="f.domain"
+                (ngModelChange)="onDomainChange(row.key, $event)"
+                placeholder="example.com"
+                aria-label="Domain"
+                autocomplete="off"
+                spellcheck="false"
+              />
+            }
+          </div>
+          @if (f.prefixError) {
+            <span class="fl-field__error">{{ f.prefixError }}</span>
+          }
+          @if (f.hostnameMode === 'domain' && f.domainError) {
+            <span class="fl-field__error">{{ f.domainError }}</span>
+          }
+          @if (f.hostnameMode === 'ip' && !f.prefixError && f.prefix.trim()) {
+            <span class="fl-field__hint">Works right away, no DNS setup needed.</span>
+          }
+        </div>
+
+        @if (
+          f.hostnameMode === 'domain' &&
+          !f.prefixError &&
+          !f.domainError &&
+          f.prefix.trim() &&
+          f.domain.trim()
+        ) {
+          <div class="flex flex-col gap-2">
+            <span class="text-fl-body-sm">Create this record at your DNS provider:</span>
+            <div class="fl-table-wrap">
+              <table flTable density="dense">
+                <thead>
+                  <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">Type</th>
+                    <th scope="col">Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <fl-copy-id [value]="f.prefix.trim() + '.' + f.domain.trim()" label="name" />
+                    </td>
+                    <td class="fl-mono">A</td>
+                    <td>
+                      @if (wiz.masterIp()) {
+                        <fl-copy-id [value]="wiz.masterIp()" label="value" />
+                      } @else {
+                        <span class="text-fl-ink-muted">Your cluster IP</span>
+                      }
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            @if (wiz.masterIp()) {
+              @if (f.dnsChecking) {
+                <fl-status tone="progress" label="Checking DNS…" />
+              } @else if (f.dnsOk === true) {
+                <fl-status tone="success" label="Points to your cluster" />
+              } @else if (f.dnsOk === false) {
+                <fl-status tone="warning" [label]="mismatchLabel(f)" />
               }
             }
           </div>
+        }
 
-          <!-- Inline form -->
-          @if (activeFormKey() === row.key) {
-            @let f = getForm(row.key);
-            <div class="border-t border-border px-4 py-3 bg-muted/30 space-y-3">
-              <!-- Hostname mode toggle (compact segmented) -->
-              <div>
-                <label class="block text-xs font-medium text-muted-foreground mb-1.5"
-                  >Hostname source</label
-                >
-                <div class="inline-flex rounded-md border border-border overflow-hidden text-xs">
-                  <button
-                    type="button"
-                    (click)="setMode(row.key, 'ip')"
-                    [disabled]="!wiz.masterIp()"
-                    [class]="modeBtnClass(f.hostnameMode === 'ip', !wiz.masterIp())"
-                    [title]="
-                      !wiz.masterIp()
-                        ? 'Cluster IP not available yet'
-                        : 'Auto-generated test address'
-                    "
-                  >
-                    <ng-icon name="lucideZap" class="h-3 w-3" />
-                    Test address
-                  </button>
-                  <button
-                    type="button"
-                    (click)="setMode(row.key, 'domain')"
-                    [class]="modeBtnClass(f.hostnameMode === 'domain', false)"
-                  >
-                    <ng-icon name="lucideGlobe" class="h-3 w-3" />
-                    Your domain
-                  </button>
-                </div>
-              </div>
+        <span class="text-fl-caption text-fl-ink-muted">
+          One certificate is shared across all the apps you set up here.
+        </span>
 
-              <!-- Split address: subdomain (always editable, defaulted to app slug) + suffix -->
-              <div>
-                <label class="block text-xs font-medium text-foreground mb-1">Address</label>
-                <div class="flex items-stretch">
-                  <input
-                    type="text"
-                    [(ngModel)]="f.prefix"
-                    (ngModelChange)="onPrefixChange(row.key)"
-                    [placeholder]="row.slug || 'api'"
-                    class="flex-1 min-w-0 px-3 py-1.5 border rounded-l-md bg-background text-xs text-foreground font-mono focus:outline-none focus:ring-1 focus:ring-primary"
-                    [class.border-destructive]="f.prefixError"
-                  />
-                  @if (f.hostnameMode === 'ip') {
-                    <span
-                      class="inline-flex items-center px-2 py-1.5 border border-l-0 rounded-r-md bg-muted text-xs text-muted-foreground font-mono whitespace-nowrap select-none"
-                    >
-                      .{{ ipDashed() }}.nip.io
-                    </span>
-                  } @else {
-                    <span
-                      class="inline-flex items-center px-2 py-1.5 border border-l-0 bg-muted text-xs text-muted-foreground font-mono select-none"
-                      >.</span
-                    >
-                    <input
-                      type="text"
-                      [(ngModel)]="f.domain"
-                      (ngModelChange)="onDomainChange(row.key)"
-                      placeholder="example.com"
-                      class="flex-1 min-w-0 px-3 py-1.5 border border-l-0 rounded-r-md bg-background text-xs text-foreground font-mono focus:outline-none focus:ring-1 focus:ring-primary"
-                      [class.border-destructive]="f.domainError"
-                    />
-                  }
-                </div>
-                @if (f.prefixError) {
-                  <p class="mt-1 text-xs text-destructive">{{ f.prefixError }}</p>
-                }
-                @if (f.hostnameMode === 'domain' && f.domainError) {
-                  <p class="mt-1 text-xs text-destructive">{{ f.domainError }}</p>
-                }
-                @if (f.hostnameMode === 'ip' && !f.prefixError && f.prefix.trim()) {
-                  <p class="mt-1 text-[11px] text-muted-foreground">
-                    Works out of the box — no DNS setup required.
-                  </p>
-                }
-                @if (
-                  f.hostnameMode === 'domain' &&
-                  !f.prefixError &&
-                  !f.domainError &&
-                  f.prefix.trim() &&
-                  f.domain.trim()
-                ) {
-                  <p class="mt-1 text-[11px] text-muted-foreground">
-                    Make sure <span class="font-mono">{{ f.prefix }}.{{ f.domain }}</span> points to
-                    <span class="font-mono">{{ wiz.masterIp() || 'your cluster IP' }}</span>.
-                  </p>
-                }
-              </div>
+        @if (row.error) {
+          <fl-alert tone="error" title="Address not saved">{{ row.error }}</fl-alert>
+        }
 
-              <!-- DNS resolution check (custom domain only) -->
-              @if (
-                f.hostnameMode === 'domain' &&
-                wiz.masterIp() &&
-                f.prefix.trim() &&
-                f.domain.trim() &&
-                !f.prefixError &&
-                !f.domainError
-              ) {
-                <div class="flex items-center gap-1.5 text-xs">
-                  @if (f.dnsChecking) {
-                    <ng-icon
-                      name="lucideLoader"
-                      class="h-3 w-3 animate-spin text-muted-foreground"
-                    />
-                    <span class="text-muted-foreground">Checking…</span>
-                  } @else if (f.dnsOk === true) {
-                    <ng-icon name="lucideCheckCircle" class="h-3 w-3 text-emerald-500" />
-                    <span class="text-emerald-600">Points to your cluster</span>
-                  } @else if (f.dnsOk === false) {
-                    <ng-icon name="lucideAlertCircle" class="h-3 w-3 text-amber-500" />
-                    <span class="text-amber-600">
-                      Doesn't point to {{ wiz.masterIp() }} yet
-                      @if (f.dnsResolved.length) {
-                        — currently {{ f.dnsResolved.join(', ') }}
-                      }
-                    </span>
-                  }
-                </div>
-              }
-
-              <p class="text-[11px] text-muted-foreground">
-                One certificate is shared across all the apps you set up here.
-              </p>
-
-              <!-- Row error -->
-              @if (row.error) {
-                <p class="text-xs text-destructive">{{ row.error }}</p>
-              }
-
-              <!-- Actions -->
-              <div class="flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  (click)="closeForm()"
-                  class="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  (click)="save(row)"
-                  [disabled]="!canSaveRow(row.key)"
-                  class="flex items-center gap-1 rounded-md bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Save
-                </button>
-              </div>
-            </div>
-          }
+        <div class="flex items-center justify-end gap-2">
+          <button flButton="ghost" size="sm" type="button" (click)="closeForm()">Cancel</button>
+          <button
+            flButton
+            size="sm"
+            type="button"
+            (click)="save(row)"
+            [disabled]="!canSaveRow(row.key)"
+          >
+            Save
+          </button>
         </div>
-      }
-    </div>
+      </section>
+    }
 
     @if (wiz.endpointsConfigError()) {
-      <p class="mt-3 text-xs text-destructive">{{ wiz.endpointsConfigError() }}</p>
+      <fl-alert tone="error" title="Addresses not valid">{{ wiz.endpointsConfigError() }}</fl-alert>
     }
 
     @if (allConfigured()) {
-      <div
-        class="mt-3 rounded-md bg-emerald-50 border border-emerald-200 px-3 py-2 flex items-center gap-2"
-      >
-        <ng-icon name="lucideCheckCircle" class="h-4 w-4 text-emerald-500 flex-shrink-0" />
-        <p class="text-xs text-emerald-700">
-          All set. Click Next to publish the addresses and issue the certificate.
-        </p>
-      </div>
+      <fl-status
+        tone="success"
+        label="All set. Next publishes the addresses and issues the certificate."
+      />
     }
   `,
 })
@@ -336,6 +250,14 @@ export class DnsWizardEndpointsConfigStepComponent {
   private readonly dnsZonesApi = inject(DNSZonesService);
 
   protected activeFormKey = signal<string | null>(null);
+  private readonly forms = signal<Record<string, RowForm>>({});
+  private readonly timers = new Map<string, ReturnType<typeof setTimeout>>();
+
+  protected readonly activeRow = computed(() => {
+    const key = this.activeFormKey();
+    return key ? (this.wiz.directEndpoints().find((r) => r.key === key) ?? null) : null;
+  });
+
   protected allConfigured = computed(() => {
     const rows = this.wiz.directEndpoints();
     if (rows.length === 0) return false;
@@ -348,128 +270,93 @@ export class DnsWizardEndpointsConfigStepComponent {
 
   protected ipDashed = computed(() => this.wiz.masterIp().replaceAll('.', '-') || '<cluster-ip>');
 
-  protected rowForms = new Map<string, RowForm>();
-
-  private emptyForm(initial?: Partial<RowForm>): RowForm {
-    return {
-      hostnameMode: initial?.hostnameMode ?? 'ip',
-      prefix: initial?.prefix ?? '',
-      prefixError: null,
-      domain: initial?.domain ?? '',
-      domainError: null,
-      dnsChecking: false,
-      dnsOk: null,
-      dnsResolved: [],
-      timer: null,
-    };
+  constructor() {
+    inject(DestroyRef).onDestroy(() => this.timers.forEach((t) => clearTimeout(t)));
   }
 
   protected getForm(key: string): RowForm {
-    if (!this.rowForms.has(key)) this.rowForms.set(key, this.emptyForm());
-    return this.rowForms.get(key)!;
+    return this.forms()[key] ?? emptyRowForm();
+  }
+
+  private patch(key: string, change: Partial<RowForm>): void {
+    this.forms.update((all) => ({ ...all, [key]: { ...(all[key] ?? emptyRowForm()), ...change } }));
+  }
+
+  private clearTimer(key: string): void {
+    const timer = this.timers.get(key);
+    if (timer) clearTimeout(timer);
+    this.timers.delete(key);
   }
 
   protected openForm(row: DirectEndpointRow): void {
-    // Default to nip.io when the master IP is available — fastest path. If the
-    // user previously committed a domain, restore prefix + domain split.
-    const initialMode: HostnameMode =
-      row.draftHostnameMode || (this.wiz.masterIp() ? 'ip' : 'domain');
-    let initialPrefix = row.draftPrefix;
-    let initialDomain = '';
-    if (initialMode === 'domain' && row.draftFqdn) {
-      // Split the previously committed FQDN into prefix + domain (first label vs rest).
-      const dot = row.draftFqdn.indexOf('.');
-      if (dot > 0) {
-        initialPrefix = row.draftFqdn.slice(0, dot);
-        initialDomain = row.draftFqdn.slice(dot + 1);
-      } else {
-        initialPrefix = row.draftFqdn;
-      }
-    }
-    if (!initialPrefix) initialPrefix = row.slug;
-    const f = this.emptyForm({
-      hostnameMode: initialMode,
-      prefix: initialPrefix,
-      domain: initialDomain,
-    });
-    this.rowForms.set(row.key, f);
+    this.forms.update((all) => ({ ...all, [row.key]: initialRowForm(row, this.wiz.masterIp()) }));
     this.activeFormKey.set(row.key);
   }
 
   protected closeForm(): void {
     const key = this.activeFormKey();
-    if (key) {
-      const f = this.rowForms.get(key);
-      if (f?.timer) clearTimeout(f.timer);
-    }
+    if (key) this.clearTimer(key);
     this.activeFormKey.set(null);
   }
 
   protected setMode(key: string, mode: HostnameMode): void {
     if (mode === 'ip' && !this.wiz.masterIp()) return;
-    const f = this.getForm(key);
-    f.hostnameMode = mode;
-    f.prefixError = null;
-    f.domainError = null;
-    f.dnsOk = null;
-    f.dnsResolved = [];
-    if (f.timer) clearTimeout(f.timer);
+    this.clearTimer(key);
+    this.patch(key, {
+      hostnameMode: mode,
+      prefixError: null,
+      domainError: null,
+      dnsOk: null,
+      dnsResolved: [],
+    });
   }
 
-  protected onPrefixChange(key: string): void {
-    const f = this.getForm(key);
-    const v = f.prefix.trim();
-    f.prefixError = v ? validatePrefix(v) : null;
-    if (f.hostnameMode === 'domain') this.scheduleDnsCheck(key);
+  protected onPrefixChange(key: string, value: string): void {
+    const v = value.trim();
+    this.patch(key, { prefix: value, prefixError: v ? validatePrefix(v) : null });
+    if (this.getForm(key).hostnameMode === 'domain') this.scheduleDnsCheck(key);
   }
 
-  protected onDomainChange(key: string): void {
-    const f = this.getForm(key);
-    const v = f.domain.trim();
-    f.domainError = v ? validateDomain(v) : null;
+  protected onDomainChange(key: string, value: string): void {
+    const v = value.trim();
+    this.patch(key, { domain: value, domainError: v ? validateDomain(v) : null });
     this.scheduleDnsCheck(key);
   }
 
   private scheduleDnsCheck(key: string): void {
+    this.clearTimer(key);
+    this.patch(key, { dnsOk: null, dnsResolved: [] });
     const f = this.getForm(key);
-    f.dnsOk = null;
-    f.dnsResolved = [];
-    if (f.timer) clearTimeout(f.timer);
     const ip = this.wiz.masterIp();
     const prefix = f.prefix.trim();
     const domain = f.domain.trim();
     if (!ip || !prefix || !domain || f.prefixError || f.domainError) {
-      f.dnsChecking = false;
+      this.patch(key, { dnsChecking: false });
       return;
     }
     const fqdn = `${prefix}.${domain}`;
-    f.dnsChecking = true;
-    f.timer = setTimeout(() => this.runDnsCheck(key, fqdn, ip), 600);
+    this.patch(key, { dnsChecking: true });
+    this.timers.set(
+      key,
+      setTimeout(() => this.runDnsCheck(key, fqdn, ip), 600),
+    );
   }
 
   private async runDnsCheck(key: string, hostname: string, expectedIp: string): Promise<void> {
-    const f = this.getForm(key);
     try {
       const res = await firstValueFrom(
         this.dnsZonesApi.dnsZoneControllerVerifyDns(hostname, expectedIp),
       );
-      f.dnsOk = res.matches;
-      f.dnsResolved = res.resolvedAddresses;
+      this.patch(key, { dnsOk: res.matches, dnsResolved: res.resolvedAddresses });
     } catch {
-      f.dnsOk = false;
-      f.dnsResolved = [];
+      this.patch(key, { dnsOk: false, dnsResolved: [] });
     } finally {
-      f.dnsChecking = false;
+      this.patch(key, { dnsChecking: false });
     }
   }
 
   protected canSaveRow(key: string): boolean {
-    const f = this.getForm(key);
-    if (f.hostnameMode === 'ip')
-      return !!f.prefix.trim() && !f.prefixError && !!this.wiz.masterIp();
-    return (
-      !!f.prefix.trim() && !f.prefixError && !!f.domain.trim() && !f.domainError && !f.dnsChecking
-    );
+    return canSaveRowForm(this.getForm(key), this.wiz.masterIp());
   }
 
   protected save(row: DirectEndpointRow): void {
@@ -484,12 +371,9 @@ export class DnsWizardEndpointsConfigStepComponent {
     this.closeForm();
   }
 
-  protected modeBtnClass(active: boolean, disabled: boolean): string {
-    const base = 'flex items-center gap-1 px-2.5 py-1 transition-colors';
-    if (disabled) return `${base} bg-muted text-muted-foreground/50 cursor-not-allowed`;
-    return active
-      ? `${base} bg-primary text-primary-foreground`
-      : `${base} bg-background text-foreground hover:bg-muted`;
+  protected mismatchLabel(f: RowForm): string {
+    const base = `Does not point to ${this.wiz.masterIp()} yet`;
+    return f.dnsResolved.length ? `${base}, currently ${f.dnsResolved.join(', ')}` : base;
   }
 
   protected rowDisplayFqdn(row: DirectEndpointRow): string {

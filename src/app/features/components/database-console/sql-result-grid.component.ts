@@ -1,73 +1,98 @@
-import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
+import { Component, computed, input, signal } from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
 import {
-  lucideBraces,
+  lucideCheck,
   lucideCopy,
   lucideDownload,
   lucideMaximize2,
+  lucideRows3,
   lucideX,
 } from '@ng-icons/lucide';
 import { SqlColumn, SqlQueryResult } from '../../model/db-console.models';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlEmptyState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlStatus } from '../../../ui/primitives/status';
 import { JsonViewerComponent } from './json-viewer.component';
+import { FlDialogFocus } from '../../../ui/overlays/dialog-focus';
 
 const JSON_SNIFF_SAMPLE = 50;
 
 @Component({
   selector: 'app-sql-result-grid',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { class: 'contents' },
-  imports: [NgIcon, JsonViewerComponent],
+  host: { class: 'block' },
+  imports: [
+    FlDialogFocus,
+    FlPanel,
+    FlTable,
+    FlEmptyState,
+    FlButton,
+    FlIcon,
+    FlStatus,
+    JsonViewerComponent,
+  ],
   providers: [
     provideIcons({
-      lucideBraces,
+      lucideCheck,
       lucideCopy,
       lucideDownload,
       lucideMaximize2,
+      lucideRows3,
       lucideX,
     }),
   ],
   template: `
-    <div class="min-h-0 flex-1 overflow-auto rounded-lg border border-border bg-card">
-      @if (result(); as r) {
-        <div
-          class="sticky top-0 z-10 flex items-center gap-4 border-b border-border bg-muted/40 px-3 py-1.5 text-xs text-muted-foreground"
-        >
-          <span>{{ r.command || 'OK' }}</span>
-          @if (r.columns.length > 0) {
-            <span>{{ r.rowCount }} rows</span>
-          } @else {
-            <span>{{ r.rowCount }} row{{ r.rowCount === 1 ? '' : 's' }} affected</span>
-          }
-          <span>{{ r.durationMs }} ms</span>
+    @let r = result();
+    <fl-panel
+      title="Results"
+      [count]="r && r.columns.length > 0 ? r.rowCount : null"
+      [flush]="true"
+      data-testid="sql-results"
+    >
+      @if (r) {
+        <div panelActions class="fl-row">
+          <span class="fl-toolbar__info fl-num">
+            <span class="fl-mono">{{ r.command || 'OK' }}</span> · {{ r.durationMs }} ms
+          </span>
           @if (r.truncated) {
-            <span class="text-amber-600">truncated to {{ r.rows.length }}</span>
+            <fl-status tone="warning" [label]="'Truncated to ' + r.rows.length + ' rows'" />
           }
-          <div class="ml-auto flex items-center gap-2">
-            <button
-              type="button"
-              (click)="exportCsv()"
-              class="inline-flex items-center gap-1 rounded border border-border px-2 py-0.5 hover:bg-muted"
-            >
-              <ng-icon name="lucideDownload" class="h-3.5 w-3.5" /> CSV
-            </button>
-            <button
-              type="button"
-              (click)="exportJson()"
-              class="inline-flex items-center gap-1 rounded border border-border px-2 py-0.5 hover:bg-muted"
-            >
-              <ng-icon name="lucideDownload" class="h-3.5 w-3.5" /> JSON
-            </button>
-          </div>
+          <button flButton="ghost" size="sm" type="button" (click)="exportCsv()">
+            <fl-icon name="lucideDownload" [size]="14" /> CSV
+          </button>
+          <button flButton="ghost" size="sm" type="button" (click)="exportJson()">
+            <fl-icon name="lucideDownload" [size]="14" /> JSON
+          </button>
         </div>
-        @if (r.columns.length > 0) {
-          <table class="w-full border-collapse text-sm">
-            <thead>
-              <tr class="text-left">
+      }
+
+      @if (!r) {
+        <fl-empty-state
+          [compact]="true"
+          icon="lucideRows3"
+          title="No results yet"
+          body="Run a query to see its results here."
+        />
+      } @else if (r.columns.length === 0) {
+        <fl-empty-state
+          [compact]="true"
+          icon="lucideCheck"
+          [title]="(r.command || 'Statement') + ' done'"
+          [body]="r.rowCount + ' row' + (r.rowCount === 1 ? '' : 's') + ' affected.'"
+        />
+      } @else if (r.rows.length === 0) {
+        <fl-empty-state [compact]="true" icon="lucideRows3" title="The query returned no rows" />
+      } @else {
+        <div class="fl-table-wrap max-h-screen overflow-y-auto">
+          <table flTable density="dense">
+            <thead class="sticky top-0 z-10">
+              <tr>
                 @for (c of r.columns; track c.name) {
-                  <th class="border-b border-border px-3 py-1.5 font-medium">
-                    {{ c.name }}
-                    <span class="ml-1 text-xs font-normal text-muted-foreground">{{
+                  <th scope="col">
+                    <span class="fl-mono">{{ c.name }}</span>
+                    <span class="ml-1 font-mono font-normal text-fl-ink-muted">{{
                       c.dataType
                     }}</span>
                   </th>
@@ -76,27 +101,31 @@ const JSON_SNIFF_SAMPLE = 50;
             </thead>
             <tbody>
               @for (row of r.rows; track $index) {
-                <tr class="hover:bg-muted/40">
+                <tr>
                   @for (cell of row; track $index; let ci = $index) {
-                    <td class="border-b border-border/60 px-3 py-1 align-top">
+                    <td class="fl-mono align-top">
                       @if (cell === null) {
-                        <span class="italic text-muted-foreground">NULL</span>
+                        <span class="italic text-fl-ink-muted">NULL</span>
                       } @else if (isJsonCell(ci)) {
                         <div class="group relative max-w-md">
                           <button
+                            flButton
+                            size="sm"
+                            [iconOnly]="true"
                             type="button"
                             (click)="openJson(cell, r.columns[ci].name)"
-                            class="absolute right-0 top-0 z-10 rounded border border-border bg-card p-1 text-muted-foreground opacity-0 hover:bg-muted hover:text-foreground group-hover:opacity-100"
-                            title="Open in panel"
+                            class="absolute right-0 top-0 z-10 opacity-0 focus:opacity-100 group-hover:opacity-100"
+                            aria-label="Open JSON"
+                            title="Open JSON"
                           >
-                            <ng-icon name="lucideMaximize2" class="h-3 w-3" />
+                            <fl-icon name="lucideMaximize2" [size]="13" />
                           </button>
-                          <div class="max-h-48 overflow-auto pr-6">
+                          <div class="max-h-48 overflow-auto pr-8">
                             <app-json-viewer [value]="asJsonValue(cell)" [autoExpandDepth]="1" />
                           </div>
                         </div>
                       } @else {
-                        <span class="font-mono">{{ renderCell(cell) }}</span>
+                        {{ renderCell(cell) }}
                       }
                     </td>
                   }
@@ -104,44 +133,46 @@ const JSON_SNIFF_SAMPLE = 50;
               }
             </tbody>
           </table>
-        }
-      } @else {
-        <div class="p-6 text-center text-sm text-muted-foreground">Run a query to see results.</div>
+        </div>
       }
-    </div>
+    </fl-panel>
 
     @if (jsonDrawer(); as jd) {
       <div class="fixed inset-0 z-50 flex justify-end" (click)="closeJson()">
-        <div class="absolute inset-0 bg-black/30"></div>
+        <div class="fl-backdrop absolute inset-0"></div>
         <aside
-          class="relative z-10 flex h-full w-full max-w-md flex-col border-l border-border bg-card"
+          class="relative z-10 flex h-full w-full max-w-md flex-col border-l border-fl-border bg-fl-surface"
+          role="dialog"
+          aria-modal="true"
+          [attr.aria-label]="jd.column"
+          flDialogFocus
+          (dismissed)="closeJson()"
           (click)="$event.stopPropagation()"
         >
-          <div class="flex items-center justify-between gap-2 border-b border-border px-4 py-2.5">
-            <div class="flex min-w-0 items-center gap-2">
-              <ng-icon name="lucideBraces" class="h-4 w-4 shrink-0 text-muted-foreground" />
-              <span class="truncate text-sm font-medium">{{ jd.column }}</span>
-            </div>
+          <header class="fl-dialog__header">
+            <h2 class="fl-dialog__title truncate font-mono">{{ jd.column }}</h2>
             <div class="flex items-center gap-1">
               <button
                 type="button"
+                class="fl-dialog__close"
                 (click)="copyJson()"
+                [attr.aria-label]="jsonCopied() ? 'Copied' : 'Copy JSON'"
                 [title]="jsonCopied() ? 'Copied' : 'Copy JSON'"
-                class="rounded border border-border p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
               >
-                <ng-icon name="lucideCopy" class="h-3.5 w-3.5" />
+                <fl-icon [name]="jsonCopied() ? 'lucideCheck' : 'lucideCopy'" />
               </button>
               <button
                 type="button"
+                class="fl-dialog__close"
                 (click)="closeJson()"
+                aria-label="Close"
                 title="Close"
-                class="rounded border border-border p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
               >
-                <ng-icon name="lucideX" class="h-3.5 w-3.5" />
+                <fl-icon name="lucideX" />
               </button>
             </div>
-          </div>
-          <div class="min-h-0 flex-1 overflow-auto p-3">
+          </header>
+          <div class="min-h-0 flex-1 overflow-auto p-4">
             <app-json-viewer [value]="jd.value" />
           </div>
         </aside>

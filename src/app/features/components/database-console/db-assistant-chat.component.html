@@ -1,0 +1,229 @@
+@if (!expanded()) {
+  <button
+    flButton
+    [iconOnly]="true"
+    type="button"
+    (click)="toggle()"
+    aria-label="Show assistant"
+    title="Show assistant"
+  >
+    <fl-icon name="lucideSparkles" />
+  </button>
+} @else {
+  <aside
+    class="fl-panel flex max-h-screen min-h-96 w-full shrink-0 xl:sticky xl:top-0 xl:w-80 flex-col self-stretch"
+    [attr.aria-label]="identity()"
+  >
+    <header class="fl-panel__header flex-nowrap">
+      <h2 class="fl-panel__title flex min-w-0 items-center gap-2">
+        @if (imgOk()) {
+          <img
+            src="icons/assistant.svg"
+            class="h-4 w-4 shrink-0 object-contain"
+            alt=""
+            (error)="imgOk.set(false)"
+          />
+        } @else {
+          <fl-icon class="text-fl-ink-muted" name="lucideSparkles" />
+        }
+        <span class="truncate">{{ identity() }}</span>
+      </h2>
+      <div class="fl-panel__actions gap-1">
+        <button
+          flButton="ghost"
+          size="sm"
+          [iconOnly]="true"
+          type="button"
+          (click)="newChat()"
+          aria-label="New chat"
+          title="New chat"
+        >
+          <fl-icon name="lucidePlus" [size]="14" />
+        </button>
+        <button
+          flButton="ghost"
+          size="sm"
+          [iconOnly]="true"
+          type="button"
+          (click)="toggleHistory()"
+          [attr.aria-pressed]="showHistory()"
+          [class.bg-fl-accent-soft]="showHistory()"
+          aria-label="Past chats"
+          title="Past chats"
+        >
+          <fl-icon name="lucideHistory" [size]="14" />
+        </button>
+        <button
+          flButton="ghost"
+          size="sm"
+          [iconOnly]="true"
+          type="button"
+          (click)="toggle()"
+          aria-label="Hide assistant"
+          title="Hide assistant"
+        >
+          <fl-icon name="lucideChevronRight" [size]="14" />
+        </button>
+      </div>
+    </header>
+
+    @if (showHistory()) {
+      <div class="max-h-48 overflow-y-auto border-b border-fl-border py-1">
+        @if (sessions().length === 0) {
+          <p class="m-0 px-4 py-2 text-fl-caption text-fl-ink-muted">
+            No past chats yet. New chat keeps the current one here.
+          </p>
+        } @else {
+          <ul class="m-0 list-none p-0">
+            @for (s of sessions(); track s.id) {
+              <li class="group flex items-center gap-1 px-2 hover:bg-fl-surface-hover">
+                <button
+                  type="button"
+                  (click)="openSession(s.id)"
+                  class="min-w-0 flex-1 truncate px-2 py-1.5 text-left text-fl-body-sm"
+                  [title]="s.title"
+                >
+                  {{ s.title }}
+                </button>
+                <button
+                  flButton="ghost"
+                  size="sm"
+                  [iconOnly]="true"
+                  type="button"
+                  (click)="deleteSession(s.id, $event)"
+                  class="opacity-0 focus:opacity-100 group-hover:opacity-100"
+                  aria-label="Delete chat"
+                  title="Delete chat"
+                >
+                  <fl-icon name="lucideX" [size]="13" />
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    }
+
+    <div #scroll class="min-h-0 flex-1 overflow-y-auto">
+      @if (noInference()) {
+        <fl-empty-state
+          [compact]="true"
+          icon="lucideSparkles"
+          title="Connect a model to get started"
+          body="The assistant uses the inference provider configured for Flui."
+        >
+          <button flButton size="sm" type="button" (click)="goConnectModel()">
+            Connect a model
+          </button>
+        </fl-empty-state>
+      } @else if (messages().length === 0) {
+        <p class="m-0 px-4 py-3 text-fl-body-sm text-fl-ink-muted">{{ emptyHint() }}</p>
+      }
+
+      @for (m of messages(); track $index) {
+        <div class="border-b border-fl-border-subtle px-4 py-3">
+          <p class="m-0 text-fl-caption font-semibold text-fl-ink-secondary">
+            {{ m.role === 'user' ? 'You' : identity() }}
+          </p>
+          <p
+            class="m-0 mt-1 whitespace-pre-wrap text-fl-body-sm"
+            [class.text-fl-ink-secondary]="m.role !== 'user'"
+          >
+            {{ m.text }}
+          </p>
+          @if (m.role === 'ai' && m.code) {
+            <pre
+              class="m-0 mt-2 overflow-auto rounded-fl-md border border-fl-border bg-fl-surface-subtle p-2 font-mono text-fl-mono-sm"
+            ><code>{{ m.code }}</code></pre>
+            <div class="mt-2 flex flex-wrap items-center gap-2">
+              @if (m.mutation) {
+                <fl-status tone="warning" label="Changes data" />
+              }
+              <span class="ml-auto flex gap-2">
+                @if (showInsert()) {
+                  <button flButton size="sm" type="button" (click)="insert.emit(m.code!)">
+                    Insert
+                  </button>
+                }
+                <button
+                  flButton
+                  size="sm"
+                  type="button"
+                  (click)="onRun(m.code!, m.mutation ?? false)"
+                >
+                  <fl-icon name="lucidePlay" [size]="13" /> Run
+                </button>
+              </span>
+            </div>
+          }
+        </div>
+      }
+
+      @if (pendingRun(); as p) {
+        <div class="px-4 py-3">
+          <fl-alert tone="warning" title="Confirm write">
+            This {{ codeNoun() }} changes data or structure, so it runs as a write.
+            <pre
+              class="m-0 mt-2 overflow-auto rounded-fl-md border border-fl-border bg-fl-surface p-2 font-mono text-fl-mono-sm"
+            ><code>{{ p }}</code></pre>
+            <ng-container alertActions>
+              <button flButton="ghost" size="sm" type="button" (click)="cancelRun()">Cancel</button>
+              <button flButton="danger" size="sm" type="button" (click)="confirmRun()">
+                <fl-icon name="lucidePlay" [size]="13" /> Run write
+              </button>
+            </ng-container>
+          </fl-alert>
+        </div>
+      }
+
+      @if (thinking()) {
+        <div class="flex items-center gap-2 px-4 py-3 text-fl-body-sm text-fl-ink-muted">
+          <fl-spinner label="Thinking" /> Thinking
+        </div>
+      }
+
+      @if (error(); as e) {
+        <div class="px-4 py-3">
+          <fl-alert tone="error" title="The assistant could not answer">
+            <span class="whitespace-pre-wrap">{{ e }}</span>
+          </fl-alert>
+        </div>
+      }
+    </div>
+
+    <div class="border-t border-fl-border p-3">
+      <textarea
+        class="fl-textarea"
+        [(ngModel)]="prompt"
+        (keydown)="onKey($event)"
+        [disabled]="noInference()"
+        rows="2"
+        aria-label="Message"
+        [placeholder]="noInference() ? 'Connect a model first' : 'Ask in plain language'"
+      ></textarea>
+      <div class="mt-2 flex items-center justify-between gap-2">
+        <div class="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
+          <app-assistant-model-picker />
+          <span
+            class="inline-flex shrink-0 items-center gap-1 text-fl-caption text-fl-ink-muted"
+            [title]="dataBlindTooltip()"
+          >
+            <fl-icon name="lucideLock" [size]="13" /> {{ dataBlindBadge() }}
+          </span>
+        </div>
+        <button
+          flButton
+          size="sm"
+          [iconOnly]="true"
+          type="button"
+          (click)="ask()"
+          [disabled]="thinking() || noInference()"
+          aria-label="Send"
+          title="Send"
+        >
+          <fl-icon name="lucideSend" [size]="14" />
+        </button>
+      </div>
+    </div>
+  </aside>
+}

@@ -60,7 +60,13 @@ interface RunningOperation extends VolumeRestoreStarted {
         data-testid="volume-backups"
       >
         <div panelActions class="fl-row">
-          <button flButton="ghost" size="sm" type="button" (click)="showHelp.set(!showHelp())">
+          <button
+            flButton="ghost"
+            size="sm"
+            type="button"
+            [attr.aria-expanded]="showHelp()"
+            (click)="showHelp.set(!showHelp())"
+          >
             {{ showHelp() ? 'Less' : 'More' }}
           </button>
           <button flButton="ghost" size="sm" type="button" (click)="load()" [disabled]="loading()">

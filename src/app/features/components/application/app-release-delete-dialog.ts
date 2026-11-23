@@ -8,10 +8,11 @@ import { FlButton } from '../../../ui/primitives/button';
 import { FlIcon } from '../../../ui/primitives/icon';
 import { FlSpinner } from '../../../ui/primitives/spinner';
 import { releaseStateOf, shortDigest } from './app-release-row';
+import { FlDialogFocus } from '../../../ui/overlays/dialog-focus';
 
 @Component({
   selector: 'app-release-delete-dialog',
-  imports: [FlAlert, FlKeyValue, FlKvItem, FlButton, FlIcon, FlSpinner],
+  imports: [FlDialogFocus, FlAlert, FlKeyValue, FlKvItem, FlButton, FlIcon, FlSpinner],
   providers: [provideIcons({ lucideX })],
   host: { class: 'contents' },
   template: `
@@ -25,6 +26,8 @@ import { releaseStateOf, shortDigest } from './app-release-row';
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="release-delete-title"
+        flDialogFocus
+        (dismissed)="deleting() || cancelled.emit()"
         (click)="$event.stopPropagation()"
       >
         <header class="fl-dialog__header">

@@ -52,6 +52,6 @@ export class K8sEventsTable {
   readonly events = input.required<readonly K8sEventRow[]>();
 
   protected formatDate(iso: string): string {
-    return new Date(iso).toLocaleString();
+    return new Date(iso).toLocaleString('en-GB');
   }
 }

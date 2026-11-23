@@ -64,7 +64,7 @@ import { PodContainer, containerStateSummary, probeSummary } from './pod-contain
 
     @if (p.conditions.length) {
       <fl-panel title="Conditions" [flush]="true">
-        <div class="fl-table-wrap">
+        <div class="fl-table-wrap relative">
           <table flTable density="dense">
             <thead>
               <tr>
@@ -106,7 +106,7 @@ import { PodContainer, containerStateSummary, probeSummary } from './pod-contain
 
     @if (p.volumes.length) {
       <fl-panel title="Volumes" [count]="p.volumes.length" [flush]="true">
-        <div class="fl-table-wrap">
+        <div class="fl-table-wrap relative">
           <table flTable density="dense">
             <thead>
               <tr>
@@ -188,6 +188,6 @@ export class PodDetailComponent {
   }
 
   formatDate(iso: string): string {
-    return new Date(iso).toLocaleString();
+    return new Date(iso).toLocaleString('en-GB');
   }
 }

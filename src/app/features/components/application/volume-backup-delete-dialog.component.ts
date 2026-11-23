@@ -7,10 +7,11 @@ import { FlIcon } from '../../../ui/primitives/icon';
 import { FlSpinner } from '../../../ui/primitives/spinner';
 import { VolumeBackup } from '../../model/volume-backup.models';
 import { formatDate } from './snapshot-format';
+import { FlDialogFocus } from '../../../ui/overlays/dialog-focus';
 
 @Component({
   selector: 'app-volume-backup-delete-dialog',
-  imports: [FlAlert, FlButton, FlIcon, FlSpinner],
+  imports: [FlDialogFocus, FlAlert, FlButton, FlIcon, FlSpinner],
   providers: [provideIcons({ lucideX })],
   template: `
     <div
@@ -22,6 +23,8 @@ import { formatDate } from './snapshot-format';
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="volume-backup-delete-title"
+        flDialogFocus
+        (dismissed)="dismissed.emit()"
         (click)="$event.stopPropagation()"
       >
         <header class="fl-dialog__header">

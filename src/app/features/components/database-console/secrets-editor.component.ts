@@ -1,364 +1,245 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  effect,
-  inject,
-  signal,
-  viewChild,
-} from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgIcon, provideIcons } from '@ng-icons/core';
+import { provideIcons } from '@ng-icons/core';
 import {
   lucideCheck,
-  lucideCode,
   lucideCopy,
   lucideEye,
   lucideEyeOff,
   lucideKeyRound,
-  lucideLoader,
-  lucidePlus,
   lucideSave,
-  lucideTrash2,
-  lucideX,
 } from '@ng-icons/lucide';
-import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog.component';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlCopyId } from '../../../ui/patterns/copy-id';
+import { FlField } from '../../../ui/patterns/field';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+import { FlStatus } from '../../../ui/primitives/status';
+import { ConfirmService } from '../../../ui/overlays/confirm';
 import { SecretsConsoleStateService } from './secrets-console-state.service';
+import { SecretsFields } from './secrets-fields';
 import { SecretsVersionHistoryComponent } from './secrets-version-history.component';
 import { joinPath, parseBulk, rowsToData, toEnv, toJson } from './secrets-format';
 
 @Component({
   selector: 'app-secrets-editor',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgIcon, FormsModule, ConfirmationDialogComponent, SecretsVersionHistoryComponent],
-  providers: [
-    provideIcons({
-      lucideCheck,
-      lucideCode,
-      lucideCopy,
-      lucideEye,
-      lucideEyeOff,
-      lucideKeyRound,
-      lucideLoader,
-      lucidePlus,
-      lucideSave,
-      lucideTrash2,
-      lucideX,
-    }),
+  imports: [
+    FormsModule,
+    FlAlert,
+    FlButton,
+    FlCopyId,
+    FlEmptyState,
+    FlField,
+    FlIcon,
+    FlLoadingState,
+    FlPanel,
+    FlSpinner,
+    FlStatus,
+    SecretsFields,
+    SecretsVersionHistoryComponent,
   ],
+  providers: [
+    provideIcons({ lucideCheck, lucideCopy, lucideEye, lucideEyeOff, lucideKeyRound, lucideSave }),
+  ],
+  host: { class: 'fl-stack' },
   template: `
-    <div class="min-w-0 flex-1 rounded-fl-lg border border-border bg-card">
-      @if (!s.editing()) {
-        <div
-          class="flex h-64 flex-col items-center justify-center gap-2 text-sm text-muted-foreground"
-        >
-          <ng-icon name="lucideKeyRound" class="h-8 w-8 opacity-30" />
-          Select a secret, or create one with “New”.
-        </div>
-      } @else {
-        <div class="flex flex-wrap items-center gap-2 border-b border-border px-4 py-3">
-          <ng-icon name="lucideKeyRound" class="h-4 w-4 text-primary" />
+    @if (!s.editing()) {
+      <fl-panel>
+        <fl-empty-state
+          icon="lucideKeyRound"
+          title="No secret open"
+          body="Select a secret on the left, or create one with New."
+        />
+      </fl-panel>
+    } @else {
+      <fl-panel [title]="s.isNew() ? 'New secret' : 'Secret'" [flush]="true">
+        @if (!s.isNew() && s.selected(); as sec) {
+          <span panelActions class="fl-select-wrap">
+            <select
+              class="fl-select fl-select--sm"
+              aria-label="Version"
+              [ngModel]="s.viewVersion()"
+              (ngModelChange)="s.changeVersion($event)"
+            >
+              @for (v of sec.versions; track v.version) {
+                <option [value]="v.version">
+                  Version {{ v.version
+                  }}{{ v.destroyed ? ', destroyed' : v.deleted ? ', deleted' : '' }}
+                </option>
+              }
+            </select>
+          </span>
+        }
+
+        <div class="border-b border-fl-border p-4">
           @if (s.isNew()) {
-            <span class="shrink-0 font-mono text-sm text-muted-foreground"
-              >{{ s.server()?.mount || 'secret' }}/{{ s.prefix() ? s.prefix() + '/' : '' }}</span
+            <fl-field
+              label="Name"
+              for="secret-new-leaf"
+              [hint]="'Creates ' + previewPath() + '. Use / in the name to nest into folders.'"
             >
-            <input
-              type="text"
-              [(ngModel)]="newLeaf"
-              placeholder="name (e.g. db)"
-              class="h-9 flex-1 rounded-lg border border-border bg-background px-3 font-mono text-sm text-foreground"
-            />
-            <p class="w-full text-[11px] text-muted-foreground">
-              Creates the secret
-              <span class="font-mono text-foreground">{{ previewPath() }}</span>. Use
-              <span class="font-mono">/</span> in the name to nest into sub-folders.
-            </p>
+              <div class="fl-input fl-input--lg font-mono">
+                <span class="text-fl-ink-muted"
+                  >{{ s.server()?.mount || 'secret' }}/{{
+                    s.prefix() ? s.prefix() + '/' : ''
+                  }}</span
+                >
+                <input id="secret-new-leaf" type="text" placeholder="db" [(ngModel)]="newLeaf" />
+              </div>
+            </fl-field>
           } @else {
-            <span class="truncate font-mono text-sm font-medium text-foreground">{{
-              s.selectedPath()
-            }}</span>
-            <button
-              type="button"
-              (click)="s.copy(s.selectedPath(), 'path')"
-              class="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted"
-              title="Copy path"
-            >
-              <ng-icon
-                [name]="s.copied() === 'path' ? 'lucideCheck' : 'lucideCopy'"
-                class="h-3.5 w-3.5"
-                [class.text-emerald-500]="s.copied() === 'path'"
-              />
-            </button>
-            @if (s.selected(); as sec) {
-              <select
-                [ngModel]="s.viewVersion()"
-                (ngModelChange)="s.changeVersion($event)"
-                class="ml-auto h-8 rounded-lg border border-border bg-background px-2 text-xs text-foreground"
-              >
-                @for (v of sec.versions; track v.version) {
-                  <option [value]="v.version">
-                    v{{ v.version
-                    }}{{ v.destroyed ? ' · destroyed' : v.deleted ? ' · deleted' : '' }}
-                  </option>
-                }
-              </select>
-            }
+            <fl-copy-id [value]="s.selectedPath()" label="path" />
           }
         </div>
 
         @if (s.loadingSecret()) {
-          <div class="space-y-3 p-4">
-            <div class="h-8 w-48 rounded-lg bg-muted/60"></div>
-            @for (i of skel; track i) {
-              <div class="h-9 rounded-lg bg-muted/60"></div>
-            }
-          </div>
+          <fl-loading-state [rows]="5" />
         } @else {
-          <div class="flex flex-wrap items-center gap-2 border-b border-border px-4 py-2.5">
-            <div class="inline-flex rounded-lg border border-border p-0.5">
-              <button
-                type="button"
-                (click)="setBulk(false)"
-                class="rounded-md px-2.5 py-1 text-xs font-medium"
-                [class.bg-muted]="!s.bulk()"
-                [class.text-foreground]="!s.bulk()"
-                [class.text-muted-foreground]="s.bulk()"
-              >
-                Fields
-              </button>
-              <button
-                type="button"
-                (click)="setBulk(true)"
-                class="inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium"
-                [class.bg-muted]="s.bulk()"
-                [class.text-foreground]="s.bulk()"
-                [class.text-muted-foreground]="!s.bulk()"
-              >
-                <ng-icon name="lucideCode" class="h-3.5 w-3.5" /> JSON / .env
-              </button>
+          <div class="fl-toolbar">
+            <div class="fl-toolbar__group">
+              <div class="fl-segmented" role="group" aria-label="Editor">
+                <button type="button" [attr.aria-pressed]="!s.bulk()" (click)="setBulk(false)">
+                  Fields
+                </button>
+                <button type="button" [attr.aria-pressed]="s.bulk()" (click)="setBulk(true)">
+                  JSON or .env
+                </button>
+              </div>
+              @if (!s.bulk()) {
+                <button
+                  flButton="ghost"
+                  size="sm"
+                  type="button"
+                  [disabled]="s.maskModeOn()"
+                  [attr.aria-pressed]="s.revealAll()"
+                  [title]="s.maskModeOn() ? 'Turn off mask mode to reveal' : ''"
+                  (click)="s.revealAll.set(!s.revealAll())"
+                >
+                  <fl-icon [name]="s.revealAll() ? 'lucideEyeOff' : 'lucideEye'" [size]="14" />
+                  {{ s.revealAll() ? 'Hide values' : 'Reveal values' }}
+                </button>
+              }
             </div>
-
-            @if (!s.bulk()) {
+            <div class="fl-toolbar__group">
               <button
+                flButton="ghost"
+                size="sm"
                 type="button"
-                (click)="s.revealAll.set(!s.revealAll())"
-                [disabled]="s.maskModeOn()"
-                [title]="s.maskModeOn() ? 'Turn off mask mode to reveal' : ''"
-                class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border px-2.5 text-xs text-muted-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
-              >
-                <ng-icon
-                  [name]="s.revealAll() ? 'lucideEyeOff' : 'lucideEye'"
-                  class="h-3.5 w-3.5"
-                />
-                {{ s.revealAll() ? 'Hide values' : 'Reveal values' }}
-              </button>
-            }
-
-            <div class="ml-auto flex items-center gap-1.5">
-              <button
-                type="button"
-                (click)="s.copy(toEnv(), 'env')"
                 title="Copy as .env"
-                class="inline-flex h-8 items-center gap-1 rounded-lg border border-border px-2.5 text-xs text-muted-foreground hover:bg-muted"
+                (click)="s.copy(toEnv(), 'env')"
               >
-                <ng-icon
-                  [name]="s.copied() === 'env' ? 'lucideCheck' : 'lucideCopy'"
-                  class="h-3.5 w-3.5"
-                  [class.text-emerald-500]="s.copied() === 'env'"
-                />
+                <fl-icon [name]="s.copied() === 'env' ? 'lucideCheck' : 'lucideCopy'" [size]="14" />
                 .env
               </button>
               <button
+                flButton="ghost"
+                size="sm"
                 type="button"
-                (click)="s.copy(toJson(), 'json')"
                 title="Copy as JSON"
-                class="inline-flex h-8 items-center gap-1 rounded-lg border border-border px-2.5 text-xs text-muted-foreground hover:bg-muted"
+                (click)="s.copy(toJson(), 'json')"
               >
-                <ng-icon
+                <fl-icon
                   [name]="s.copied() === 'json' ? 'lucideCheck' : 'lucideCopy'"
-                  class="h-3.5 w-3.5"
-                  [class.text-emerald-500]="s.copied() === 'json'"
+                  [size]="14"
                 />
                 JSON
               </button>
             </div>
           </div>
 
-          <div class="p-4">
+          <div class="flex flex-col gap-4 p-4">
             @if (s.bulk()) {
-              <textarea
-                [(ngModel)]="bulkText"
-                rows="10"
-                [disabled]="s.readOnly()"
-                placeholder='Paste JSON ({"KEY":"value"}) or .env (KEY=value) and Apply'
-                class="w-full rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs text-foreground disabled:opacity-70"
-              ></textarea>
-              <button
-                type="button"
-                (click)="applyBulk()"
-                [disabled]="s.readOnly()"
-                class="mt-2 inline-flex h-8 items-center gap-1 rounded-lg border border-border px-3 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-40"
+              <fl-field
+                label="Paste values"
+                for="secret-bulk"
+                hint="A JSON object or .env lines (KEY=value), then apply them to the fields."
+                [error]="bulkError()"
               >
-                Apply to fields
-              </button>
-              @if (bulkError()) {
-                <span class="ml-2 text-xs text-destructive">{{ bulkError() }}</span>
-              }
-            } @else {
-              <div class="space-y-2">
-                @for (row of s.rows(); track $index) {
-                  <div class="flex items-center gap-2">
-                    <input
-                      type="text"
-                      [(ngModel)]="row.key"
-                      [disabled]="s.readOnly()"
-                      placeholder="key"
-                      class="h-9 w-44 rounded-lg border border-border bg-background px-2.5 font-mono text-xs text-foreground disabled:opacity-70"
-                    />
-                    <div class="relative flex-1">
-                      <input
-                        [type]="s.isRevealed($index) ? 'text' : 'password'"
-                        [(ngModel)]="row.value"
-                        [disabled]="s.readOnly()"
-                        placeholder="value"
-                        class="h-9 w-full rounded-lg border border-border bg-background pl-2.5 pr-16 font-mono text-xs text-foreground disabled:opacity-70"
-                      />
-                      <div class="absolute right-1 top-1/2 flex -translate-y-1/2 items-center">
-                        <button
-                          type="button"
-                          (click)="s.toggleReveal($index)"
-                          [disabled]="s.maskModeOn()"
-                          [title]="
-                            s.maskModeOn()
-                              ? 'Turn off mask mode to reveal'
-                              : s.isRevealed($index)
-                                ? 'Hide'
-                                : 'Reveal'
-                          "
-                          class="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
-                        >
-                          <ng-icon
-                            [name]="s.isRevealed($index) ? 'lucideEyeOff' : 'lucideEye'"
-                            class="h-3.5 w-3.5"
-                          />
-                        </button>
-                        <button
-                          type="button"
-                          (click)="s.copy(row.value, 'row' + $index)"
-                          class="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted"
-                          title="Copy value"
-                        >
-                          <ng-icon
-                            [name]="s.copied() === 'row' + $index ? 'lucideCheck' : 'lucideCopy'"
-                            class="h-3.5 w-3.5"
-                            [class.text-emerald-500]="s.copied() === 'row' + $index"
-                          />
-                        </button>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      (click)="s.removeRow($index)"
-                      [disabled]="s.readOnly()"
-                      class="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted disabled:opacity-40"
-                    >
-                      <ng-icon name="lucideX" class="h-4 w-4" />
-                    </button>
-                  </div>
-                }
+                <textarea
+                  id="secret-bulk"
+                  class="fl-textarea font-mono"
+                  rows="10"
+                  [disabled]="s.readOnly()"
+                  [(ngModel)]="bulkText"
+                ></textarea>
+              </fl-field>
+              <div>
+                <button
+                  flButton
+                  size="sm"
+                  type="button"
+                  [disabled]="s.readOnly()"
+                  (click)="applyBulk()"
+                >
+                  Apply to fields
+                </button>
               </div>
-              <button
-                type="button"
-                (click)="s.addRow()"
-                [disabled]="s.readOnly()"
-                class="mt-2.5 inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-40"
-              >
-                <ng-icon name="lucidePlus" class="h-3.5 w-3.5" /> Add field
-              </button>
+            } @else {
+              <app-secrets-fields />
             }
 
-            <div class="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-4">
+            @if (s.editError()) {
+              <fl-alert tone="error" title="Request failed">{{ s.editError() }}</fl-alert>
+            }
+
+            <div class="fl-row border-t border-fl-border pt-4">
               <button
+                flButton="primary"
                 type="button"
-                (click)="save()"
                 [disabled]="s.saving() || s.readOnly() || (s.isNew() && !newLeaf.trim())"
-                class="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3.5 text-sm font-medium text-primary-foreground disabled:opacity-50"
+                (click)="save()"
               >
                 @if (s.saving()) {
-                  <ng-icon name="lucideLoader" class="h-4 w-4 animate-spin" />
+                  <fl-spinner label="Saving" />
                 } @else {
-                  <ng-icon name="lucideSave" class="h-4 w-4" />
+                  <fl-icon name="lucideSave" [size]="14" />
                 }
                 {{ saveLabel() }}
               </button>
               @if (!s.isNew()) {
                 <button
+                  flButton
                   type="button"
-                  (click)="askSoftDelete()"
                   [disabled]="s.readOnly() || s.saving()"
-                  class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border px-3 text-sm text-foreground hover:bg-muted disabled:opacity-40"
+                  (click)="askSoftDelete()"
                 >
-                  <ng-icon name="lucideTrash2" class="h-4 w-4" /> Delete latest
+                  Delete latest
                 </button>
                 <button
+                  flButton="danger"
                   type="button"
-                  (click)="askDestroy()"
                   [disabled]="s.readOnly() || s.saving()"
-                  class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-destructive/40 px-3 text-sm text-destructive hover:bg-destructive/10 disabled:opacity-40"
+                  (click)="askDestroy()"
                 >
-                  <ng-icon name="lucideTrash2" class="h-4 w-4" /> Destroy
+                  Destroy
                 </button>
               }
               @if (s.readOnly()) {
-                <span class="text-xs text-muted-foreground">Turn off read-only to change.</span>
-              }
-              @if (s.saveOk()) {
-                <span class="inline-flex items-center gap-1 text-xs text-emerald-600"
-                  ><ng-icon name="lucideCheck" class="h-3.5 w-3.5" /> Saved</span
+                <span class="text-fl-caption text-fl-ink-muted"
+                  >Allow writes to change this secret.</span
                 >
               }
-              @if (s.editError()) {
-                <span class="text-xs text-destructive">{{ s.editError() }}</span>
+              @if (s.saveOk()) {
+                <fl-status tone="success" label="Saved" />
               }
             </div>
           </div>
-
-          <app-secrets-version-history />
         }
+      </fl-panel>
+
+      @if (!s.loadingSecret()) {
+        <app-secrets-version-history />
       }
-    </div>
-
-    <app-confirmation-dialog
-      #destroyDialog
-      title="Destroy secret"
-      [message]="
-        'Permanently destroy “' +
-        s.selectedPath() +
-        '” and all its versions? This cannot be undone.'
-      "
-      confirmText="Destroy"
-      variant="danger"
-      (confirmed)="confirmDestroy()"
-    />
-
-    <app-confirmation-dialog
-      #deleteDialog
-      title="Delete latest version"
-      [message]="
-        'Delete the latest version of “' +
-        s.selectedPath() +
-        '”? You can restore it later from the version history.'
-      "
-      confirmText="Delete latest"
-      variant="warning"
-      (confirmed)="confirmSoftDelete()"
-    />
+    }
   `,
 })
 export class SecretsEditorComponent {
   protected readonly s = inject(SecretsConsoleStateService);
+  private readonly confirm = inject(ConfirmService);
 
-  readonly skel = [0, 1, 2, 3, 4];
   newLeaf = '';
   bulkText = '';
   readonly bulkError = signal<string | null>(null);
@@ -369,9 +250,6 @@ export class SecretsEditorComponent {
       this.newLeaf = '';
     });
   }
-
-  private readonly destroyDialog = viewChild<ConfirmationDialogComponent>('destroyDialog');
-  private readonly deleteDialog = viewChild<ConfirmationDialogComponent>('deleteDialog');
 
   previewPath(): string {
     return joinPath(this.s.prefix(), this.newLeaf.trim()) || '…';
@@ -393,7 +271,7 @@ export class SecretsEditorComponent {
     this.bulkError.set(null);
     const parsed = parseBulk(this.bulkText);
     if (!parsed) {
-      this.bulkError.set('Could not parse as JSON object or .env (KEY=value).');
+      this.bulkError.set('Could not read this as a JSON object or as .env lines (KEY=value).');
       return;
     }
     this.s.setRows(parsed);
@@ -414,16 +292,25 @@ export class SecretsEditorComponent {
     this.s.save(rowsToData(this.s.rows()), this.newLeaf);
   }
 
-  askSoftDelete(): void {
-    this.deleteDialog()?.open();
+  async askSoftDelete(): Promise<void> {
+    const ok = await this.confirm.confirm({
+      title: 'Delete latest version',
+      body: `Delete the latest version of ${this.s.selectedPath()}? You can restore it later from the version history.`,
+      confirmLabel: 'Delete latest',
+      destructive: true,
+    });
+    if (ok) this.s.removeSecret(false);
   }
-  confirmSoftDelete(): void {
-    this.s.removeSecret(false, this.deleteDialog());
-  }
-  askDestroy(): void {
-    this.destroyDialog()?.open();
-  }
-  confirmDestroy(): void {
-    this.s.removeSecret(true, this.destroyDialog());
+
+  async askDestroy(): Promise<void> {
+    const path = this.s.selectedPath();
+    const ok = await this.confirm.confirm({
+      title: `Destroy ${path}`,
+      body: 'This permanently destroys the secret and all its versions. It cannot be undone.',
+      confirmLabel: 'Destroy secret',
+      destructive: true,
+      typeToConfirm: path,
+    });
+    if (ok) this.s.removeSecret(true);
   }
 }

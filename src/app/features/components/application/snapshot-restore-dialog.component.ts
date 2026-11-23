@@ -5,10 +5,11 @@ import { FlButton } from '../../../ui/primitives/button';
 import { FlIcon } from '../../../ui/primitives/icon';
 import { FlSpinner } from '../../../ui/primitives/spinner';
 import { ApplicationSnapshot } from '../../model/volume-management.models';
+import { FlDialogFocus } from '../../../ui/overlays/dialog-focus';
 
 @Component({
   selector: 'app-snapshot-restore-dialog',
-  imports: [FlButton, FlIcon, FlSpinner],
+  imports: [FlDialogFocus, FlButton, FlIcon, FlSpinner],
   providers: [provideIcons({ lucideX })],
   template: `
     @if (snapshot(); as snap) {
@@ -21,6 +22,8 @@ import { ApplicationSnapshot } from '../../model/volume-management.models';
           role="dialog"
           aria-modal="true"
           aria-labelledby="snapshot-restore-title"
+          flDialogFocus
+          (dismissed)="restoring() || cancelled.emit()"
           (click)="$event.stopPropagation()"
         >
           <header class="fl-dialog__header">

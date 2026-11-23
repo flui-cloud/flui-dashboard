@@ -8,10 +8,11 @@ import { FlIcon } from '../../../ui/primitives/icon';
 import { FlSpinner } from '../../../ui/primitives/spinner';
 import { CronConcurrencyPolicy } from '../../model/scheduled-job.models';
 import { describeCron } from './cron-text';
+import { FlDialogFocus } from '../../../ui/overlays/dialog-focus';
 
 @Component({
   selector: 'app-schedule-editor',
-  imports: [FormsModule, FlField, FlButton, FlIcon, FlSpinner],
+  imports: [FlDialogFocus, FormsModule, FlField, FlButton, FlIcon, FlSpinner],
   providers: [provideIcons({ lucideX })],
   template: `
     <div class="fl-backdrop fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -20,6 +21,8 @@ import { describeCron } from './cron-text';
         role="dialog"
         aria-modal="true"
         aria-labelledby="schedule-editor-title"
+        flDialogFocus
+        (dismissed)="cancelled.emit()"
       >
         <header class="fl-dialog__header">
           <h2 class="fl-dialog__title" id="schedule-editor-title">

@@ -1,79 +1,113 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideEye, lucideLoader } from '@ng-icons/lucide';
 import { QueueMessage } from '../../model/messaging-console.models';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlField } from '../../../ui/patterns/field';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlEmptyState } from '../../../ui/patterns/states';
+import { FlTable } from '../../../ui/patterns/table';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlSpinner } from '../../../ui/primitives/spinner';
+import { FlTag } from '../../../ui/primitives/tag';
 import { MessagingConsoleStateService } from './messaging-console-state.service';
 import { formatPayload, isJsonPayload } from './messaging-format';
 
 @Component({
   selector: 'app-messaging-peek-panel',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgIcon, FormsModule],
-  providers: [provideIcons({ lucideEye, lucideLoader })],
+  imports: [
+    FormsModule,
+    FlAlert,
+    FlButton,
+    FlEmptyState,
+    FlField,
+    FlPanel,
+    FlSpinner,
+    FlTable,
+    FlTag,
+  ],
+  host: { class: 'block' },
   template: `
-    <div class="rounded-md border border-border p-3">
-      <div class="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
-        <ng-icon name="lucideEye" class="h-4 w-4 text-muted-foreground" />
-        Peek messages
-        <span class="font-normal text-muted-foreground">· non-destructive</span>
+    <fl-panel title="Peek messages" [flush]="true">
+      <span panelActions class="text-fl-caption text-fl-ink-muted">Does not consume</span>
+      <div class="flex flex-col gap-4 p-4">
+        <div class="flex items-end gap-2">
+          <fl-field class="min-w-0 flex-1" [label]="s.nouns().itemTitle" for="msg-peek-stream">
+            <span class="fl-select-wrap">
+              <select
+                id="msg-peek-stream"
+                class="fl-select"
+                [ngModel]="s.peekStreamName()"
+                (ngModelChange)="s.peekStreamName.set($event)"
+              >
+                <option value="">Select a {{ s.nouns().item }}</option>
+                @for (st of s.streams(); track st.name) {
+                  <option [value]="st.name">{{ st.name }}</option>
+                }
+              </select>
+            </span>
+          </fl-field>
+          <button
+            flButton
+            type="button"
+            [disabled]="s.peeking() || !s.peekStreamName()"
+            (click)="s.peek()"
+          >
+            @if (s.peeking()) {
+              <fl-spinner label="Peeking" />
+            }
+            Peek
+          </button>
+        </div>
+        @if (s.peekError()) {
+          <fl-alert tone="error" title="Peek failed">{{ s.peekError() }}</fl-alert>
+        }
       </div>
-      <div class="mb-2 flex items-center gap-2">
-        <select
-          [ngModel]="s.peekStreamName()"
-          (ngModelChange)="s.peekStreamName.set($event)"
-          class="h-9 flex-1 rounded-md border border-border bg-background px-2 text-sm text-foreground"
-        >
-          <option value="">Select a {{ s.nouns().item }}…</option>
-          @for (st of s.streams(); track st.name) {
-            <option [value]="st.name">{{ st.name }}</option>
-          }
-        </select>
-        <button
-          type="button"
-          (click)="s.peek()"
-          [disabled]="s.peeking() || !s.peekStreamName()"
-          class="inline-flex h-8 items-center gap-1 rounded-md border border-border px-3 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-50"
-        >
-          @if (s.peeking()) {
-            <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" />
-          }
-          Peek
-        </button>
-      </div>
-      @if (s.peekError()) {
-        <p class="text-xs text-destructive">{{ s.peekError() }}</p>
-      }
+
       @if (s.peekMessages().length) {
-        <div class="max-h-72 overflow-y-auto overflow-x-hidden rounded-md border border-border">
-          @for (m of s.peekMessages(); track m.seq) {
-            <div class="border-b border-border px-2 py-1.5 last:border-0">
-              <div class="flex items-center justify-between gap-2 text-xs text-muted-foreground">
-                <span class="truncate font-mono">#{{ m.seq }} · {{ m.subject }}</span>
-                <span class="flex shrink-0 items-center gap-1.5">
-                  @if (isJson(m)) {
-                    <span
-                      class="rounded bg-muted px-1 py-0.5 text-[10px] font-medium uppercase tracking-wide"
-                      >JSON</span
-                    >
-                  }
-                  <span>{{ m.timestamp }}</span>
-                </span>
-              </div>
-              <pre
-                class="mt-1 max-h-48 overflow-auto whitespace-pre-wrap break-words rounded bg-muted/40 p-1.5 font-mono text-xs text-foreground"
-                >{{ payload(m) }}</pre>
-              @if (m.encoding === 'base64') {
-                <span class="text-[10px] text-muted-foreground">(base64 — binary payload)</span>
+        <div class="fl-table-wrap max-h-96 overflow-auto border-t border-fl-border">
+          <table flTable density="dense">
+            <thead>
+              <tr>
+                <th scope="col" class="is-num">Seq</th>
+                <th scope="col">Subject</th>
+                <th scope="col">Timestamp</th>
+                <th scope="col">Payload</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (m of s.peekMessages(); track m.seq) {
+                <tr>
+                  <td class="is-num fl-mono align-top">{{ m.seq }}</td>
+                  <td class="fl-mono align-top">{{ m.subject }}</td>
+                  <td class="fl-mono align-top text-fl-ink-muted">{{ m.timestamp }}</td>
+                  <td class="is-wrap">
+                    <div class="flex flex-col gap-1">
+                      @if (isJson(m)) {
+                        <fl-tag class="self-start">JSON</fl-tag>
+                      }
+                      <pre
+                        class="fl-mono m-0 max-h-48 overflow-auto whitespace-pre-wrap break-words"
+                        >{{ payload(m) }}</pre>
+                      @if (m.encoding === 'base64') {
+                        <span class="text-fl-caption text-fl-ink-muted"
+                          >Base64, binary payload</span
+                        >
+                      }
+                    </div>
+                  </td>
+                </tr>
               }
-            </div>
-          }
+            </tbody>
+          </table>
         </div>
       } @else if (s.peeked()) {
-        <p class="text-xs text-muted-foreground">No messages in this stream.</p>
+        <fl-empty-state
+          class="border-t border-fl-border"
+          [compact]="true"
+          [title]="'No messages in this ' + s.nouns().item"
+        />
       }
-    </div>
+    </fl-panel>
   `,
 })
 export class MessagingPeekPanelComponent {

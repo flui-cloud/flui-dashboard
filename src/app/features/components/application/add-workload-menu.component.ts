@@ -1,14 +1,11 @@
-import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
+import { CdkMenu, CdkMenuItem, CdkMenuTrigger } from '@angular/cdk/menu';
 import { Router } from '@angular/router';
 import { InstallPromptService } from '../../../core/services/install-prompt.service';
-import { NgIcon, provideIcons } from '@ng-icons/core';
+import { provideIcons } from '@ng-icons/core';
 import { lucideChevronDown, lucideGitBranch, lucidePlus, lucideStore } from '@ng-icons/lucide';
-import { BrnMenuTriggerDirective } from '@spartan-ng/brain/menu';
-import {
-  HlmMenuComponent,
-  HlmMenuItemDirective,
-  HlmMenuItemIconDirective,
-} from '@spartan-ng/ui-menu-helm';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
 
 export type AddScope = 'applications' | 'data' | null;
 
@@ -21,40 +18,46 @@ export function catalogQueryFor(scope: AddScope): Record<string, string> {
 
 @Component({
   selector: 'app-add-workload-menu',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    NgIcon,
-    BrnMenuTriggerDirective,
-    HlmMenuComponent,
-    HlmMenuItemDirective,
-    HlmMenuItemIconDirective,
-  ],
+  imports: [CdkMenuTrigger, CdkMenu, CdkMenuItem, FlButton, FlIcon],
   providers: [provideIcons({ lucideChevronDown, lucideGitBranch, lucidePlus, lucideStore })],
   host: { class: 'inline-flex' },
   template: `
     <button
+      flButton="primary"
       type="button"
-      [brnMenuTriggerFor]="menu"
-      align="end"
-      class="inline-flex items-center gap-2 px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
+      [cdkMenuTriggerFor]="menu"
+      [cdkMenuPosition]="[
+        { originX: 'end', originY: 'bottom', overlayX: 'end', overlayY: 'top', offsetY: 4 },
+      ]"
       data-testid="add-workload"
     >
-      <ng-icon name="lucidePlus" class="h-4 w-4" />
+      <fl-icon name="lucidePlus" />
       {{ label() }}
-      <ng-icon name="lucideChevronDown" class="h-3.5 w-3.5 opacity-80" />
+      <fl-icon name="lucideChevronDown" [size]="14" />
     </button>
     <ng-template #menu>
-      <hlm-menu class="w-60">
-        <button hlmMenuItem type="button" (click)="deploy()" data-testid="add-from-repository">
-          <ng-icon name="lucideGitBranch" hlmMenuIcon />
-          <span>Deploy from a repository</span>
+      <div class="fl-menu" cdkMenu>
+        <button
+          type="button"
+          class="fl-menu__item"
+          cdkMenuItem
+          (cdkMenuItemTriggered)="deploy()"
+          data-testid="add-from-repository"
+        >
+          <fl-icon name="lucideGitBranch" [size]="14" />
+          Deploy from a repository
         </button>
-        <button hlmMenuItem type="button" (click)="install()" data-testid="add-from-catalog">
-          <ng-icon name="lucideStore" hlmMenuIcon />
-          <span>Install from the catalog</span>
+        <button
+          type="button"
+          class="fl-menu__item"
+          cdkMenuItem
+          (cdkMenuItemTriggered)="install()"
+          data-testid="add-from-catalog"
+        >
+          <fl-icon name="lucideStore" [size]="14" />
+          Install from the catalog
         </button>
-      </hlm-menu>
+      </div>
     </ng-template>
   `,
 })

@@ -1,7 +1,6 @@
 import { Component, input, computed } from '@angular/core';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { lucideCheckCircle, lucideLoader, lucideCircleX } from '@ng-icons/lucide';
 import { AppEndpointStatus, AppEndpointPhase } from './dns-setup-wizard.service';
+import { FlStatus, StatusTone } from '../../../ui/primitives/status';
 
 interface PhaseStep {
   phase: AppEndpointPhase;
@@ -54,41 +53,27 @@ function phaseIndex(p: AppEndpointPhase): number {
   return PHASE_ORDER.indexOf(p);
 }
 
+type StepStatus = 'pending' | 'running' | 'done' | 'error';
+
+const STEP_TONES: Record<StepStatus, StatusTone> = {
+  pending: 'neutral',
+  running: 'progress',
+  done: 'success',
+  error: 'error',
+};
+
 @Component({
   selector: 'app-dns-wizard-endpoint-phases',
-  standalone: true,
-  imports: [NgIconComponent],
-  providers: [provideIcons({ lucideCheckCircle, lucideLoader, lucideCircleX })],
+  imports: [FlStatus],
   template: `
-    <div class="mt-1.5 ml-6 flex flex-col gap-0.5">
+    <ol class="m-0 flex list-none flex-col gap-1 p-0">
       @for (step of steps(); track step.phase) {
         @let st = stepStatus(step.phase);
-        <div class="flex items-center gap-1.5">
-          @if (st === 'done') {
-            <ng-icon name="lucideCheckCircle" class="h-3 w-3 text-emerald-500 flex-shrink-0" />
-          } @else if (st === 'running') {
-            <ng-icon name="lucideLoader" class="h-3 w-3 text-primary animate-spin flex-shrink-0" />
-          } @else if (st === 'error') {
-            <ng-icon name="lucideCircleX" class="h-3 w-3 text-destructive flex-shrink-0" />
-          } @else {
-            <div class="h-3 w-3 flex items-center justify-center flex-shrink-0">
-              <div class="h-1.5 w-1.5 rounded-full bg-muted-foreground/30"></div>
-            </div>
-          }
-          <span
-            class="text-xs"
-            [class.text-foreground]="st === 'running' || st === 'done'"
-            [class.text-muted-foreground]="st === 'pending'"
-            [class.text-destructive]="st === 'error'"
-          >
-            {{ step.label }}
-            @if (isRolloutPhase(step.phase) && st === 'running' && app().rolloutProgress !== null) {
-              <span class="text-muted-foreground ml-1">({{ app().rolloutProgress }}%)</span>
-            }
-          </span>
-        </div>
+        <li>
+          <fl-status [tone]="stepTone(st)" [label]="stepLabel(step, st)" />
+        </li>
       }
-    </div>
+    </ol>
   `,
 })
 export class DnsWizardEndpointPhasesComponent {
@@ -96,7 +81,7 @@ export class DnsWizardEndpointPhasesComponent {
 
   protected steps = computed(() => PHASES_BY_SLUG[this.app().key] ?? BASE_PHASES);
 
-  protected stepStatus(phase: AppEndpointPhase): 'pending' | 'running' | 'done' | 'error' {
+  protected stepStatus(phase: AppEndpointPhase): StepStatus {
     const current = this.app().phase;
     if (current === 'error') {
       const currentIdx = phaseIndex(this.lastActivePhase());
@@ -117,10 +102,19 @@ export class DnsWizardEndpointPhasesComponent {
 
   private lastActivePhase(): AppEndpointPhase {
     const steps = PHASES_BY_SLUG[this.app().key] ?? BASE_PHASES;
-    // Find the last step that has been reached (before error)
-    // We can approximate by the current certStatus / errorMessage
-    // Just return the current phase in the sequence
     return steps.at(-1)!.phase;
+  }
+
+  protected stepTone(status: StepStatus): StatusTone {
+    return STEP_TONES[status];
+  }
+
+  protected stepLabel(step: PhaseStep, status: StepStatus): string {
+    const progress = this.app().rolloutProgress;
+    if (this.isRolloutPhase(step.phase) && status === 'running' && progress !== null) {
+      return `${step.label} (${progress}%)`;
+    }
+    return step.label;
   }
 
   protected isRolloutPhase(phase: AppEndpointPhase): boolean {

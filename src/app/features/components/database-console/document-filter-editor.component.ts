@@ -1,6 +1,5 @@
 import {
   AfterViewInit,
-  ChangeDetectionStrategy,
   Component,
   ElementRef,
   NgZone,
@@ -14,7 +13,13 @@ import {
 import { FormsModule } from '@angular/forms';
 import { DocumentField } from '../../model/document-console.models';
 
-/** Mongo query operators offered at value position (inside `{ field: { … } }`). */
+interface CmView {
+  state: { doc: { toString(): string; length: number } };
+  dispatch(tx: unknown): void;
+  focus(): void;
+  destroy(): void;
+}
+
 const OPERATORS = [
   '$eq',
   '$ne',
@@ -46,15 +51,13 @@ const OPERATORS = [
  */
 @Component({
   selector: 'app-document-filter-editor',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'contents' },
   imports: [FormsModule],
   template: `
     <div
       #host
       [hidden]="!ready()"
-      class="min-w-0 flex-1 overflow-x-auto rounded-md border border-border bg-muted text-xs"
+      class="min-w-0 flex-1 overflow-x-auto rounded-fl-md border border-fl-border-input bg-fl-surface font-mono text-fl-mono-sm focus-within:border-fl-accent"
     ></div>
     @if (!ready()) {
       <input
@@ -64,7 +67,8 @@ const OPERATORS = [
         [disabled]="disabled()"
         spellcheck="false"
         placeholder='{ field: "value" }  ·  { _id: ObjectId("…") }'
-        class="min-w-0 flex-1 rounded-md border border-border bg-muted px-2 py-1.5 font-mono text-xs outline-none focus:border-primary disabled:opacity-50"
+        aria-label="Filter"
+        class="min-w-0 flex-1 rounded-fl-md border border-fl-border-input bg-fl-surface px-2 py-1.5 font-mono text-fl-mono-sm text-fl-ink outline-none focus:border-fl-accent disabled:opacity-50"
       />
     }
   `,
@@ -82,8 +86,7 @@ export class DocumentFilterEditorComponent implements AfterViewInit, OnDestroy {
   readonly ready = signal(false);
   fallbackText = '';
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private view: any = null;
+  private view: CmView | null = null;
 
   text(): string {
     return this.view ? String(this.view.state.doc.toString()) : this.fallbackText;
@@ -206,23 +209,28 @@ export class DocumentFilterEditorComponent implements AfterViewInit, OnDestroy {
             runKeys,
             sync,
             EditorView.lineWrapping,
+            EditorView.contentAttributes.of({ 'aria-label': 'Filter' }),
             EditorView.theme({
-              '&': { backgroundColor: 'transparent', color: 'inherit' },
+              '&': { backgroundColor: 'transparent', color: 'var(--fl-ink)' },
               '&.cm-focused': { outline: 'none' },
+              '.cm-scroller': { fontFamily: 'var(--fl-font-mono)' },
               '.cm-content': {
                 padding: '6px 8px',
-                caretColor: 'hsl(var(--foreground))',
-                fontFamily: 'ui-monospace, monospace',
+                caretColor: 'var(--fl-ink)',
+                fontFamily: 'var(--fl-font-mono)',
               },
               '.cm-line': { padding: '0' },
-              '.cm-cursor, .cm-dropCursor': { borderLeftColor: 'hsl(var(--foreground))' },
-              '&.cm-focused .cm-cursor': { borderLeftColor: 'hsl(var(--foreground))' },
+              '.cm-cursor, .cm-dropCursor': { borderLeftColor: 'var(--fl-ink)' },
+              '&.cm-focused .cm-cursor': { borderLeftColor: 'var(--fl-ink)' },
+              '&.cm-focused .cm-selectionBackground, .cm-selectionBackground': {
+                backgroundColor: 'var(--fl-accent-soft)',
+              },
             }),
           ],
         }),
         parent: this.host().nativeElement,
       });
-      this.view = ev;
+      this.view = ev as unknown as CmView;
       this.ready.set(true);
     } catch {
       this.ready.set(false);

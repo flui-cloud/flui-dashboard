@@ -7,10 +7,11 @@ import { FlButton } from '../../../ui/primitives/button';
 import { FlIcon } from '../../../ui/primitives/icon';
 import { FlSpinner } from '../../../ui/primitives/spinner';
 import { CreateSnapshotRequest } from '../../model/volume-management.models';
+import { FlDialogFocus } from '../../../ui/overlays/dialog-focus';
 
 @Component({
   selector: 'app-snapshot-create-dialog',
-  imports: [FormsModule, FlField, FlButton, FlIcon, FlSpinner],
+  imports: [FlDialogFocus, FormsModule, FlField, FlButton, FlIcon, FlSpinner],
   providers: [provideIcons({ lucideX })],
   template: `
     @if (open()) {
@@ -23,6 +24,8 @@ import { CreateSnapshotRequest } from '../../model/volume-management.models';
           role="dialog"
           aria-modal="true"
           aria-labelledby="snapshot-create-title"
+          flDialogFocus
+          (dismissed)="cancelled.emit()"
           (click)="$event.stopPropagation()"
         >
           <header class="fl-dialog__header">

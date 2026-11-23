@@ -147,7 +147,7 @@ import { AppAutoscaling, AppRuntimeService } from '../../service/app-runtime.ser
         </div>
 
         <div
-          class="flex flex-wrap items-center justify-end gap-2 border-t border-fl-border bg-fl-surface-subtle px-4 py-3"
+          class="flex flex-wrap items-center justify-end gap-2 rounded-b-fl-lg border-t border-fl-border bg-fl-surface-subtle px-4 py-3"
         >
           @if (dirty()) {
             <button flButton="ghost" type="button" [disabled]="saving()" (click)="reset()">

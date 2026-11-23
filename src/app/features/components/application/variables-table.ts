@@ -23,7 +23,7 @@ import { VarRow, isDirtyRow, valueTypeLabel } from './variable-rows';
     provideIcons({ lucideEye, lucideEyeOff, lucideMaximize2, lucidePencil, lucideTrash2, lucideX }),
   ],
   template: `
-    <div class="fl-table-wrap">
+    <div class="fl-table-wrap relative">
       <table flTable density="dense">
         <thead>
           <tr>

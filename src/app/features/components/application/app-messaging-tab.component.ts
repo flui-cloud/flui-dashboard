@@ -84,7 +84,7 @@ import { FlActionsMenu, MenuAction } from '../../../ui/overlays/actions-menu';
         @if (queues().length === 0) {
           <fl-empty-state [compact]="true" title="No queues yet" />
         } @else {
-          <div class="fl-table-wrap">
+          <div class="fl-table-wrap relative">
             <table flTable density="dense">
               <thead>
                 <tr>

@@ -37,11 +37,13 @@ import { FlButton } from '../../../ui/primitives/button';
 import { FlIcon } from '../../../ui/primitives/icon';
 import { FlSpinner } from '../../../ui/primitives/spinner';
 import { FlStatus } from '../../../ui/primitives/status';
+import { FlDialogFocus } from '../../../ui/overlays/dialog-focus';
 
 @Component({
   selector: 'app-app-dns-tab',
   standalone: true,
   imports: [
+    FlDialogFocus,
     RouterModule,
     DnsEndpointsListComponent,
     ClusterEndpointFormComponent,
@@ -112,7 +114,7 @@ import { FlStatus } from '../../../ui/primitives/status';
         }
       </fl-panel>
 
-      <fl-panel title="Endpoints" [count]="filteredEndpoints().length">
+      <fl-panel title="Endpoints" [count]="filteredEndpoints().length" [flush]="true">
         <ng-container panelActions>
           <button
             flButton="ghost"
@@ -136,20 +138,20 @@ import { FlStatus } from '../../../ui/primitives/status';
             </button>
           }
         </ng-container>
-        <div class="flex flex-col gap-4">
-          @if (appEndpointsService.error(); as error) {
+        @if (appEndpointsService.error(); as error) {
+          <div class="p-4">
             <fl-alert tone="error" title="Endpoints request failed">{{ error }}</fl-alert>
-          }
-          <app-dns-endpoints-list
-            [endpoints]="filteredEndpoints()"
-            [reconcilingId]="reconcilingId()"
-            [certPollingId]="certPollingId()"
-            [writable]="!readOnly()"
-            (editAction)="editEndpoint($event)"
-            (reconcileAction)="reconcileEndpoint($event)"
-            (deleteAction)="deleteEndpoint($event)"
-          />
-        </div>
+          </div>
+        }
+        <app-dns-endpoints-list
+          [endpoints]="filteredEndpoints()"
+          [reconcilingId]="reconcilingId()"
+          [certPollingId]="certPollingId()"
+          [writable]="!readOnly()"
+          (editAction)="editEndpoint($event)"
+          (reconcileAction)="reconcileEndpoint($event)"
+          (deleteAction)="deleteEndpoint($event)"
+        />
       </fl-panel>
     }
 
@@ -161,6 +163,8 @@ import { FlStatus } from '../../../ui/primitives/status';
             role="dialog"
             aria-modal="true"
             [attr.aria-label]="editingEndpoint() ? 'Edit endpoint' : 'New endpoint'"
+            flDialogFocus
+            (dismissed)="closeEndpointForm()"
             (click)="$event.stopPropagation()"
           >
             <app-cluster-endpoint-form

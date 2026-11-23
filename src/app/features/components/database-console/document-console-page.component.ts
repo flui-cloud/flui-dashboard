@@ -1,22 +1,9 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  inject,
-  signal,
-  viewChild,
-} from '@angular/core';
+import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideArrowLeft,
-  lucideDatabase,
-  lucideLoader,
-  lucideRotateCcw,
-  lucideTriangleAlert,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideDatabase, lucideFileText } from '@ng-icons/lucide';
 import { DocumentConsoleService } from '../../service/document-console.service';
 import {
   DocumentCollection,
@@ -29,10 +16,15 @@ import { DocQuery, DocumentQueryBarComponent } from './document-query-bar.compon
 import { DocumentShellComponent } from './document-shell.component';
 import { AssistFn, DbAssistantChatComponent } from './db-assistant-chat.component';
 import { parsePlainFind } from './parse-plain-find';
+import { StoreConsoleHeader } from './store-console-header';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlEmptyState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
 
 type ConnState = 'connecting' | 'connected' | 'error';
 const PAGE_SIZE = 20;
-// Databases we don't auto-select (FerretDB/Mongo housekeeping).
 const SYSTEM_DBS = new Set(['admin', 'local', 'config']);
 const EMPTY_QUERY: DocQuery = {
   filterText: '',
@@ -48,85 +40,46 @@ const EMPTY_QUERY: DocQuery = {
  */
 @Component({
   selector: 'app-document-console-page',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    NgIcon,
     DocumentCollectionTreeComponent,
     DocumentQueryBarComponent,
     DocumentListComponent,
     DocumentShellComponent,
     DbAssistantChatComponent,
+    StoreConsoleHeader,
+    FlAlert,
+    FlPanel,
+    FlEmptyState,
+    FlButton,
+    FlIcon,
   ],
-  providers: [
-    provideIcons({
-      lucideArrowLeft,
-      lucideDatabase,
-      lucideLoader,
-      lucideRotateCcw,
-      lucideTriangleAlert,
-    }),
-  ],
+  providers: [provideIcons({ lucideDatabase, lucideFileText })],
   template: `
-    <div class="p-4 md:p-6">
-      <div class="mb-4 flex items-center gap-3">
-        <button
-          type="button"
-          (click)="back()"
-          class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border text-muted-foreground hover:bg-muted"
-          title="Back"
-        >
-          <ng-icon name="lucideArrowLeft" class="h-4 w-4" />
-        </button>
-        <ng-icon name="lucideDatabase" class="h-5 w-5 text-primary" />
-        <div class="min-w-0">
-          <h1 class="text-base font-semibold text-foreground">Document Browser</h1>
-          <p class="truncate font-mono text-xs text-muted-foreground">{{ applicationId() }}</p>
-        </div>
-        <div class="ml-auto flex items-center gap-2 text-xs">
-          @switch (conn()) {
-            @case ('connecting') {
-              <span class="inline-flex items-center gap-1 text-muted-foreground">
-                <ng-icon name="lucideLoader" class="h-3.5 w-3.5 animate-spin" /> Connecting…
-              </span>
-            }
-            @case ('connected') {
-              <span class="inline-flex items-center gap-1 text-emerald-700"> Connected </span>
-            }
-            @case ('error') {
-              <button
-                type="button"
-                (click)="connect()"
-                class="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 hover:bg-muted"
-              >
-                <ng-icon name="lucideRotateCcw" class="h-3.5 w-3.5" /> Retry
-              </button>
-            }
-          }
-        </div>
-      </div>
+    <div class="fl-page">
+      <app-store-console-header
+        title="Document browser"
+        [appId]="applicationId()"
+        [conn]="conn()"
+        (retry)="connect()"
+      />
 
       @if (conn() === 'error' && connError(); as e) {
-        <div
-          class="mb-4 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
-        >
-          <ng-icon name="lucideTriangleAlert" class="mt-0.5 h-4 w-4 shrink-0" />
-          <div>
-            <div class="font-medium">Couldn't reach the database.</div>
-            <div class="mt-0.5 whitespace-pre-wrap text-xs">{{ e }}</div>
-          </div>
-        </div>
+        <fl-alert tone="error" title="Could not reach the database">
+          <span class="whitespace-pre-wrap">{{ e }}</span>
+        </fl-alert>
       }
 
-      <div class="flex h-[calc(100vh-180px)] gap-4">
+      <div class="flex flex-col gap-5 xl:flex-row xl:items-start">
         @if (!showTree()) {
           <button
+            flButton
+            [iconOnly]="true"
             type="button"
             (click)="toggleTree()"
+            aria-label="Show databases"
             title="Show databases"
-            class="flex h-8 w-8 shrink-0 self-start items-center justify-center rounded-lg border border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
           >
-            <ng-icon name="lucideDatabase" class="h-4 w-4" />
+            <fl-icon name="lucideDatabase" />
           </button>
         } @else {
           <app-document-collection-tree
@@ -143,7 +96,7 @@ const EMPTY_QUERY: DocQuery = {
           />
         }
 
-        <section class="flex min-w-0 flex-1 flex-col gap-3 overflow-hidden">
+        <section class="fl-stack min-w-0 flex-1" aria-label="Query and documents">
           <app-document-query-bar
             [disabled]="!selectedCollection()"
             [running]="loadingDocs()"
@@ -151,30 +104,35 @@ const EMPTY_QUERY: DocQuery = {
             (find)="onFind($event)"
           />
 
-          <div class="min-h-0 flex-1 overflow-y-auto">
-            @if (selectedCollection()) {
-              <div class="mb-2 flex flex-wrap items-center gap-2">
-                <span class="break-all font-mono text-sm font-medium"
-                  >{{ selectedDb() }} / {{ selectedCollection() }}</span
-                >
-                @if (durationMs() !== null) {
-                  <span class="ml-auto text-xs text-muted-foreground">{{ durationMs() }}ms</span>
-                }
-              </div>
-              <app-document-list
-                [documents]="documents()"
-                [loading]="loadingDocs()"
-                [error]="docError()"
-                [page]="page()"
-                [pageSize]="pageSize"
-                [hasNext]="hasNext()"
-                (prevPage)="prevPage()"
-                (nextPage)="nextPage()"
-              />
-            } @else {
-              <p class="text-sm text-muted-foreground">Select a collection to browse documents.</p>
-            }
-          </div>
+          @if (selectedCollection()) {
+            <app-document-list
+              [title]="selectedDb() + ' / ' + selectedCollection()"
+              [durationMs]="durationMs()"
+              [documents]="documents()"
+              [loading]="loadingDocs()"
+              [error]="docError()"
+              [page]="page()"
+              [pageSize]="pageSize"
+              [hasNext]="hasNext()"
+              (prevPage)="prevPage()"
+              (nextPage)="nextPage()"
+            />
+          } @else {
+            <fl-panel title="Documents">
+              @if (docError(); as e) {
+                <fl-alert tone="error" title="Could not load collections">
+                  <span class="whitespace-pre-wrap">{{ e }}</span>
+                </fl-alert>
+              } @else {
+                <fl-empty-state
+                  [compact]="true"
+                  icon="lucideFileText"
+                  title="No collection selected"
+                  body="Select a collection to browse its documents."
+                />
+              }
+            </fl-panel>
+          }
 
           <app-document-shell
             [appId]="applicationId() ?? ''"
@@ -190,8 +148,8 @@ const EMPTY_QUERY: DocQuery = {
           [assist]="docAssist"
           [showInsert]="true"
           dataBlindBadge="structure only"
-          dataBlindTooltip="The assistant receives collection names and inferred field types — never document values."
-          emptyHint="Describe what you need in plain language — e.g. “admin users created this year”. The assistant proposes a mongosh statement; you review and run it in the shell."
+          dataBlindTooltip="The assistant receives collection names and inferred field types, never document values."
+          emptyHint="Describe what you need in plain language, for example “admin users created this year”. The assistant proposes a mongosh statement; you review and run it in the shell."
           codeNoun="statement"
           (insert)="onChatInsert($event)"
           (run)="onChatRun($event)"
@@ -233,8 +191,6 @@ export class DocumentConsolePageComponent implements OnInit {
 
   private query: DocQuery = { ...EMPTY_QUERY };
 
-  // NL→mongosh copilot: same chat shell as the SQL/KV consoles, document KB. Data-blind —
-  // sends the active database/collection (names + inferred field types) plus the question.
   readonly docAssist: AssistFn = (prompt, conversation, model) => {
     const id = this.applicationId() ?? '';
     return this.docs
@@ -262,18 +218,11 @@ export class DocumentConsolePageComponent implements OnInit {
     this.shell()?.insert(statement);
   }
 
-  // Smart routing: a plain find on an available collection lands in the top query bar (main
-  // paged grid); aggregate / count / writes / admin — anything else — runs in the shell.
   onChatRun(e: { code: string; mutation: boolean }): void {
     const find = e.mutation ? null : parsePlainFind(e.code);
-    // A plain find lands in the top query bar (main paged grid) as long as a database is
-    // selected to run it against; routeFindToBar selects the collection if needed. Everything
-    // else — aggregate / count / writes / admin / no db context — runs in the shell.
     if (find && this.selectedDb()) {
       this.routeFindToBar(find);
     } else {
-      // Writes/aggregate/admin run in the shell. A confirmed-in-chat write runs once as a
-      // one-off (forceWrite) without arming the shell toggle; reads/aggregates honor it.
       this.shell()?.runStatement(e.code, e.mutation);
     }
   }
@@ -291,7 +240,6 @@ export class DocumentConsolePageComponent implements OnInit {
     this.queryBar()?.setQuery(find.filterText, find.projectionText, find.sortText);
   }
 
-  // A shell write may have changed data or structure — refresh the browse pane.
   onShellChanged(): void {
     const id = this.applicationId();
     const database = this.selectedDb();
@@ -325,9 +273,6 @@ export class DocumentConsolePageComponent implements OnInit {
       next: (dbs) => {
         this.databases.set(dbs);
         this.conn.set('connected');
-        // Auto-select the first user database so there's always a browse context: the
-        // grid + the assistant's find-routing need a selected collection, and the shell
-        // gets a real db (not the 'test' default). System dbs are skipped.
         if (!this.selectedDb()) {
           const firstUser = dbs.find((d) => !SYSTEM_DBS.has(d.name));
           if (firstUser) this.selectDb(firstUser.name);
@@ -341,8 +286,6 @@ export class DocumentConsolePageComponent implements OnInit {
   }
 
   selectDb(name: string): void {
-    // Re-clicking the active database is a no-op — don't silently blank the
-    // browse pane (it reads as a selection, not a toggle).
     if (this.selectedDb() === name) return;
     this.selectedDb.set(name);
     this.collections.set([]);
@@ -372,8 +315,6 @@ export class DocumentConsolePageComponent implements OnInit {
     this.onFind(this.query);
   }
 
-  // Sampled field structure for the query-bar autocomplete (best-effort; a failure
-  // just means no suggestions, never a broken browse).
   private loadFields(collection: string): void {
     const id = this.applicationId();
     const database = this.selectedDb();
@@ -404,8 +345,6 @@ export class DocumentConsolePageComponent implements OnInit {
     this.loadPage();
   }
 
-  // One fixed page of PAGE_SIZE; the result replaces the previous page (no infinite
-  // scroll). `truncated` (server fetches pageSize+1) tells us a next page exists.
   private loadPage(): void {
     const id = this.applicationId();
     const database = this.selectedDb();

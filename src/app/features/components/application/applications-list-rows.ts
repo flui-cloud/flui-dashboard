@@ -359,7 +359,7 @@ export function buildListRow(group: AppGroupView, ctx: ListRowContext): ListRow 
     backup: { label: backup.label, tone: backup.tone, title: backup.title },
     released: {
       text: relativeTime(releasedAt, now),
-      title: releasedAt ? new Date(releasedAt).toLocaleString() : '',
+      title: releasedAt ? new Date(releasedAt).toLocaleString('en-GB') : '',
     },
     attention,
     noBackup: backup.noBackup,

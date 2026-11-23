@@ -66,8 +66,8 @@ const ROLLBACK_ITEMS_BUSY: readonly MenuAction[] = [
   template: `
     <fl-panel title="Revision history" [count]="service.eventsTotal()" [flush]="true">
       <div panelToolbar class="fl-toolbar" role="toolbar" aria-label="Filters">
-        <div class="fl-toolbar__group">
-          <div class="fl-segmented" role="group" aria-label="Event type">
+        <div class="fl-toolbar__group max-w-full overflow-x-auto">
+          <div class="fl-segmented shrink-0" role="group" aria-label="Event type">
             @for (filter of filters; track filter.label) {
               <button
                 type="button"
@@ -92,7 +92,7 @@ const ROLLBACK_ITEMS_BUSY: readonly MenuAction[] = [
       } @else if (service.events().length === 0) {
         <fl-empty-state title="No activity yet" />
       } @else {
-        <div class="fl-table-wrap">
+        <div class="fl-table-wrap relative">
           <table flTable density="dense">
             <thead>
               <tr>
@@ -114,7 +114,7 @@ const ROLLBACK_ITEMS_BUSY: readonly MenuAction[] = [
                       <span class="fl-muted">—</span>
                     }
                   </td>
-                  <td class="whitespace-normal">
+                  <td class="is-wrap">
                     <div class="flex min-w-0 flex-wrap items-center gap-2">
                       <fl-icon
                         class="text-fl-ink-muted"

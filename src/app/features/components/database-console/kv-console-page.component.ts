@@ -1,304 +1,205 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
-
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideArrowLeft,
-  lucideClock,
-  lucideKeyRound,
-  lucidePlay,
-  lucideRefreshCw,
-  lucideSearch,
-} from '@ng-icons/lucide';
+import { provideIcons } from '@ng-icons/core';
+import { lucideKeyRound, lucidePlay, lucideRefreshCw, lucideSearch } from '@ng-icons/lucide';
 import { KvConsoleService } from '../../service/kv-console.service';
 import { KeyMeta, KeyValueRead, KeyspaceSummary } from '../../model/kv-console.models';
 import { JsonViewerComponent } from './json-viewer.component';
 import { AssistFn, DbAssistantChatComponent } from './db-assistant-chat.component';
 import { GateNoticeComponent } from './gate-notice.component';
+import { KvValueView } from './kv-value-view';
+import { StoreConsoleHeader } from './store-console-header';
+import { FlAlert } from '../../../ui/patterns/alert';
+import { FlPanel } from '../../../ui/patterns/panel';
+import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
+import { FlButton } from '../../../ui/primitives/button';
+import { FlIcon } from '../../../ui/primitives/icon';
 
 type ConnState = 'connecting' | 'connected' | 'error';
 const SCAN_COUNT = 100;
 
 @Component({
   selector: 'app-kv-console-page',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     FormsModule,
-    NgIcon,
     JsonViewerComponent,
     DbAssistantChatComponent,
     GateNoticeComponent,
+    KvValueView,
+    StoreConsoleHeader,
+    FlAlert,
+    FlPanel,
+    FlEmptyState,
+    FlLoadingState,
+    FlButton,
+    FlIcon,
   ],
-  viewProviders: [
-    provideIcons({
-      lucideArrowLeft,
-      lucideClock,
-      lucideKeyRound,
-      lucidePlay,
-      lucideRefreshCw,
-      lucideSearch,
-    }),
-  ],
+  viewProviders: [provideIcons({ lucideKeyRound, lucidePlay, lucideRefreshCw, lucideSearch })],
   template: `
-    <div class="p-4 md:p-6">
-      <div class="mb-4 flex items-center gap-3">
-        <button
-          type="button"
-          (click)="back()"
-          class="rounded-md border border-border p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+    <div class="fl-page">
+      <app-store-console-header
+        title="Key browser"
+        [appId]="applicationId()"
+        [conn]="conn()"
+        (retry)="connect()"
+      />
+
+      @if (conn() === 'error' && connError(); as e) {
+        <fl-alert tone="error" title="Could not reach the store">
+          <span class="whitespace-pre-wrap">{{ e }}</span>
+        </fl-alert>
+      }
+
+      <div class="flex flex-col gap-5 xl:flex-row xl:items-start">
+        <aside
+          class="fl-panel flex max-h-screen w-full shrink-0 xl:sticky xl:top-0 xl:w-80 flex-col self-stretch"
+          aria-label="Keys"
         >
-          <ng-icon name="lucideArrowLeft" class="h-4 w-4" />
-        </button>
-        <ng-icon name="lucideKeyRound" class="h-5 w-5 text-primary" />
-        <div class="min-w-0">
-          <h1 class="text-base font-semibold text-foreground">Key Browser</h1>
-          <p class="truncate font-mono text-xs text-muted-foreground">{{ applicationId() }}</p>
-        </div>
-        <span class="ml-auto text-xs">
-          @switch (conn()) {
-            @case ('connected') {
-              <span class="text-emerald-600">Connected</span>
-            }
-            @case ('connecting') {
-              <span class="text-muted-foreground">Connecting…</span>
-            }
-            @case ('error') {
-              <span class="text-destructive">{{ connError() }}</span>
+          <header class="fl-panel__header">
+            <h2 class="fl-panel__title">
+              Keys
+              @if (summary(); as s) {
+                <span class="fl-panel__count">({{ s.keyCount }})</span>
+              }
+            </h2>
+            <div class="fl-panel__actions">
               <button
+                flButton="ghost"
+                size="sm"
+                [iconOnly]="true"
                 type="button"
                 (click)="connect()"
-                class="ml-2 rounded border border-border px-1.5 py-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                aria-label="Refresh keys"
+                title="Refresh keys"
               >
-                Retry
+                <fl-icon name="lucideRefreshCw" [size]="14" />
               </button>
-            }
-          }
-        </span>
-      </div>
-
-      <div class="flex h-[calc(100vh-180px)] gap-4">
-        <aside
-          class="flex w-80 shrink-0 flex-col overflow-hidden rounded-fl-lg border border-border bg-card p-3"
-        >
-          @if (summary(); as s) {
-            <div class="mb-3 rounded-lg border border-border bg-muted/30 p-2.5">
-              <div class="flex items-center justify-between">
-                <span class="text-xs font-medium text-foreground">{{ s.keyCount }} keys</span>
-                <button
-                  type="button"
-                  (click)="connect()"
-                  class="text-muted-foreground hover:text-foreground"
-                  title="Refresh"
-                >
-                  <ng-icon name="lucideRefreshCw" class="h-3.5 w-3.5" />
-                </button>
-              </div>
-              <div class="mt-1.5 flex flex-wrap gap-1">
-                @for (t of s.byType; track t.type) {
-                  <span
-                    class="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground"
-                    >{{ t.type }} {{ t.count }}</span
-                  >
-                }
-              </div>
             </div>
-          }
-
-          <div class="mb-2 flex items-center gap-1.5 rounded-md border border-border px-2">
-            <ng-icon name="lucideSearch" class="h-3.5 w-3.5 text-muted-foreground" />
-            <input
-              [(ngModel)]="match"
-              (keydown.enter)="applyFilter()"
-              placeholder="MATCH pattern, e.g. user:*"
-              class="w-full bg-transparent py-1.5 font-mono text-xs outline-none"
-            />
+          </header>
+          <div class="flex flex-col gap-2 border-b border-fl-border px-3 py-3">
+            <label class="fl-input">
+              <fl-icon name="lucideSearch" [size]="14" />
+              <input
+                class="font-mono"
+                [(ngModel)]="match"
+                (keydown.enter)="applyFilter()"
+                aria-label="Match pattern"
+                placeholder="MATCH pattern, e.g. user:*"
+              />
+            </label>
+            @if (summary(); as s) {
+              @if (s.byType.length) {
+                <p class="fl-toolbar__info m-0 font-mono">
+                  @for (t of s.byType; track t.type; let last = $last) {
+                    {{ t.type }} {{ t.count }}{{ last ? '' : ' · ' }}
+                  }
+                </p>
+              }
+            }
           </div>
 
-          <div class="min-h-0 flex-1 overflow-auto">
+          <div class="min-h-0 flex-1 overflow-y-auto">
             @if (scanError(); as e) {
-              <div
-                class="mb-2 rounded-md border border-destructive/40 bg-destructive/10 px-2 py-1.5 text-[11px] text-destructive"
-              >
-                {{ e }}
+              <div class="p-3">
+                <fl-alert tone="error" title="Could not list keys">{{ e }}</fl-alert>
               </div>
             }
             @if (keys().length === 0 && (scanning() || conn() === 'connecting')) {
-              @for (i of skeletonRows; track i) {
-                <div class="mb-1 flex items-center gap-2 px-2 py-1">
-                  <span class="h-3.5 w-10 rounded bg-muted"></span>
-                  <span class="h-3.5 flex-1 rounded bg-muted/60"></span>
-                </div>
-              }
+              <fl-loading-state [rows]="8" />
             } @else {
-              @for (k of keys(); track k.key) {
-                <button
-                  type="button"
-                  (click)="selectKey(k.key)"
-                  class="flex w-full items-center gap-2 rounded px-2 py-1 text-left hover:bg-muted/60"
-                  [class.bg-muted]="selected()?.key === k.key"
-                >
-                  <span class="rounded bg-muted px-1 text-[10px] uppercase text-muted-foreground">{{
-                    k.type
-                  }}</span>
-                  <span class="min-w-0 flex-1 truncate font-mono text-xs">{{ k.key }}</span>
-                </button>
-              } @empty {
-                <p class="px-2 py-4 text-center text-xs text-muted-foreground">No keys.</p>
+              <ul class="m-0 list-none py-1 pl-0">
+                @for (k of keys(); track k.key) {
+                  <li>
+                    <button
+                      type="button"
+                      (click)="selectKey(k.key)"
+                      class="flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-fl-surface-hover"
+                      [class.bg-fl-accent-soft]="selected()?.key === k.key"
+                      [attr.aria-current]="selected()?.key === k.key ? 'true' : null"
+                    >
+                      <span class="w-12 shrink-0 font-mono text-fl-caption text-fl-ink-muted">{{
+                        k.type
+                      }}</span>
+                      <span
+                        class="min-w-0 flex-1 truncate font-mono text-fl-mono-sm"
+                        [class.text-fl-accent]="selected()?.key === k.key"
+                        >{{ k.key }}</span
+                      >
+                    </button>
+                  </li>
+                }
+              </ul>
+              @if (keys().length === 0) {
+                <fl-empty-state
+                  [compact]="true"
+                  icon="lucideKeyRound"
+                  [title]="match.trim() ? 'No keys match the pattern' : 'No keys'"
+                />
               }
             }
           </div>
           @if (cursor() !== '0') {
-            <button
-              type="button"
-              (click)="loadMore()"
-              [disabled]="scanning()"
-              class="mt-2 w-full rounded-md border border-border py-1.5 text-xs hover:bg-muted disabled:opacity-50"
-            >
-              {{ scanning() ? 'Loading…' : 'Load more' }}
-            </button>
+            <div class="border-t border-fl-border p-3">
+              <button
+                flButton
+                size="sm"
+                [block]="true"
+                type="button"
+                (click)="loadMore()"
+                [disabled]="scanning()"
+              >
+                {{ scanning() ? 'Loading' : 'Load more' }}
+              </button>
+            </div>
           }
         </aside>
 
-        <section
-          class="flex min-w-0 flex-1 flex-col overflow-hidden rounded-fl-lg border border-border bg-card"
-        >
-          <div class="flex shrink-0 items-center gap-2 border-b border-border p-2">
-            <input
-              [(ngModel)]="cmd"
-              (keydown.enter)="runManual()"
-              placeholder="Command — e.g. SET key value · HSET h f v · DEL key"
-              class="min-w-0 flex-1 rounded-md border border-border bg-background px-2 py-1.5 font-mono text-xs outline-none"
-            />
-            <label
-              class="flex shrink-0 items-center gap-1 text-xs text-muted-foreground"
-              title="Off = writes allowed"
-            >
-              <input type="checkbox" [(ngModel)]="cmdReadOnly" /> Read-only
-            </label>
-            <button
-              type="button"
-              (click)="runManual()"
-              [disabled]="!cmd.trim() || cmdRunning()"
-              class="inline-flex h-8 items-center gap-1 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-            >
-              <ng-icon
-                [name]="cmdRunning() ? 'lucideRefreshCw' : 'lucidePlay'"
-                class="h-3 w-3"
-                [class.animate-spin]="cmdRunning()"
-              />
-              Run
-            </button>
-          </div>
-
-          <div class="shrink-0 px-2 pt-2">
-            <app-gate-notice engine="Redis/Valkey" />
-          </div>
-
-          <div class="min-h-0 flex-1 overflow-y-auto p-4">
-            @if (loadingValue()) {
-              <p class="text-sm text-muted-foreground">Loading…</p>
-            } @else if (selected()) {
-              @if (selected(); as v) {
-                <div class="mb-3 flex flex-wrap items-center gap-2">
-                  <span
-                    class="rounded bg-muted px-1.5 py-0.5 text-[11px] uppercase text-muted-foreground"
-                    >{{ v.type }}</span
-                  >
-                  <span class="break-all font-mono text-sm font-medium">{{ v.key }}</span>
-                  <span class="ml-auto flex items-center gap-1 text-xs text-muted-foreground">
-                    <ng-icon name="lucideClock" class="h-3 w-3" /> {{ ttlLabel(v.ttl) }}
-                  </span>
-                </div>
-                @if (v.truncated) {
-                  <p class="mb-2 text-xs text-amber-600">
-                    Showing the first elements{{ v.length ? ' of ' + v.length : '' }} — value
-                    truncated.
-                  </p>
-                }
-                @switch (v.value.kind) {
-                  @case ('string') {
-                    @if (asJson(v.value.value); as parsed) {
-                      <app-json-viewer [value]="parsed" />
-                    } @else {
-                      <pre class="overflow-auto whitespace-pre-wrap break-all font-mono text-xs">{{
-                        v.value.value
-                      }}</pre>
-                    }
-                  }
-                  @case ('hash') {
-                    <table class="w-full border-collapse text-xs">
-                      <tbody>
-                        @for (f of v.value.fields; track f.field) {
-                          <tr class="border-b border-border/60">
-                            <td class="py-1 pr-3 align-top font-mono text-muted-foreground">
-                              {{ f.field }}
-                            </td>
-                            <td class="py-1 font-mono break-all">{{ f.value }}</td>
-                          </tr>
-                        }
-                      </tbody>
-                    </table>
-                  }
-                  @case ('list') {
-                    <ol class="space-y-0.5 font-mono text-xs">
-                      @for (it of v.value.items; track $index) {
-                        <li class="flex gap-2">
-                          <span class="text-muted-foreground">{{ $index }}</span><span
-                            class="break-all"
-                            >{{ it }}</span
-                          >
-                        </li>
-                      }
-                    </ol>
-                  }
-                  @case ('set') {
-                    <ul class="space-y-0.5 font-mono text-xs">
-                      @for (m of v.value.members; track $index) {
-                        <li class="break-all">{{ m }}</li>
-                      }
-                    </ul>
-                  }
-                  @case ('zset') {
-                    <table class="w-full border-collapse text-xs">
-                      <tbody>
-                        @for (e of v.value.entries; track $index) {
-                          <tr class="border-b border-border/60">
-                            <td class="py-1 pr-3 font-mono break-all">{{ e.member }}</td>
-                            <td class="py-1 text-right font-mono text-muted-foreground">
-                              {{ e.score }}
-                            </td>
-                          </tr>
-                        }
-                      </tbody>
-                    </table>
-                  }
-                  @default {
-                    <p class="text-sm text-muted-foreground">{{ v.value.note }}</p>
-                  }
-                }
-              }
-            } @else {
-              <p class="text-sm text-muted-foreground">Select a key to see its value.</p>
-            }
-
-            @if (commandError()) {
-              <p
-                class="mt-3 rounded-md border border-destructive/40 bg-destructive/5 p-2 text-xs text-destructive"
+        <section class="fl-stack min-w-0 flex-1" aria-label="Command and value">
+          <fl-panel title="Command">
+            <div class="flex flex-wrap items-center gap-3">
+              <label class="fl-input min-w-0 flex-1">
+                <input
+                  class="font-mono"
+                  [(ngModel)]="cmd"
+                  (keydown.enter)="runManual()"
+                  aria-label="Command"
+                  placeholder="SET key value · HSET h f v · DEL key"
+                />
+              </label>
+              <label class="fl-check" title="Clear to allow writes">
+                <input type="checkbox" [(ngModel)]="cmdReadOnly" /> Read-only
+              </label>
+              <button
+                flButton="primary"
+                size="sm"
+                type="button"
+                (click)="runManual()"
+                [disabled]="!cmd.trim() || cmdRunning()"
               >
-                {{ commandError() }}
-              </p>
-            }
-            @if (commandReply() !== undefined) {
-              <div class="mt-3 rounded-md border border-border bg-muted/30 p-2">
-                <p class="mb-1 text-[11px] font-medium text-muted-foreground">Command output</p>
-                <app-json-viewer [value]="commandReply()" />
-              </div>
-            }
-          </div>
+                <fl-icon name="lucidePlay" [size]="14" />
+                {{ cmdRunning() ? 'Running' : 'Run' }}
+              </button>
+            </div>
+            <div class="mt-3 flex flex-col gap-3">
+              <app-gate-notice engine="Redis/Valkey" />
+              @if (commandError()) {
+                <fl-alert tone="error" title="Command failed">
+                  <span class="whitespace-pre-wrap">{{ commandError() }}</span>
+                </fl-alert>
+              }
+              @if (commandReply() !== undefined) {
+                <div class="rounded-fl-md border border-fl-border bg-fl-surface-subtle p-3">
+                  <p class="m-0 mb-1 text-fl-caption font-semibold text-fl-ink-secondary">Output</p>
+                  <app-json-viewer [value]="commandReply()" />
+                </div>
+              }
+            </div>
+          </fl-panel>
+
+          <app-kv-value-view [value]="selected()" [loading]="loadingValue()" />
         </section>
 
         <app-db-assistant-chat
@@ -307,8 +208,8 @@ const SCAN_COUNT = 100;
           identity="Flui database assistant"
           [assist]="kvAssist"
           dataBlindBadge="counts only"
-          dataBlindTooltip="The assistant sees only key counts by type — never key names or values."
-          emptyHint="Describe what you need — e.g. “keys matching session:*” or “TTL of cart:42”. The assistant proposes a command; you review and run it."
+          dataBlindTooltip="The assistant sees only key counts by type, never key names or values."
+          emptyHint="Describe what you need, for example “keys matching session:*” or “TTL of cart:42”. The assistant proposes a command; you review and run it."
           codeNoun="command"
           (run)="onChatRun($event)"
         />
@@ -338,13 +239,10 @@ export class KvConsolePageComponent implements OnInit {
   readonly commandReply = signal<unknown>(undefined);
   readonly commandError = signal<string | null>(null);
   readonly cmdRunning = signal(false);
-  /** A key-scan failure (separate from the connection state). */
   readonly scanError = signal<string | null>(null);
 
   cmd = '';
   cmdReadOnly = true;
-
-  readonly skeletonRows = Array.from({ length: 8 }, (_, i) => i);
 
   readonly kvAssist: AssistFn = (prompt, conversation, model) => {
     const id = this.applicationId() ?? '';
@@ -410,8 +308,6 @@ export class KvConsolePageComponent implements OnInit {
         },
         error: (err) => {
           this.scanning.set(false);
-          // A scan failure is not a connection failure — surface it in the key
-          // list, don't poison the "Connected" pill (which never renders it).
           this.scanError.set(this.messageFrom(err));
         },
       });
@@ -435,22 +331,6 @@ export class KvConsolePageComponent implements OnInit {
     });
   }
 
-  ttlLabel(ttl: number): string {
-    if (ttl === -1) return 'no expiry';
-    if (ttl === -2) return 'missing';
-    return `${ttl}s`;
-  }
-
-  asJson(value: string): unknown {
-    const t = value.trim();
-    if (!t.startsWith('{') && !t.startsWith('[')) return null;
-    try {
-      return JSON.parse(t);
-    } catch {
-      return null;
-    }
-  }
-
   runManual(): void {
     const command = this.cmd.trim();
     if (!command) return;
@@ -458,8 +338,6 @@ export class KvConsolePageComponent implements OnInit {
   }
 
   onChatRun(e: { code: string; mutation: boolean }): void {
-    // One-off: writes allowed for this call only (mutation ⇒ readOnly false) without touching
-    // the persistent toggle. Mirror the command into the editor for review.
     this.cmd = e.code;
     this.execCommand(e.code, !e.mutation);
   }

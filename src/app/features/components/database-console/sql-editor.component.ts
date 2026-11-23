@@ -1,6 +1,5 @@
 import {
   AfterViewInit,
-  ChangeDetectionStrategy,
   Component,
   ElementRef,
   NgZone,
@@ -27,22 +26,21 @@ interface MinimalEditorView {
 
 @Component({
   selector: 'app-sql-editor',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'contents' },
   imports: [FormsModule],
   template: `
     <div
-      class="flex min-h-[240px] flex-col overflow-hidden rounded-lg border border-border bg-card"
+      class="flex h-60 resize-y flex-col overflow-hidden rounded-fl-md border border-fl-border-input bg-fl-surface font-mono text-fl-mono-sm focus-within:border-fl-accent"
     >
-      <div #editorHost [hidden]="!editorReady()" class="min-h-0 flex-1 overflow-auto text-sm"></div>
+      <div #editorHost [hidden]="!editorReady()" class="min-h-0 flex-1 overflow-auto"></div>
       @if (!editorReady()) {
         <textarea
           #sqlTextarea
           [(ngModel)]="sqlText"
           (keydown)="onEditorKey($event)"
           spellcheck="false"
-          class="min-h-0 w-full flex-1 resize-none bg-transparent p-3 font-mono text-sm outline-none"
+          aria-label="SQL"
+          class="min-h-0 w-full flex-1 resize-none border-0 bg-transparent p-3 font-mono text-fl-mono-sm text-fl-ink outline-none"
           placeholder="SELECT …"
         ></textarea>
       }
@@ -134,13 +132,19 @@ export class SqlEditorComponent implements AfterViewInit, OnDestroy {
 
   private async tryMountEditor(): Promise<void> {
     try {
-      const [{ EditorState, Prec, Compartment }, view, { sql, PostgreSQL, MySQL }, { basicSetup }] =
-        await Promise.all([
-          import('@codemirror/state'),
-          import('@codemirror/view'),
-          import('@codemirror/lang-sql'),
-          import('codemirror'),
-        ]);
+      const [
+        { EditorState, Prec, Compartment },
+        view,
+        { sql, PostgreSQL, MySQL },
+        { basicSetup },
+        highlight,
+      ] = await Promise.all([
+        import('@codemirror/state'),
+        import('@codemirror/view'),
+        import('@codemirror/lang-sql'),
+        import('codemirror'),
+        import('./cm-highlight').then((m) => m.fluiHighlighting()),
+      ]);
       const { EditorView, keymap } = view;
       const langCompartment = new Compartment();
       const dialects = { postgres: PostgreSQL, mariadb: MySQL };
@@ -174,6 +178,7 @@ export class SqlEditorComponent implements AfterViewInit, OnDestroy {
           doc: this.sqlText,
           extensions: [
             basicSetup,
+            highlight,
             runKey,
             syncListener,
             langCompartment.of(
@@ -182,25 +187,27 @@ export class SqlEditorComponent implements AfterViewInit, OnDestroy {
                 upperCaseKeywords: true,
               }),
             ),
+            EditorView.contentAttributes.of({ 'aria-label': 'SQL' }),
             EditorView.theme({
               '&': {
                 height: '100%',
                 backgroundColor: 'transparent',
-                color: 'inherit',
+                color: 'var(--fl-ink)',
               },
-              '.cm-scroller': { overflow: 'auto' },
-              '.cm-content': { caretColor: 'currentColor' },
-              '.cm-cursor, .cm-dropCursor': { borderLeftColor: 'currentColor' },
-              '&.cm-focused .cm-cursor': { borderLeftColor: 'currentColor' },
+              '&.cm-focused': { outline: 'none' },
+              '.cm-scroller': { overflow: 'auto', fontFamily: 'var(--fl-font-mono)' },
+              '.cm-content': { caretColor: 'var(--fl-ink)' },
+              '.cm-cursor, .cm-dropCursor': { borderLeftColor: 'var(--fl-ink)' },
+              '&.cm-focused .cm-cursor': { borderLeftColor: 'var(--fl-ink)' },
               '.cm-gutters': {
-                backgroundColor: 'transparent',
-                color: 'inherit',
-                borderRight: 'none',
-                opacity: '0.6',
+                backgroundColor: 'var(--fl-surface-subtle)',
+                color: 'var(--fl-ink-muted)',
+                borderRight: '1px solid var(--fl-border-subtle)',
               },
-              '.cm-activeLine': { backgroundColor: 'rgba(127,127,127,0.08)' },
-              '.cm-activeLineGutter': {
-                backgroundColor: 'rgba(127,127,127,0.08)',
+              '.cm-activeLine': { backgroundColor: 'var(--fl-surface-subtle)' },
+              '.cm-activeLineGutter': { backgroundColor: 'var(--fl-surface-hover)' },
+              '&.cm-focused .cm-selectionBackground, .cm-selectionBackground': {
+                backgroundColor: 'var(--fl-accent-soft)',
               },
             }),
           ],

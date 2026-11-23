@@ -7,10 +7,11 @@ import { FlField } from '../../../ui/patterns/field';
 import { FlButton } from '../../../ui/primitives/button';
 import { FlIcon } from '../../../ui/primitives/icon';
 import { FlSpinner } from '../../../ui/primitives/spinner';
+import { FlDialogFocus } from '../../../ui/overlays/dialog-focus';
 
 @Component({
   selector: 'app-gateway-add-route-dialog',
-  imports: [FormsModule, FlAlert, FlField, FlButton, FlIcon, FlSpinner],
+  imports: [FlDialogFocus, FormsModule, FlAlert, FlField, FlButton, FlIcon, FlSpinner],
   providers: [provideIcons({ lucideX })],
   template: `
     <div
@@ -22,6 +23,8 @@ import { FlSpinner } from '../../../ui/primitives/spinner';
         role="dialog"
         aria-modal="true"
         aria-labelledby="gateway-add-route-title"
+        flDialogFocus
+        (dismissed)="cancelled.emit()"
         (click)="$event.stopPropagation()"
       >
         <header class="fl-dialog__header">
