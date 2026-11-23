@@ -1,6 +1,8 @@
 import { Component, input, output } from '@angular/core';
 import { provideIcons } from '@ng-icons/core';
 import { lucideDownload } from '@ng-icons/lucide';
+import { GithubCredentialProblem } from '../../../core/state/github-credential';
+import { GithubCredentialAlert } from '../../../shared/components/github-credential-alert.component';
 import { ApplicationManifest, RepositoryManifestEntry } from '../../service/repository.service';
 import { FlAlert } from '../../../ui/patterns/alert';
 import { FlKeyValue, FlKvItem } from '../../../ui/patterns/key-value';
@@ -23,6 +25,7 @@ export type AnalysisBranch =
     FlButton,
     FlIcon,
     FlStatus,
+    GithubCredentialAlert,
     DeployStepNoManifest,
   ],
   providers: [provideIcons({ lucideDownload })],
@@ -148,12 +151,16 @@ export type AnalysisBranch =
         />
       }
       @case ('check-failed') {
-        <fl-alert tone="warning" title="Could not read flui.yaml">
-          {{ fetchError() }}
-          <button alertActions flButton size="sm" type="button" (click)="retry.emit()">
-            Retry
-          </button>
-        </fl-alert>
+        @if (credentialProblem(); as problem) {
+          <app-github-credential-alert [problem]="problem" />
+        } @else {
+          <fl-alert tone="warning" title="Could not read flui.yaml">
+            {{ fetchError() }}
+            <button alertActions flButton size="sm" type="button" (click)="retry.emit()">
+              Retry
+            </button>
+          </fl-alert>
+        }
       }
     }
   `,
@@ -167,6 +174,7 @@ export class DeployStepAnalysis {
   readonly branch = input('');
   readonly repoId = input<string | null>(null);
   readonly fetchError = input<string | null>(null);
+  readonly credentialProblem = input<GithubCredentialProblem | null>(null);
   readonly agentPrompt = input('');
   readonly promptCopied = input(false);
   readonly download = output<void>();

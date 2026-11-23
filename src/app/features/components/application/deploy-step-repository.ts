@@ -1,4 +1,6 @@
 import { Component, input, output } from '@angular/core';
+import { GithubCredentialProblem } from '../../../core/state/github-credential';
+import { GithubCredentialAlert } from '../../../shared/components/github-credential-alert.component';
 import { ConnectedRepository } from '../../service/repository.service';
 import { PublicRepoSearchResultDto } from '../../../core/api/model/publicRepoSearchResultDto';
 import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
@@ -11,7 +13,15 @@ export type RepoTab = 'mine' | 'public';
 
 @Component({
   selector: 'app-deploy-step-repository',
-  imports: [FlEmptyState, FlLoadingState, FlTable, FlButton, FlStatus, PublicRepoPickerComponent],
+  imports: [
+    FlEmptyState,
+    FlLoadingState,
+    FlTable,
+    FlButton,
+    FlStatus,
+    GithubCredentialAlert,
+    PublicRepoPickerComponent,
+  ],
   host: { class: 'fl-stack' },
   template: `
     <div class="fl-segmented self-start" role="group" aria-label="Repositories">
@@ -94,6 +104,10 @@ export type RepoTab = 'mine' | 'public';
       }
       <app-public-repo-picker (repoSelected)="publicRepoSelect.emit($event)" />
     }
+
+    @if (credentialProblem(); as problem) {
+      <app-github-credential-alert [problem]="problem" />
+    }
   `,
 })
 export class DeployStepRepository {
@@ -102,6 +116,7 @@ export class DeployStepRepository {
   readonly repos = input.required<readonly ConnectedRepository[]>();
   readonly selectedId = input<string | null>(null);
   readonly publicRepo = input<PublicRepoSearchResultDto | null>(null);
+  readonly credentialProblem = input<GithubCredentialProblem | null>(null);
   readonly tabChange = output<RepoTab>();
   readonly repoSelect = output<ConnectedRepository>();
   readonly publicRepoSelect = output<PublicRepoSearchResultDto>();

@@ -11,6 +11,7 @@ import { GitHubSetupHealthResponseDto } from '../../core/api/model/gitHubSetupHe
 import { PublicRepoSearchResultDto } from '../../core/api/model/publicRepoSearchResultDto';
 import { RepositoryAnalysisDto } from '../../core/api/model/repositoryAnalysisDto';
 import { ExtractedEnvVarDto } from '../../core/api/model/extractedEnvVarDto';
+import { githubCredentialProblem } from '../../core/state/github-credential';
 import { isSandboxRefusal } from '../../core/services/sandbox.service';
 
 export interface ManifestEnvVar {
@@ -533,9 +534,10 @@ export class RepositoryService {
       );
       return result as unknown as RepositoryFluiManifests;
     } catch (error: any) {
+      console.error('Failed to read flui.yaml manifests:', error);
+      if (githubCredentialProblem(error)) throw error;
       const errorMessage =
         error?.error?.message || error?.message || 'Failed to read flui.yaml manifests';
-      console.error('Failed to read flui.yaml manifests:', error);
       throw new Error(errorMessage);
     }
   }
@@ -604,7 +606,7 @@ export class RepositoryService {
       };
 
       return frameworkMap[analysis.detection?.framework] || null;
-    } catch (error) {
+    } catch {
       return null;
     }
   }

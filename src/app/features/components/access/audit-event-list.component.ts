@@ -4,6 +4,7 @@ import { FlTable } from '../../../ui/patterns/table';
 import { FlStatus, StatusTone } from '../../../ui/primitives/status';
 import { FlTag } from '../../../ui/primitives/tag';
 import { AuditEvent, AuditOutcome, auditTargetText } from '../../model/audit.model';
+import { ASSISTANT_NAME, isAssistantActor } from '../../model/agent-activity.models';
 import { formatWhen } from '../../model/iam.model';
 
 const OUTCOME_TONE: Record<AuditOutcome, StatusTone> = {
@@ -38,7 +39,9 @@ const OUTCOME_TONE: Record<AuditOutcome, StatusTone> = {
                   <td>
                     <div class="flex items-center gap-1.5">
                       <span>{{ e.email ?? 'platform' }}</span>
-                      @if (e.actorKind === 'key' || e.actorKind === 'agent') {
+                      @if (isAssistant(e)) {
+                        <fl-tag>{{ assistantName }}</fl-tag>
+                      } @else if (e.actorKind === 'key' || e.actorKind === 'agent') {
                         <fl-tag>{{ e.actorKind }}</fl-tag>
                       }
                     </div>
@@ -74,6 +77,11 @@ export class AuditEventListComponent {
   readonly events = input.required<AuditEvent[]>();
   readonly showWho = input(true);
   readonly emptyText = input('Nothing recorded.');
+  protected readonly assistantName = ASSISTANT_NAME;
+
+  isAssistant(e: AuditEvent): boolean {
+    return isAssistantActor(e);
+  }
 
   when(at: string): string {
     return formatWhen(at);

@@ -61,6 +61,16 @@ describe('whose activity this is', () => {
       ).toBeNull();
     });
 
+    it('names the in-product assistant whatever the directories hold', () => {
+      expect(
+        namedActor(
+          { actorKeyId: 'surface:assistant', actorKeyName: null, userId: 'u-1' },
+          { 'surface:assistant': 'stale' },
+          { 'u-1': 'someone' },
+        ),
+      ).toBe('Flui Assistant');
+    });
+
     it('never reaches the account index while a key is named', () => {
       expect(namedActor(row, {}, { 'u-1': 'wrong' })).toBe('from-register');
     });

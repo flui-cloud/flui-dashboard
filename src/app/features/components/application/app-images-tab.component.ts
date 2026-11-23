@@ -15,6 +15,7 @@ import { AvailableVersionsResponseDto } from '../../../core/api/model/availableV
 import { FlPanel } from '../../../ui/patterns/panel';
 import { FlTable } from '../../../ui/patterns/table';
 import { FlAlert } from '../../../ui/patterns/alert';
+import { GithubCredentialAlert } from '../../../shared/components/github-credential-alert.component';
 import { FlEmptyState, FlLoadingState } from '../../../ui/patterns/states';
 import { FlButton } from '../../../ui/primitives/button';
 import { FlIcon } from '../../../ui/primitives/icon';
@@ -32,6 +33,7 @@ import { AppReleaseDeleteDialog } from './app-release-delete-dialog';
     FlPanel,
     FlTable,
     FlAlert,
+    GithubCredentialAlert,
     FlEmptyState,
     FlLoadingState,
     FlButton,
@@ -80,7 +82,9 @@ import { AppReleaseDeleteDialog } from './app-release-delete-dialog';
       </fl-alert>
     }
 
-    @if (githubAppMissing()) {
+    @if (versioning.credentialProblem(); as problem) {
+      <app-github-credential-alert [problem]="problem" />
+    } @else if (githubAppMissing()) {
       <fl-alert tone="warning" title="GitHub integration required">
         Connect GitHub from Repositories to list the versions of
         <span class="fl-mono">ghcr.io</span> images.

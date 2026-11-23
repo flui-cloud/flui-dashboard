@@ -224,6 +224,8 @@ export class DeployWizardNavigation {
     f.manifestsForSelector.set(null);
     f.selectedManifestPath.set(null);
     f.manifestFetchError.set(null);
+    f.manifestProblem.set(null);
+    f.branchesProblem.set(null);
 
     if (sub === 'template') {
       this.loadTemplates();

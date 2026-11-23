@@ -3,7 +3,6 @@ import { Injectable, inject, signal } from '@angular/core';
 import { AppConfigService } from '../../core/services/app-config.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { Project } from '../model/project.model';
-import { AppAttributes } from '../model/iam.model';
 
 @Injectable({ providedIn: 'root' })
 export class ProjectsService {
@@ -18,25 +17,10 @@ export class ProjectsService {
   private readonly _projects = signal<Project[]>([]);
   readonly projects = this._projects.asReadonly();
 
-  private readonly _apps = signal<AppAttributes[]>([]);
-  readonly apps = this._apps.asReadonly();
-
-  refresh(): void {
-    this.loadProjects();
-    this.loadApps();
-  }
-
   loadProjects(): void {
     this.http.get<Project[]>(this.base()).subscribe({
       next: (p) => this._projects.set(p),
       error: () => this._projects.set([]),
-    });
-  }
-
-  private loadApps(): void {
-    this.http.get<AppAttributes[]>(`${this.appConfig.apiBaseUrl}/api/v1/iam/resources`).subscribe({
-      next: (a) => this._apps.set(a),
-      error: () => this._apps.set([]),
     });
   }
 
@@ -76,7 +60,6 @@ export class ProjectsService {
     this.http.delete<void>(this.base(`/${id}`)).subscribe({
       next: () => {
         this._projects.update((list) => list.filter((p) => p.id !== id));
-        this.loadApps();
       },
       error: (e) => this.fail('delete project', e),
     });

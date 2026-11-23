@@ -74,6 +74,7 @@ describe('an undetermined health path stays a question', () => {
             error: signal(null),
             branches: signal([]),
             branchesError: signal(null),
+            branchesProblem: signal(null),
             applying: signal(false),
             applyResult: signal(null),
             applyRefusal: signal(null),

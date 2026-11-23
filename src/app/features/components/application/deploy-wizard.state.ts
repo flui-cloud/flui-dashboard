@@ -22,6 +22,7 @@ import {
   ApplicationKindEnum,
 } from '../../model/application.models';
 import { ClusterInfo } from '../../model/cluster.models';
+import { GithubCredentialProblem } from '../../../core/state/github-credential';
 import { WizardStep } from '../../../ui/patterns/wizard-steps';
 import {
   DeployMarketplaceStepsInput,
@@ -70,6 +71,7 @@ export class DeployWizardForm {
   readonly availableBranches = signal<string[]>([]);
   readonly selectedBranch = signal<string>('');
   readonly branchesFailed = signal<boolean>(false);
+  readonly branchesProblem = signal<GithubCredentialProblem | null>(null);
 
   readonly envMode = signal<'key-value' | 'json'>('key-value');
   readonly envVars = signal<EnvironmentVariable[]>([]);
@@ -109,6 +111,7 @@ export class DeployWizardForm {
   readonly manifestsForSelector = signal<RepositoryManifestEntry[] | null>(null);
   readonly selectedManifestPath = signal<string | null>(null);
   readonly manifestFetchError = signal<string | null>(null);
+  readonly manifestProblem = signal<GithubCredentialProblem | null>(null);
 
   readonly manifestChecks = signal<ManifestCheckDto[] | null>(null);
   readonly manifestChecksLoading = signal<boolean>(false);

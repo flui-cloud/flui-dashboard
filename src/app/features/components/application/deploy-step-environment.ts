@@ -1,5 +1,7 @@
 import { Component, computed, input, output } from '@angular/core';
 import { ResourceProfileDto } from '../../../core/api/model/resourceProfileDto';
+import { GithubCredentialProblem } from '../../../core/state/github-credential';
+import { GithubCredentialAlert } from '../../../shared/components/github-credential-alert.component';
 import { FlowSubtype } from '../../service/deploy-wizard-state.service';
 import { FlAlert } from '../../../ui/patterns/alert';
 import { FlField } from '../../../ui/patterns/field';
@@ -8,7 +10,7 @@ import { profileCpu, profileDescription, profileLabel, profileMemory } from './d
 
 @Component({
   selector: 'app-deploy-step-environment',
-  imports: [FlAlert, FlField, FlStatus],
+  imports: [FlAlert, FlField, FlStatus, GithubCredentialAlert],
   host: { class: 'fl-stack' },
   template: `
     @if (flow() === 'existing-repo') {
@@ -61,9 +63,13 @@ import { profileCpu, profileDescription, profileLabel, profileMemory } from './d
         </fl-field>
       </div>
       @if (branchesFailed() && !loadingBranches() && branches().length === 0) {
-        <fl-alert tone="warning" title="Branches could not be listed">
-          Type the branch you want to deploy.
-        </fl-alert>
+        @if (credentialProblem(); as problem) {
+          <app-github-credential-alert [problem]="problem" />
+        } @else {
+          <fl-alert tone="warning" title="Branches could not be listed">
+            Type the branch you want to deploy.
+          </fl-alert>
+        }
       }
       <p class="m-0 text-fl-body-sm text-fl-ink-muted">
         The port is read from your Dockerfile (<span class="fl-mono">EXPOSE</span>).
@@ -202,6 +208,7 @@ export class DeployStepEnvironment {
   readonly branches = input<readonly string[]>([]);
   readonly branch = input('');
   readonly branchesFailed = input(false);
+  readonly credentialProblem = input<GithubCredentialProblem | null>(null);
   readonly port = input<number | null>(null);
   readonly portDiscovering = input(false);
   readonly portAutoDetected = input(false);

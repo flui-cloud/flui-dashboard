@@ -1,3 +1,4 @@
+export * from './github-credential';
 export * from './http-error';
 export * from './poll';
 export * from './remote-data';

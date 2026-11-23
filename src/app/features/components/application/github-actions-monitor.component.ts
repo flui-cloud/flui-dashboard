@@ -427,7 +427,7 @@ export class GithubActionsMonitorComponent implements OnInit, OnDestroy {
     const appId = this.applicationId();
     if (!appId) return;
     try {
-      await this.appService.generateWorkflow(appId, { branch: 'main', framework: '' } as any);
+      await this.appService.generateWorkflowV3(appId, { branch: 'main' });
       this.phase.set('queued');
       this.buildError.set(null);
       this.pollingActive = true;

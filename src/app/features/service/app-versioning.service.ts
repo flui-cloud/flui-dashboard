@@ -2,6 +2,10 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { reasonOf } from '../../core/state/http-error';
+import {
+  GithubCredentialProblem,
+  githubCredentialProblem,
+} from '../../core/state/github-credential';
 import { ApplicationsService } from '../../core/api/api/applications.service';
 import { AvailableVersionDto } from '../../core/api/model/availableVersionDto';
 import { AvailableVersionsResponseDto } from '../../core/api/model/availableVersionsResponseDto';
@@ -30,11 +34,13 @@ export class AppVersioningService {
   private readonly loadingSig = signal<boolean>(false);
   private readonly loadingMoreSig = signal<boolean>(false);
   private readonly errorSig = signal<string | null>(null);
+  private readonly problemSig = signal<GithubCredentialProblem | null>(null);
 
   readonly state = this.stateSig.asReadonly();
   readonly loading = this.loadingSig.asReadonly();
   readonly loadingMore = this.loadingMoreSig.asReadonly();
   readonly error = this.errorSig.asReadonly();
+  readonly credentialProblem = this.problemSig.asReadonly();
 
   readonly versions = computed(() => this.stateSig().versions);
   readonly currentImageRef = computed(() => this.stateSig().currentImageRef);
@@ -64,6 +70,7 @@ export class AppVersioningService {
   ): Promise<void> {
     this.loadingSig.set(true);
     this.errorSig.set(null);
+    this.problemSig.set(null);
     try {
       const response = await firstValueFrom(
         this.applicationsApi.applicationReleasesControllerGetAvailableVersions(appId, 1, limit),
@@ -75,6 +82,7 @@ export class AppVersioningService {
         nextPage: response.nextPage ?? null,
       });
     } catch (err: any) {
+      this.problemSig.set(githubCredentialProblem(err));
       this.errorSig.set(this.extractError(err, 'The available versions could not be read'));
       throw err;
     } finally {
@@ -87,6 +95,7 @@ export class AppVersioningService {
     if (next == null) return;
     this.loadingMoreSig.set(true);
     this.errorSig.set(null);
+    this.problemSig.set(null);
     try {
       const response = await firstValueFrom(
         this.applicationsApi.applicationReleasesControllerGetAvailableVersions(appId, next, limit),
@@ -98,6 +107,7 @@ export class AppVersioningService {
         nextPage: response.nextPage ?? null,
       }));
     } catch (err: any) {
+      this.problemSig.set(githubCredentialProblem(err));
       this.errorSig.set(this.extractError(err, 'More versions could not be read'));
       throw err;
     } finally {
@@ -108,12 +118,14 @@ export class AppVersioningService {
   reset(): void {
     this.stateSig.set(EMPTY_STATE);
     this.errorSig.set(null);
+    this.problemSig.set(null);
     this.loadingSig.set(false);
     this.loadingMoreSig.set(false);
   }
 
   clearError(): void {
     this.errorSig.set(null);
+    this.problemSig.set(null);
   }
 
   private extractError(err: unknown, fallback: string): string {

@@ -5,6 +5,8 @@ import { FlPanel } from '../../../ui/patterns/panel';
 import { FlButton } from '../../../ui/primitives/button';
 import { FlIcon } from '../../../ui/primitives/icon';
 import { FlSpinner } from '../../../ui/primitives/spinner';
+import { GithubCredentialProblem } from '../../../core/state/github-credential';
+import { GithubCredentialAlert } from '../../../shared/components/github-credential-alert.component';
 import { RepoBranch } from '../../service/repo-map.service';
 
 export interface RepoMapClusterOption {
@@ -14,7 +16,7 @@ export interface RepoMapClusterOption {
 
 @Component({
   selector: 'app-repo-map-controls',
-  imports: [FlPanel, FlButton, FlIcon, FlSpinner],
+  imports: [FlPanel, FlButton, FlIcon, FlSpinner, GithubCredentialAlert],
   providers: [provideIcons({ lucideGitBranch, lucideRefreshCw })],
   template: `
     <fl-panel>
@@ -86,6 +88,9 @@ export interface RepoMapClusterOption {
           </button>
         </div>
       </div>
+      @if (branchesProblem(); as problem) {
+        <app-github-credential-alert class="mt-3" [problem]="problem" />
+      }
     </fl-panel>
   `,
 })
@@ -96,6 +101,7 @@ export class RepoMapControls {
   readonly clusters = input<readonly RepoMapClusterOption[]>([]);
   readonly defaultBranch = input<string | undefined>(undefined);
   readonly branchesError = input<unknown>(null);
+  readonly branchesProblem = input<GithubCredentialProblem | null>(null);
   readonly loading = input(false);
   readonly hasRun = input(false);
   readonly check = output<void>();

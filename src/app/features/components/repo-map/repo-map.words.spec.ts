@@ -406,6 +406,7 @@ function build() {
             { name: 'develop', sha: 'def' },
           ]),
           branchesError: signal(null),
+          branchesProblem: signal(null),
           applying: signal(false),
           applyResult: signal(null),
           applyRefusal: signal(null),

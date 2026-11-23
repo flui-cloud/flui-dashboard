@@ -77,6 +77,7 @@ export { BAD_OUTCOMES } from './repo-map-view';
         [clusters]="activeClusters()"
         [defaultBranch]="repo()?.branch"
         [branchesError]="branchesError()"
+        [branchesProblem]="branchesProblem()"
         [loading]="loading()"
         [hasRun]="hasRun()"
         (check)="runMap()"
@@ -140,6 +141,7 @@ export class RepoMapComponent implements OnInit, OnDestroy {
   readonly result = this.repoMapService.map;
   readonly branches = this.repoMapService.branches;
   readonly branchesError = this.repoMapService.branchesError;
+  readonly branchesProblem = this.repoMapService.branchesProblem;
   readonly loading = this.repoMapService.loading;
   readonly error = this.repoMapService.error;
   readonly applying = this.repoMapService.applying;

@@ -190,6 +190,29 @@ describe('the register of what an agent did', () => {
       expect(find('activity-what')?.textContent).toContain('release-bot');
     });
 
+    it('names a row written by the in-product assistant, not a deleted key', async () => {
+      await build({
+        entries: [entry({ actorKeyId: 'surface:assistant', actorKeyName: null })],
+        keyNames: {},
+      });
+      const said = find('activity-what')?.textContent ?? '';
+      expect(said).toContain('Flui Assistant');
+      expect(said).not.toContain('surface:assistant');
+      expect(said).not.toContain('deleted');
+    });
+
+    it('lists the in-product assistant in the agents table under its own name', async () => {
+      await build({
+        identities: [actor({ actorKeyId: 'surface:assistant', actorKeyName: null })],
+        entries: [],
+      });
+      const said = find('activity-actor')?.textContent ?? '';
+      expect(said).toContain('Flui Assistant');
+      expect(said).toContain('In-product assistant');
+      expect(said).not.toContain('No name left');
+      expect(said).not.toContain('API key');
+    });
+
     it('summarises each credential by what it did, refusals included', async () => {
       await build({ identities: [actor()], entries: [entry()] });
       const said = find('activity-actor')?.textContent ?? '';

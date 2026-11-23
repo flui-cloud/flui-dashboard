@@ -145,6 +145,7 @@ async function build(
           error: signal(null),
           branches: signal([{ name: 'main', sha: 'abc' }]),
           branchesError: signal(null),
+          branchesProblem: signal(null),
           applying,
           applyResult,
           applyRefusal,

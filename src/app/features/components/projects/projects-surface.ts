@@ -8,7 +8,6 @@ import type {
 } from '@flui-cloud/semantic-surface';
 
 import type { Project } from '../../model/project.model';
-import type { AppAttributes } from '../../model/iam.model';
 
 const SURFACE_APP_ID = 'flui-dashboard';
 const SURFACE_NAMESPACE = 'flui';
@@ -18,7 +17,7 @@ const MAX_ROWS = 60;
 
 export interface ProjectsSurfaceInput {
   projects: Project[];
-  apps: AppAttributes[];
+  workloadCounts: Readonly<Record<string, number>>;
 }
 
 export interface ProjectsSurfaceContext {
@@ -43,15 +42,11 @@ function valueObservation(key: string, value: number, source: ObservationSource)
   return { key, presentedAs: { value }, source };
 }
 
-/** The apps-per-project count the card already shows as a badge, from the same
- * `apps.filter(a => a.project === p.slug)` the template itself calls (§3.4). Individual
- * app membership is not itemised here — a count is what the page leads with, and every
- * assigned app already gets its own entity/ref on the Application Detail producer. */
 function projectRow(
   project: Project,
-  apps: AppAttributes[],
+  workloadCounts: Readonly<Record<string, number>>,
 ): { ref: string; label: string; observations: Observation[] } {
-  const appsCount = apps.filter((a) => a.project === project.slug).length;
+  const appsCount = workloadCounts[project.id] ?? 0;
   return {
     ref: projectEntityRef(project.id),
     label: project.name,
@@ -92,7 +87,7 @@ export function presentedContent(input: ProjectsSurfaceInput): PresentedContent 
   };
 
   const rowScopes: SemanticScopeSnapshot[] = rows.map((project) => {
-    const row = projectRow(project, input.apps);
+    const row = projectRow(project, input.workloadCounts);
     const entities: EntityReference[] = [{ ref: row.ref, label: row.label, role: 'related' }];
     return {
       id: `${LIST_ID}:${project.id}`,

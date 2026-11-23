@@ -1,4 +1,10 @@
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+import { AppConfigService } from './app-config.service';
 import {
+  SandboxService,
+  SandboxSession,
   formatCountdown,
   isSandboxRefusal,
   sandboxAreaForUrl,
@@ -89,5 +95,75 @@ describe('the area a screen belongs to', () => {
   it('claims nothing it was not given', () => {
     expect(sandboxAreaForUrl('/dashboard')).toBeNull();
     expect(sandboxAreaForUrl('/applications/abc')).toBeNull();
+  });
+});
+
+describe('probing for a guest session', () => {
+  const API = 'https://api.example.test/api/v1/sandbox';
+  const REMEMBERED_KEY = 'flui:sandbox';
+  const session: SandboxSession = {
+    hasArea: false,
+    expiresAt: null,
+    secondsRemaining: 0,
+    ttlHours: 24,
+    loginUrl: '/login',
+  };
+
+  let http: HttpTestingController;
+
+  const build = (remembered: SandboxSession | null = null): SandboxService => {
+    if (remembered) {
+      sessionStorage.setItem(
+        REMEMBERED_KEY,
+        JSON.stringify({ session: remembered, areas: [], fence: [], visitorFence: [] }),
+      );
+    }
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: AppConfigService, useValue: { apiBaseUrl: 'https://api.example.test' } },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    return TestBed.inject(SandboxService);
+  };
+
+  beforeEach(() => sessionStorage.removeItem(REMEMBERED_KEY));
+  afterEach(() => {
+    http.verify();
+    sessionStorage.removeItem(REMEMBERED_KEY);
+  });
+
+  it('answers false for a 200 with no body and stays out of the sandbox', () => {
+    const service = build();
+    const answers: boolean[] = [];
+    service.probe().subscribe((answer) => answers.push(answer));
+    http.expectOne(`${API}/session`).flush(null);
+    expect(answers).toEqual([false]);
+    expect(service.inSandbox()).toBeFalse();
+    expect(service.session()).toBeNull();
+    expect(service.visitor()).toBeFalse();
+    expect(service.secondsRemaining()).toBe(0);
+  });
+
+  it('drops a remembered guest session when the answer is a 200 with no body', async () => {
+    const service = build(session);
+    expect(service.inSandbox()).toBeTrue();
+    service.probe().subscribe();
+    http.expectOne(`${API}/session`).flush(null);
+    expect(service.inSandbox()).toBeFalse();
+    expect(sessionStorage.getItem(REMEMBERED_KEY)).toBeNull();
+    expect(await service.whenKnown(10)).toBeFalse();
+  });
+
+  it('answers true and adopts the session when the API sends one', () => {
+    const service = build();
+    const answers: boolean[] = [];
+    service.probe().subscribe((answer) => answers.push(answer));
+    http.expectOne(`${API}/session`).flush(session);
+    http.expectOne(`${API}/limits`).flush({ areas: [] });
+    expect(answers).toEqual([true]);
+    expect(service.inSandbox()).toBeTrue();
   });
 });

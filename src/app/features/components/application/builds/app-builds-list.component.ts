@@ -224,9 +224,8 @@ export class AppBuildsListComponent implements OnInit, OnDestroy {
     this.isForcingBuild.set(true);
     this.error.set(null);
     try {
-      await this.appService.generateWorkflow(this.appId, {
+      await this.appService.generateWorkflowV3(this.appId, {
         branch: app?.sourceConfig?.branch ?? 'main',
-        framework: app?.sourceConfig?.framework ?? '',
       });
       this.toast.showSuccess({
         message: 'Build triggered. The new run will appear in the list shortly.',

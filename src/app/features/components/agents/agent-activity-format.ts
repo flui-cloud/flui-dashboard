@@ -4,6 +4,7 @@ import {
   AgentIdentityActivity,
   UnderTone,
   actorRef,
+  isAssistantActor,
 } from '../../model/agent-activity.models';
 import { formatTimeSince } from '../../model/dns.models';
 import { AgentActorRow } from './agent-actors-table';
@@ -38,11 +39,15 @@ export function actorRow(identity: AgentIdentityActivity, name: string | null): 
   let tone: StatusTone = 'success';
   if (revoked) tone = 'neutral';
   else if (lastRefused) tone = 'warning';
+  const assistant = isAssistantActor(identity);
+  let through = 'Account';
+  if (assistant) through = 'In-product assistant';
+  else if (identity.actorKeyId) through = 'API key';
   return {
     ref: actorRef(identity),
     name: name ?? 'An agent with no name left',
     kind: KIND_LABELS[identity.actorKind ?? 'unknown'] ?? 'Unknown',
-    through: identity.actorKeyId ? 'API key' : 'Account',
+    through,
     activity: `${calls}${refused}`,
     lastActive: formatTimeSince(identity.lastActivityAt),
     lastActiveAt: identity.lastActivityAt,

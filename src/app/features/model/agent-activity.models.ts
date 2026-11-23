@@ -78,11 +78,19 @@ export function actorRef(entry: { actorKeyId: string | null; userId: string }): 
   return entry.actorKeyId ? `key:${entry.actorKeyId}` : `account:${entry.userId}`;
 }
 
+export const ASSISTANT_KEY_ID = 'surface:assistant';
+export const ASSISTANT_NAME = 'Flui Assistant';
+
+export function isAssistantActor(entry: { actorKeyId: string | null }): boolean {
+  return entry.actorKeyId === ASSISTANT_KEY_ID;
+}
+
 export function namedActor(
   entry: { actorKeyId: string | null; actorKeyName?: string | null; userId: string },
   keyNames: Readonly<Record<string, string>>,
   identityNames: Readonly<Record<string, string>>,
 ): string | null {
+  if (isAssistantActor(entry)) return ASSISTANT_NAME;
   if (entry.actorKeyName) return entry.actorKeyName;
   if (entry.actorKeyId) return keyNames[entry.actorKeyId] ?? null;
   return identityNames[entry.userId] ?? null;
@@ -156,7 +164,7 @@ export function underLabel(entry: {
 }
 
 export function shortId(id: string): string {
-  return id.replace(/-/g, '').slice(0, 4);
+  return id.replaceAll('-', '').slice(0, 4);
 }
 
 export function actedOn(entry: {

@@ -2,6 +2,10 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { Configuration } from '../../core/api/configuration';
+import {
+  GithubCredentialProblem,
+  githubCredentialProblem,
+} from '../../core/state/github-credential';
 import { RepositoriesService } from '../../core/api/api/repositories.service';
 import { RepositoryMapResponseDto } from '../../core/api/model/repositoryMapResponseDto';
 import { SkippedUnitDto } from '../../core/api/model/skippedUnitDto';
@@ -93,6 +97,7 @@ export class RepoMapService {
   private readonly errorData = signal<string | null>(null);
   private readonly branchesData = signal<RepoBranch[]>([]);
   private readonly branchesErrorData = signal<string | null>(null);
+  private readonly branchesProblemData = signal<GithubCredentialProblem | null>(null);
   private readonly applyingData = signal(false);
   private readonly applyResultData = signal<RepoApplyResult | null>(null);
   private readonly applyRefusalData = signal<ApplyRefusal | null>(null);
@@ -104,6 +109,7 @@ export class RepoMapService {
   /** Non-null when the provider would not list them: the caller falls back to typing a name
    * rather than pretending the repository has no branches. */
   readonly branchesError = this.branchesErrorData.asReadonly();
+  readonly branchesProblem = this.branchesProblemData.asReadonly();
   readonly applying = this.applyingData.asReadonly();
   readonly applyResult = this.applyResultData.asReadonly();
   readonly applyRefusal = this.applyRefusalData.asReadonly();
@@ -138,6 +144,7 @@ export class RepoMapService {
    * the repository's own default branch. */
   async loadBranches(repositoryId: string): Promise<void> {
     this.branchesErrorData.set(null);
+    this.branchesProblemData.set(null);
     try {
       const result = (await firstValueFrom(
         this.api.repositoriesControllerListBranches(repositoryId),
@@ -145,6 +152,7 @@ export class RepoMapService {
       this.branchesData.set(Array.isArray(result) ? result.filter((b) => Boolean(b?.name)) : []);
     } catch (err: unknown) {
       this.branchesData.set([]);
+      this.branchesProblemData.set(githubCredentialProblem(err));
       this.branchesErrorData.set(this.extractErrorMessage(err, 'Branches could not be listed'));
     }
   }
@@ -194,6 +202,7 @@ export class RepoMapService {
     this.errorData.set(null);
     this.branchesData.set([]);
     this.branchesErrorData.set(null);
+    this.branchesProblemData.set(null);
     this.applyResultData.set(null);
     this.applyRefusalData.set(null);
   }

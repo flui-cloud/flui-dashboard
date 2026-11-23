@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { FlPanel } from '../../../ui/patterns/panel';
 import { FlStatus } from '../../../ui/primitives/status';
 import { AgentActivityService, AgentIdentityActivityDto } from '../../../core/api';
+import { ASSISTANT_NAME, isAssistantActor } from '../../model/agent-activity.models';
 
 /** How long after its last recorded tool call an identity still reads as "working" rather than merely "seen". */
 const WORKING_WINDOW_MS = 3 * 60 * 1000;
@@ -107,6 +108,7 @@ export class DashboardAgentStatusComponent implements OnInit {
   }
 
   identityLabel(i: AgentIdentityActivityDto): string {
+    if (isAssistantActor(i)) return ASSISTANT_NAME;
     if (i.actorKeyName) return i.actorKeyName;
     return i.actorKind === 'agent' ? 'Agent identity' : 'Connected agent';
   }

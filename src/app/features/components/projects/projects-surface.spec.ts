@@ -13,7 +13,6 @@ import {
   projectEntityRef,
 } from './projects-surface';
 import type { Project } from '../../model/project.model';
-import type { AppAttributes } from '../../model/iam.model';
 
 const PROJECT: Project = {
   id: 'proj-1',
@@ -23,23 +22,10 @@ const PROJECT: Project = {
   color: '#22c55e',
 };
 
-const APP: AppAttributes = {
-  id: 'app-1',
-  slug: 'billing-api',
-  name: 'billing-api',
-  type: 'user',
-  kind: 'APPLICATION',
-  clusterId: 'cluster-1',
-  clusterName: 'cluster-1',
-  provider: 'hetzner',
-  project: 'billing',
-  tags: [],
-};
-
 function input(over: Partial<ProjectsSurfaceInput> = {}): ProjectsSurfaceInput {
   return {
     projects: [PROJECT],
-    apps: [APP],
+    workloadCounts: { 'proj-1': 1 },
     ...over,
   };
 }
@@ -101,7 +87,7 @@ describe('projects surface producer', () => {
     ]);
   });
 
-  it('presents the apps-count badge exactly as the card computes it (same filter the template uses)', () => {
+  it('presents the workload count exactly as the row shows it', () => {
     const snapshot = snapshotOf();
     const row = rowsOf(snapshot)[0];
     const count = row.observations!.find((o) => o.key === 'flui.project.apps_count');
@@ -112,7 +98,7 @@ describe('projects surface producer', () => {
     const snapshot = snapshotOf({ projects: [] });
     const list = snapshot.scopes.find((s) => s.id === 'projects:list')!;
     expect(list.state).toEqual({ empty: true });
-    expect(rowsOf(snapshot).length).toBe(0);
+    expect(rowsOf(snapshot)).toHaveSize(0);
   });
 
   it('redacts nothing unexpected: only slug/description/apps_count reach a project row', () => {

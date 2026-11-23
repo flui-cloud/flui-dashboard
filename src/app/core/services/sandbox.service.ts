@@ -211,8 +211,12 @@ export class SandboxService {
 
   // Never errors: not being in a sandbox is an answer, not a failure.
   probe(): Observable<boolean> {
-    return this.http.get<SandboxSession>(`${this.base}/session`).pipe(
+    return this.http.get<SandboxSession | null>(`${this.base}/session`).pipe(
       map((session) => {
+        if (!session) {
+          this.clear();
+          return false;
+        }
         this.adopt(session);
         return true;
       }),

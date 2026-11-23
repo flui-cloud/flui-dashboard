@@ -801,21 +801,6 @@ export class ApplicationService {
     return firstValueFrom(this.http.get<RemovalPreview>(url));
   }
 
-  /** @deprecated Use generateWorkflowV3 for V3 Dockerfile-first flow */
-  async generateWorkflow(
-    applicationId: string,
-    params: GenerateWorkflowParams,
-  ): Promise<GenerateWorkflowResult> {
-    try {
-      const url = `${this.appConfig.apiBaseUrl}/api/v1/applications/${applicationId}/generate-workflow`;
-      const result = await firstValueFrom(this.http.post<GenerateWorkflowResult>(url, params));
-      return result;
-    } catch (error: any) {
-      const msg = error?.error?.message || error?.message || 'Failed to generate workflow';
-      throw new Error(msg);
-    }
-  }
-
   /**
    * V3 workflow generation — Dockerfile-first, universal workflow.
    * Commits .github/workflows/flui.yml to the repo.
@@ -824,7 +809,8 @@ export class ApplicationService {
     applicationId: string,
     params: {
       branch: string;
-      isFluiManaged: boolean;
+      isFluiManaged?: boolean;
+      force?: boolean;
       delivery?: WorkflowDelivery;
     },
   ): Promise<GenerateWorkflowResult> {

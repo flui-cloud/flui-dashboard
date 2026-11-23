@@ -12,6 +12,8 @@ import {
 import { RouterLink } from '@angular/router';
 import { provideIcons } from '@ng-icons/core';
 import { lucidePlus, lucideRefreshCw, lucideSearch } from '@ng-icons/lucide';
+import { ApplicationService } from '../../service/application.service';
+import { ClusterService } from '../../service/cluster.service';
 import { ProjectsService } from '../../service/projects.service';
 import { PermissionService } from '../../../core/services/permission.service';
 import { Project } from '../../model/project.model';
@@ -27,6 +29,7 @@ import { FlIcon } from '../../../ui/primitives/icon';
 import { FlTag } from '../../../ui/primitives/tag';
 import { ProjectFormComponent } from './project-form.component';
 import { ProjectFormDialog } from './project-form-dialog';
+import { buildSections, clusterNamesOf, filterGroups } from './project-workloads-sections';
 import {
   ProjectsSurfaceInput,
   ProjectsSurfaceRevision,
@@ -47,6 +50,7 @@ const BUSY_ACTIONS: readonly MenuAction[] = [EDIT, { ...DELETE, disabled: true }
 interface ProjectRow {
   project: Project;
   workloads: number;
+  empty: boolean;
   clusters: string;
   actions: readonly MenuAction[];
 }
@@ -80,7 +84,7 @@ interface ProjectRow {
             [iconOnly]="true"
             aria-label="Refresh"
             title="Refresh"
-            (click)="projects.refresh()"
+            (click)="refresh()"
           >
             <fl-icon name="lucideRefreshCw" />
           </button>
@@ -197,6 +201,8 @@ interface ProjectRow {
 })
 export class ProjectsComponent implements OnInit, OnDestroy {
   protected readonly projects = inject(ProjectsService);
+  private readonly appService = inject(ApplicationService);
+  private readonly clusterService = inject(ClusterService);
   private readonly perms = inject(PermissionService);
   private readonly currentSurface = inject(CurrentSurfaceService);
   private readonly confirm = inject(ConfirmService);
@@ -207,21 +213,49 @@ export class ProjectsComponent implements OnInit, OnDestroy {
   readonly canManage = computed(() => this.perms.hasSection('projects'));
   readonly search = signal('');
 
+  private readonly clusterNames = computed(
+    () => new Map(this.clusterService.clusters().map((c) => [c.id, c.name ?? ''])),
+  );
+
+  private readonly clusterName = (id: string): string => this.clusterNames().get(id) ?? '';
+
+  private readonly occupiedProjectIds = computed(
+    () =>
+      new Set(
+        this.appService
+          .applicationGroups()
+          .map((g) => g.projectId)
+          .filter((id): id is string => !!id),
+      ),
+  );
+
   private readonly allRows = computed<ProjectRow[]>(() => {
-    const apps = this.projects.apps();
-    return this.projects.projects().map((project) => {
-      const inProject = apps.filter((a) => a.project === project.slug);
-      const clusters = [...new Set(inProject.map((a) => a.clusterName).filter(Boolean))].sort(
-        (a, b) => a.localeCompare(b),
-      );
-      return {
-        project,
-        workloads: inProject.length,
-        clusters: clusters.join(', '),
-        actions: inProject.length === 0 ? EMPTY_ACTIONS : BUSY_ACTIONS,
-      };
+    const groups = filterGroups(this.appService.applicationGroups(), {
+      term: '',
+      kind: '',
+      includeSystem: false,
     });
+    const occupied = this.occupiedProjectIds();
+    return buildSections(groups, this.projects.projects(), false).flatMap(
+      ({ project, groups: inProject }) => {
+        if (!project) return [];
+        const busy = occupied.has(project.id);
+        return [
+          {
+            project,
+            workloads: inProject.length,
+            empty: !busy,
+            clusters: clusterNamesOf(inProject, this.clusterName).join(', '),
+            actions: busy ? BUSY_ACTIONS : EMPTY_ACTIONS,
+          },
+        ];
+      },
+    );
   });
+
+  protected readonly workloadCounts = computed<Record<string, number>>(() =>
+    Object.fromEntries(this.allRows().map((row) => [row.project.id, row.workloads])),
+  );
 
   protected readonly rows = computed(() => {
     const term = this.search().trim().toLowerCase();
@@ -239,7 +273,7 @@ export class ProjectsComponent implements OnInit, OnDestroy {
   readonly surface = computed(() => {
     const input: ProjectsSurfaceInput = {
       projects: this.projects.projects(),
-      apps: this.projects.apps(),
+      workloadCounts: this.workloadCounts(),
     };
     const content = presentedContent(input);
     return buildProjectsSurface(input, {
@@ -256,7 +290,16 @@ export class ProjectsComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.perms.load();
-    this.projects.refresh();
+    this.projects.loadProjects();
+    if (this.clusterService.clusters().length === 0) {
+      this.clusterService.loadClusters().catch(() => undefined);
+    }
+    void this.appService.loadApplications();
+  }
+
+  protected refresh(): void {
+    this.projects.loadProjects();
+    void this.appService.loadApplications(true);
   }
 
   ngOnDestroy(): void {
@@ -273,7 +316,7 @@ export class ProjectsComponent implements OnInit, OnDestroy {
 
   protected onAction(row: ProjectRow, action: string): void {
     if (action === 'edit') this.form.open(this.formTemplate(), row.project);
-    else if (action === 'delete' && row.workloads === 0) void this.askDelete(row.project);
+    else if (action === 'delete' && row.empty) void this.askDelete(row.project);
   }
 
   async askDelete(p: Project): Promise<void> {

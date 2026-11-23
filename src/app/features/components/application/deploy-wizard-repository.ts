@@ -5,6 +5,7 @@ import { DeployWizardStateService } from '../../service/deploy-wizard-state.serv
 import { PlatformVersionService } from '../../service/platform-version.service';
 import { ApplicationsService } from '../../../core/api/api/applications.service';
 import { PublicRepoSearchResultDto } from '../../../core/api/model/publicRepoSearchResultDto';
+import { githubCredentialProblem } from '../../../core/state/github-credential';
 import { ToastService } from '../../../shared/services/toast.service';
 import { DeployWizardForm } from './deploy-wizard.state';
 import { DeployWizardEnv } from './deploy-wizard-env';
@@ -78,6 +79,7 @@ export class DeployWizardRepository {
     this.form.selectedPublicRepo.set(null);
     this.form.availableBranches.set([]);
     this.form.branchesFailed.set(false);
+    this.form.branchesProblem.set(null);
     this.form.selectedBranch.set('');
   }
 
@@ -104,6 +106,7 @@ export class DeployWizardRepository {
       }
       f.availableBranches.set(branchNames);
       f.branchesFailed.set(false);
+      f.branchesProblem.set(null);
 
       const currentBranch = f.selectedBranch();
       if (branchNames.length > 0 && !branchNames.includes(currentBranch)) {
@@ -118,6 +121,7 @@ export class DeployWizardRepository {
       console.error('Failed to load branches:', error);
       f.availableBranches.set([]);
       f.branchesFailed.set(true);
+      f.branchesProblem.set(githubCredentialProblem(error));
     } finally {
       f.isLoadingBranches.set(false);
     }
@@ -164,6 +168,7 @@ export class DeployWizardRepository {
     f.manifestsForSelector.set(null);
     f.selectedManifestPath.set(null);
     f.manifestFetchError.set(null);
+    f.manifestProblem.set(null);
 
     try {
       const result = await this.repoService.getFluiManifests(repo.id, f.selectedBranch());
@@ -171,7 +176,10 @@ export class DeployWizardRepository {
       const firstValid = result.manifests.find((e) => e.valid);
       if (firstValid) f.selectedManifestPath.set(firstValid.path);
     } catch (error: any) {
-      f.manifestFetchError.set(error?.message || 'Failed to read flui.yaml manifests');
+      f.manifestProblem.set(githubCredentialProblem(error));
+      f.manifestFetchError.set(
+        error?.error?.message || error?.message || 'Failed to read flui.yaml manifests',
+      );
     } finally {
       f.isCheckingManifest.set(false);
     }
