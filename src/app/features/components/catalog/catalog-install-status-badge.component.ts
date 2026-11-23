@@ -7,7 +7,7 @@ import { installState } from './catalog-view';
   selector: 'app-catalog-install-status-badge',
   imports: [FlStatus],
   host: { class: 'inline-flex' },
-  template: `<fl-status [tone]="meta().tone" [label]="meta().label" />`,
+  template: `<fl-status role="status" [tone]="meta().tone" [label]="meta().label" />`,
 })
 export class CatalogInstallStatusBadgeComponent {
   readonly status = input.required<CatalogInstallResponseDto.StatusEnum>();

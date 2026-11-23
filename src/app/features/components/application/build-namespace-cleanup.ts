@@ -1,4 +1,4 @@
-import { Component, input, model, output } from '@angular/core';
+import { Component, afterNextRender, input, model, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { BuildNamespaceCleanupResultDto } from '../../../core/api/model/buildNamespaceCleanupResultDto';
 import { FlPanel } from '../../../ui/patterns/panel';
@@ -93,4 +93,8 @@ export class BuildNamespaceCleanup {
   readonly previewRequested = output<void>();
   readonly confirmed = output<void>();
   readonly cancelled = output<void>();
+
+  constructor() {
+    afterNextRender(() => document.getElementById('build-cleanup-age')?.focus());
+  }
 }

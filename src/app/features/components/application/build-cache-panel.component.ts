@@ -70,7 +70,7 @@ import { cachePhaseStatus, cacheUsagePercent, scanStatus } from './build-namespa
 
         @if (isClearingCache()) {
           <div class="flex flex-wrap items-center gap-3">
-            <fl-status tone="progress" [label]="clearMessage()" />
+            <fl-status role="status" tone="progress" [label]="clearMessage()" />
             <span class="fl-mono text-fl-ink-muted"
               >Step {{ clearStepIndex() + 1 }} of {{ clearTotalSteps() }} ·
               {{ clearProgress() }}%</span

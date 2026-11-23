@@ -1,4 +1,5 @@
 import { Component, computed, input, output } from '@angular/core';
+import { categoryLabel } from './catalog-view';
 import { FormsModule } from '@angular/forms';
 import { provideIcons } from '@ng-icons/core';
 import { lucideSearch, lucideX } from '@ng-icons/lucide';
@@ -17,6 +18,7 @@ import { FlIcon } from '../../../ui/primitives/icon';
         <span class="fl-sr">Search apps</span>
         <input
           type="search"
+          aria-label="Search apps"
           placeholder="Search by name, tag or alternative"
           [ngModel]="search()"
           (ngModelChange)="searchChange.emit($event)"
@@ -44,7 +46,7 @@ import { FlIcon } from '../../../ui/primitives/icon';
           >
             <option value="">Category: All</option>
             @for (cat of categories(); track cat) {
-              <option [value]="cat" class="capitalize">{{ cat }}</option>
+              <option [value]="cat">{{ categoryLabel(cat) }}</option>
             }
           </select>
         </span>
@@ -97,6 +99,7 @@ import { FlIcon } from '../../../ui/primitives/icon';
   `,
 })
 export class CatalogListToolbar {
+  protected readonly categoryLabel = categoryLabel;
   readonly search = input('');
   readonly category = input<string | null>(null);
   readonly categories = input<readonly string[]>([]);

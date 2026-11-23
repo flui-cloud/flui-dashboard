@@ -1,4 +1,5 @@
 import { Component, input, output } from '@angular/core';
+import { categoryLabel } from './catalog-view';
 import { RouterLink } from '@angular/router';
 import { CatalogResponseDto } from '../../../core/api/model/models';
 import { FlTable } from '../../../ui/patterns/table';
@@ -70,7 +71,7 @@ export interface CatalogRowGroup {
                     </div>
                   </div>
                 </td>
-                <td class="capitalize">{{ row.app.category }}</td>
+                <td>{{ categoryLabel(row.app.category) }}</td>
                 <td class="fl-mono">{{ row.app.version }}</td>
                 <td>
                   @if (row.installedCount > 0) {
@@ -109,6 +110,7 @@ export interface CatalogRowGroup {
   `,
 })
 export class CatalogListTable {
+  protected readonly categoryLabel = categoryLabel;
   readonly groups = input.required<readonly CatalogRowGroup[]>();
   readonly grouped = input(true);
   readonly install = output<string>();

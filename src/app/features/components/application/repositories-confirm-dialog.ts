@@ -1,3 +1,4 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { Component, input, output } from '@angular/core';
 import { provideIcons } from '@ng-icons/core';
 import { lucideX } from '@ng-icons/lucide';
@@ -9,7 +10,7 @@ let nextId = 0;
 
 @Component({
   selector: 'app-repositories-confirm-dialog',
-  imports: [FlButton, FlIcon, FlSpinner],
+  imports: [CdkTrapFocus, FlButton, FlIcon, FlSpinner],
   providers: [provideIcons({ lucideX })],
   host: { '(document:keydown.escape)': 'cancel()' },
   template: `
@@ -19,6 +20,8 @@ let nextId = 0;
     >
       <div
         class="fl-dialog"
+        cdkTrapFocus
+        [cdkTrapFocusAutoCapture]="true"
         role="alertdialog"
         aria-modal="true"
         [attr.aria-labelledby]="titleId"

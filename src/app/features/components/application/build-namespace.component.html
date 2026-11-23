@@ -37,7 +37,12 @@
           <fl-icon name="lucideRefreshCw" />
         </button>
         @if (!showCleanupPanel()) {
-          <button flButton type="button" (click)="showCleanupPanel.set(true)">
+          <button
+            flButton
+            id="build-namespace-cleanup-open"
+            type="button"
+            (click)="showCleanupPanel.set(true)"
+          >
             <fl-icon name="lucideTrash2" />
             Clean up
           </button>

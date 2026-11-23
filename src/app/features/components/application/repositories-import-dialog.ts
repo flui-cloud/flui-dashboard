@@ -1,3 +1,4 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { Component, computed, input, output, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -14,6 +15,7 @@ import { AvailableRepo, filterAvailableRepos } from './repositories-format';
 @Component({
   selector: 'app-repositories-import-dialog',
   imports: [
+    CdkTrapFocus,
     NgTemplateOutlet,
     FormsModule,
     FlAlert,
@@ -33,6 +35,8 @@ import { AvailableRepo, filterAvailableRepos } from './repositories-format';
     >
       <div
         class="fl-dialog fl-dialog--wide"
+        cdkTrapFocus
+        [cdkTrapFocusAutoCapture]="true"
         role="dialog"
         aria-modal="true"
         aria-labelledby="repositories-import-title"

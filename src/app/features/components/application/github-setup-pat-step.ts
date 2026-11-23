@@ -68,7 +68,7 @@ import { PAT_DEEP_LINK, patErrorLabel } from './github-setup-helpers';
 
     @if (validation(); as v) {
       @if (v.valid && (v.missingScopes?.length ?? 0) === 0) {
-        <div class="flex flex-col gap-1">
+        <div class="flex flex-col gap-1" role="status">
           <fl-status tone="success" [label]="'Authenticated as @' + v.login" />
           <span class="text-fl-caption text-fl-ink-muted">
             Scopes: <span class="fl-mono">{{ (v.scopes ?? []).join(', ') }}</span>

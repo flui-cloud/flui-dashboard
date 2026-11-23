@@ -407,7 +407,7 @@ export class CatalogInstallDetailComponent implements OnInit, OnDestroy {
 
   formatDate(iso: string): string {
     try {
-      return new Date(iso).toLocaleString();
+      return new Date(iso).toLocaleString('en');
     } catch {
       return iso;
     }

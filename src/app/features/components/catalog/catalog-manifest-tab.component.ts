@@ -33,6 +33,7 @@ import { FlIcon } from '../../../ui/primitives/icon';
             </button>
           </ng-container>
         }
+        <span class="fl-sr" role="status">{{ copied() ? 'Manifest copied' : '' }}</span>
         <div class="flex flex-col gap-4">
           <p class="m-0 max-w-3xl text-fl-body-sm text-fl-ink-secondary">
             The <span class="fl-mono">flui.yaml</span> shipped with this catalog entry, read-only.
@@ -50,6 +51,8 @@ import { FlIcon } from '../../../ui/primitives/icon';
               >
             </fl-key-value>
             <pre
+              tabindex="0"
+              aria-label="Manifest YAML"
               class="fl-mono m-0 max-h-screen overflow-auto rounded-fl-md border border-fl-border bg-fl-surface-subtle p-3"
             ><code>{{ y.rawYaml }}</code></pre>
           }

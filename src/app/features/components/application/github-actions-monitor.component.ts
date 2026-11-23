@@ -63,7 +63,7 @@ import {
     <div class="fl-page">
       @let state = headerState();
       <fl-page-header [title]="title()" [breadcrumb]="breadcrumb()">
-        <fl-status headerStatus [tone]="state.tone" [label]="state.label" />
+        <fl-status role="status" headerStatus [tone]="state.tone" [label]="state.label" />
         <span headerMeta>GitHub Actions</span>
         @if (buildPhase() && buildElapsedLabel(); as elapsed) {
           <span headerMeta>

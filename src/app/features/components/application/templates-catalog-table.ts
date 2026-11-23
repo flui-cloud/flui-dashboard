@@ -53,6 +53,7 @@ import { categoryLabel, templateCategory, templateRepoUrl } from './templates-ca
                   size="sm"
                   type="button"
                   [disabled]="!canUse()"
+                  [attr.aria-label]="'Use ' + tpl.displayName + ' template'"
                   [title]="canUse() ? '' : disabledReason()"
                   (click)="useTemplate.emit(tpl)"
                 >

@@ -1,3 +1,4 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { Component, OnDestroy, OnInit, inject, signal, computed, effect } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -42,6 +43,7 @@ interface PendingAction {
 @Component({
   selector: 'app-image-registry-list',
   imports: [
+    CdkTrapFocus,
     FormsModule,
     RouterLink,
     FluiTagManagerComponent,
@@ -58,6 +60,7 @@ interface PendingAction {
     FlTag,
   ],
   providers: [provideIcons({ lucideRefreshCw, lucideSearch, lucideImage, lucideTag, lucideX })],
+  host: { '(document:keydown.escape)': 'tagImageId.set(null)' },
   templateUrl: './image-registry-list.component.html',
 })
 export class ImageRegistryListComponent implements OnInit, OnDestroy {
@@ -173,7 +176,7 @@ export class ImageRegistryListComponent implements OnInit, OnDestroy {
   }
 
   formatDate(date: string): string {
-    return new Date(date).toLocaleDateString(undefined, {
+    return new Date(date).toLocaleDateString('en', {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',

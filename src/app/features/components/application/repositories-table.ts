@@ -78,6 +78,7 @@ const ROW_ACTIONS: MenuAction[] = [
                     size="sm"
                     type="button"
                     [disabled]="checking()"
+                    [attr.aria-label]="'Deploy ' + repo.fullName"
                     (click)="deploy.emit(repo)"
                   >
                     Deploy

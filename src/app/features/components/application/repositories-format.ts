@@ -44,11 +44,11 @@ export function formatRelativeDate(date: string): string {
   if (diffMins < 60) return rtf.format(-diffMins, 'minute');
   if (diffHours < 24) return rtf.format(-diffHours, 'hour');
   if (diffDays < 7) return rtf.format(-diffDays, 'day');
-  return then.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  return then.toLocaleDateString('en', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
 export function formatDay(date: string): string {
-  return parseUtc(date).toLocaleDateString(undefined, {
+  return parseUtc(date).toLocaleDateString('en', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',

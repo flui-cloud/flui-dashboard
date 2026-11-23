@@ -240,6 +240,7 @@ export class BuildNamespaceComponent implements OnInit, OnDestroy {
       );
       this.cleanupPreview.set(null);
       this.showCleanupPanel.set(false);
+      this.focusCleanupOpener();
       await this.loadResources();
     } catch (e: unknown) {
       this.note(e, 'Failed to clean up stale builds');
@@ -262,5 +263,10 @@ export class BuildNamespaceComponent implements OnInit, OnDestroy {
   cancelCleanup(): void {
     this.showCleanupPanel.set(false);
     this.cleanupPreview.set(null);
+    this.focusCleanupOpener();
+  }
+
+  private focusCleanupOpener(): void {
+    setTimeout(() => document.getElementById('build-namespace-cleanup-open')?.focus());
   }
 }

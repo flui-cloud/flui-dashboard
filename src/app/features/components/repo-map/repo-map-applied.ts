@@ -30,6 +30,7 @@ import { shortSha, unitName } from './repo-map-view';
   template: `
     @let done = result();
     <fl-status
+      role="status"
       [tone]="done.partial ? 'warning' : 'success'"
       [label]="done.partial ? 'Applied, but not everything was armed' : 'Applied'"
     />
@@ -130,7 +131,13 @@ import { shortSha, unitName } from './repo-map-view';
     }
 
     <div>
-      <button flButton="ghost" size="sm" type="button" (click)="toggleFiles.emit()">
+      <button
+        flButton="ghost"
+        size="sm"
+        type="button"
+        [attr.aria-expanded]="filesExpanded()"
+        (click)="toggleFiles.emit()"
+      >
         <fl-icon [name]="filesExpanded() ? 'lucideChevronDown' : 'lucideChevronRight'" />
         {{ done.files.length }} file{{ done.files.length === 1 ? '' : 's' }} written
       </button>

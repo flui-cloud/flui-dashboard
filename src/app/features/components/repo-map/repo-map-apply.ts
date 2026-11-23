@@ -43,7 +43,13 @@ import { shortSha, unitName } from './repo-map-view';
             minutes.
           </p>
           <div>
-            <button flButton="ghost" size="sm" type="button" (click)="toggled.emit('apply-detail')">
+            <button
+              flButton="ghost"
+              size="sm"
+              type="button"
+              [attr.aria-expanded]="isOpen('apply-detail')"
+              (click)="toggled.emit('apply-detail')"
+            >
               <fl-icon
                 [name]="isOpen('apply-detail') ? 'lucideChevronDown' : 'lucideChevronRight'"
               />
@@ -87,7 +93,9 @@ import { shortSha, unitName } from './repo-map-view';
               (click)="apply.emit()"
               [disabled]="disabled()"
               [attr.aria-disabled]="disabled()"
-              [attr.aria-label]="blockedReason() || null"
+              [attr.aria-describedby]="
+                blockedReason() && !applying() ? 'repo-map-blocked-reason' : null
+              "
             >
               @if (applying()) {
                 <fl-spinner label="Applying" />
@@ -99,11 +107,16 @@ import { shortSha, unitName } from './repo-map-view';
           </span>
 
           @if (!applying() && blockedReason(); as why) {
-            <p class="m-0 max-w-prose text-fl-body-sm text-fl-ink-secondary">{{ why }}</p>
+            <p
+              id="repo-map-blocked-reason"
+              class="m-0 max-w-prose text-fl-body-sm text-fl-ink-secondary"
+            >
+              {{ why }}
+            </p>
           }
 
           @if (applying()) {
-            <p class="m-0 text-fl-body-sm text-fl-ink-secondary">
+            <p class="m-0 text-fl-body-sm text-fl-ink-secondary" role="status">
               Cutting the branch, committing the manifests, and installing the services they
               declare. This can take a few minutes, so leave the page open.
             </p>
@@ -141,12 +154,24 @@ import { shortSha, unitName } from './repo-map-view';
 
         <div class="fl-row">
           @if (renderedUnits().length > 0) {
-            <button flButton="ghost" size="sm" type="button" (click)="toggled.emit('yaml')">
+            <button
+              flButton="ghost"
+              size="sm"
+              type="button"
+              [attr.aria-expanded]="isOpen('yaml')"
+              (click)="toggled.emit('yaml')"
+            >
               <fl-icon [name]="isOpen('yaml') ? 'lucideChevronDown' : 'lucideChevronRight'" />
               flui.yaml
             </button>
           }
-          <button flButton="ghost" size="sm" type="button" (click)="toggled.emit('raw')">
+          <button
+            flButton="ghost"
+            size="sm"
+            type="button"
+            [attr.aria-expanded]="isOpen('raw')"
+            (click)="toggled.emit('raw')"
+          >
             <fl-icon [name]="isOpen('raw') ? 'lucideChevronDown' : 'lucideChevronRight'" />
             Raw map
             @if (caveatCount() > 0) {
@@ -176,6 +201,8 @@ import { shortSha, unitName } from './repo-map-view';
                 </button>
               </div>
               <pre
+                tabindex="0"
+                [attr.aria-label]="'flui.yaml for ' + name(ru.unitId)"
                 class="fl-mono m-0 overflow-x-auto rounded-fl-md border border-fl-border bg-fl-surface-subtle p-3 text-fl-ink"
                 >{{ ru.yaml }}</pre>
             </div>
@@ -183,6 +210,8 @@ import { shortSha, unitName } from './repo-map-view';
         }
         @if (isOpen('raw')) {
           <pre
+            tabindex="0"
+            aria-label="Raw map"
             class="fl-mono m-0 max-h-96 overflow-auto rounded-fl-md border border-fl-border bg-fl-surface-subtle p-3 text-fl-ink"
             >{{ rawJson() }}</pre>
         }

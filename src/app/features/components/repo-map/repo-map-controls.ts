@@ -42,6 +42,7 @@ export interface RepoMapClusterOption {
               <input
                 id="repo-map-branch"
                 type="text"
+                [attr.aria-describedby]="branchesError() ? 'repo-map-branch-hint' : null"
                 [value]="branch()"
                 (input)="branch.set(valueOf($event))"
                 [placeholder]="defaultBranch() || 'default branch'"
@@ -49,7 +50,7 @@ export interface RepoMapClusterOption {
             </span>
           }
           @if (branchesError()) {
-            <span class="fl-field__hint max-w-64">
+            <span id="repo-map-branch-hint" class="fl-field__hint max-w-64">
               Branches could not be listed. Type one, or leave it empty for the repository's
               default.
             </span>
@@ -74,7 +75,7 @@ export interface RepoMapClusterOption {
           </span>
         </div>
         <div class="fl-field">
-          <span class="fl-field__label" aria-hidden="true">&nbsp;</span>
+          <span class="fl-field__label hidden sm:block" aria-hidden="true">&nbsp;</span>
           <button flButton size="sm" type="button" (click)="check.emit()" [disabled]="loading()">
             @if (loading()) {
               <fl-spinner />

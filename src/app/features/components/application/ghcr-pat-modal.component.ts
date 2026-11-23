@@ -1,3 +1,4 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { Component, OnInit, computed, inject, signal, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { provideIcons } from '@ng-icons/core';
@@ -22,7 +23,7 @@ const TODAY_PLUS_DAYS = (days: number): string => {
 
 @Component({
   selector: 'app-ghcr-pat-modal',
-  imports: [FormsModule, FlAlert, FlField, FlButton, FlIcon, FlSpinner],
+  imports: [CdkTrapFocus, FormsModule, FlAlert, FlField, FlButton, FlIcon, FlSpinner],
   providers: [provideIcons({ lucideExternalLink, lucideX })],
   host: { '(document:keydown.escape)': 'onBackdrop()' },
   template: `
@@ -32,6 +33,8 @@ const TODAY_PLUS_DAYS = (days: number): string => {
     >
       <div
         class="fl-dialog"
+        cdkTrapFocus
+        [cdkTrapFocusAutoCapture]="true"
         role="dialog"
         aria-modal="true"
         aria-labelledby="ghcr-pat-title"

@@ -8,7 +8,7 @@ import { FlEmptyState } from '../../../ui/patterns/states';
 import { FlTable } from '../../../ui/patterns/table';
 import { FlIcon } from '../../../ui/primitives/icon';
 import { FlTag } from '../../../ui/primitives/tag';
-import { CatalogLinks, linksOf, ratingRows } from './catalog-view';
+import { CatalogLinks, categoryLabel, linksOf, ratingRows } from './catalog-view';
 
 @Component({
   selector: 'app-catalog-detail-overview',
@@ -27,7 +27,7 @@ import { CatalogLinks, linksOf, ratingRows } from './catalog-view';
         <fl-key-value>
           <fl-kv-item key="Version" [mono]="true">{{ a.version }}</fl-kv-item>
           <fl-kv-item key="Category"
-            ><span class="capitalize">{{ a.category }}</span></fl-kv-item
+            ><span>{{ categoryLabel(a.category) }}</span></fl-kv-item
           >
           @if (a.license) {
             <fl-kv-item key="License">{{ a.license }}</fl-kv-item>
@@ -58,7 +58,7 @@ import { CatalogLinks, linksOf, ratingRows } from './catalog-view';
           }
         </fl-key-value>
         @if (a.tags.length) {
-          <div class="flex flex-wrap gap-1" aria-label="Tags">
+          <div class="flex flex-wrap gap-1" role="group" aria-label="Tags">
             @for (tag of a.tags; track tag) {
               <fl-tag>{{ tag }}</fl-tag>
             }
@@ -127,6 +127,7 @@ import { CatalogLinks, linksOf, ratingRows } from './catalog-view';
   `,
 })
 export class CatalogDetailOverview {
+  protected readonly categoryLabel = categoryLabel;
   readonly app = input.required<CatalogDetailResponseDto>();
 
   protected readonly ratings = computed(() => ratingRows(this.app().ratings));

@@ -104,3 +104,12 @@ export function installQueryParams(
   if (autoConnectTo) params['autoConnectTo'] = autoConnectTo;
   return params;
 }
+
+const CATEGORY_ACRONYMS: Record<string, string> = { ai: 'AI', cms: 'CMS' };
+
+export function categoryLabel(category: string): string {
+  const acronym = CATEGORY_ACRONYMS[category.toLowerCase()];
+  if (acronym) return acronym;
+  const words = category.toLowerCase().replace(/[-_]+/g, ' ').trim();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}

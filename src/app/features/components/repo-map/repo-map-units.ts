@@ -19,7 +19,6 @@ import { readinessLabel, readinessOf, readinessTone, unitName } from './repo-map
         flButton="ghost"
         size="sm"
         type="button"
-        [attr.aria-pressed]="showEvidence()"
         (click)="showEvidence.set(!showEvidence())"
       >
         {{ showEvidence() ? 'Hide evidence' : 'Show evidence' }}

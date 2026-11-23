@@ -28,7 +28,7 @@ let nextId = 0;
             placeholder="stable"
             [id]="inputId"
             [(ngModel)]="newTag"
-            (keydown.escape)="newTag.set('')"
+            (keydown.escape)="newTag() && $event.stopPropagation(); newTag.set('')"
           />
         </div>
       </fl-field>

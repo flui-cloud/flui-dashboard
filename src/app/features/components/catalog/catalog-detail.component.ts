@@ -19,7 +19,14 @@ import { CatalogManifestTabComponent } from './catalog-manifest-tab.component';
 import { CatalogDetailConfig } from './catalog-detail-config';
 import { CatalogDetailInstances } from './catalog-detail-instances';
 import { CatalogDetailOverview } from './catalog-detail-overview';
-import { CatalogLinks, DETAIL_TABS, DetailTab, installQueryParams, linksOf } from './catalog-view';
+import {
+  CatalogLinks,
+  DETAIL_TABS,
+  DetailTab,
+  categoryLabel,
+  installQueryParams,
+  linksOf,
+} from './catalog-view';
 import {
   CatalogDetailSurfaceInput,
   CatalogDetailSurfaceRevision,
@@ -47,7 +54,7 @@ import {
     <div class="fl-page">
       <fl-page-header [title]="app?.name ?? slug() ?? 'App'" [breadcrumb]="breadcrumb()">
         @if (app) {
-          <fl-tag headerStatus class="capitalize">{{ app.category }}</fl-tag>
+          <fl-tag headerStatus>{{ categoryLabel(app.category) }}</fl-tag>
         }
         @if (app) {
           <span headerMeta class="inline-flex items-center gap-2">
@@ -89,7 +96,12 @@ import {
           />
         }
 
-        <div class="fl-tabs" role="tablist" aria-label="App sections">
+        <div
+          class="fl-tabs"
+          role="tablist"
+          aria-label="App sections"
+          (keydown)="onTabKeydown($event)"
+        >
           @for (t of tabs; track t.key) {
             <button
               type="button"
@@ -98,6 +110,7 @@ import {
               [id]="'catalog-tab-' + t.key"
               aria-controls="catalog-tab-panel"
               [attr.aria-selected]="activeTab() === t.key"
+              [attr.tabindex]="activeTab() === t.key ? 0 : -1"
               (click)="setTab(t.key)"
             >
               {{ t.label }}
@@ -128,6 +141,7 @@ import {
   `,
 })
 export class CatalogDetailComponent implements OnDestroy {
+  protected readonly categoryLabel = categoryLabel;
   protected readonly catalog = inject(CatalogService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -237,6 +251,32 @@ export class CatalogDetailComponent implements OnDestroy {
 
   setTab(tab: DetailTab): void {
     this.activeTab.set(tab);
+  }
+
+  protected onTabKeydown(event: KeyboardEvent): void {
+    const count = this.tabs.length;
+    const current = this.tabs.findIndex((t) => t.key === this.activeTab());
+    let next: number;
+    switch (event.key) {
+      case 'ArrowRight':
+        next = (current + 1) % count;
+        break;
+      case 'ArrowLeft':
+        next = (current - 1 + count) % count;
+        break;
+      case 'Home':
+        next = 0;
+        break;
+      case 'End':
+        next = count - 1;
+        break;
+      default:
+        return;
+    }
+    event.preventDefault();
+    const tab = this.tabs[next];
+    this.setTab(tab.key);
+    document.getElementById('catalog-tab-' + tab.key)?.focus();
   }
 
   goToInstall(slug: string): void {
