@@ -88,7 +88,7 @@ The dashboard is a pure client of the Flui API. It makes no provider calls of it
 
 ## Status
 
-Flui is in **alpha**. The dashboard is used every day, but the surface is large: expect the interface to keep changing as the API settles.
+The dashboard is used every day. The surface is large: expect the interface to keep changing as the API settles.
 
 ## Contributing
 

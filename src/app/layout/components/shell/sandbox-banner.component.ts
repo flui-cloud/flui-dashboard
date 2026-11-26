@@ -60,7 +60,7 @@ import { FlStatus, StatusTone } from '../../../ui/primitives/status';
         </a>
 
         <span class="ml-auto hidden text-fl-caption text-fl-ink-muted lg:inline">
-          Shared cluster, with quotas. Flui is alpha.
+          Shared cluster, with quotas.
         </span>
       </div>
     }
